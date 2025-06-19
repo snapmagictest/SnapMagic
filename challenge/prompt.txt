@@ -1,0 +1,18 @@
+SnapMagic is a application that is been built to use an AWS events such as summits.
+Therefore it needs to be resilient and secure as it will also store personal selfie pictures of users. 
+You must apply Well architected framework when creating the app. You must as far as possible use AWS native services unless custom is required. These must ensure that once the system is running it must be resilient and not fail while proccessing or loading or available etc..
+It must have a login page for an admin user so that access cant easily be made to the app and must have 2MFA.
+After the login page there will be 3 options.
+1. Transform pictures - This will take a picture using the devices camera of the user like a selfie and then also input a prompt with option to speech to text. The prompt will be something like transform my picture into me sitting on a beach sipping a cold beverage on a hot summers day
+2. Transform Video - This will take a picture using the devices camera of the user like a selfie and then also input a prompt with option to speech to text so same as above but make it into a short video reel
+3. Rate Experience - using the device camera the app will stream the users experience by the user expressing a thumbs up or a thumbs down and the video must then be identified as thumbs up for good and thumbs down for bad and store that result
+i have given you access to mcp servers, the internet via brave, amazon docs, github. you can add more mcp servers for what is needed for making the above app as well as you have strands agents to use. 
+you have aws cli for an aws account to deploy the application. all i need is a place to reach the app lauch it and login to test
+you must use devops so cloudformation cdk etc.. then code repo in github and must be able to manage changes. 
+use latest tech like amazon nova models on bedrock. 
+Remember use proper sdlc agile dev practices. so start in stages as an mvp get the front end up then work backwards for the features. for the frontend after login have the camera show immediatly so it catches peoples attention. then take selfie. then click transofrm pic and capture the propmt and same for video and then rating. like that layout
+create the cloudformation stack so it can be launched in any aws account and then the ci/cd etc... as well as to make it easy to remove everything and recreate when needed to save costs. so like a shutdown and start button.
+create design docs like the mcp has a diagram drawer use that and draw the architecture etc.. 
+use the repo https://github.com/awslabs/mcp for all mcps that is required and add the ones to use
+use the repo https://github.com/strands-agents to select the right agents for tools to use bedrock and use them when needed etc.. you have full access and many tools so use them to make a simple solution.
+I gave you lot of information but i want to build out an mvp then to complete the project. Keep it simple. 
