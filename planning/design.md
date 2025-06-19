@@ -13,8 +13,12 @@ SnapMagic follows a serverless, event-driven architecture using AWS native servi
 ### Implemented Components
 - **AWS CDK Infrastructure**: TypeScript-based infrastructure as code
 - **AWS Amplify**: Static web hosting with CI/CD integration from GitHub
-- **GitHub Integration**: Automated deployments from main branch
+  - App ID: d3ektdqj3lnzss
+  - Console URL: https://console.aws.amazon.com/amplify/home?region=us-east-1#/d3ektdqj3lnzss
+  - App URL: https://main.d3ektdqj3lnzss.amplifyapp.com (after GitHub connection)
+- **GitHub Integration**: Ready for automated deployments from main branch
 - **Multi-environment Support**: Dev/staging/prod environment configuration
+- **IAM Roles**: Service roles configured for Amplify with appropriate permissions
 
 ## Architecture Principles
 
