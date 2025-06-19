@@ -1,0 +1,11 @@
+{
+  "name": "snapmagic-frontend",
+  "version": "1.0.0",
+  "description": "SnapMagic - AI-powered transformation for AWS events",
+  "dependencies": {
+    "aws-amplify": "^6.0.0"
+  },
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  }
+}

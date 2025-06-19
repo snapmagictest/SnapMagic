@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="SnapMagic - AI-powered image and video transformation">
+    <title>SnapMagic - Transform Your Experience</title>
+    
+    <!-- Preload critical resources -->
+    <link rel="preload" href="css/main.css" as="style">
+    <link rel="preload" href="css/components.css" as="style">
+    <link rel="preload" href="css/responsive.css" as="style">
+    
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/responsive.css">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📸</text></svg>">
+    
+    <!-- Security headers -->
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="X-Frame-Options" content="DENY">
+    <meta http-equiv="X-XSS-Protection" content="1; mode=block">
+</head>
+<body class="app-page">
+    <!-- App Header -->
+    <header class="app-header" id="appHeader">
+        <div class="container">
+            <div class="header-content">
+                <a href="#" class="app-logo">
+                    <span class="logo-icon">📸</span>
+                    <span class="logo-text">SnapMagic</span>
+                </a>
+                
+                <div class="header-actions">
+                    <div class="status-indicator online" id="connectionStatus">
+                        <div class="status-dot pulse"></div>
+                        <span>Connected</span>
+                    </div>
+                    
+                    <button class="btn btn-outline btn-sm" id="logoutButton">
+                        <span>Sign Out</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+    
+    <!-- Main Application -->
+    <main class="app-main">
+        <div class="container">
+            <!-- Feature Navigation -->
+            <nav class="nav-tabs" id="featureNavigation" role="tablist">
+                <button class="nav-tab active" data-feature="pictures" role="tab" aria-selected="true" aria-controls="picturesPanel">
+                    <span class="nav-tab-icon">🖼️</span>
+                    <span>Transform Pictures</span>
+                </button>
+                <button class="nav-tab" data-feature="videos" role="tab" aria-selected="false" aria-controls="videosPanel">
+                    <span class="nav-tab-icon">🎬</span>
+                    <span>Transform Videos</span>
+                </button>
+                <button class="nav-tab" data-feature="rating" role="tab" aria-selected="false" aria-controls="ratingPanel">
+                    <span class="nav-tab-icon">👍</span>
+                    <span>Rate Experience</span>
+                </button>
+            </nav>
+            
+            <!-- Feature Panels -->
+            <div class="feature-panels">
+                <!-- Transform Pictures Panel -->
+                <div class="feature-panel active" id="picturesPanel" role="tabpanel" aria-labelledby="pictures-tab">
+                    <div class="panel-content">
+                        <div class="camera-section">
+                            <!-- Camera Component -->
+                            <div class="camera-container" id="pictureCamera">
+                                <video class="camera-video" id="pictureVideo" autoplay muted playsinline></video>
+                                <div class="camera-overlay hidden" id="pictureOverlay">
+                                    <div>
+                                        <p>📷 Camera access required</p>
+                                        <button class="btn btn-primary" id="enablePictureCamera">Enable Camera</button>
+                                    </div>
+                                </div>
+                                <div class="camera-controls" id="pictureControls">
+                                    <button class="capture-btn" id="capturePictureBtn" aria-label="Capture photo">
+                                        📸
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Captured Image Preview -->
+                            <div class="image-preview hidden" id="picturePreview">
+                                <img id="capturedPicture" alt="Captured photo" />
+                                <div class="image-actions">
+                                    <button class="image-action-btn" id="retakePictureBtn" aria-label="Retake photo">
+                                        🔄
+                                    </button>
+                                    <button class="image-action-btn" id="deletePictureBtn" aria-label="Delete photo">
+                                        🗑️
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="content-section">
+                            <!-- Prompt Input -->
+                            <div class="prompt-container">
+                                <div class="form-group">
+                                    <label for="picturePrompt" class="form-label text-white">
+                                        Describe your transformation
+                                    </label>
+                                    <textarea 
+                                        id="picturePrompt" 
+                                        class="prompt-input" 
+                                        placeholder="e.g., Transform my picture into me sitting on a beach sipping a cold beverage on a hot summer's day"
+                                        rows="4"
+                                    ></textarea>
+                                </div>
+                                
+                                <div class="prompt-actions">
+                                    <button class="voice-btn" id="pictureVoiceBtn">
+                                        <span class="voice-icon">🎤</span>
+                                        <span class="voice-text">Voice Input</span>
+                                    </button>
+                                    
+                                    <button class="btn btn-primary" id="transformPictureBtn" disabled>
+                                        <span>Transform Picture</span>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Processing Status -->
+                            <div class="processing-status hidden" id="pictureProcessing">
+                                <div class="processing-spinner"></div>
+                                <div class="processing-text">Transforming your image...</div>
+                                <div class="processing-subtext">This may take up to 30 seconds</div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" id="pictureProgress"></div>
+                                </div>
+                            </div>
+                            
+                            <!-- Result Display -->
+                            <div class="result-container hidden" id="pictureResult">
+                                <img class="result-media" id="transformedPicture" alt="Transformed image" />
+                                <div class="result-actions">
+                                    <a class="download-btn" id="downloadPictureBtn" download>
+                                        <span>📥</span>
+                                        <span>Download Image</span>
+                                    </a>
+                                    <button class="btn btn-outline" id="newPictureBtn">
+                                        <span>Create New</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Transform Videos Panel -->
+                <div class="feature-panel" id="videosPanel" role="tabpanel" aria-labelledby="videos-tab">
+                    <div class="panel-content">
+                        <div class="camera-section">
+                            <!-- Camera Component -->
+                            <div class="camera-container" id="videoCamera">
+                                <video class="camera-video" id="videoVideo" autoplay muted playsinline></video>
+                                <div class="camera-overlay hidden" id="videoOverlay">
+                                    <div>
+                                        <p>📷 Camera access required</p>
+                                        <button class="btn btn-primary" id="enableVideoCamera">Enable Camera</button>
+                                    </div>
+                                </div>
+                                <div class="camera-controls" id="videoControls">
+                                    <button class="capture-btn" id="captureVideoBtn" aria-label="Capture photo for video">
+                                        📸
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Captured Image Preview -->
+                            <div class="image-preview hidden" id="videoPreview">
+                                <img id="capturedVideo" alt="Captured photo for video" />
+                                <div class="image-actions">
+                                    <button class="image-action-btn" id="retakeVideoBtn" aria-label="Retake photo">
+                                        🔄
+                                    </button>
+                                    <button class="image-action-btn" id="deleteVideoBtn" aria-label="Delete photo">
+                                        🗑️
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="content-section">
+                            <!-- Prompt Input -->
+                            <div class="prompt-container">
+                                <div class="form-group">
+                                    <label for="videoPrompt" class="form-label text-white">
+                                        Describe your video transformation
+                                    </label>
+                                    <textarea 
+                                        id="videoPrompt" 
+                                        class="prompt-input" 
+                                        placeholder="e.g., Create a video of me walking through a magical forest with sparkles around me"
+                                        rows="4"
+                                    ></textarea>
+                                </div>
+                                
+                                <div class="prompt-actions">
+                                    <button class="voice-btn" id="videoVoiceBtn">
+                                        <span class="voice-icon">🎤</span>
+                                        <span class="voice-text">Voice Input</span>
+                                    </button>
+                                    
+                                    <button class="btn btn-primary" id="transformVideoBtn" disabled>
+                                        <span>Generate Video</span>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Processing Status -->
+                            <div class="processing-status hidden" id="videoProcessing">
+                                <div class="processing-spinner"></div>
+                                <div class="processing-text">Generating your video...</div>
+                                <div class="processing-subtext">This may take up to 60 seconds</div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" id="videoProgress"></div>
+                                </div>
+                            </div>
+                            
+                            <!-- Result Display -->
+                            <div class="result-container hidden" id="videoResult">
+                                <video class="result-media" id="transformedVideo" controls>
+                                    Your browser does not support the video tag.
+                                </video>
+                                <div class="result-actions">
+                                    <a class="download-btn" id="downloadVideoBtn" download>
+                                        <span>📥</span>
+                                        <span>Download Video</span>
+                                    </a>
+                                    <button class="btn btn-outline" id="newVideoBtn">
+                                        <span>Create New</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Rate Experience Panel -->
+                <div class="feature-panel" id="ratingPanel" role="tabpanel" aria-labelledby="rating-tab">
+                    <div class="panel-content">
+                        <div class="rating-section">
+                            <div class="text-center mb-2">
+                                <h2 class="text-white">Rate Your Experience</h2>
+                                <p class="text-white">Show us thumbs up 👍 or thumbs down 👎</p>
+                            </div>
+                            
+                            <!-- Gesture Recognition Camera -->
+                            <div class="gesture-container" id="gestureCamera">
+                                <video class="gesture-video" id="gestureVideo" autoplay muted playsinline></video>
+                                <div class="camera-overlay hidden" id="gestureOverlay">
+                                    <div>
+                                        <p>📷 Camera access required for gesture recognition</p>
+                                        <button class="btn btn-primary" id="enableGestureCamera">Enable Camera</button>
+                                    </div>
+                                </div>
+                                <div class="gesture-overlay" id="gestureInstructions">
+                                    <p>Position yourself in the camera and show a thumbs up or thumbs down gesture</p>
+                                </div>
+                                <div class="gesture-feedback hidden" id="gestureFeedback">
+                                    <span class="feedback-icon">👍</span>
+                                    <span class="feedback-text">Thank you for your feedback!</span>
+                                </div>
+                            </div>
+                            
+                            <!-- Manual Rating Buttons (Fallback) -->
+                            <div class="manual-rating">
+                                <div class="text-center">
+                                    <p class="text-white mb-1">Or rate manually:</p>
+                                    <div class="rating-buttons">
+                                        <button class="btn btn-lg" id="thumbsUpBtn" style="background: var(--success-color); color: white;">
+                                            <span style="font-size: 2rem;">👍</span>
+                                            <span>Great Experience</span>
+                                        </button>
+                                        <button class="btn btn-lg" id="thumbsDownBtn" style="background: var(--error-color); color: white;">
+                                            <span style="font-size: 2rem;">👎</span>
+                                            <span>Needs Improvement</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <!-- Toast Container -->
+    <div id="toastContainer" class="toast-container"></div>
+    
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay hidden">
+        <div class="loading-content">
+            <div class="processing-spinner"></div>
+            <p class="loading-text" id="loadingText">Processing...</p>
+        </div>
+    </div>
+    
+    <!-- Scripts -->
+    <script src="js/utils.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/camera.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/app.js"></script>
+    
+    <style>
+        /* App-specific styles */
+        .app-page {
+            background: linear-gradient(135deg, var(--aws-dark-blue) 0%, var(--aws-light-blue) 100%);
+            min-height: 100vh;
+        }
+        
+        .feature-panels {
+            position: relative;
+        }
+        
+        .feature-panel {
+            display: none;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        
+        .feature-panel.active {
+            display: block;
+        }
+        
+        .panel-content {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: var(--spacing-xl);
+        }
+        
+        .rating-section {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .rating-buttons {
+            display: flex;
+            gap: var(--spacing-lg);
+            justify-content: center;
+            margin-top: var(--spacing-lg);
+        }
+        
+        .rating-buttons .btn {
+            flex-direction: column;
+            gap: var(--spacing-sm);
+            padding: var(--spacing-lg);
+            min-width: 160px;
+        }
+        
+        .manual-rating {
+            margin-top: var(--spacing-xl);
+            padding-top: var(--spacing-xl);
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        /* Desktop layout */
+        @media (min-width: 992px) {
+            .panel-content {
+                grid-template-columns: 1fr 1fr;
+                gap: var(--spacing-xxl);
+                align-items: start;
+            }
+            
+            .rating-section {
+                grid-column: 1 / -1;
+            }
+        }
+        
+        /* Mobile adjustments */
+        @media (max-width: 767px) {
+            .rating-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .rating-buttons .btn {
+                width: 100%;
+                max-width: 200px;
+            }
+        }
+        
+        /* Accessibility improvements */
+        .feature-panel:focus {
+            outline: 2px solid var(--primary-color);
+            outline-offset: 2px;
+        }
+        
+        /* High contrast mode */
+        @media (prefers-contrast: high) {
+            .nav-tab.active {
+                border: 2px solid var(--black);
+            }
+            
+            .camera-container,
+            .gesture-container {
+                border: 2px solid var(--white);
+            }
+        }
+    </style>
+</body>
+</html>
