@@ -66,9 +66,50 @@ venv/
 ehthumbs.db
 Thumbs.db
 
-# AWS
+# AWS & Security - NEVER COMMIT THESE
 .aws/
 *.pem
+*.key
+*.p12
+*.pfx
+credentials
+credentials.*
+config
+config.*
+aws-exports.js
+aws-exports.ts
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+.envrc
+secrets.json
+secrets.yaml
+secrets.yml
+*secret*
+*password*
+*token*
+*key*
+
+# AWS CLI profiles and credentials
+aws-credentials
+aws-config
+.aws-credentials
+.aws-config
+
+# Terraform state files (if used)
+*.tfstate
+*.tfstate.*
+.terraform/
+terraform.tfvars
+terraform.tfvars.json
+
+# CDK context and outputs
+cdk.context.json
+cdk.out/
+.cdk.staging/
+*.d.ts.map
 
 # Logs
 logs/
