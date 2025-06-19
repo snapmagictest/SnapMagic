@@ -1,64 +1,11 @@
-# Old project files
+# Ignore old files directory
 .old/
-frontend/
 
-# AWS & Security - NEVER COMMIT THESE
-.aws/
-*.pem
-*.key
-*.p12
-*.pfx
-credentials
-credentials.*
-config
-config.*
-aws-exports.js
-aws-exports.ts
-
-# Environment variables and secrets
-.env
-.env.*
-!.env.example
-.envrc
-secrets.json
-secrets.yaml
-secrets.yml
-*secret*
-*password*
-*token*
-*key*
-
-# AWS CLI profiles and credentials
-aws-credentials
-aws-config
-.aws-credentials
-.aws-config
-
-# Terraform state files (if used)
-*.tfstate
-*.tfstate.*
-.terraform/
-terraform.tfvars
-terraform.tfvars.json
-
-# CDK context and outputs
-cdk.context.json
-cdk.out/
-.cdk.staging/
-*.d.ts.map
-
-# Python virtual environment
-.venv/
-venv/
-env/
-
-# Python cache
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
-
-# Distribution / packaging
 .Python
 build/
 develop-eggs/
@@ -75,29 +22,16 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+MANIFEST
 
-# PyInstaller
-*.manifest
-*.spec
-
-# Unit test / coverage reports
-htmlcov/
-.tox/
-.coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-.hypothesis/
-.pytest_cache/
-
-# Environments
+# Virtual environments
 .env
 .venv
-ENV/
 env/
 venv/
+ENV/
+env.bak/
+venv.bak/
 
 # IDE
 .vscode/
@@ -116,20 +50,58 @@ ehthumbs.db
 Thumbs.db
 
 # Logs
-logs/
 *.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+logs/
 
-# Node modules (if we add frontend)
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+
+# nyc test coverage
+.nyc_output
+
+# Dependency directories
 node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
 
-# Temporary files
-*.tmp
-*.temp
-.tmp/
-.temp/
+# Optional npm cache directory
+.npm
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# dotenv environment variables file
+.env
+.env.test
+
+# parcel-bundler cache (https://parceljs.org/)
+.cache
+.parcel-cache
+
+# next.js build output
+.next
+
+# nuxt.js build output
+.nuxt
+
+# vuepress build directory
+.vuepress/dist
+
+# Serverless directories
+.serverless
+
+# FuseBox cache
+.fusebox/
+
+# DynamoDB Local files
+.dynamodb/
