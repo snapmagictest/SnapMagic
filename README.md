@@ -19,13 +19,39 @@ SnapMagic provides immediate value to AWS event organizers and attendees by:
 - **Optimizing Costs**: Serverless architecture with easy shutdown/startup capabilities for cost management
 - **Scaling Automatically**: Built on AWS native services to handle summit-scale traffic loads
 
-## Development approach
+## Quick Start
 
-This project follows a step-by-step agile development approach within a git repository. The agent updates and extends this README.md file with additional information about the project as development progresses, and commits changes to this file and the other planning files as they are updated.
+### Prerequisites
+Before deploying SnapMagic, ensure you have all required tools and accounts set up:
 
-Working with the user, the agent implements the project step by step, first by working out the requirements, then the design/architecture including AWS infrastructure components, then the list of tasks needed to: 1) implement the project source code and AWS infrastructure as code, 2) deploy the project to a test AWS environment, 3) run any integration tests against the deployed project.
+📋 **[Read PREREQUISITES.md](PREREQUISITES.md)** - Complete setup guide
 
-Once all planning steps are completed and documented, and the user is ready to proceed, the agent begins implementing the tasks one at a time until the project is completed.
+🔍 **Quick Check**: Run the prerequisites checker:
+```bash
+./scripts/check-prerequisites.sh
+```
+
+### Deployment
+Once prerequisites are met:
+
+1. **Deploy Infrastructure**:
+   ```bash
+   cd infrastructure
+   npm install
+   npm run deploy
+   ```
+
+2. **Store GitHub Token**:
+   ```bash
+   ./scripts/setup-secrets.sh
+   ```
+
+3. **Connect GitHub to Amplify**:
+   - Open AWS Amplify Console
+   - Connect your forked repository
+   - Deploy the application
+
+🔗 **Detailed Instructions**: See [PREREQUISITES.md](PREREQUISITES.md)
 
 ## Project layout 
 
