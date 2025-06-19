@@ -1,27 +1,27 @@
 # SnapMagic - Requirements
 
 ## Project Overview
-SnapMagic is an AWS-native application designed for AWS events (summits) that provides AI-powered image and video transformation capabilities along with real-time experience rating functionality.
+SnapMagic is an AWS-native application designed for AWS events (summits) that provides AI-powered image and video transformation capabilities along with real-time experience rating functionality. The system is designed for temporary deployment with automatic shutdown capabilities.
 
 ## Business Requirements
 
 ### Target Users
 - **Primary**: AWS Summit attendees seeking engaging, personalized content creation
 - **Secondary**: AWS event organizers needing real-time feedback collection
-- **Admin**: Event staff managing the application and monitoring usage
+- **Admin**: Event staff managing the application during events
 
 ### Core Value Proposition
 - Create memorable, shareable content at AWS events
 - Streamline feedback collection through gesture recognition
 - Demonstrate AWS AI/ML capabilities in an interactive format
+- Provide global accessibility with low latency through AWS CloudFront
 
 ## Functional Requirements
 
-### FR1: Admin Authentication & Security
-- **FR1.1**: Secure admin login page with username/password
-- **FR1.2**: Multi-factor authentication (2FA) using SMS or authenticator app
-- **FR1.3**: Session management with automatic timeout
-- **FR1.4**: Role-based access control for admin functions
+### FR1: Admin Authentication & Access Control
+- **FR1.1**: Simple admin login page with username/password (no 2FA required)
+- **FR1.2**: Basic access control to prevent public access and cost incurrence
+- **FR1.3**: Application remains accessible throughout event duration without re-authentication
 
 ### FR2: Transform Pictures Feature
 - **FR2.1**: Camera integration for selfie capture using device camera
@@ -46,11 +46,19 @@ SnapMagic is an AWS-native application designed for AWS events (summits) that pr
 - **FR4.5**: Analytics dashboard for event organizers
 
 ### FR5: User Interface Requirements
-- **FR5.1**: Responsive web design for mobile, tablet, and desktop
+- **FR5.1**: Responsive web design for mobile, tablet, and desktop using AWS Amplify
 - **FR5.2**: Immediate camera display after admin login to capture attention
 - **FR5.3**: Intuitive navigation between three main features
 - **FR5.4**: Real-time processing status indicators
-- **FR5.5**: Error handling with user-friendly messages
+- **FR5.5**: Error handling with user-friendly messages and retry capabilities
+- **FR5.6**: Global content delivery through Amazon CloudFront for low latency
+
+### FR6: System Lifecycle Management
+- **FR6.1**: Easy deployment capability for any AWS account
+- **FR6.2**: Manual shutdown capability when event concludes
+- **FR6.3**: Automatic shutdown after 2 weeks post-deployment
+- **FR6.4**: Complete resource cleanup to prevent ongoing costs
+- **FR6.5**: Deployment status monitoring and cost tracking
 
 ## Non-Functional Requirements
 
@@ -74,6 +82,9 @@ SnapMagic is an AWS-native application designed for AWS events (summits) that pr
 - **NFR3.3**: Automatic retry mechanisms for failed operations
 - **NFR3.4**: Circuit breaker patterns for external service calls
 - **NFR3.5**: Comprehensive monitoring and alerting
+- **NFR3.6**: Content caching for retry scenarios and failure recovery
+- **NFR3.7**: Multi-region failover capabilities using CloudFront
+- **NFR3.8**: Resilient architecture to handle network interruptions
 
 ### NFR4: Cost Optimization
 - **NFR4.1**: Serverless architecture to minimize idle costs
@@ -81,20 +92,28 @@ SnapMagic is an AWS-native application designed for AWS events (summits) that pr
 - **NFR4.3**: Automatic cleanup of temporary files
 - **NFR4.4**: Resource tagging for cost allocation and tracking
 - **NFR4.5**: Pay-per-use pricing model alignment
+- **NFR4.6**: Automatic resource termination after 2 weeks
+- **NFR4.7**: Cost monitoring and alerting for budget control
+- **NFR4.8**: Efficient caching to reduce repeated AI processing costs
 
 ## Technical Requirements
 
 ### TR1: AWS Services Integration
-- **TR1.1**: Amazon Cognito for authentication and user management
+- **TR1.1**: Amazon Cognito for basic authentication (simplified)
 - **TR1.2**: Amazon Bedrock with Nova Canvas for image transformation
 - **TR1.3**: Amazon Bedrock with Nova Reel for video generation
 - **TR1.4**: Amazon Rekognition for gesture detection
 - **TR1.5**: Amazon Transcribe for speech-to-text conversion
-- **TR1.6**: Amazon S3 for secure file storage
+- **TR1.6**: Amazon S3 for secure file storage with lifecycle policies
 - **TR1.7**: AWS Lambda for serverless compute
 - **TR1.8**: Amazon API Gateway for REST API management
 - **TR1.9**: AWS Step Functions for workflow orchestration
 - **TR1.10**: Amazon CloudWatch for monitoring and logging
+- **TR1.11**: Amazon CloudFront for global content delivery and caching
+- **TR1.12**: AWS Amplify for frontend hosting and deployment
+- **TR1.13**: Amazon ElastiCache for application-level caching (if needed)
+- **TR1.14**: AWS EventBridge for scheduled auto-shutdown
+- **TR1.15**: AWS Systems Manager for parameter management
 
 ### TR2: Architecture Requirements
 - **TR2.1**: Well-Architected Framework compliance (all 6 pillars)
@@ -113,18 +132,24 @@ SnapMagic is an AWS-native application designed for AWS events (summits) that pr
 ## Constraints & Assumptions
 
 ### Constraints
-- **C1**: Must use AWS native services where possible
+- **C1**: Must use AWS native services where possible (CloudFront, Amplify, etc.)
 - **C2**: Budget constraints require cost-effective serverless solutions
 - **C3**: Event duration limited (typically 1-3 days)
 - **C4**: Mobile-first design due to event attendee device usage patterns
 - **C5**: Real-time processing requirements for user engagement
+- **C6**: Global accessibility required (US hosting, Africa usage via CloudFront)
+- **C7**: Temporary deployment model with automatic cleanup
+- **C8**: Must handle network interruptions and provide retry capabilities
 
 ### Assumptions
 - **A1**: Users have modern smartphones with camera capabilities
-- **A2**: Reliable internet connectivity at event venues
+- **A2**: Reliable internet connectivity at event venues (with fallback for interruptions)
 - **A3**: AWS Bedrock Nova models are available in deployment region
 - **A4**: Event organizers provide admin credentials
 - **A5**: Legal approval for image/video processing and temporary storage
+- **A6**: CloudFront provides adequate performance for Africa from US regions
+- **A7**: Events typically last 1-3 days with known end dates
+- **A8**: Cost monitoring and automatic shutdown prevent runaway expenses
 
 ## Success Criteria
 - **SC1**: Successful deployment and operation during AWS Summit event
