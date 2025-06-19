@@ -3,63 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="SnapMagic - Hello World">
-    <title>SnapMagic - Hello World</title>
-    <link rel="stylesheet" href="style.css">
+    <title>SnapMagic - Welcome</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #232F3E 0%, #4B9CD3 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+        .container { text-align: center; padding: 2rem; }
+        .logo { font-size: 3rem; margin-bottom: 1rem; }
+        .title { font-size: 2.5rem; margin-bottom: 1rem; color: #FF9900; }
+        .subtitle { font-size: 1.2rem; margin-bottom: 2rem; opacity: 0.9; }
+        .btn {
+            display: inline-block;
+            padding: 1rem 2rem;
+            background: #FF9900;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            margin: 0.5rem;
+        }
+        .btn:hover { background: #e68900; transform: translateY(-2px); }
+    </style>
 </head>
 <body>
     <div class="container">
-        <header class="header">
-            <h1 class="logo">SnapMagic</h1>
-            <nav class="nav">
-                <button class="nav-toggle" id="navToggle">☰</button>
-                <ul class="nav-menu" id="navMenu">
-                    <li><a href="#home">Home</a></li>
-                    <li><a href="#about">About</a></li>
-                    <li><a href="#contact">Contact</a></li>
-                </ul>
-            </nav>
-        </header>
-
-        <main class="main">
-            <section class="hero">
-                <div class="hero-content">
-                    <h2 class="hero-title">Hello World!</h2>
-                    <p class="hero-subtitle">Welcome to SnapMagic - Your magical experience starts here</p>
-                    <button class="cta-button" id="ctaButton">Get Started</button>
-                </div>
-                <div class="hero-image">
-                    <div class="magic-circle">✨</div>
-                </div>
-            </section>
-
-            <section class="features">
-                <div class="feature-grid">
-                    <div class="feature-card">
-                        <div class="feature-icon">📱</div>
-                        <h3>Mobile Ready</h3>
-                        <p>Works perfectly on all mobile devices</p>
-                    </div>
-                    <div class="feature-card">
-                        <div class="feature-icon">💻</div>
-                        <h3>Desktop Optimized</h3>
-                        <p>Beautiful experience on laptops and PCs</p>
-                    </div>
-                    <div class="feature-card">
-                        <div class="feature-icon">📺</div>
-                        <h3>TV Compatible</h3>
-                        <p>Scales perfectly for large screens</p>
-                    </div>
-                </div>
-            </section>
-        </main>
-
-        <footer class="footer">
-            <p>&copy; 2024 SnapMagic. Made with ❤️</p>
-            <div class="device-info" id="deviceInfo"></div>
-        </footer>
+        <div class="logo">📸</div>
+        <h1 class="title">SnapMagic</h1>
+        <p class="subtitle">AI-powered transformation for AWS events</p>
+        <div>
+            <a href="login.html" class="btn">Admin Login</a>
+            <a href="app.html" class="btn">Go to App</a>
+        </div>
     </div>
-
-    <script src="script.js"></script>
+    <script>
+        setTimeout(() => { window.location.href = 'login.html'; }, 3000);
+    </script>
 </body>
 </html>
