@@ -1,3 +1,52 @@
+# Old project files
+.old/
+frontend/
+
+# AWS & Security - NEVER COMMIT THESE
+.aws/
+*.pem
+*.key
+*.p12
+*.pfx
+credentials
+credentials.*
+config
+config.*
+aws-exports.js
+aws-exports.ts
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+.envrc
+secrets.json
+secrets.yaml
+secrets.yml
+*secret*
+*password*
+*token*
+*key*
+
+# AWS CLI profiles and credentials
+aws-credentials
+aws-config
+.aws-credentials
+.aws-config
+
+# Terraform state files (if used)
+*.tfstate
+*.tfstate.*
+.terraform/
+terraform.tfvars
+terraform.tfvars.json
+
+# CDK context and outputs
+cdk.context.json
+cdk.out/
+.cdk.staging/
+*.d.ts.map
+
 # Python virtual environment
 .venv/
 venv/
@@ -66,51 +115,6 @@ venv/
 ehthumbs.db
 Thumbs.db
 
-# AWS & Security - NEVER COMMIT THESE
-.aws/
-*.pem
-*.key
-*.p12
-*.pfx
-credentials
-credentials.*
-config
-config.*
-aws-exports.js
-aws-exports.ts
-
-# Environment variables and secrets
-.env
-.env.*
-!.env.example
-.envrc
-secrets.json
-secrets.yaml
-secrets.yml
-*secret*
-*password*
-*token*
-*key*
-
-# AWS CLI profiles and credentials
-aws-credentials
-aws-config
-.aws-credentials
-.aws-config
-
-# Terraform state files (if used)
-*.tfstate
-*.tfstate.*
-.terraform/
-terraform.tfvars
-terraform.tfvars.json
-
-# CDK context and outputs
-cdk.context.json
-cdk.out/
-.cdk.staging/
-*.d.ts.map
-
 # Logs
 logs/
 *.log
@@ -123,11 +127,6 @@ node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-
-# CDK
-cdk.out/
-.cdk.staging/
-cdk.context.json
 
 # Temporary files
 *.tmp
