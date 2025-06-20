@@ -1039,14 +1039,11 @@
         </main>
     </div>
 
-    <!-- API Configuration (will be updated by deployment) -->
-    <script src="api-config.js"></script>
-    
     <script>
-        // SnapMagic Configuration
+        // SnapMagic Configuration - Using native Amplify environment variables
         window.SNAPMAGIC_CONFIG = {
-            // API URL will be set by CDK deployment
-            API_URL: window.SNAPMAGIC_API_URL || 'demo-mode',
+            // API URL from Amplify environment variable (set by CDK)
+            API_URL: '${SNAPMAGIC_API_URL}' || 'demo-mode',
             VERSION: '1.0.0',
             FEATURES: {
                 TRANSFORM_IMAGES: true,

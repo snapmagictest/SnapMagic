@@ -32,9 +32,10 @@ frontend:
       commands:
         - cd frontend
         - npm ci --only=production
-        - echo "Configuring API URL..."
-        - echo "window.SNAPMAGIC_API_URL = '$SNAPMAGIC_API_URL';" > public/api-config.js
-        - cat public/api-config.js
+        - echo "Configuring API URL using environment variable substitution..."
+        - echo "SNAPMAGIC_API_URL is set to: $SNAPMAGIC_API_URL"
+        - sed -i "s/\\\${SNAPMAGIC_API_URL}/$SNAPMAGIC_API_URL/g" public/index.html
+        - echo "API URL configured in index.html"
     build:
       commands:
         - echo "Frontend is already built - copying static files"
