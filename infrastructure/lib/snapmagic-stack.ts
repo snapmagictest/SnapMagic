@@ -155,7 +155,9 @@ frontend:
       memorySize: 1024,
       environment: {
         PYTHONPATH: '/var/task:/var/task/src',
-        LOG_LEVEL: 'INFO'
+        LOG_LEVEL: 'INFO',
+        SNAPMAGIC_USERNAME: inputs.basicAuthUsername || 'd',
+        SNAPMAGIC_PASSWORD: inputs.basicAuthPassword || 'd'
       },
       description: 'SnapMagic AI backend using Strands Agents'
     });

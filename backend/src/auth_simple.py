@@ -17,12 +17,13 @@ class SnapMagicAuthSimple:
     """Simple authentication handler for SnapMagic events without JWT"""
     
     def __init__(self):
-        # Event credentials (same for everyone)
+        # Get credentials from environment variables (set by CDK deployment)
+        import os
+        username = os.environ.get('SNAPMAGIC_USERNAME', 'demo')
+        password = os.environ.get('SNAPMAGIC_PASSWORD', 'demo')
+        
         self.valid_credentials = {
-            'd': 'd',  # Simple credentials as requested
-            'demo': 'demo',
-            'summit2024': 'AWSRocks123!',
-            'event': 'snapmagic2024'
+            username: password
         }
     
     def validate_login(self, username: str, password: str) -> bool:
