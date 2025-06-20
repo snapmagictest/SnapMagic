@@ -147,7 +147,7 @@ frontend:
       timeout: Duration.minutes(5),
       memorySize: 1024,
       environment: {
-        PYTHONPATH: '/var/task/src',
+        PYTHONPATH: '/var/task:/var/task/src',
         LOG_LEVEL: 'INFO'
       },
       description: 'SnapMagic AI backend using Strands Agents'
@@ -160,7 +160,7 @@ frontend:
       defaultCorsPreflightOptions: {
         allowOrigins: apigateway.Cors.ALL_ORIGINS,
         allowMethods: apigateway.Cors.ALL_METHODS,
-        allowHeaders: ['Content-Type', 'X-Amz-Date', 'Authorization', 'X-Api-Key', 'X-Amz-Security-Token']
+        allowHeaders: ['Content-Type', 'X-Amz-Date', 'Authorization', 'X-Api-Key', 'X-Amz-Security-Token', 'X-Auth-Token']
       },
       deployOptions: {
         stageName: props.environment,
@@ -177,6 +177,10 @@ frontend:
 
     // API endpoints
     const apiResource = api.root.addResource('api');
+    
+    // Login endpoint (no authentication required)
+    const loginResource = apiResource.addResource('login');
+    loginResource.addMethod('POST', lambdaIntegration);
     
     // Transform image endpoint
     const transformImageResource = apiResource.addResource('transform-image');

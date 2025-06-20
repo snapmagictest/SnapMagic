@@ -1342,21 +1342,66 @@
                     loginError.textContent = '';
                     console.log('🔐 Attempting login...');
                     
-                    // Simulate login for now (replace with real Amplify Auth later)
-                    if (username && password) {
+                    // Get the API endpoint from configuration
+                    const apiBaseUrl = window.SNAPMAGIC_CONFIG.API_URL;
+                    
+                    if (apiBaseUrl === 'demo-mode') {
+                        // Demo mode - use simple validation
+                        if (username && password) {
+                            this.currentUser = { 
+                                username: username,
+                                loginTime: new Date().toISOString(),
+                                token: 'demo-token' // Demo token for offline mode
+                            };
+                            this.isAuthenticated = true;
+                            this.saveSession();
+                            console.log('✅ Demo login successful - Session saved');
+                            this.showMainApp();
+                            return;
+                        } else {
+                            throw new Error('Please enter both username and password');
+                        }
+                    }
+                    
+                    // Real API login with JWT
+                    const loginEndpoint = `${apiBaseUrl}/api/login`;
+                    console.log(`🌐 Calling login API: ${loginEndpoint}`);
+                    
+                    const response = await fetch(loginEndpoint, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            username: username,
+                            password: password
+                        })
+                    });
+                    
+                    if (!response.ok) {
+                        const errorData = await response.json().catch(() => ({}));
+                        throw new Error(errorData.message || `Login failed: ${response.status} ${response.statusText}`);
+                    }
+                    
+                    const result = await response.json();
+                    
+                    if (result.success && result.token) {
+                        // Store user data with JWT token
                         this.currentUser = { 
                             username: username,
-                            loginTime: new Date().toISOString()
+                            loginTime: new Date().toISOString(),
+                            token: result.token,
+                            expiresIn: result.expires_in || 86400 // 24 hours default
                         };
                         this.isAuthenticated = true;
                         
                         // Save session to localStorage
                         this.saveSession();
                         
-                        console.log('✅ Login successful - Session saved');
+                        console.log('✅ Login successful - JWT token received and session saved');
                         this.showMainApp();
                     } else {
-                        throw new Error('Please enter both username and password');
+                        throw new Error(result.message || 'Login failed - no token received');
                     }
                     
                 } catch (error) {
@@ -1522,6 +1567,11 @@
                         throw new Error('Demo mode - API not configured');
                     }
                     
+                    // Check if user is authenticated and has token
+                    if (!this.currentUser || !this.currentUser.token) {
+                        throw new Error('Authentication required - please login again');
+                    }
+                    
                     // Convert image to base64
                     const imageBase64 = this.capturedImages[feature].split(',')[1]; // Remove data:image/jpeg;base64, prefix
                     
@@ -1530,12 +1580,14 @@
                     if (feature === 'picture') {
                         endpoint = `${apiBaseUrl}/api/transform-image`;
                         requestBody = {
+                            action: 'transform_image',
                             prompt: prompt,
                             image_base64: imageBase64
                         };
                     } else if (feature === 'video') {
                         endpoint = `${apiBaseUrl}/api/generate-video`;
                         requestBody = {
+                            action: 'generate_video',
                             prompt: prompt,
                             image_base64: imageBase64
                         };
@@ -1547,11 +1599,19 @@
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${this.currentUser.token}`,
+                            'X-Auth-Token': this.currentUser.token
                         },
                         body: JSON.stringify(requestBody)
                     });
                     
                     if (!response.ok) {
+                        // Handle authentication errors
+                        if (response.status === 401) {
+                            console.warn('🔒 Authentication failed - token may be expired');
+                            this.handleLogout();
+                            throw new Error('Session expired - please login again');
+                        }
                         throw new Error(`API call failed: ${response.status} ${response.statusText}`);
                     }
                     
@@ -1673,7 +1733,7 @@
                 }
             }
 
-            handleRating(rating) {
+            async handleRating(rating) {
                 const result = document.getElementById('ratingResult');
                 if (result) {
                     result.classList.remove('hidden');
@@ -1684,7 +1744,42 @@
                 }
                 
                 console.log(`👍 User rating: ${rating}`);
-                // TODO: Send rating to analytics backend
+                
+                // Send rating to backend API
+                try {
+                    const apiBaseUrl = window.SNAPMAGIC_CONFIG.API_URL;
+                    
+                    if (apiBaseUrl !== 'demo-mode' && this.currentUser && this.currentUser.token) {
+                        const endpoint = `${apiBaseUrl}/api/detect-gesture`;
+                        
+                        const response = await fetch(endpoint, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${this.currentUser.token}`,
+                                'X-Auth-Token': this.currentUser.token
+                            },
+                            body: JSON.stringify({
+                                action: 'detect_gesture',
+                                rating: rating,
+                                timestamp: new Date().toISOString(),
+                                user: this.currentUser.username
+                            })
+                        });
+                        
+                        if (response.ok) {
+                            const result = await response.json();
+                            console.log('✅ Rating sent to backend:', result);
+                        } else if (response.status === 401) {
+                            console.warn('🔒 Authentication failed - token may be expired');
+                            this.handleLogout();
+                        } else {
+                            console.warn('⚠️ Failed to send rating to backend:', response.statusText);
+                        }
+                    }
+                } catch (error) {
+                    console.error('❌ Error sending rating:', error);
+                }
             }
 
             showLoginScreen() {
