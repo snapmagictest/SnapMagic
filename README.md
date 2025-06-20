@@ -19,15 +19,62 @@ npm run setup
 npm run deploy
 ```
 
-### Step 3: Provide Information
-During deployment, you'll be asked for:
-- **GitHub Repository URL**: `https://github.com/YOUR-USERNAME/SnapMagic`
-- **GitHub Token**: [Create here](https://github.com/settings/tokens) (needs `repo` permissions)
-- **Branch**: `main` (or your preferred branch)
-- **App Name**: Choose a unique name
-- **Password Protection**: Optional for events
+### Step 3: Provide Information During Deployment
+The deployment will prompt you for the following information:
+
+**📁 GitHub Repository URL:**
+```
+https://github.com/YOUR-USERNAME/SnapMagic
+```
+
+**🔑 GitHub Personal Access Token:**
+- Create at: https://github.com/settings/tokens
+- Required permissions: `repo` (Full control of private repositories)
+- Enter your token (will be hidden with asterisks)
+
+**🌿 GitHub Branch:**
+```
+main
+```
+(or your preferred branch name)
+
+**📱 Amplify App Name:**
+```
+my-snapmagic-app
+```
+(choose a unique name for your deployment)
+
+**🔒 Password Protection (Optional):**
+- Enable password protection? `y` or `N`
+- If yes, provide:
+  - **👤 Username:** `summit2024` (for event attendees)
+  - **🔐 Password:** `AWSRocks123!` (for event attendees)
 
 **That's it! Your SnapMagic will be live in 5-10 minutes!** 🎉
+
+### Complete Deployment Flow:
+```bash
+# 1. Navigate to infrastructure folder
+cd infrastructure
+
+# 2. Install dependencies and build
+npm run setup
+
+# 3. Start deployment
+npm run deploy
+
+# 4. Follow the interactive prompts:
+📁 GitHub Repository URL: https://github.com/YOUR-USERNAME/SnapMagic
+🔑 GitHub Token: [paste your token - will be hidden]
+🌿 Branch: main
+📱 App Name: my-snapmagic-app
+🔒 Enable password protection? y
+👤 Username: summit2024
+🔐 Password: [enter password - will be hidden]
+
+# 5. Wait for deployment to complete
+✅ Your SnapMagic will be live at the provided URL!
+```
 
 ## ✨ Features
 
