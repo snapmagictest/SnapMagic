@@ -19,6 +19,7 @@ class SnapMagicAuthSimple:
     def __init__(self):
         # Event credentials (same for everyone)
         self.valid_credentials = {
+            'd': 'd',  # Simple credentials as requested
             'demo': 'demo',
             'summit2024': 'AWSRocks123!',
             'event': 'snapmagic2024'
