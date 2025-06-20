@@ -1,8 +1,11 @@
 {
   "name": "snapmagic-infrastructure",
   "version": "1.0.0",
-  "description": "SnapMagic AWS CDK Infrastructure",
+  "description": "SnapMagic AWS CDK Infrastructure - Current Best Practices",
   "main": "lib/index.js",
+  "engines": {
+    "node": ">=22.0.0"
+  },
   "scripts": {
     "build": "tsc",
     "watch": "tsc -w",
@@ -11,17 +14,27 @@
     "deploy": "cdk deploy",
     "destroy": "cdk destroy",
     "diff": "cdk diff",
-    "synth": "cdk synth"
+    "synth": "cdk synth",
+    "bootstrap": "cdk bootstrap"
   },
   "devDependencies": {
-    "@types/jest": "^29.5.5",
-    "@types/node": "20.6.0",
+    "@types/jest": "^29.5.12",
+    "@types/node": "^22.0.0",
     "jest": "^29.7.0",
-    "ts-jest": "^29.1.1",
-    "typescript": "~5.2.2"
+    "ts-jest": "^29.2.5",
+    "typescript": "^5.6.0"
   },
   "dependencies": {
-    "aws-cdk-lib": "2.100.0",
-    "constructs": "^10.0.0"
-  }
+    "aws-cdk-lib": "^2.170.0",
+    "constructs": "^10.4.0"
+  },
+  "keywords": [
+    "aws",
+    "cdk",
+    "infrastructure",
+    "snapmagic",
+    "amplify"
+  ],
+  "author": "SnapMagic Team",
+  "license": "MIT"
 }
