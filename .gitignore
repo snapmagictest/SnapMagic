@@ -1,8 +1,15 @@
-*.js
-!jest.config.js
-*.d.ts
-node_modules
+# Node modules
+node_modules/
 
-# CDK asset staging directory
-.cdk.staging
-cdk.out
+# CDK build files
+*.d.ts
+.cdk.staging/
+cdk.out/
+
+# Infrastructure JS files (CDK compiled output only)
+infrastructure/*.js
+infrastructure/lib/*.js
+infrastructure/bin/*.js
+
+# Old files
+.old/
