@@ -1,0 +1,489 @@
+/* SnapMagic - Responsive Design */
+
+/* Mobile First Approach */
+/* Base styles are mobile-first, then we enhance for larger screens */
+
+/* Small devices (landscape phones, 576px and up) */
+@media (min-width: 576px) {
+    .container {
+        max-width: 540px;
+    }
+    
+    .modal-content {
+        max-width: 540px;
+    }
+}
+
+/* Medium devices (tablets, 768px and up) */
+@media (min-width: 768px) {
+    .container {
+        max-width: 720px;
+    }
+    
+    /* Header adjustments for tablets */
+    .app-header {
+        padding: var(--spacing-lg) 0;
+    }
+    
+    .app-logo {
+        font-size: var(--font-size-xxl);
+    }
+    
+    /* Navigation tabs for tablets */
+    .nav-tabs {
+        margin-bottom: var(--spacing-xxl);
+    }
+    
+    .nav-tab {
+        padding: var(--spacing-lg) var(--spacing-xl);
+        font-size: var(--font-size-lg);
+    }
+    
+    /* Camera component for tablets */
+    .camera-container {
+        max-height: 500px;
+    }
+    
+    .capture-btn {
+        width: 72px;
+        height: 72px;
+    }
+    
+    /* Feature grid for tablets */
+    .feature-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--spacing-xl);
+    }
+    
+    /* Form improvements for tablets */
+    .prompt-input {
+        min-height: 120px;
+    }
+    
+    /* Modal improvements for tablets */
+    .modal-content {
+        max-width: 600px;
+        padding: var(--spacing-xxl);
+    }
+    
+    /* Toast positioning for tablets */
+    .toast-container {
+        top: var(--spacing-xl);
+        right: var(--spacing-xl);
+    }
+    
+    .toast {
+        min-width: 350px;
+    }
+}
+
+/* Large devices (desktops, 992px and up) */
+@media (min-width: 992px) {
+    .container {
+        max-width: 960px;
+    }
+    
+    /* Desktop layout improvements */
+    .app-main {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: var(--spacing-xxl);
+        align-items: start;
+    }
+    
+    /* Camera and preview side by side */
+    .camera-section {
+        grid-column: 1;
+    }
+    
+    .content-section {
+        grid-column: 2;
+    }
+    
+    /* Feature grid for desktop */
+    .feature-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    
+    /* Enhanced camera controls for desktop */
+    .camera-controls {
+        bottom: var(--spacing-xl);
+        gap: var(--spacing-lg);
+    }
+    
+    .capture-btn {
+        width: 80px;
+        height: 80px;
+    }
+    
+    /* Desktop-specific navigation */
+    .nav-tabs {
+        justify-content: center;
+        max-width: 600px;
+        margin: 0 auto var(--spacing-xxl);
+    }
+    
+    /* Enhanced processing status for desktop */
+    .processing-status {
+        padding: var(--spacing-xxl);
+    }
+    
+    .processing-spinner {
+        width: 64px;
+        height: 64px;
+        border-width: 6px;
+    }
+    
+    /* Desktop modal improvements */
+    .modal-content {
+        max-width: 700px;
+    }
+    
+    /* Desktop-specific hover effects */
+    .feature-card:hover {
+        transform: translateY(-8px);
+    }
+    
+    .btn:hover:not(:disabled) {
+        transform: translateY(-3px);
+    }
+}
+
+/* Extra large devices (large desktops, 1200px and up) */
+@media (min-width: 1200px) {
+    .container {
+        max-width: 1140px;
+    }
+    
+    /* Large desktop enhancements */
+    .app-main {
+        gap: 4rem;
+    }
+    
+    /* Enhanced typography for large screens */
+    h1 { font-size: 3rem; }
+    h2 { font-size: 2.5rem; }
+    
+    /* Camera improvements for large screens */
+    .camera-container {
+        max-height: 600px;
+    }
+    
+    /* Feature cards for large screens */
+    .feature-card {
+        padding: 3rem;
+    }
+    
+    .feature-icon {
+        font-size: 4rem;
+    }
+    
+    /* Enhanced buttons for large screens */
+    .btn-lg {
+        padding: var(--spacing-lg) var(--spacing-xxl);
+        font-size: var(--font-size-xl);
+        min-height: 60px;
+    }
+    
+    /* Large screen modal */
+    .modal-content {
+        max-width: 800px;
+    }
+}
+
+/* Extra extra large devices (1400px and up) */
+@media (min-width: 1400px) {
+    .container {
+        max-width: 1320px;
+    }
+    
+    /* Ultra-wide screen optimizations */
+    .app-main {
+        grid-template-columns: 1fr 1.2fr;
+        gap: 5rem;
+    }
+    
+    /* Enhanced feature grid for ultra-wide */
+    .feature-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: var(--spacing-xxl);
+    }
+}
+
+/* Mobile-specific styles (up to 767px) */
+@media (max-width: 767px) {
+    /* Mobile header */
+    .header-content {
+        flex-direction: column;
+        gap: var(--spacing-md);
+        text-align: center;
+    }
+    
+    .header-actions {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    /* Mobile navigation */
+    .nav-tabs {
+        flex-direction: column;
+        gap: var(--spacing-xs);
+    }
+    
+    .nav-tab {
+        width: 100%;
+        justify-content: flex-start;
+        text-align: left;
+        padding: var(--spacing-md) var(--spacing-lg);
+    }
+    
+    /* Mobile camera */
+    .camera-container {
+        margin-bottom: var(--spacing-md);
+        border-radius: var(--radius-md);
+    }
+    
+    .camera-controls {
+        bottom: var(--spacing-md);
+        gap: var(--spacing-sm);
+    }
+    
+    /* Mobile forms */
+    .prompt-actions {
+        flex-direction: column;
+        gap: var(--spacing-md);
+    }
+    
+    .voice-btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    /* Mobile buttons */
+    .btn-full-mobile {
+        width: 100%;
+    }
+    
+    .result-actions {
+        flex-direction: column;
+    }
+    
+    .result-actions .btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    /* Mobile modal */
+    .modal {
+        padding: var(--spacing-md);
+        align-items: flex-end;
+    }
+    
+    .modal-content {
+        max-height: 80vh;
+        border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+        animation: slideUpMobile 0.3s ease-out;
+    }
+    
+    @keyframes slideUpMobile {
+        from {
+            transform: translateY(100%);
+        }
+        to {
+            transform: translateY(0);
+        }
+    }
+    
+    /* Mobile toast */
+    .toast-container {
+        top: auto;
+        bottom: var(--spacing-lg);
+        left: var(--spacing-md);
+        right: var(--spacing-md);
+    }
+    
+    .toast {
+        min-width: auto;
+        width: 100%;
+    }
+    
+    /* Mobile feature grid */
+    .feature-grid {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-md);
+    }
+    
+    .feature-card {
+        padding: var(--spacing-lg);
+    }
+    
+    /* Mobile gesture feedback */
+    .gesture-feedback {
+        bottom: var(--spacing-md);
+        left: var(--spacing-md);
+        right: var(--spacing-md);
+        transform: none;
+        border-radius: var(--radius-md);
+    }
+}
+
+/* Landscape orientation adjustments */
+@media (max-width: 767px) and (orientation: landscape) {
+    .camera-container {
+        aspect-ratio: 16/9;
+        max-height: 300px;
+    }
+    
+    .nav-tabs {
+        flex-direction: row;
+        overflow-x: auto;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+    
+    .nav-tabs::-webkit-scrollbar {
+        display: none;
+    }
+    
+    .nav-tab {
+        flex-shrink: 0;
+        min-width: 120px;
+    }
+    
+    .modal-content {
+        max-height: 70vh;
+    }
+}
+
+/* High DPI displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    .app-logo img {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .capture-btn {
+        border-width: 3px;
+    }
+    
+    .status-dot {
+        width: 10px;
+        height: 10px;
+    }
+}
+
+/* Print styles */
+@media print {
+    .app-header,
+    .nav-tabs,
+    .camera-container,
+    .camera-controls,
+    .modal,
+    .toast-container {
+        display: none !important;
+    }
+    
+    .result-container {
+        box-shadow: none;
+        border: 1px solid #ccc;
+    }
+    
+    .btn {
+        border: 1px solid #ccc;
+        background: white !important;
+        color: black !important;
+    }
+}
+
+/* Accessibility improvements for different screen sizes */
+@media (max-width: 767px) {
+    /* Larger touch targets for mobile */
+    .btn {
+        min-height: 48px;
+        padding: var(--spacing-md) var(--spacing-lg);
+    }
+    
+    .form-control {
+        min-height: 48px;
+        font-size: 16px; /* Prevents zoom on iOS */
+    }
+    
+    .nav-tab {
+        min-height: 48px;
+    }
+    
+    /* Improved spacing for mobile */
+    .form-group {
+        margin-bottom: var(--spacing-xl);
+    }
+}
+
+/* Reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+    .modal-content {
+        animation: none;
+    }
+    
+    .toast {
+        animation: none;
+    }
+    
+    .feature-card:hover,
+    .btn:hover {
+        transform: none;
+    }
+    
+    .processing-spinner {
+        animation: none;
+        border-top-color: var(--primary-color);
+        border-right-color: var(--primary-color);
+    }
+}
+
+/* Dark mode support (if system preference is dark) */
+@media (prefers-color-scheme: dark) {
+    .card {
+        background: rgba(255, 255, 255, 0.1);
+        color: var(--white);
+    }
+    
+    .form-control {
+        background: rgba(255, 255, 255, 0.1);
+        color: var(--white);
+        border-color: rgba(255, 255, 255, 0.2);
+    }
+    
+    .form-control::placeholder {
+        color: rgba(255, 255, 255, 0.6);
+    }
+    
+    .modal-content {
+        background: var(--secondary-color);
+        color: var(--white);
+    }
+    
+    .toast {
+        background: var(--secondary-color);
+        color: var(--white);
+    }
+}
+
+/* Container queries support (future-proofing) */
+@supports (container-type: inline-size) {
+    .feature-grid {
+        container-type: inline-size;
+    }
+    
+    @container (min-width: 600px) {
+        .feature-card {
+            display: flex;
+            text-align: left;
+            gap: var(--spacing-lg);
+        }
+        
+        .feature-icon {
+            flex-shrink: 0;
+            margin-bottom: 0;
+        }
+    }
+}
