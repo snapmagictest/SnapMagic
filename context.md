@@ -76,11 +76,14 @@
 - Uptime: 99.9% during event hours
 
 ### Security Requirements
-- Simple login (username/password)
+- **SECURITY IS NON-NEGOTIABLE** - All endpoints must be properly authenticated
+- **NO OPEN APIs** - Every API Gateway endpoint requires authentication
+- **DEFENSE IN DEPTH** - Multiple layers of security protection
+- **LEAST PRIVILEGE** - IAM roles with minimal required permissions only
 - Encryption at rest and in transit
-- No permanent storage of personal images
 - GDPR compliance considerations
 - Secure API endpoints with authentication
+- **RESILIENCE** - System must be secure and fault-tolerant
 
 ### Development Requirements
 - Infrastructure as Code (AWS CDK)
