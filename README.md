@@ -52,23 +52,19 @@ my-snapmagic-app
 
 **That's it! Your complete SnapMagic system will be live in 10-15 minutes!** 🎉
 
-### Step 4: Trigger First Build & Configure API (One-Time Only)
-After deployment completes, CDK will output commands like this:
+### Step 4: Trigger First Build (One-Time Only)
+After deployment completes, CDK will output a command like this:
 
-**1. Trigger First Build:**
+**Trigger First Build:**
 ```bash
 aws amplify start-job --app-id YOUR-APP-ID --branch-name main --job-type RELEASE --region us-east-1
 ```
 
-**2. Configure Frontend API:**
-```bash
-echo "window.SNAPMAGIC_API_URL = 'https://your-api-id.execute-api.us-east-1.amazonaws.com/dev/';" > frontend/public/api-config.js
-```
-
-**Copy and run both commands.** After this, your SnapMagic will have:
+**Copy and run this command.** After this, your SnapMagic will have:
 - ✅ **Working frontend** with camera functionality
 - ✅ **AI backend** with Bedrock Nova Canvas/Reel
 - ✅ **Complete integration** from camera to AI transformation
+- ✅ **Automatic API configuration** - no manual steps needed!
 
 ## ✨ Features
 

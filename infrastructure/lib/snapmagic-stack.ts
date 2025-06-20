@@ -32,6 +32,9 @@ frontend:
       commands:
         - cd frontend
         - npm ci --only=production
+        - echo "Configuring API URL..."
+        - echo "window.SNAPMAGIC_API_URL = '$SNAPMAGIC_API_URL';" > public/api-config.js
+        - cat public/api-config.js
     build:
       commands:
         - echo "Frontend is already built - copying static files"
@@ -74,31 +77,8 @@ frontend:
       ]
     });
 
-    // Create main branch connected to GitHub
-    const mainBranch = new amplify.CfnBranch(this, 'MainBranch', {
-      appId: snapMagicApp.attrAppId,
-      branchName: inputs.githubBranch,
-      description: `${inputs.githubBranch} branch for SnapMagic deployment`,
-      enableAutoBuild: true,
-      enablePerformanceMode: false,
-      enablePullRequestPreview: false,
-      stage: props.environment === 'prod' ? 'PRODUCTION' : 'DEVELOPMENT',
-      
-      // Environment variables specific to this branch
-      environmentVariables: [
-        {
-          name: 'NODE_ENV',
-          value: props.environment === 'prod' ? 'production' : 'development'
-        },
-        {
-          name: 'AMPLIFY_BUILD_TIMEOUT',
-          value: '15'
-        }
-      ]
-    });
-
     // ========================================
-    // AI BACKEND INFRASTRUCTURE
+    // AI BACKEND INFRASTRUCTURE (Created first to get API URL)
     // ========================================
 
     // IAM Role for Lambda with Bedrock and other AI service permissions
@@ -222,6 +202,33 @@ frontend:
     const healthResource = api.root.addResource('health');
     healthResource.addMethod('GET', lambdaIntegration);
 
+    // Create main branch connected to GitHub (now that we have the API URL)
+    const mainBranch = new amplify.CfnBranch(this, 'MainBranch', {
+      appId: snapMagicApp.attrAppId,
+      branchName: inputs.githubBranch,
+      description: `${inputs.githubBranch} branch for SnapMagic deployment`,
+      enableAutoBuild: true,
+      enablePerformanceMode: false,
+      enablePullRequestPreview: false,
+      stage: props.environment === 'prod' ? 'PRODUCTION' : 'DEVELOPMENT',
+      
+      // Environment variables specific to this branch
+      environmentVariables: [
+        {
+          name: 'NODE_ENV',
+          value: props.environment === 'prod' ? 'production' : 'development'
+        },
+        {
+          name: 'AMPLIFY_BUILD_TIMEOUT',
+          value: '15'
+        },
+        {
+          name: 'SNAPMAGIC_API_URL',
+          value: api.url
+        }
+      ]
+    });
+
     // Apply tags using CDK v2 best practices
     Tags.of(this).add('Project', 'SnapMagic');
     Tags.of(this).add('Environment', props.environment);
@@ -279,12 +286,6 @@ frontend:
     new CfnOutput(this, 'LambdaFunctionName', {
       value: snapMagicLambda.functionName,
       description: 'SnapMagic AI Lambda Function Name'
-    });
-
-    // Update frontend with API URL after deployment
-    new CfnOutput(this, 'UpdateFrontendCommand', {
-      value: `echo "window.SNAPMAGIC_API_URL = '${api.url}';" > frontend/public/api-config.js`,
-      description: 'Command to update frontend with API URL'
     });
 
     new CfnOutput(this, 'StackName', {
