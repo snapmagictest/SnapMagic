@@ -1,4 +1,4 @@
-import { Stack, StackProps, CfnOutput, Tags, Duration } from 'aws-cdk-lib';
+import { Stack, StackProps, CfnOutput, Tags, Duration, CfnResource } from 'aws-cdk-lib';
 import { aws_amplify as amplify, aws_lambda as lambda, aws_apigateway as apigateway, aws_iam as iam } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { DeploymentInputs } from './deployment-inputs';
@@ -234,7 +234,7 @@ frontend:
     });
 
     // CRITICAL: Ensure branch creation depends on API Gateway being fully deployed
-    mainBranch.addDependency(api.node.defaultChild as cdk.CfnResource);
+    mainBranch.addDependency(api.node.defaultChild as CfnResource);
 
     // Apply tags using CDK v2 best practices
     Tags.of(this).add('Project', 'SnapMagic');
