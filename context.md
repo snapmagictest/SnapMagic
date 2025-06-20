@@ -183,24 +183,74 @@ SnapMagic/
 - **Cost Optimization**: Proper tagging and resource management
 - **Production Tested**: End-to-end deployment and teardown verified
 
-### 🚧 **CURRENT PHASE: AI/ML Backend Services Integration (NEXT)**
+### 🚧 **CURRENT PHASE: AI/ML Backend Services Integration (IN PROGRESS)**
 
-#### Phase 3: AI/ML Backend Services Integration (UPCOMING)
-**Decision: Skip Cognito - Use Simple Shared Authentication**
-- Event-specific deployment (1-3 days max)
-- Shared credentials distributed at event
-- No user registration/management needed
-- Cost optimization and complexity reduction
-- Current session persistence already perfect
+#### Phase 3: AI/ML Backend Services Integration - Strands Agents Approach
+**Decision: Use Strands Agents as Primary Bedrock Integration Layer**
 
-**Priority Services to Implement:**
+**✅ Architecture Decision Made:**
+- **Strands Agents** as primary integration for all AI/ML services
+- **Built-in Bedrock integration** - handles authentication automatically
+- **Tool-based approach** - perfect for SnapMagic's 3 main features
+- **Model abstraction** - easy switching between Nova Canvas/Reel
+- **Error handling** - built-in retry and fallback logic
+
+**🎯 Implementation Approach:**
+```python
+# Strands Agents tools for SnapMagic features
+@tool
+def transform_image(prompt: str, image_base64: str) -> str:
+    """Transform user's selfie using Amazon Nova Canvas"""
+    agent = Agent(model="amazon.nova-canvas-v1:0")
+    return agent(f"Transform image: {prompt}")
+
+@tool  
+def generate_video(prompt: str, image_base64: str) -> str:
+    """Generate video using Amazon Nova Reel"""
+    agent = Agent(model="amazon.nova-reel-v1:0")
+    return agent(f"Generate video: {prompt}")
+
+@tool
+def detect_gesture(image_base64: str) -> str:
+    """Detect thumbs up/down using Rekognition"""
+    agent = Agent(model="amazon.rekognition")
+    return agent("Analyze gestures in image")
+
+# Main SnapMagic Agent
+snapmagic_agent = Agent(
+    model="us.anthropic.claude-3-7-sonnet-20250219-v1:0",
+    tools=[transform_image, generate_video, detect_gesture],
+    system_prompt="You are SnapMagic AI assistant..."
+)
+```
+
+**🏗️ Architecture:**
+```
+Frontend (Amplify)
+    ↓ API calls
+Strands Agents Backend (Lambda/Service)
+    ↓ Built-in Bedrock integration
+Amazon Bedrock Nova Canvas/Reel + Rekognition
+    ↓ Returns results
+Frontend displays + download
+```
+
+**📋 Priority Services to Implement:**
+- [ ] Strands Agents backend service/Lambda
 - [ ] Amazon Bedrock Nova Canvas integration (image transformation)
 - [ ] Amazon Bedrock Nova Reel integration (video generation)
 - [ ] Amazon Rekognition integration (gesture detection)
 - [ ] Amazon Transcribe integration (speech-to-text)
-- [ ] S3 buckets for temporary image/video storage
-- [ ] API Gateway + Lambda functions for service orchestration
+- [ ] Frontend API integration with Strands backend
 - [ ] Error handling and retry mechanisms
+
+**🚀 Benefits of Strands Approach:**
+- ✅ **Simplified Bedrock integration** - no manual SDK setup
+- ✅ **Built-in authentication** - Strands handles AWS credentials
+- ✅ **Model management** - easy to switch between AI models
+- ✅ **Tool orchestration** - perfect for our 3 main features
+- ✅ **Error handling** - automatic retries and fallbacks
+- ✅ **Scalable architecture** - can add more AI capabilities easily
 
 ### 📋 UPCOMING PHASES
 
@@ -396,9 +446,10 @@ SnapMagic/
 - Prerequisites validation scripts
 
 🚧 **Next Steps**: 
-1. **AI/ML Integration**: Implement Amazon Bedrock Nova Canvas for image transformation
-2. **Complete Backend**: Add Bedrock Nova Reel, Rekognition, Transcribe
-3. **Deploy Supporting Infrastructure**: API Gateway, Lambda, S3
-4. **Test End-to-End**: Complete workflow from frontend to AI services
+1. **Implement Strands Agents Backend**: Create Lambda/service with SnapMagic agent
+2. **Bedrock Nova Canvas Integration**: Image transformation functionality
+3. **Bedrock Nova Reel Integration**: Video generation from images
+4. **Frontend API Integration**: Connect existing UI to Strands backend
+5. **Test End-to-End**: Complete workflow from camera to AI transformation
 
-**Status**: COMPLETE PRODUCTION-READY DEPLOYMENT SYSTEM! Everything working 100%! Any user can now fork, clone, and deploy SnapMagic with the interactive flow. Simple CLI trigger for first build. Clean teardown with no prompts. Multi-environment support. AI/ML backend integration is the next major milestone.
+**Status**: COMPLETE PRODUCTION-READY DEPLOYMENT SYSTEM! Strands Agents architecture decided for AI/ML integration. Ready to implement Bedrock Nova Canvas through Strands tools.
