@@ -4,8 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SnapMagic - AI-powered transformation</title>
-    <link rel="stylesheet" href="../src/modern-styles.css">
     <style>
+        /* Reset and base styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #232F3E 0%, #4B9CD3 100%);
+            min-height: 100vh;
+            color: white;
+        }
+
         /* Loading screen styles */
         .loading-screen {
             position: fixed;
@@ -30,6 +43,284 @@
         .loading-title { font-size: 2.5rem; margin-bottom: 1rem; color: #FF9900; }
         .loading-subtitle { font-size: 1.2rem; margin-bottom: 2rem; opacity: 0.9; }
         .loading-text { font-size: 1rem; opacity: 0.7; }
+
+        /* Login Screen Styles */
+        .login-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #232F3E 0%, #4B9CD3 100%);
+        }
+
+        .login-container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 2rem;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .login-header .logo {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .login-header h1 {
+            font-size: 2rem;
+            color: #FF9900;
+            margin-bottom: 0.5rem;
+        }
+
+        .login-header p {
+            opacity: 0.9;
+            font-size: 0.9rem;
+        }
+
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .form-group label {
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .form-group input {
+            padding: 0.75rem;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 1rem;
+        }
+
+        .form-group input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #FF9900;
+            box-shadow: 0 0 0 2px rgba(255, 153, 0, 0.2);
+        }
+
+        .login-btn {
+            padding: 0.75rem;
+            background: #FF9900;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .login-btn:hover {
+            background: #e88900;
+        }
+
+        .error-message {
+            color: #ff6b6b;
+            font-size: 0.9rem;
+            text-align: center;
+            margin-top: 0.5rem;
+        }
+
+        /* Main App Styles */
+        .main-app {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .app-header {
+            background: rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 1rem 0;
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .logo-section .logo {
+            font-size: 2rem;
+        }
+
+        .logo-section h1 {
+            font-size: 1.5rem;
+            color: #FF9900;
+        }
+
+        .user-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logout-btn {
+            padding: 0.5rem 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .app-main {
+            flex: 1;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+            width: 100%;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .feature-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 2rem;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .feature-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: #FF9900;
+        }
+
+        .feature-card p {
+            opacity: 0.9;
+            margin-bottom: 1.5rem;
+            line-height: 1.5;
+        }
+
+        .feature-btn {
+            padding: 0.75rem 1.5rem;
+            background: #FF9900;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            width: 100%;
+        }
+
+        .feature-btn:hover {
+            background: #e88900;
+        }
+
+        .device-info {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+            
+            .user-section {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            
+            .features-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .feature-card {
+                padding: 1.5rem;
+            }
+            
+            .login-container {
+                margin: 1rem;
+                padding: 1.5rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .app-main {
+                padding: 1rem 0.5rem;
+            }
+            
+            .login-header h1 {
+                font-size: 1.5rem;
+            }
+            
+            .login-header .logo {
+                font-size: 2.5rem;
+            }
+        }
     </style>
 </head>
 <body>
@@ -39,7 +330,7 @@
             <div class="loading-logo">📸</div>
             <h1 class="loading-title">SnapMagic</h1>
             <p class="loading-subtitle">AI-powered transformation for AWS events</p>
-            <p class="loading-text">Initializing Amplify SDK v6...</p>
+            <p class="loading-text">Initializing modern interface...</p>
         </div>
     </div>
 
@@ -55,12 +346,12 @@
             <form id="loginForm" class="login-form">
                 <div class="form-group">
                     <label for="username">Username</label>
-                    <input type="text" id="username" name="username" required>
+                    <input type="text" id="username" name="username" required placeholder="Enter your username">
                 </div>
                 
                 <div class="form-group">
                     <label for="password">Password</label>
-                    <input type="password" id="password" name="password" required>
+                    <input type="password" id="password" name="password" required placeholder="Enter your password">
                 </div>
                 
                 <button type="submit" class="login-btn">Sign In</button>
@@ -90,21 +381,21 @@
                 <div class="feature-card">
                     <div class="feature-icon">🖼️</div>
                     <h3>Transform Pictures</h3>
-                    <p>AI-powered image transformation using Amazon Bedrock</p>
+                    <p>AI-powered image transformation using Amazon Bedrock Nova Canvas</p>
                     <button id="transformPictureBtn" class="feature-btn">Start Transform</button>
                 </div>
 
                 <div class="feature-card">
                     <div class="feature-icon">🎥</div>
                     <h3>Transform Video</h3>
-                    <p>Generate video reels from your photos</p>
+                    <p>Generate video reels from your photos using Nova Reel</p>
                     <button id="transformVideoBtn" class="feature-btn">Create Video</button>
                 </div>
 
                 <div class="feature-card">
                     <div class="feature-icon">👍</div>
                     <h3>Rate Experience</h3>
-                    <p>Share feedback through gesture recognition</p>
+                    <p>Share feedback through gesture recognition with Rekognition</p>
                     <button id="rateExperienceBtn" class="feature-btn">Rate Now</button>
                 </div>
             </div>
@@ -115,21 +406,192 @@
         </main>
     </div>
 
-    <!-- Modern ES Module Scripts -->
-    <script type="module" src="../src/app.js"></script>
-    
-    <!-- Hide loading screen after app initializes -->
     <script>
-        // Hide loading screen after a short delay
-        setTimeout(() => {
-            const loadingScreen = document.getElementById('loadingScreen');
-            if (loadingScreen) {
-                loadingScreen.classList.add('hidden');
-                setTimeout(() => {
-                    loadingScreen.style.display = 'none';
-                }, 500);
+        // SnapMagic Modern App - Single File Version
+        class SnapMagicApp {
+            constructor() {
+                this.currentUser = null;
+                this.isAuthenticated = false;
+                this.init();
             }
-        }, 2000);
+
+            async init() {
+                console.log('🎉 SnapMagic Gen 2 App Initializing...');
+                
+                // Hide loading screen after short delay
+                setTimeout(() => {
+                    this.hideLoadingScreen();
+                    this.showLoginScreen();
+                }, 2000);
+                
+                // Setup event listeners
+                this.setupEventListeners();
+                
+                // Display device information
+                this.displayDeviceInfo();
+                
+                console.log('✅ SnapMagic App Ready!');
+            }
+
+            hideLoadingScreen() {
+                const loadingScreen = document.getElementById('loadingScreen');
+                if (loadingScreen) {
+                    loadingScreen.classList.add('hidden');
+                    setTimeout(() => {
+                        loadingScreen.style.display = 'none';
+                    }, 500);
+                }
+            }
+
+            setupEventListeners() {
+                // Login form handling
+                const loginForm = document.getElementById('loginForm');
+                if (loginForm) {
+                    loginForm.addEventListener('submit', (e) => this.handleLogin(e));
+                }
+
+                // Logout button
+                const logoutBtn = document.getElementById('logoutBtn');
+                if (logoutBtn) {
+                    logoutBtn.addEventListener('click', () => this.handleLogout());
+                }
+
+                // Feature buttons
+                const transformPictureBtn = document.getElementById('transformPictureBtn');
+                const transformVideoBtn = document.getElementById('transformVideoBtn');
+                const rateExperienceBtn = document.getElementById('rateExperienceBtn');
+
+                if (transformPictureBtn) {
+                    transformPictureBtn.addEventListener('click', () => this.handleTransformPicture());
+                }
+                if (transformVideoBtn) {
+                    transformVideoBtn.addEventListener('click', () => this.handleTransformVideo());
+                }
+                if (rateExperienceBtn) {
+                    rateExperienceBtn.addEventListener('click', () => this.handleRateExperience());
+                }
+                
+                // Window resize handler
+                window.addEventListener('resize', () => this.displayDeviceInfo());
+            }
+
+            async handleLogin(event) {
+                event.preventDefault();
+                
+                const username = document.getElementById('username').value;
+                const password = document.getElementById('password').value;
+                const loginError = document.getElementById('loginError');
+                
+                try {
+                    loginError.textContent = '';
+                    console.log('🔐 Attempting login...');
+                    
+                    // Simulate login for now (replace with real Amplify Auth later)
+                    if (username && password) {
+                        this.currentUser = { username: username };
+                        this.isAuthenticated = true;
+                        
+                        console.log('✅ Login successful');
+                        this.showMainApp();
+                    } else {
+                        throw new Error('Please enter both username and password');
+                    }
+                    
+                } catch (error) {
+                    console.error('❌ Login failed:', error);
+                    loginError.textContent = error.message || 'Login failed. Please check your credentials.';
+                }
+            }
+
+            async handleLogout() {
+                try {
+                    this.currentUser = null;
+                    this.isAuthenticated = false;
+                    console.log('✅ Logout successful');
+                    this.showLoginScreen();
+                } catch (error) {
+                    console.error('❌ Logout failed:', error);
+                }
+            }
+
+            showLoginScreen() {
+                const loginScreen = document.getElementById('loginScreen');
+                const mainApp = document.getElementById('mainApp');
+                
+                if (loginScreen) loginScreen.style.display = 'flex';
+                if (mainApp) mainApp.style.display = 'none';
+            }
+
+            showMainApp() {
+                const loginScreen = document.getElementById('loginScreen');
+                const mainApp = document.getElementById('mainApp');
+                
+                if (loginScreen) loginScreen.style.display = 'none';
+                if (mainApp) mainApp.style.display = 'block';
+                
+                // Update user info
+                const userInfo = document.getElementById('userInfo');
+                if (userInfo && this.currentUser) {
+                    userInfo.textContent = `Welcome, ${this.currentUser.username}!`;
+                }
+            }
+
+            // Feature handlers (placeholders for now)
+            handleTransformPicture() {
+                console.log('🖼️ Transform Picture feature clicked');
+                alert('🖼️ Transform Picture feature coming soon!\n\nThis will use Amazon Bedrock Nova Canvas to transform your photos with AI.');
+            }
+
+            handleTransformVideo() {
+                console.log('🎥 Transform Video feature clicked');
+                alert('🎥 Transform Video feature coming soon!\n\nThis will use Amazon Bedrock Nova Reel to create video reels from your photos.');
+            }
+
+            handleRateExperience() {
+                console.log('👍 Rate Experience feature clicked');
+                alert('👍 Rate Experience feature coming soon!\n\nThis will use Amazon Rekognition to detect thumbs up/down gestures.');
+            }
+
+            displayDeviceInfo() {
+                const deviceInfo = document.getElementById('deviceInfo');
+                if (!deviceInfo) return;
+                
+                const screenWidth = window.innerWidth;
+                const screenHeight = window.innerHeight;
+                const deviceType = this.getDeviceType(screenWidth);
+                
+                deviceInfo.innerHTML = `
+                    <strong>Device:</strong> ${deviceType}<br>
+                    <strong>Screen:</strong> ${screenWidth} × ${screenHeight}<br>
+                    <strong>Status:</strong> ${this.isAuthenticated ? '🟢 Authenticated' : '🔴 Not Authenticated'}<br>
+                    <strong>Version:</strong> SnapMagic Gen 2 (Amplify Ready)
+                `;
+            }
+
+            getDeviceType(width) {
+                if (width < 768) return '📱 Mobile';
+                if (width < 1024) return '📱 Tablet';
+                if (width < 1920) return '💻 Desktop';
+                return '📺 Large Screen';
+            }
+        }
+
+        // Initialize the app when DOM is ready
+        document.addEventListener('DOMContentLoaded', () => {
+            window.snapMagicApp = new SnapMagicApp();
+            
+            console.log(`
+            ╔══════════════════════════════════════╗
+            ║            SNAPMAGIC                 ║
+            ║         Gen 2 Ready! ✨              ║
+            ║                                      ║
+            ║  📱 Mobile Ready                     ║
+            ║  💻 Desktop Optimized                ║
+            ║  🔐 Modern Auth Ready                ║
+            ║  ⚡ Amplify Compatible               ║
+            ╚══════════════════════════════════════╝
+            `);
+        });
     </script>
 </body>
 </html>
