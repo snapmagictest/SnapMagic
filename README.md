@@ -12,7 +12,7 @@ git clone https://github.com/YOUR-USERNAME/SnapMagic.git
 cd SnapMagic
 ```
 
-### Step 2: Deploy Infrastructure
+### Step 2: Deploy Complete System
 ```bash
 cd infrastructure
 npm run setup
@@ -50,79 +50,87 @@ my-snapmagic-app
   - **👤 Username:** `summit2024` (for event attendees)
   - **🔐 Password:** `AWSRocks123!` (for event attendees)
 
-**That's it! Your SnapMagic will be live in 5-10 minutes!** 🎉
+**That's it! Your complete SnapMagic system will be live in 10-15 minutes!** 🎉
 
-### Step 4: Trigger First Build (One-Time Only)
-After deployment completes, CDK will output a command like this:
+### Step 4: Trigger First Build & Configure API (One-Time Only)
+After deployment completes, CDK will output commands like this:
+
+**1. Trigger First Build:**
 ```bash
 aws amplify start-job --app-id YOUR-APP-ID --branch-name main --job-type RELEASE --region us-east-1
 ```
 
-**Copy and run this command to start your first build.** After this, all future pushes to GitHub will auto-build.
-
-### Complete Deployment Flow:
+**2. Configure Frontend API:**
 ```bash
-# 1. Navigate to infrastructure folder
-cd infrastructure
-
-# 2. Install dependencies and build
-npm run setup
-
-# 3. Start deployment
-npm run deploy
-
-# 4. Follow the interactive prompts:
-📁 GitHub Repository URL: https://github.com/YOUR-USERNAME/SnapMagic
-🔑 GitHub Token: [paste your token - will be hidden]
-🌿 Branch: main
-📱 App Name: my-snapmagic-app
-🔒 Enable password protection? N (recommended for simplicity)
-
-# 5. Wait for deployment to complete
-✅ Deployment complete!
-
-# 6. Trigger first build (copy command from CDK output)
-aws amplify start-job --app-id YOUR-APP-ID --branch-name main --job-type RELEASE --region us-east-1
-
-# 7. Your SnapMagic will be live in 2-3 minutes!
+echo "window.SNAPMAGIC_API_URL = 'https://your-api-id.execute-api.us-east-1.amazonaws.com/dev/';" > frontend/public/api-config.js
 ```
+
+**Copy and run both commands.** After this, your SnapMagic will have:
+- ✅ **Working frontend** with camera functionality
+- ✅ **AI backend** with Bedrock Nova Canvas/Reel
+- ✅ **Complete integration** from camera to AI transformation
 
 ## ✨ Features
 
 ### 🖼️ Transform Pictures
 - Take a selfie with your device camera
 - Add a creative prompt (text or voice)
-- AI transforms your photo into amazing scenes
+- AI transforms your photo using **Amazon Bedrock Nova Canvas**
 - Download and share your creation
 
 ### 🎬 Transform Videos
 - Capture a photo for video generation
 - Describe your desired video scene
-- AI creates a short video reel from your image
+- AI creates a short video reel using **Amazon Bedrock Nova Reel**
 - Perfect for social media sharing
 
 ### 👍 Rate Experience
-- Real-time gesture recognition
+- Real-time gesture recognition using **Amazon Rekognition**
 - Thumbs up/down feedback collection
 - Analytics for event organizers
 - Instant feedback processing
 
+### 🎤 Voice Input
+- Speech-to-text using **Amazon Transcribe**
+- Voice prompts for transformations
+- Hands-free operation
+
 ## 🛠️ Technology Stack
 
 - **Frontend**: Modern JavaScript with AWS Amplify SDK v6.8.0
+- **Backend**: Python with Strands Agents SDK
 - **Infrastructure**: AWS CDK v2 with TypeScript
-- **AI/ML**: Amazon Bedrock (Nova Canvas & Nova Reel)
-- **Computer Vision**: Amazon Rekognition
-- **Speech**: Amazon Transcribe
+- **AI/ML**: 
+  - Amazon Bedrock Nova Canvas (image transformation)
+  - Amazon Bedrock Nova Reel (video generation)
+  - Amazon Rekognition (gesture detection)
+  - Amazon Transcribe (speech-to-text)
 - **Hosting**: AWS Amplify with CloudFront
-- **Deployment**: Interactive CDK deployment
+- **API**: AWS API Gateway + Lambda
+- **Deployment**: Single CDK stack deployment
+
+## 🏗️ Architecture
+
+```
+Frontend (Amplify)
+    ↓ HTTP API calls
+API Gateway
+    ↓ triggers
+Lambda (Strands Agents)
+    ↓ orchestrates
+Amazon Bedrock Nova Canvas/Reel + Rekognition + Transcribe
+    ↓ AI Results (base64 images/videos/text)
+Frontend displays + download options
+```
 
 ## 📋 Prerequisites
 
 - **Node.js 22.x+** (required for AWS CDK v2)
+- **Python 3.11+** (for Strands Agents backend)
 - **AWS CLI** configured with your credentials
 - **AWS CDK** installed: `npm install -g aws-cdk`
 - **GitHub account** with a personal access token
+- **Amazon Bedrock access** to Nova Canvas and Nova Reel models
 
 ### AWS CLI Setup (Required)
 Before deploying SnapMagic, you must configure AWS CLI with your credentials:
@@ -143,18 +151,13 @@ aws configure
 # Default output format: json
 ```
 
-**How to get AWS credentials:**
-1. Go to [AWS Console](https://console.aws.amazon.com/)
-2. Click your username (top right) → **Security credentials**
-3. Scroll to **Access keys** → **Create access key**
-4. Copy the **Access Key ID** and **Secret Access Key**
-5. Use these in `aws configure`
+### Amazon Bedrock Model Access
+Ensure you have access to the following models in Amazon Bedrock:
+- **Amazon Nova Canvas** (amazon.nova-canvas-v1:0)
+- **Amazon Nova Reel** (amazon.nova-reel-v1:0)
+- **Anthropic Claude 3.7 Sonnet** (us.anthropic.claude-3-7-sonnet-20250219-v1:0)
 
-**Verify AWS CLI is working:**
-```bash
-aws sts get-caller-identity
-# Should return your AWS account information
-```
+Request access at: https://console.aws.amazon.com/bedrock/home#/modelaccess
 
 ### Quick Prerequisites Check
 Run this script to verify everything is set up correctly:
@@ -175,7 +178,8 @@ cd SnapMagic
 
 SnapMagic is designed for temporary deployment at AWS events:
 
-- **Quick Setup**: Deploy in minutes with interactive prompts
+- **Complete AI Integration**: Real Bedrock Nova Canvas/Reel transformations
+- **Quick Setup**: Deploy entire system in 10-15 minutes
 - **Event-Ready**: Password protection and custom branding
 - **Cost-Optimized**: Easy teardown after events
 - **Scalable**: Handles 1000+ concurrent users
@@ -184,7 +188,7 @@ SnapMagic is designed for temporary deployment at AWS events:
 ## 🚀 Deployment Commands
 
 ```bash
-# Deploy to development (default)
+# Deploy complete system (frontend + backend)
 npm run deploy
 
 # Deploy to specific environments
@@ -201,6 +205,29 @@ npm run destroy:staging
 npm run destroy:prod
 ```
 
+## 🧪 Testing
+
+### Test Backend Locally
+```bash
+# Test Strands Agents backend
+cd backend
+python test_agent.py
+
+# Run local development server
+python run_local.py
+```
+
+### Test API Endpoints
+```bash
+# Health check
+curl -X GET https://your-api-url/health
+
+# Transform image (example)
+curl -X POST https://your-api-url/api/transform-image \
+  -H "Content-Type: application/json" \
+  -d '{"prompt": "Transform me into a superhero", "image_base64": "..."}'
+```
+
 ## 🗑️ Clean Teardown
 
 **Remove all AWS resources instantly:**
@@ -211,6 +238,8 @@ npm run destroy
 
 **What gets removed:**
 - ✅ AWS Amplify app
+- ✅ API Gateway and Lambda function
+- ✅ IAM roles and policies
 - ✅ CloudFormation stack
 - ✅ All associated AWS resources
 
@@ -225,6 +254,22 @@ npm run destroy
 - **Tokens are never logged or persisted** anywhere
 - **All sensitive data is handled securely** during the deployment process
 - **No credentials are stored in the repository** or AWS resources
+- **IAM roles follow least privilege principle**
+- **API endpoints are secured with proper CORS configuration**
+
+## 🎨 AI Capabilities
+
+### Image Transformation Examples
+- "Transform my picture into me sitting on a beach sipping a cold beverage"
+- "Make me look like a superhero flying over the city"
+- "Put me in a professional AWS re:Invent presentation setting"
+- "Transform me into a character from a sci-fi movie"
+
+### Video Generation Examples
+- "Create a video of me flying through the clouds"
+- "Generate a video where I'm presenting at AWS Summit"
+- "Make a video of me surfing on digital waves"
+- "Create a time-lapse video of me coding"
 
 ## 🤝 Contributing
 
@@ -247,9 +292,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 🎉 Acknowledgments
 
 - Built for AWS Summit events and community
-- Powered by AWS AI/ML services
+- Powered by AWS AI/ML services (Bedrock Nova Canvas/Reel, Rekognition, Transcribe)
+- Integrated with Strands Agents for advanced AI orchestration
 - Designed for developers, by developers
 
 ---
 
-**Ready to create some magic? Fork, clone, and deploy SnapMagic to your AWS account!** ✨
+**Ready to create some AI-powered magic? Fork, clone, and deploy SnapMagic to your AWS account!** ✨
