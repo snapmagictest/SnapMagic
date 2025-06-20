@@ -164,115 +164,6 @@ frontend:
       description: 'SnapMagic AI backend using Strands Agents'
     });
 
-    // Custom Resource Lambda to update Amplify branch with API Gateway URL
-    const updateAmplifyBranchFunction = new lambda.Function(this, 'UpdateAmplifyBranchFunction', {
-      runtime: lambda.Runtime.PYTHON_3_11,
-      handler: 'index.handler',
-      timeout: Duration.minutes(5),
-      code: lambda.Code.fromInline(`
-import boto3
-import json
-import logging
-import urllib3
-
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
-
-def handler(event, context):
-    try:
-        logger.info(f"Received event: {json.dumps(event)}")
-        
-        request_type = event['RequestType']
-        
-        if request_type == 'Delete':
-            send_response(event, context, 'SUCCESS', {'Message': 'Delete completed'})
-            return
-        
-        # Extract properties from CloudFormation custom resource
-        props = event['ResourceProperties']
-        app_id = props['AppId']
-        branch_name = props['BranchName']
-        api_url = props['ApiUrl']
-        region = props['Region']
-        
-        amplify = boto3.client('amplify', region_name=region)
-        
-        # Update branch environment variables with the actual API Gateway URL
-        logger.info(f"Updating branch {branch_name} with API URL: {api_url}")
-        
-        response = amplify.update_branch(
-            appId=app_id,
-            branchName=branch_name,
-            environmentVariables={
-                'NODE_ENV': 'development',
-                'AMPLIFY_BUILD_TIMEOUT': '15',
-                'SNAPMAGIC_API_URL': api_url,
-                'AMPLIFY_DIFF_DEPLOY': 'false'
-            }
-        )
-        
-        logger.info(f"Branch updated successfully")
-        
-        # Trigger a new build to pick up the environment variable
-        build_response = amplify.start_job(
-            appId=app_id,
-            branchName=branch_name,
-            jobType='RELEASE'
-        )
-        
-        job_id = build_response['jobSummary']['jobId']
-        logger.info(f"Started build job: {job_id}")
-        
-        # Send success response to CloudFormation
-        send_response(event, context, 'SUCCESS', {
-            'Message': f'Successfully updated branch and started build',
-            'ApiUrl': api_url,
-            'JobId': job_id
-        })
-        
-    except Exception as e:
-        logger.error(f"Error: {str(e)}")
-        send_response(event, context, 'FAILED', {'Error': str(e)})
-
-def send_response(event, context, status, data):
-    response_body = {
-        'Status': status,
-        'Reason': f'See CloudWatch Log Stream: {context.log_stream_name}',
-        'PhysicalResourceId': context.log_stream_name,
-        'StackId': event['StackId'],
-        'RequestId': event['RequestId'],
-        'LogicalResourceId': event['LogicalResourceId'],
-        'Data': data
-    }
-    
-    http = urllib3.PoolManager()
-    response = http.request('PUT', event['ResponseURL'], 
-                          body=json.dumps(response_body),
-                          headers={'Content-Type': 'application/json'})
-    logger.info(f"Response status: {response.status}")
-`),
-      role: new iam.Role(this, 'UpdateAmplifyBranchFunctionRole', {
-        assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
-        managedPolicies: [
-          iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaBasicExecutionRole')
-        ],
-        inlinePolicies: {
-          AmplifyAccess: new iam.PolicyDocument({
-            statements: [
-              new iam.PolicyStatement({
-                effect: iam.Effect.ALLOW,
-                actions: [
-                  'amplify:UpdateBranch',
-                  'amplify:StartJob'
-                ],
-                resources: [`arn:aws:amplify:${this.region}:${this.account}:apps/*`]
-              })
-            ]
-          })
-        }
-      })
-    });
-
     // API Gateway for REST API
     const api = new apigateway.RestApi(this, 'SnapMagicAPI', {
       restApiName: `SnapMagic AI API (${props.environment})`,
@@ -360,22 +251,6 @@ def send_response(event, context, status, data):
     // CRITICAL: Ensure branch creation depends on API Gateway being fully deployed
     mainBranch.addDependency(api.node.defaultChild as CfnResource);
 
-    // Custom Resource to update Amplify branch with correct API Gateway URL
-    const updateAmplifyBranch = new CustomResource(this, 'UpdateAmplifyBranch', {
-      serviceToken: updateAmplifyBranchFunction.functionArn,
-      properties: {
-        AppId: snapMagicApp.attrAppId,
-        BranchName: inputs.githubBranch,
-        ApiUrl: api.url,
-        Region: this.region
-      }
-    });
-
-    // Ensure custom resource runs after both Amplify branch and API are created
-    updateAmplifyBranch.node.addDependency(snapMagicApp);
-    updateAmplifyBranch.node.addDependency(api);
-    updateAmplifyBranch.node.addDependency(mainBranch);
-
     // Apply tags using CDK v2 best practices
     Tags.of(this).add('Project', 'SnapMagic');
     Tags.of(this).add('Environment', props.environment);
@@ -414,13 +289,18 @@ def send_response(event, context, status, data):
     });
 
     new CfnOutput(this, 'DeploymentStatus', {
-      value: 'CDK Custom Resource will automatically update Amplify branch and trigger build',
+      value: 'CDK deployment complete - run the commands below to configure API Gateway URL',
       description: 'Deployment Status'
     });
 
-    new CfnOutput(this, 'TriggerFirstBuild', {
-      value: 'Automatic - CDK Custom Resource handles this',
-      description: '✅ AUTOMATED: Custom Resource updates branch and triggers build automatically'
+    new CfnOutput(this, 'ConfigureAmplifyStep1', {
+      value: `aws amplify update-branch --app-id ${snapMagicApp.attrAppId} --branch-name ${inputs.githubBranch} --environment-variables SNAPMAGIC_API_URL=${api.url},NODE_ENV=development,AMPLIFY_BUILD_TIMEOUT=15 --region ${this.region}`,
+      description: '🔧 STEP 1: Update Amplify branch with API Gateway URL'
+    });
+
+    new CfnOutput(this, 'ConfigureAmplifyStep2', {
+      value: `aws amplify start-job --app-id ${snapMagicApp.attrAppId} --branch-name ${inputs.githubBranch} --job-type RELEASE --region ${this.region}`,
+      description: '🚀 STEP 2: Trigger build to apply the API Gateway URL'
     });
 
     // AI Backend Outputs
