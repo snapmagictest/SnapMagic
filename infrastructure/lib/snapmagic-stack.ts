@@ -280,6 +280,12 @@ frontend:
       description: 'Command to trigger first build'
     });
 
+    // Manual API Configuration Command (USE THIS AFTER DEPLOYMENT)
+    new CfnOutput(this, 'ConfigureAPICommand', {
+      value: `aws amplify update-branch --app-id ${snapMagicApp.attrAppId} --branch-name ${inputs.githubBranch} --environment-variables SNAPMAGIC_API_URL=${api.url} --region ${this.region} && aws amplify start-job --app-id ${snapMagicApp.attrAppId} --branch-name ${inputs.githubBranch} --job-type RELEASE --region ${this.region}`,
+      description: '🚀 RUN THIS COMMAND: Configure correct API Gateway URL and trigger build'
+    });
+
     // AI Backend Outputs
     new CfnOutput(this, 'APIGatewayURL', {
       value: api.url,
