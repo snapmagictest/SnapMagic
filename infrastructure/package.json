@@ -11,11 +11,19 @@
     "watch": "tsc -w",
     "test": "jest",
     "cdk": "cdk",
-    "deploy": "cdk deploy",
+    "deploy": "cdk deploy --require-approval never",
+    "deploy:dev": "cdk deploy -c environment=dev --require-approval never",
+    "deploy:staging": "cdk deploy -c environment=staging --require-approval never",
+    "deploy:prod": "cdk deploy -c environment=prod --require-approval never",
     "destroy": "cdk destroy",
+    "destroy:dev": "cdk destroy -c environment=dev",
+    "destroy:staging": "cdk destroy -c environment=staging",
+    "destroy:prod": "cdk destroy -c environment=prod",
     "diff": "cdk diff",
     "synth": "cdk synth",
-    "bootstrap": "cdk bootstrap"
+    "bootstrap": "cdk bootstrap",
+    "setup": "npm install && npm run build",
+    "quick-deploy": "npm run setup && npm run deploy"
   },
   "devDependencies": {
     "@types/jest": "^29.5.12",
