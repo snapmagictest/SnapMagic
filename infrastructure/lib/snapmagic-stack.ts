@@ -1,4 +1,4 @@
-import { Stack, StackProps, CfnOutput, Tags, Duration, CfnResource } from 'aws-cdk-lib';
+import { Stack, StackProps, CfnOutput, Tags, Duration, CfnResource, CustomResource } from 'aws-cdk-lib';
 import { aws_amplify as amplify, aws_lambda as lambda, aws_apigateway as apigateway, aws_iam as iam } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { DeploymentInputs } from './deployment-inputs';
@@ -355,7 +355,7 @@ def send_response(event, context, status, data):
     mainBranch.addDependency(api.node.defaultChild as CfnResource);
 
     // Custom Resource to update Amplify branch with correct API Gateway URL
-    const updateAmplifyBranch = new cdk.CustomResource(this, 'UpdateAmplifyBranch', {
+    const updateAmplifyBranch = new CustomResource(this, 'UpdateAmplifyBranch', {
       serviceToken: updateAmplifyBranchFunction.functionArn,
       properties: {
         AppId: snapMagicApp.attrAppId,
