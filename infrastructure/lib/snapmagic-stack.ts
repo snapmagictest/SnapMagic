@@ -34,8 +34,9 @@ frontend:
         - npm ci --only=production
         - echo "Configuring API URL using environment variable substitution..."
         - echo "SNAPMAGIC_API_URL is set to: $SNAPMAGIC_API_URL"
-        - sed -i "s/\\\${SNAPMAGIC_API_URL}/$SNAPMAGIC_API_URL/g" public/index.html
+        - sed -i "s|\\\${SNAPMAGIC_API_URL}|$SNAPMAGIC_API_URL|g" public/index.html
         - echo "API URL configured in index.html"
+        - grep -A 2 -B 2 "API_URL:" public/index.html || echo "Could not find API_URL in index.html"
     build:
       commands:
         - echo "Frontend is already built - copying static files"
