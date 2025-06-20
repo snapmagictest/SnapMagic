@@ -6,13 +6,13 @@ frontend:
         - echo "No build process needed for static HTML/CSS/JS"
     build:
       commands:
-        - echo "Building SnapMagic Hello World frontend"
-        - ls -la frontend/
+        - echo "Building SnapMagic frontend"
+        - ls -la public/
     postBuild:
       commands:
         - echo "Build completed successfully"
   artifacts:
-    baseDirectory: frontend
+    baseDirectory: public
     files:
       - '**/*'
   cache:
