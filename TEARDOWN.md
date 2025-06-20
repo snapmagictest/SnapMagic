@@ -18,7 +18,7 @@ cd scripts
 
 ### Option 3: AWS CLI
 ```bash
-aws amplify delete-app --app-id d2j6ejtnu13yb2 --region us-east-1
+aws amplify delete-app --app-id YOUR-APP-ID --region us-east-1
 ```
 
 ## 🎯 What Gets Deleted
@@ -51,7 +51,7 @@ aws amplify delete-app --app-id d2j6ejtnu13yb2 --region us-east-1
 After teardown, verify deletion:
 
 1. **Amplify Console**: https://console.aws.amazon.com/amplify/home?region=us-east-1
-2. **App URL**: https://main.d2j6ejtnu13yb2.amplifyapp.com/ (should return 404)
+2. **App URL**: https://main.YOUR-APP-ID.amplifyapp.com/ (should return 404)
 3. **AWS CLI**: `aws amplify list-apps --region us-east-1`
 
 ## 🚨 Emergency Teardown
@@ -60,7 +60,7 @@ If you need to tear down immediately during an event:
 
 ```bash
 # Single command - no confirmation
-aws amplify delete-app --app-id d2j6ejtnu13yb2 --region us-east-1 --force
+aws amplify delete-app --app-id YOUR-APP-ID --region us-east-1 --force
 ```
 
 ## 📞 Support

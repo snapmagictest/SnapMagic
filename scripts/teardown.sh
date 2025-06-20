@@ -10,10 +10,24 @@ echo "=============================="
 
 # Configuration
 REGION="us-east-1"
-APP_ID="d2j6ejtnu13yb2"
+
+# Get App ID from CDK outputs or user input
+if [ -f "../infrastructure/cdk.out/outputs.json" ]; then
+    APP_ID=$(cat ../infrastructure/cdk.out/outputs.json | grep -o '"AmplifyAppId":"[^"]*"' | cut -d'"' -f4)
+    echo "📱 Found App ID from CDK outputs: $APP_ID"
+elif [ -n "$1" ]; then
+    APP_ID="$1"
+    echo "📱 Using provided App ID: $APP_ID"
+else
+    echo "📱 App ID not found. Please provide it as an argument:"
+    echo "   ./teardown.sh YOUR-APP-ID"
+    echo ""
+    echo "Or find it in your Amplify Console:"
+    echo "   https://console.aws.amazon.com/amplify/home?region=$REGION"
+    exit 1
+fi
 
 echo "📍 Region: $REGION"
-echo "📱 App ID: $APP_ID"
 echo ""
 
 # Confirm deletion

@@ -211,15 +211,15 @@ SnapMagic/
 - Update this context.md file after major milestones
 
 ## Key URLs & Resources
-- **Amplify Console**: https://console.aws.amazon.com/amplify/home?region=us-east-1#/d2j6ejtnu13yb2
-- **Live App URL**: https://main.d2j6ejtnu13yb2.amplifyapp.com/
+- **Amplify Console**: https://console.aws.amazon.com/amplify/home?region=us-east-1#/YOUR-APP-ID
+- **Live App URL**: https://main.YOUR-APP-ID.amplifyapp.com/
 - **GitHub Repo**: https://github.com/snapmagictest/SnapMagic
 - **AWS Region**: us-east-1 (primary)
 
 ## Deployment & Operations
 - **Deploy CDK**: `cd infrastructure && cdk deploy`
 - **Teardown**: `cd scripts && ./teardown.sh` or `cdk destroy`
-- **Emergency Teardown**: `aws amplify delete-app --app-id d2j6ejtnu13yb2 --region us-east-1`
+- **Emergency Teardown**: `aws amplify delete-app --app-id YOUR-APP-ID --region us-east-1`
 - **Documentation**: See TEARDOWN.md for complete teardown guide
 
 ## Current Frontend Implementation Details
@@ -292,7 +292,7 @@ SnapMagic/
 - Complete responsive design for mobile/tablet/desktop
 - All 3 features working with camera integration
 - Voice input, gesture recognition setup, processing states
-- Production deployment: https://main.d2j6ejtnu13yb2.amplifyapp.com/
+- Production deployment: https://main.YOUR-APP-ID.amplifyapp.com/
 
 ✅ **Infrastructure & Operations COMPLETE**:
 - CDK infrastructure for current Amplify setup
@@ -315,7 +315,7 @@ SnapMagic/
 - Successful CDK destroy execution
 - All Amplify apps deleted (verified empty list)
 - All CloudFormation stacks removed (DELETE_COMPLETE)
-- App URL returns 404 (https://main.d2j6ejtnu13yb2.amplifyapp.com/)
+- App URL returns 404 (https://main.YOUR-APP-ID.amplifyapp.com/)
 - Zero ongoing costs confirmed
 - Clean slate for future deployments
 
