@@ -1,7 +1,8 @@
-import { Stack, StackProps, CfnOutput, Tags } from 'aws-cdk-lib';
-import { aws_amplify as amplify } from 'aws-cdk-lib';
+import { Stack, StackProps, CfnOutput, Tags, Duration } from 'aws-cdk-lib';
+import { aws_amplify as amplify, aws_lambda as lambda, aws_apigateway as apigateway, aws_iam as iam } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { DeploymentInputs } from './deployment-inputs';
+import * as path from 'path';
 
 export interface SnapMagicStackProps extends StackProps {
   environment: string;
@@ -96,6 +97,131 @@ frontend:
       ]
     });
 
+    // ========================================
+    // AI BACKEND INFRASTRUCTURE
+    // ========================================
+
+    // IAM Role for Lambda with Bedrock and other AI service permissions
+    const lambdaRole = new iam.Role(this, 'SnapMagicLambdaRole', {
+      assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
+      description: 'IAM role for SnapMagic AI Lambda function',
+      managedPolicies: [
+        iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaBasicExecutionRole'),
+      ],
+      inlinePolicies: {
+        BedrockAccess: new iam.PolicyDocument({
+          statements: [
+            new iam.PolicyStatement({
+              effect: iam.Effect.ALLOW,
+              actions: [
+                'bedrock:InvokeModel',
+                'bedrock:InvokeModelWithResponseStream',
+                'bedrock:ListFoundationModels',
+                'bedrock:GetFoundationModel'
+              ],
+              resources: [
+                `arn:aws:bedrock:${this.region}::foundation-model/amazon.nova-canvas-v1:0`,
+                `arn:aws:bedrock:${this.region}::foundation-model/amazon.nova-reel-v1:0`,
+                `arn:aws:bedrock:${this.region}::foundation-model/us.anthropic.claude-3-7-sonnet-20250219-v1:0`
+              ]
+            })
+          ]
+        }),
+        RekognitionAccess: new iam.PolicyDocument({
+          statements: [
+            new iam.PolicyStatement({
+              effect: iam.Effect.ALLOW,
+              actions: [
+                'rekognition:DetectLabels',
+                'rekognition:DetectFaces',
+                'rekognition:DetectCustomLabels'
+              ],
+              resources: ['*']
+            })
+          ]
+        }),
+        TranscribeAccess: new iam.PolicyDocument({
+          statements: [
+            new iam.PolicyStatement({
+              effect: iam.Effect.ALLOW,
+              actions: [
+                'transcribe:StartTranscriptionJob',
+                'transcribe:GetTranscriptionJob',
+                'transcribe:ListTranscriptionJobs'
+              ],
+              resources: ['*']
+            })
+          ]
+        })
+      }
+    });
+
+    // Lambda function for SnapMagic AI backend
+    const snapMagicLambda = new lambda.Function(this, 'SnapMagicAIFunction', {
+      runtime: lambda.Runtime.PYTHON_3_11,
+      handler: 'lambda_handler.lambda_handler',
+      code: lambda.Code.fromAsset(path.join(__dirname, '../../backend'), {
+        exclude: ['*.md', '__pycache__', '*.pyc', 'test_*', 'run_local.py', 'README.md']
+      }),
+      role: lambdaRole,
+      timeout: Duration.minutes(5),
+      memorySize: 1024,
+      environment: {
+        PYTHONPATH: '/var/task/src',
+        LOG_LEVEL: 'INFO'
+      },
+      description: 'SnapMagic AI backend using Strands Agents'
+    });
+
+    // API Gateway for REST API
+    const api = new apigateway.RestApi(this, 'SnapMagicAPI', {
+      restApiName: `SnapMagic AI API (${props.environment})`,
+      description: 'REST API for SnapMagic AI backend services',
+      defaultCorsPreflightOptions: {
+        allowOrigins: apigateway.Cors.ALL_ORIGINS,
+        allowMethods: apigateway.Cors.ALL_METHODS,
+        allowHeaders: ['Content-Type', 'X-Amz-Date', 'Authorization', 'X-Api-Key', 'X-Amz-Security-Token']
+      },
+      deployOptions: {
+        stageName: props.environment,
+        throttlingRateLimit: 100,
+        throttlingBurstLimit: 200
+      }
+    });
+
+    // Lambda integration
+    const lambdaIntegration = new apigateway.LambdaIntegration(snapMagicLambda, {
+      requestTemplates: { 'application/json': '{ "statusCode": "200" }' },
+      proxy: true
+    });
+
+    // API endpoints
+    const apiResource = api.root.addResource('api');
+    
+    // Transform image endpoint
+    const transformImageResource = apiResource.addResource('transform-image');
+    transformImageResource.addMethod('POST', lambdaIntegration);
+    
+    // Generate video endpoint
+    const generateVideoResource = apiResource.addResource('generate-video');
+    generateVideoResource.addMethod('POST', lambdaIntegration);
+
+    // Detect gesture endpoint
+    const detectGestureResource = apiResource.addResource('detect-gesture');
+    detectGestureResource.addMethod('POST', lambdaIntegration);
+
+    // Transcribe audio endpoint
+    const transcribeAudioResource = apiResource.addResource('transcribe-audio');
+    transcribeAudioResource.addMethod('POST', lambdaIntegration);
+
+    // Generic SnapMagic endpoint
+    const snapMagicResource = apiResource.addResource('snapmagic');
+    snapMagicResource.addMethod('POST', lambdaIntegration);
+
+    // Health check endpoint
+    const healthResource = api.root.addResource('health');
+    healthResource.addMethod('GET', lambdaIntegration);
+
     // Apply tags using CDK v2 best practices
     Tags.of(this).add('Project', 'SnapMagic');
     Tags.of(this).add('Environment', props.environment);
@@ -141,6 +267,24 @@ frontend:
     new CfnOutput(this, 'TriggerFirstBuild', {
       value: `aws amplify start-job --app-id ${snapMagicApp.attrAppId} --branch-name ${inputs.githubBranch} --job-type RELEASE --region ${this.region}`,
       description: 'Command to trigger first build'
+    });
+
+    // AI Backend Outputs
+    new CfnOutput(this, 'APIGatewayURL', {
+      value: api.url,
+      description: 'SnapMagic AI API Gateway URL',
+      exportName: `SnapMagic-${props.environment}-API-URL`
+    });
+
+    new CfnOutput(this, 'LambdaFunctionName', {
+      value: snapMagicLambda.functionName,
+      description: 'SnapMagic AI Lambda Function Name'
+    });
+
+    // Update frontend with API URL after deployment
+    new CfnOutput(this, 'UpdateFrontendCommand', {
+      value: `echo "window.SNAPMAGIC_API_URL = '${api.url}';" > frontend/public/api-config.js`,
+      description: 'Command to update frontend with API URL'
     });
 
     new CfnOutput(this, 'StackName', {

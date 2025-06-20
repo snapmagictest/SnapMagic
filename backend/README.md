@@ -42,6 +42,36 @@ python test_agent.py
 python run_local.py
 ```
 
+## 🚀 Deployment
+
+### Deploy Backend Infrastructure
+
+```bash
+# Deploy backend to development
+cd ../infrastructure
+npm run deploy:backend
+
+# Deploy to staging
+npm run deploy:backend:staging
+
+# Deploy to production
+npm run deploy:backend:prod
+```
+
+### Teardown Backend
+
+```bash
+# Remove backend from development
+cd ../infrastructure
+npm run destroy:backend
+
+# Remove from staging
+npm run destroy:backend:staging
+
+# Remove from production
+npm run destroy:backend:prod
+```
+
 ## 🔧 Configuration
 
 ### AWS Permissions Required
@@ -146,10 +176,10 @@ curl -X GET http://localhost:8000/health
 
 ## 🚀 Deployment Options
 
-### Option 1: AWS Lambda (Serverless)
-- Use `lambda_handler.py` for serverless deployment
-- Deploy via CDK or SAM
+### Option 1: AWS Lambda (Serverless) - **RECOMMENDED**
+- Use CDK deployment: `npm run deploy:backend`
 - Cost-effective for event-based usage
+- Automatic scaling and management
 
 ### Option 2: Container Deployment
 - Use `main.py` with FastAPI

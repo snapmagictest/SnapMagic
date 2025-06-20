@@ -132,7 +132,7 @@ if (isDestroy) {
   console.log('\n🚀 Deploying to AWS...\n');
 }
 
-// Create the stack with collected inputs
+// Create the complete SnapMagic stack (frontend + backend)
 new SnapMagicStack(app, `SnapMagic-${environment}`, {
   env: {
     account: process.env.CDK_DEFAULT_ACCOUNT,
