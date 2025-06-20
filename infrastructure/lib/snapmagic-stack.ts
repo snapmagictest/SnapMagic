@@ -216,7 +216,7 @@ frontend:
       enablePullRequestPreview: false,
       stage: props.environment === 'prod' ? 'PRODUCTION' : 'DEVELOPMENT',
       
-      // Environment variables specific to this branch
+      // Environment variables specific to this branch - CRITICAL: These must be set correctly
       environmentVariables: [
         {
           name: 'NODE_ENV',
@@ -228,10 +228,13 @@ frontend:
         },
         {
           name: 'SNAPMAGIC_API_URL',
-          value: api.url
+          value: api.url  // This is the key - CDK will resolve this to the actual API Gateway URL
         }
       ]
     });
+
+    // CRITICAL: Ensure branch creation depends on API Gateway being fully deployed
+    mainBranch.addDependency(api.node.defaultChild as cdk.CfnResource);
 
     // Apply tags using CDK v2 best practices
     Tags.of(this).add('Project', 'SnapMagic');
@@ -277,13 +280,7 @@ frontend:
 
     new CfnOutput(this, 'TriggerFirstBuild', {
       value: `aws amplify start-job --app-id ${snapMagicApp.attrAppId} --branch-name ${inputs.githubBranch} --job-type RELEASE --region ${this.region}`,
-      description: 'Command to trigger first build'
-    });
-
-    // Manual API Configuration Command (USE THIS AFTER DEPLOYMENT)
-    new CfnOutput(this, 'ConfigureAPICommand', {
-      value: `aws amplify update-branch --app-id ${snapMagicApp.attrAppId} --branch-name ${inputs.githubBranch} --environment-variables SNAPMAGIC_API_URL=${api.url} --region ${this.region} && aws amplify start-job --app-id ${snapMagicApp.attrAppId} --branch-name ${inputs.githubBranch} --job-type RELEASE --region ${this.region}`,
-      description: '🚀 RUN THIS COMMAND: Configure correct API Gateway URL and trigger build'
+      description: '🚀 RUN THIS COMMAND: Trigger build to pick up correct API Gateway URL (environment variable is set by CDK)'
     });
 
     // AI Backend Outputs
