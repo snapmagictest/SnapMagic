@@ -1,0 +1,19 @@
+version: 1
+frontend:
+  phases:
+    preBuild:
+      commands:
+        - echo "No build process needed for static HTML/CSS/JS"
+    build:
+      commands:
+        - echo "Building SnapMagic frontend"
+        - ls -la frontend/public/
+    postBuild:
+      commands:
+        - echo "Build completed successfully"
+  artifacts:
+    baseDirectory: frontend/public
+    files:
+      - '**/*'
+  cache:
+    paths: []
