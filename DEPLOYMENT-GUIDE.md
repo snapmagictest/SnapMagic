@@ -286,6 +286,26 @@ Error: This stack uses assets, so the toolkit stack must be deployed to the envi
 cdk bootstrap
 ```
 
+## 🚀 Step 4: Trigger First Build
+
+After deployment completes, you'll see output like this:
+
+```
+✅  SnapMagic-dev
+
+Outputs:
+SnapMagic-dev.TriggerFirstBuild = aws amplify start-job --app-id d1a2b3c4d5e6f7 --branch-name main --job-type RELEASE --region us-east-1
+```
+
+**Copy and run the command:**
+```bash
+aws amplify start-job --app-id d1a2b3c4d5e6f7 --branch-name main --job-type RELEASE --region us-east-1
+```
+
+**Your SnapMagic will be live in 2-3 minutes!** 🎉
+
+**Note:** This is only needed for the first deployment. All future GitHub pushes will auto-build.
+
 ## 🗑️ Cleanup After Event
 ```bash
 cd infrastructure

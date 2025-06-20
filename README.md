@@ -52,6 +52,14 @@ my-snapmagic-app
 
 **That's it! Your SnapMagic will be live in 5-10 minutes!** 🎉
 
+### Step 4: Trigger First Build (One-Time Only)
+After deployment completes, CDK will output a command like this:
+```bash
+aws amplify start-job --app-id YOUR-APP-ID --branch-name main --job-type RELEASE --region us-east-1
+```
+
+**Copy and run this command to start your first build.** After this, all future pushes to GitHub will auto-build.
+
 ### Complete Deployment Flow:
 ```bash
 # 1. Navigate to infrastructure folder
@@ -68,12 +76,15 @@ npm run deploy
 🔑 GitHub Token: [paste your token - will be hidden]
 🌿 Branch: main
 📱 App Name: my-snapmagic-app
-🔒 Enable password protection? y
-👤 Username: summit2024
-🔐 Password: [enter password - will be hidden]
+🔒 Enable password protection? N (recommended for simplicity)
 
 # 5. Wait for deployment to complete
-✅ Your SnapMagic will be live at the provided URL!
+✅ Deployment complete!
+
+# 6. Trigger first build (copy command from CDK output)
+aws amplify start-job --app-id YOUR-APP-ID --branch-name main --job-type RELEASE --region us-east-1
+
+# 7. Your SnapMagic will be live in 2-3 minutes!
 ```
 
 ## ✨ Features
