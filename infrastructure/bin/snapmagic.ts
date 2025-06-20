@@ -10,6 +10,29 @@ async function main() {
   // Get environment from context
   const environment = app.node.tryGetContext('environment') || 'dev';
   
+  // Check if this is a destroy operation
+  const isDestroy = process.argv.includes('destroy');
+  
+  if (isDestroy) {
+    // For destroy operations, create a minimal stack for identification
+    new SnapMagicStack(app, `SnapMagic-${environment}`, {
+      env: {
+        account: process.env.CDK_DEFAULT_ACCOUNT,
+        region: process.env.CDK_DEFAULT_REGION || 'us-east-1',
+      },
+      environment,
+      inputs: {
+        githubRepo: 'https://github.com/snapmagictest/SnapMagic',
+        githubToken: 'dummy-token-for-destroy',
+        githubBranch: 'main',
+        appName: `snapmagic-${environment}`,
+        enableBasicAuth: false
+      },
+      description: 'SnapMagic - AI-powered photo and video transformation for AWS events'
+    });
+    return;
+  }
+  
   try {
     // Collect deployment inputs upfront
     console.log('🎯 SnapMagic requires some information to connect to your GitHub repository...\n');
