@@ -38,9 +38,10 @@ frontend:
         - npm ci --only=production
         - echo "Configuring API URL using Amplify environment variables..."
         - echo "SNAPMAGIC_API_URL is set to: $SNAPMAGIC_API_URL"
-        - echo "API_URL is set to: $API_URL"
-        - sed -i "s|\\\${SNAPMAGIC_API_URL}|$SNAPMAGIC_API_URL|g" public/index.html
-        - echo "API URL configured in index.html"
+        - echo "Before substitution:"
+        - grep -A 2 -B 2 "API_URL:" public/index.html || echo "Could not find API_URL in index.html"
+        - sed -i "s|\\\$\{SNAPMAGIC_API_URL\}|$SNAPMAGIC_API_URL|g" public/index.html
+        - echo "After substitution:"
         - grep -A 2 -B 2 "API_URL:" public/index.html || echo "Could not find API_URL in index.html"
     build:
       commands:
