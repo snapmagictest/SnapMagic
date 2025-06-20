@@ -3,35 +3,133 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SnapMagic - Loading...</title>
+    <title>SnapMagic - AI-powered transformation</title>
+    <link rel="stylesheet" href="../src/modern-styles.css">
     <style>
-        body {
-            margin: 0;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        /* Loading screen styles */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
             background: linear-gradient(135deg, #232F3E 0%, #4B9CD3 100%);
-            min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
+            z-index: 9999;
+            transition: opacity 0.5s ease;
         }
-        .container { text-align: center; padding: 2rem; }
-        .logo { font-size: 4rem; margin-bottom: 1rem; }
-        .title { font-size: 2.5rem; margin-bottom: 1rem; color: #FF9900; }
-        .subtitle { font-size: 1.2rem; margin-bottom: 2rem; opacity: 0.9; }
-        .loading { font-size: 1rem; opacity: 0.7; }
+        .loading-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        .loading-container { text-align: center; padding: 2rem; }
+        .loading-logo { font-size: 4rem; margin-bottom: 1rem; }
+        .loading-title { font-size: 2.5rem; margin-bottom: 1rem; color: #FF9900; }
+        .loading-subtitle { font-size: 1.2rem; margin-bottom: 2rem; opacity: 0.9; }
+        .loading-text { font-size: 1rem; opacity: 0.7; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="logo">📸</div>
-        <h1 class="title">SnapMagic</h1>
-        <p class="subtitle">AI-powered transformation for AWS events</p>
-        <p class="loading">Loading...</p>
+    <!-- Loading Screen -->
+    <div id="loadingScreen" class="loading-screen">
+        <div class="loading-container">
+            <div class="loading-logo">📸</div>
+            <h1 class="loading-title">SnapMagic</h1>
+            <p class="loading-subtitle">AI-powered transformation for AWS events</p>
+            <p class="loading-text">Initializing Amplify SDK v6...</p>
+        </div>
     </div>
+
+    <!-- Login Screen -->
+    <div id="loginScreen" class="login-screen" style="display: none;">
+        <div class="login-container">
+            <div class="login-header">
+                <div class="logo">📸</div>
+                <h1>SnapMagic</h1>
+                <p>AI-powered transformation for AWS events</p>
+            </div>
+            
+            <form id="loginForm" class="login-form">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                
+                <button type="submit" class="login-btn">Sign In</button>
+                
+                <div id="loginError" class="error-message"></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="mainApp" class="main-app" style="display: none;">
+        <header class="app-header">
+            <div class="header-content">
+                <div class="logo-section">
+                    <span class="logo">📸</span>
+                    <h1>SnapMagic</h1>
+                </div>
+                <div class="user-section">
+                    <span id="userInfo">Welcome!</span>
+                    <button id="logoutBtn" class="logout-btn">Sign Out</button>
+                </div>
+            </div>
+        </header>
+
+        <main class="app-main">
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🖼️</div>
+                    <h3>Transform Pictures</h3>
+                    <p>AI-powered image transformation using Amazon Bedrock</p>
+                    <button id="transformPictureBtn" class="feature-btn">Start Transform</button>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🎥</div>
+                    <h3>Transform Video</h3>
+                    <p>Generate video reels from your photos</p>
+                    <button id="transformVideoBtn" class="feature-btn">Create Video</button>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">👍</div>
+                    <h3>Rate Experience</h3>
+                    <p>Share feedback through gesture recognition</p>
+                    <button id="rateExperienceBtn" class="feature-btn">Rate Now</button>
+                </div>
+            </div>
+
+            <div class="device-info">
+                <div id="deviceInfo">Loading device info...</div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modern ES Module Scripts -->
+    <script type="module" src="../src/app.js"></script>
+    
+    <!-- Hide loading screen after app initializes -->
     <script>
-        // Redirect directly to login page
-        window.location.href = 'login.html';
+        // Hide loading screen after a short delay
+        setTimeout(() => {
+            const loadingScreen = document.getElementById('loadingScreen');
+            if (loadingScreen) {
+                loadingScreen.classList.add('hidden');
+                setTimeout(() => {
+                    loadingScreen.style.display = 'none';
+                }, 500);
+            }
+        }, 2000);
     </script>
 </body>
 </html>

@@ -77,7 +77,7 @@
 - Uptime: 99.9% during event hours
 
 ### Security Requirements
-- Simple admin login (username/password)
+- Simple login (username/password)
 - Encryption at rest and in transit
 - No permanent storage of personal images
 - GDPR compliance considerations
@@ -122,22 +122,31 @@ SnapMagic/
 #### Frontend MVP (COMPLETED)
 - [x] AWS Amplify App created (App ID: d3ektdqj3lnzss)
 - [x] Basic HTML/CSS/JS structure
-- [x] Login page with admin authentication
+- [x] Login page with authentication
 - [x] Main app interface with camera integration
 - [x] Three feature buttons (Transform Picture, Transform Video, Rate Experience)
 - [x] Responsive design for mobile/tablet/desktop
 - [x] Camera preview functionality
 - [x] Basic styling and user interface
 
-### 🚧 CURRENT PHASE: Backend Infrastructure Setup
+### 🚧 CURRENT PHASE: Amplify Framework Migration
 
-#### Phase 2: Core AWS Services Infrastructure (IN PROGRESS)
-- [ ] Amazon Cognito User Pool deployment (simplified auth)
-- [ ] API Gateway (REST + WebSocket APIs) deployment
-- [ ] S3 buckets with encryption and lifecycle policies
-- [ ] DynamoDB table for analytics
-- [ ] Lambda functions for core features
+#### Phase 2: Convert to Amplify Framework (IN PROGRESS)
+- [ ] Initialize Amplify CLI in project (`amplify init`)
+- [ ] Update package.json with core Amplify SDK dependencies
+- [ ] Convert vanilla HTML/JS to use basic Amplify SDK structure
+- [ ] Test that existing functionality still works
+- [ ] Deploy and verify site still functions
+
+**Note**: Add additional Amplify services (auth, api, storage, predictions) incrementally as we develop features, not all at once.
+
+#### Phase 3: Core AWS Services Infrastructure (UPCOMING)
+- [ ] Bedrock Nova Canvas integration (image transformation)
+- [ ] Bedrock Nova Reel integration (video generation)
+- [ ] Rekognition integration (gesture detection)
+- [ ] Transcribe integration (speech-to-text)
 - [ ] Step Functions for workflow orchestration
+- [ ] DynamoDB for analytics and session storage
 
 ### 📋 UPCOMING PHASES
 
@@ -198,6 +207,19 @@ SnapMagic/
 - Test on mobile devices due to event attendee usage patterns
 
 ---
-**Last Updated**: 2025-06-20 08:00:00 UTC
-**Current Phase**: Backend Infrastructure Setup
-**Next Milestone**: Deploy core AWS services (Cognito, API Gateway, S3, DynamoDB)
+**Last Updated**: 2025-06-20 08:45:00 UTC
+**Current Phase**: Amplify Framework Migration
+**Next Milestone**: Initialize Amplify CLI and convert to full framework
+
+## LATEST PROGRESS UPDATE (2025-06-20)
+✅ **Frontend Deployment Complete**: 
+- Working URL: https://main.d2j6ejtnu13yb2.amplifyapp.com/
+- Fixed UI blackout issues (CSS/JS paths corrected)
+- Direct login flow implemented (no admin concept)
+- Amplify + CloudFront integration confirmed working
+- Clean project structure with proper folder organization
+
+🚧 **Next: Simple Amplify Framework Conversion**: 
+- Just initialize Amplify and convert basic structure
+- Keep existing functionality working
+- Add services incrementally as we develop features (not big bang approach)
