@@ -8,67 +8,78 @@ import { DeploymentInputs } from '../lib/deployment-inputs';
 function collectInputsSync(): DeploymentInputs {
   const readlineSync = require('readline-sync');
   
+  // Handle Ctrl+C gracefully
+  process.on('SIGINT', () => {
+    console.log('\n\n❌ Deployment cancelled by user');
+    process.exit(0);
+  });
+  
   console.log('\n🚀 SnapMagic Deployment Setup');
   console.log('==============================');
-  console.log('Please provide the following information:\n');
+  console.log('Please provide the following information (Ctrl+C to cancel):\n');
 
-  // GitHub Repository
-  const githubRepo = readlineSync.question('📁 GitHub Repository URL (e.g., https://github.com/username/SnapMagic): ');
-  
-  // Validate GitHub repo format
-  if (!githubRepo.includes('github.com') || !githubRepo.includes('/')) {
-    throw new Error('❌ Invalid GitHub repository URL format');
-  }
-
-  // GitHub Token
-  console.log('\n🔑 GitHub Personal Access Token:');
-  console.log('   Create at: https://github.com/settings/tokens');
-  console.log('   Required permissions: repo (Full control of private repositories)');
-  const githubToken = readlineSync.question('   Token: ', { hideEchoBack: true });
-
-  if (!githubToken || githubToken.length < 10) {
-    throw new Error('❌ GitHub token is required and must be valid');
-  }
-
-  // GitHub Branch
-  const githubBranch = readlineSync.question('\n🌿 GitHub Branch (default: main): ', { defaultInput: 'main' });
-
-  // App Name
-  const defaultAppName = `snapmagic-${Math.random().toString(36).substring(7)}`;
-  const appName = readlineSync.question(`\n📱 Amplify App Name (default: ${defaultAppName}): `, { defaultInput: defaultAppName });
-
-  // Basic Auth (optional)
-  console.log('\n🔒 Password Protection:');
-  console.log('   This will protect your SnapMagic app with username/password.');
-  console.log('   Perfect for AWS events - share credentials with attendees.');
-  const enableAuthInput = readlineSync.question('   Enable password protection? (y/N): ', { defaultInput: 'N' });
-  const enableAuth = enableAuthInput.toLowerCase() === 'y' || enableAuthInput.toLowerCase() === 'yes';
-  
-  let basicAuthUsername, basicAuthPassword;
-  
-  if (enableAuth) {
-    basicAuthUsername = readlineSync.question('\n   👤 Username (for attendees): ', { defaultInput: 'admin' });
-    basicAuthPassword = readlineSync.question('   🔐 Password (for attendees): ', { hideEchoBack: true });
+  try {
+    // GitHub Repository
+    const githubRepo = readlineSync.question('📁 GitHub Repository URL (e.g., https://github.com/username/SnapMagic): ');
     
-    if (!basicAuthPassword) {
-      throw new Error('❌ Password is required when basic auth is enabled');
+    // Validate GitHub repo format
+    if (!githubRepo.includes('github.com') || !githubRepo.includes('/')) {
+      throw new Error('❌ Invalid GitHub repository URL format');
     }
+
+    // GitHub Token
+    console.log('\n🔑 GitHub Personal Access Token:');
+    console.log('   Create at: https://github.com/settings/tokens');
+    console.log('   Required permissions: repo (Full control of private repositories)');
+    const githubToken = readlineSync.question('   Token: ', { hideEchoBack: true });
+
+    if (!githubToken || githubToken.length < 10) {
+      throw new Error('❌ GitHub token is required and must be valid');
+    }
+
+    // GitHub Branch
+    const githubBranch = readlineSync.question('\n🌿 GitHub Branch (default: main): ', { defaultInput: 'main' });
+
+    // App Name
+    const defaultAppName = `snapmagic-${Math.random().toString(36).substring(7)}`;
+    const appName = readlineSync.question(`\n📱 Amplify App Name (default: ${defaultAppName}): `, { defaultInput: defaultAppName });
+
+    // Basic Auth (optional)
+    console.log('\n🔒 Password Protection:');
+    console.log('   This will protect your SnapMagic app with username/password.');
+    console.log('   Perfect for AWS events - share credentials with attendees.');
+    const enableAuthInput = readlineSync.question('   Enable password protection? (y/N): ', { defaultInput: 'N' });
+    const enableAuth = enableAuthInput.toLowerCase() === 'y' || enableAuthInput.toLowerCase() === 'yes';
     
-    console.log(`\n   ✅ Basic Auth configured: ${basicAuthUsername} / [password hidden]`);
+    let basicAuthUsername, basicAuthPassword;
+    
+    if (enableAuth) {
+      basicAuthUsername = readlineSync.question('\n   👤 Username (for attendees): ', { defaultInput: 'admin' });
+      basicAuthPassword = readlineSync.question('   🔐 Password (for attendees): ', { hideEchoBack: true });
+      
+      if (!basicAuthPassword) {
+        throw new Error('❌ Password is required when basic auth is enabled');
+      }
+      
+      console.log(`\n   ✅ Basic Auth configured: ${basicAuthUsername} / [password hidden]`);
+    }
+
+    console.log('\n✅ Configuration collected successfully!');
+    console.log('🚀 Deploying SnapMagic to AWS...\n');
+
+    return {
+      githubRepo,
+      githubToken,
+      githubBranch,
+      appName,
+      enableBasicAuth: enableAuth,
+      basicAuthUsername,
+      basicAuthPassword
+    };
+  } catch (error) {
+    console.log('\n❌ Input collection failed:', (error as Error).message);
+    process.exit(1);
   }
-
-  console.log('\n✅ Configuration collected successfully!');
-  console.log('🚀 Deploying SnapMagic to AWS...\n');
-
-  return {
-    githubRepo,
-    githubToken,
-    githubBranch,
-    appName,
-    enableBasicAuth: enableAuth,
-    basicAuthUsername,
-    basicAuthPassword
-  };
 }
 
 // Create CDK app
