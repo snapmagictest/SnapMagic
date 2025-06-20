@@ -1,5 +1,5 @@
-import { Stack, StackProps, CfnOutput, Tags, CustomResource, Duration } from 'aws-cdk-lib';
-import { aws_amplify as amplify, aws_lambda as lambda, aws_iam as iam } from 'aws-cdk-lib';
+import { Stack, StackProps, CfnOutput, Tags } from 'aws-cdk-lib';
+import { aws_amplify as amplify } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { DeploymentInputs } from './deployment-inputs';
 
@@ -96,82 +96,6 @@ frontend:
       ]
     });
 
-    // Lambda function to trigger initial build
-    const triggerBuildFunction = new lambda.Function(this, 'TriggerBuildFunction', {
-      runtime: lambda.Runtime.NODEJS_18_X,
-      handler: 'index.handler',
-      code: lambda.Code.fromInline(`
-        const AWS = require('aws-sdk');
-        const amplify = new AWS.Amplify();
-        
-        exports.handler = async (event) => {
-          console.log('Event:', JSON.stringify(event, null, 2));
-          
-          if (event.RequestType === 'Create') {
-            try {
-              const params = {
-                appId: event.ResourceProperties.AppId,
-                branchName: event.ResourceProperties.BranchName,
-                jobType: 'RELEASE'
-              };
-              
-              console.log('Starting build with params:', params);
-              const result = await amplify.startJob(params).promise();
-              console.log('Build started:', result);
-              
-              return {
-                Status: 'SUCCESS',
-                PhysicalResourceId: result.jobSummary.jobId,
-                Data: {
-                  JobId: result.jobSummary.jobId
-                }
-              };
-            } catch (error) {
-              console.error('Error starting build:', error);
-              return {
-                Status: 'SUCCESS', // Don't fail deployment if build trigger fails
-                PhysicalResourceId: 'failed-build-trigger',
-                Data: {
-                  Error: error.message
-                }
-              };
-            }
-          }
-          
-          return {
-            Status: 'SUCCESS',
-            PhysicalResourceId: event.PhysicalResourceId || 'build-trigger'
-          };
-        };
-      `),
-      timeout: Duration.minutes(5)
-    });
-
-    // Grant permissions to trigger Amplify builds
-    triggerBuildFunction.addToRolePolicy(new iam.PolicyStatement({
-      effect: iam.Effect.ALLOW,
-      actions: [
-        'amplify:StartJob',
-        'amplify:GetJob'
-      ],
-      resources: [
-        `arn:aws:amplify:${this.region}:${this.account}:apps/${snapMagicApp.attrAppId}/*`
-      ]
-    }));
-
-    // Custom resource to trigger the initial build
-    const triggerBuild = new CustomResource(this, 'TriggerInitialBuild', {
-      serviceToken: triggerBuildFunction.functionArn,
-      properties: {
-        AppId: snapMagicApp.attrAppId,
-        BranchName: inputs.githubBranch,
-        Timestamp: Date.now() // Force update on each deployment
-      }
-    });
-
-    // Ensure the branch is created before triggering build
-    triggerBuild.node.addDependency(mainBranch);
-
     // Apply tags using CDK v2 best practices
     Tags.of(this).add('Project', 'SnapMagic');
     Tags.of(this).add('Environment', props.environment);
@@ -210,8 +134,13 @@ frontend:
     });
 
     new CfnOutput(this, 'DeploymentStatus', {
-      value: 'Repository connected - build will start automatically',
+      value: 'Repository connected - run the trigger command below to start first build',
       description: 'Deployment Status'
+    });
+
+    new CfnOutput(this, 'TriggerFirstBuild', {
+      value: `aws amplify start-job --app-id ${snapMagicApp.attrAppId} --branch-name ${inputs.githubBranch} --job-type RELEASE --region ${this.region}`,
+      description: 'Command to trigger first build'
     });
 
     new CfnOutput(this, 'StackName', {
