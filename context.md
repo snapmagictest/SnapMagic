@@ -44,17 +44,16 @@
 
 ### AWS Services Stack
 - **Frontend**: AWS Amplify + Amazon CloudFront
-- **Authentication**: Amazon Cognito (simplified, no 2FA)
+- **Authentication**: Simple shared credentials (no Cognito needed for events)
 - **Compute**: AWS Lambda (serverless)
-- **API**: Amazon API Gateway (REST + WebSocket)
+- **API**: Amazon API Gateway (REST)
 - **AI/ML**: 
   - Amazon Bedrock (Nova Canvas for images, Nova Reel for videos)
   - Amazon Rekognition (gesture detection)
   - Amazon Transcribe (speech-to-text)
 - **Storage**: Amazon S3 with KMS encryption and lifecycle policies
-- **Orchestration**: AWS Step Functions
+- **Orchestration**: AWS Step Functions (if needed)
 - **Monitoring**: Amazon CloudWatch
-- **Caching**: Amazon ElastiCache (if needed)
 - **Automation**: AWS EventBridge (auto-shutdown)
 - **IaC**: AWS CDK with TypeScript
 
@@ -140,35 +139,41 @@ SnapMagic/
 - **Mobile Responsive**: Works perfectly on phones/tablets/desktop
 - **Error Handling**: Graceful camera permissions, session management
 
-### 🚧 CURRENT PHASE: Backend Infrastructure Setup (NEXT)
+### 🚧 CURRENT PHASE: AI/ML Backend Services Integration (NEXT)
 
-#### Phase 3: Backend Infrastructure Setup (UPCOMING)
-- [ ] Create CDK infrastructure for Cognito User Pool
-- [ ] Setup API Gateway with Lambda functions
-- [ ] Configure S3 buckets for image/video storage
-- [ ] Deploy DynamoDB for analytics and session storage
-- [ ] Connect frontend to real AWS backend services
+#### Phase 3: AI/ML Backend Services Integration (UPCOMING)
+**Decision: Skip Cognito - Use Simple Shared Authentication**
+- Event-specific deployment (1-3 days max)
+- Shared credentials distributed at event
+- No user registration/management needed
+- Cost optimization and complexity reduction
+- Current session persistence already perfect
+
+**Priority Services to Implement:**
+- [ ] Amazon Bedrock Nova Canvas integration (image transformation)
+- [ ] Amazon Bedrock Nova Reel integration (video generation)
+- [ ] Amazon Rekognition integration (gesture detection)
+- [ ] Amazon Transcribe integration (speech-to-text)
+- [ ] S3 buckets for temporary image/video storage
+- [ ] API Gateway + Lambda functions for service orchestration
+- [ ] Error handling and retry mechanisms
 
 ### 📋 UPCOMING PHASES
 
-#### Phase 4: AI/ML Services Integration
-- [ ] Amazon Bedrock Nova Canvas integration (image transformation)
-- [ ] Amazon Bedrock Nova Reel integration (video generation)
-- [ ] Amazon Rekognition stream processor (gesture detection)
-- [ ] Amazon Transcribe integration (speech-to-text)
-
-#### Phase 5: Feature Implementation
-- [ ] Transform Pictures feature complete implementation
-- [ ] Transform Video feature complete implementation
-- [ ] Rate Experience feature complete implementation
-- [ ] Error handling and retry mechanisms
-
-#### Phase 6: Production Readiness
-- [ ] Monitoring and alerting setup
-- [ ] Performance optimization
-- [ ] Security hardening
-- [ ] Auto-shutdown mechanisms
+#### Phase 4: Event Optimization & Production Readiness
+- [ ] Auto-shutdown mechanisms (EventBridge + Lambda)
 - [ ] Cost monitoring and alerts
+- [ ] Performance optimization
+- [ ] Error handling and retry logic
+- [ ] Monitoring and alerting setup
+- [ ] Security hardening (API rate limiting, input validation)
+
+#### Phase 5: Deployment & Operations
+- [ ] Multi-environment deployment (dev/staging/prod)
+- [ ] CI/CD pipeline optimization
+- [ ] Event-specific configuration management
+- [ ] Tear-down automation scripts
+- [ ] Documentation for event staff
 
 ## Development Workflow
 
@@ -222,11 +227,11 @@ SnapMagic/
 9. **Session**: Persists for 24 hours, survives page refresh
 
 ## Next Steps
-1. **Deploy CDK infrastructure** for core AWS services (Cognito, API Gateway, S3, DynamoDB)
-2. **Implement Lambda functions** for each feature endpoint
-3. **Integrate AI/ML services** (Bedrock Nova Canvas/Reel, Rekognition, Transcribe)
-4. **Connect frontend to backend APIs** (replace placeholder functionality)
-5. **Test end-to-end functionality** with real AWS services
+1. **Implement AI/ML backend services** (Bedrock Nova Canvas/Reel, Rekognition, Transcribe)
+2. **Deploy CDK infrastructure** for core AWS services (API Gateway, Lambda, S3)
+3. **Connect frontend to backend APIs** (replace placeholder functionality)
+4. **Test end-to-end functionality** with real AWS services
+5. **Add auto-shutdown and cost monitoring**
 6. **Deploy to production environment** with monitoring
 
 ## Notes for Continuation
@@ -235,13 +240,14 @@ SnapMagic/
 - ✅ **Camera functionality complete** - all 3 features have working cameras
 - ✅ **Mobile responsive** - tested on various screen sizes
 - ✅ **GitHub integration working** - automatic deployments on push
-- 🚧 **Next focus**: Backend infrastructure with CDK
-- 🚧 **Priority**: Connect to real AWS AI/ML services
+- ✅ **Authentication decision made** - skip Cognito, use shared credentials
+- 🚧 **Next focus**: AI/ML backend services integration
+- 🚧 **Priority**: Connect to real AWS AI/ML services (Bedrock, Rekognition, Transcribe)
 
 ---
-**Last Updated**: 2025-06-20 11:45:00 UTC
-**Current Phase**: Backend Infrastructure Setup
-**Next Milestone**: Deploy CDK infrastructure for core AWS services
+**Last Updated**: 2025-06-20 12:00:00 UTC
+**Current Phase**: AI/ML Backend Services Integration
+**Next Milestone**: Implement Bedrock Nova Canvas for image transformation
 
 ## LATEST PROGRESS UPDATE (2025-06-20)
 ✅ **Frontend Development COMPLETE**: 
@@ -253,13 +259,17 @@ SnapMagic/
 - Voice input, gesture recognition setup, processing states
 - Production deployment: https://main.d2j6ejtnu13yb2.amplifyapp.com/
 
-🚧 **Next: Backend Infrastructure with CDK**: 
-- Deploy Cognito User Pool for real authentication
-- Setup API Gateway with Lambda functions for each feature
-- Configure S3 buckets for image/video storage and processing
-- Add DynamoDB for analytics and user session management
-- Integrate Bedrock Nova Canvas/Reel for AI transformations
-- Connect Rekognition for gesture detection
-- Add Transcribe for voice-to-text functionality
+✅ **Architecture Decision Made**:
+- Skip Cognito for event-specific deployment
+- Use simple shared credentials distributed at event
+- Focus on AI/ML services that provide core value
+- Optimize for cost and simplicity
 
-**Status**: Frontend is event-ready! Backend integration is the next major milestone.
+🚧 **Next: AI/ML Backend Services Integration**: 
+- Implement Amazon Bedrock Nova Canvas for image transformation
+- Add Amazon Bedrock Nova Reel for video generation
+- Connect Amazon Rekognition for gesture detection
+- Integrate Amazon Transcribe for voice-to-text functionality
+- Deploy supporting infrastructure (API Gateway, Lambda, S3)
+
+**Status**: Frontend is event-ready! AI/ML backend integration is the next major milestone.
