@@ -2,35 +2,32 @@
 
 AI-powered image and video transformation for AWS events. Create amazing content with just a selfie and a prompt!
 
-## 🚀 Quick Start
+## 🚀 Quick Start (3 Simple Steps)
 
-### For New Users
+### Step 1: Fork & Clone
 ```bash
-# 1. Clone the repository
-git clone https://github.com/snapmagictest/SnapMagic.git
-cd SnapMagic
-
-# 2. Deploy to your AWS account
-cd infrastructure
-npm run quick-deploy
-
-# 3. Follow the deployment instructions to connect your GitHub repository
-```
-
-### For Contributors
-```bash
-# 1. Fork this repository on GitHub
-# 2. Clone your fork
+# 1. Fork this repository on GitHub (click the Fork button)
+# 2. Clone YOUR fork
 git clone https://github.com/YOUR-USERNAME/SnapMagic.git
 cd SnapMagic
-
-# 3. Edit configuration (optional)
-nano infrastructure/config/app-config.ts
-
-# 4. Deploy
-cd infrastructure
-npm run quick-deploy
 ```
+
+### Step 2: Deploy Infrastructure
+```bash
+cd infrastructure
+npm run setup
+npm run deploy
+```
+
+### Step 3: Provide Information
+During deployment, you'll be asked for:
+- **GitHub Repository URL**: `https://github.com/YOUR-USERNAME/SnapMagic`
+- **GitHub Token**: [Create here](https://github.com/settings/tokens) (needs `repo` permissions)
+- **Branch**: `main` (or your preferred branch)
+- **App Name**: Choose a unique name
+- **Password Protection**: Optional for events
+
+**That's it! Your SnapMagic will be live in 5-10 minutes!** 🎉
 
 ## ✨ Features
 
@@ -60,53 +57,36 @@ npm run quick-deploy
 - **Computer Vision**: Amazon Rekognition
 - **Speech**: Amazon Transcribe
 - **Hosting**: AWS Amplify with CloudFront
-- **Deployment**: One-command CDK deployment
+- **Deployment**: Interactive CDK deployment
 
 ## 📋 Prerequisites
 
 - **Node.js 22.x+** (required for AWS CDK v2)
 - **AWS CLI** configured with your credentials
 - **AWS CDK** installed: `npm install -g aws-cdk`
-- **GitHub account** (for repository connection)
+- **GitHub account** with a personal access token
 
-## 📖 Documentation
+## 🔑 GitHub Token Setup
 
-- **[Deployment Guide](DEPLOYMENT.md)** - Complete setup instructions
-- **[Teardown Guide](TEARDOWN.md)** - Clean removal after events
-- **[Configuration Guide](infrastructure/config/README.md)** - Customization options
+1. Go to [GitHub Settings > Tokens](https://github.com/settings/tokens)
+2. Click **"Generate new token (classic)"**
+3. Select **"repo"** permissions (Full control of private repositories)
+4. Copy the token (you'll need it during deployment)
 
 ## 🎯 Perfect for AWS Events
 
 SnapMagic is designed for temporary deployment at AWS events:
 
-- **Quick Setup**: Deploy in minutes
+- **Quick Setup**: Deploy in minutes with interactive prompts
 - **Event-Ready**: Password protection and custom branding
 - **Cost-Optimized**: Easy teardown after events
 - **Scalable**: Handles 1000+ concurrent users
 - **Global**: CloudFront distribution for worldwide access
 
-## 🔧 Configuration
-
-Customize your deployment by editing `infrastructure/config/app-config.ts`:
-
-```typescript
-export const defaultConfig: SnapMagicConfig = {
-  repository: {
-    url: 'https://github.com/YOUR-USERNAME/SnapMagic', // Your repo
-    branch: 'main',
-  },
-  app: {
-    name: 'my-snapmagic', // Unique app name
-    description: 'My SnapMagic deployment',
-  },
-  // ... more options
-};
-```
-
 ## 🚀 Deployment Commands
 
 ```bash
-# Development
+# Development (default)
 npm run deploy
 
 # Staging
@@ -118,6 +98,13 @@ npm run deploy:prod
 # Teardown
 npm run destroy
 ```
+
+## 🔒 Security
+
+- **GitHub tokens are used only during deployment** - not stored in AWS
+- **Tokens are never logged or persisted** anywhere
+- **All sensitive data is handled securely** during the deployment process
+- **No credentials are stored in the repository** or AWS resources
 
 ## 🤝 Contributing
 
@@ -145,4 +132,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-**Ready to create some magic? Deploy SnapMagic to your AWS account and start transforming!** ✨
+**Ready to create some magic? Fork, clone, and deploy SnapMagic to your AWS account!** ✨

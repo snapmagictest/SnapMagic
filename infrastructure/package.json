@@ -22,8 +22,7 @@
     "diff": "cdk diff",
     "synth": "cdk synth",
     "bootstrap": "cdk bootstrap",
-    "setup": "npm install && npm run build",
-    "quick-deploy": "npm run setup && npm run deploy"
+    "setup": "npm install && npm run build"
   },
   "devDependencies": {
     "@types/jest": "^29.5.12",
