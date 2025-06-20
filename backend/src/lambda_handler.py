@@ -158,19 +158,24 @@ def transform_image_bedrock(prompt: str, image_base64: str, username: str) -> st
         if ',' in image_base64:
             image_base64 = image_base64.split(',')[1]
         
-        # Prepare Nova Canvas payload - correct format for image-to-image transformation
+        # Prepare Nova Canvas payload for better face-aware transformation
+        # Using TEXT_IMAGE with detailed prompt for better face preservation
+        enhanced_prompt = f"A high-quality photograph of the same person {prompt}, maintaining the same facial features, face structure, and identity, photorealistic style, professional photography"
+        
         payload = {
             "taskType": "IMAGE_VARIATION",
             "imageVariationParams": {
-                "text": prompt,
-                "images": [image_base64]
+                "text": enhanced_prompt,
+                "images": [image_base64],
+                "similarityStrength": 0.7  # Higher value preserves more of original image
             },
             "imageGenerationConfig": {
                 "seed": random.randint(0, 858993460),
-                "quality": "standard",
+                "quality": "premium",
                 "width": 512,
                 "height": 512,
-                "numberOfImages": 1
+                "numberOfImages": 1,
+                "cfgScale": 8.0  # Higher CFG scale for better prompt adherence
             }
         }
         
