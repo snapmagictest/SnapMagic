@@ -292,4 +292,10 @@ cd infrastructure
 npm run destroy
 ```
 
-This will remove all AWS resources and stop any charges.
+**This will:**
+- ✅ Remove all AWS resources instantly
+- ✅ Stop all charges immediately
+- ✅ Keep your GitHub repository safe
+- ✅ Preserve your local code files
+
+**No prompts, no questions - just clean teardown!**

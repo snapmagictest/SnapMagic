@@ -8,8 +8,7 @@ import { DeploymentInputs } from '../lib/deployment-inputs';
 function collectInputsSync(): DeploymentInputs {
   const readlineSync = require('readline-sync');
   
-  console.log('🎯 SnapMagic requires some information to connect to your GitHub repository...\n');
-  console.log('🚀 SnapMagic Deployment Setup');
+  console.log('\n🚀 SnapMagic Deployment Setup');
   console.log('==============================');
   console.log('Please provide the following information:\n');
 
@@ -42,7 +41,8 @@ function collectInputsSync(): DeploymentInputs {
   console.log('\n🔒 Password Protection:');
   console.log('   This will protect your SnapMagic app with username/password.');
   console.log('   Perfect for AWS events - share credentials with attendees.');
-  const enableAuth = readlineSync.keyInYNStrict('   Enable password protection?');
+  const enableAuthInput = readlineSync.question('   Enable password protection? (y/N): ', { defaultInput: 'N' });
+  const enableAuth = enableAuthInput.toLowerCase() === 'y' || enableAuthInput.toLowerCase() === 'yes';
   
   let basicAuthUsername, basicAuthPassword;
   
@@ -71,11 +71,31 @@ function collectInputsSync(): DeploymentInputs {
   };
 }
 
-// Check for environment variables first (for testing)
-function getInputs(): DeploymentInputs {
+// Create CDK app
+const app = new cdk.App();
+
+// Get environment from context
+const environment = app.node.tryGetContext('environment') || 'dev';
+
+// Check if this is a destroy operation - if so, skip all input collection
+const isDestroy = process.argv.includes('destroy') || process.env.npm_lifecycle_event === 'destroy';
+
+let inputs: DeploymentInputs;
+
+if (isDestroy) {
+  // For destroy operations, use minimal dummy inputs - no prompts needed
+  inputs = {
+    githubRepo: 'https://github.com/dummy/repo',
+    githubToken: 'dummy-token',
+    githubBranch: 'main',
+    appName: 'dummy-app',
+    enableBasicAuth: false
+  };
+} else {
+  // For deploy operations, collect inputs
   if (process.env.SNAPMAGIC_GITHUB_REPO && process.env.SNAPMAGIC_GITHUB_TOKEN) {
     console.log('🧪 Using environment variables for testing...');
-    return {
+    inputs = {
       githubRepo: process.env.SNAPMAGIC_GITHUB_REPO,
       githubToken: process.env.SNAPMAGIC_GITHUB_TOKEN,
       githubBranch: process.env.SNAPMAGIC_GITHUB_BRANCH || 'main',
@@ -84,53 +104,21 @@ function getInputs(): DeploymentInputs {
       basicAuthUsername: process.env.SNAPMAGIC_AUTH_USERNAME || 'admin',
       basicAuthPassword: process.env.SNAPMAGIC_AUTH_PASSWORD
     };
-  }
-
-  // Skip input collection if running in CI/CD
-  if (process.env.CI || process.env.GITHUB_ACTIONS || process.env.CDK_SKIP_INPUTS) {
+  } else if (process.env.CI || process.env.GITHUB_ACTIONS || process.env.CDK_SKIP_INPUTS) {
     throw new Error('❌ Interactive input collection not supported in CI/CD. Please use environment variables.');
+  } else {
+    console.log('🎯 SnapMagic requires some information to connect to your GitHub repository...\n');
+    inputs = collectInputsSync();
   }
 
-  return collectInputsSync();
-}
-
-// Create CDK app
-const app = new cdk.App();
-
-// Get environment from context
-const environment = app.node.tryGetContext('environment') || 'dev';
-
-// Check if this is a destroy operation
-const isDestroy = process.argv.includes('destroy');
-
-let inputs: DeploymentInputs;
-
-if (isDestroy) {
-  // For destroy operations, use dummy inputs
-  inputs = {
-    githubRepo: 'https://github.com/snapmagictest/SnapMagic',
-    githubToken: 'dummy-token-for-destroy',
-    githubBranch: 'main',
-    appName: `snapmagic-${environment}`,
-    enableBasicAuth: false
-  };
-} else {
-  try {
-    inputs = getInputs();
-    
-    console.log(`✅ CDK stack configured for environment: ${environment}`);
-    console.log(`📁 Repository: ${inputs.githubRepo}`);
-    console.log(`🌿 Branch: ${inputs.githubBranch}`);
-    console.log(`📱 App Name: ${inputs.appName}`);
-    if (inputs.enableBasicAuth) {
-      console.log(`🔒 Basic Auth: Enabled (${inputs.basicAuthUsername})`);
-    }
-    console.log('\n🚀 Deploying to AWS...\n');
-    
-  } catch (error) {
-    console.error('\n❌ Deployment failed:', (error as Error).message);
-    process.exit(1);
+  console.log(`✅ CDK stack configured for environment: ${environment}`);
+  console.log(`📁 Repository: ${inputs.githubRepo}`);
+  console.log(`🌿 Branch: ${inputs.githubBranch}`);
+  console.log(`📱 App Name: ${inputs.appName}`);
+  if (inputs.enableBasicAuth) {
+    console.log(`🔒 Basic Auth: Enabled (${inputs.basicAuthUsername})`);
   }
+  console.log('\n🚀 Deploying to AWS...\n');
 }
 
 // Create the stack with collected inputs

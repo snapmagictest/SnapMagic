@@ -2,17 +2,7 @@
 
 AI-powered image and video transformation for AWS events. Create amazing content with just a selfie and a prompt!
 
-## 🚀 Quick Start (4 Simple Steps)
-
-### Step 0: Setup AWS CLI (REQUIRED FIRST!)
-```bash
-# Install AWS CLI and configure with your credentials
-aws configure
-
-# Verify it works
-aws sts get-caller-identity
-```
-**⚠️ This must work before proceeding!**
+## 🚀 Quick Start (3 Simple Steps)
 
 ### Step 1: Fork & Clone
 ```bash
@@ -183,18 +173,40 @@ SnapMagic is designed for temporary deployment at AWS events:
 ## 🚀 Deployment Commands
 
 ```bash
-# Development (default)
+# Deploy to development (default)
 npm run deploy
 
-# Staging
+# Deploy to specific environments
+npm run deploy:dev
 npm run deploy:staging
-
-# Production
 npm run deploy:prod
 
-# Teardown
+# Teardown (removes all AWS resources)
+npm run destroy
+
+# Environment-specific teardown
+npm run destroy:dev
+npm run destroy:staging
+npm run destroy:prod
+```
+
+## 🗑️ Clean Teardown
+
+**Remove all AWS resources instantly:**
+```bash
+cd infrastructure
 npm run destroy
 ```
+
+**What gets removed:**
+- ✅ AWS Amplify app
+- ✅ CloudFormation stack
+- ✅ All associated AWS resources
+
+**What stays safe:**
+- ✅ Your GitHub repository (untouched)
+- ✅ Your local code files
+- ✅ Git history and commits
 
 ## 🔒 Security
 
