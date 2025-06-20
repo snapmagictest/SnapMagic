@@ -270,14 +270,434 @@
             background: #e88900;
         }
 
-        .device-info {
+        /* Feature Navigation */
+        .feature-nav {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .nav-tab {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 1rem 1.5rem;
+            background: transparent;
+            border: none;
+            color: rgba(255, 255, 255, 0.7);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .nav-tab:hover {
+            color: white;
             background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
+        }
+
+        .nav-tab.active {
+            color: #FF9900;
+            border-bottom-color: #FF9900;
+        }
+
+        .nav-icon {
+            font-size: 1.2rem;
+        }
+
+        /* Feature Panels */
+        .feature-panels {
+            position: relative;
+        }
+
+        .feature-panel {
+            display: none;
+        }
+
+        .feature-panel.active {
+            display: block;
+        }
+
+        .panel-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            align-items: start;
+        }
+
+        /* Camera Section */
+        .camera-section {
+            position: relative;
+        }
+
+        .camera-container {
+            position: relative;
+            background: rgba(0, 0, 0, 0.3);
             border-radius: 12px;
-            padding: 1rem;
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            overflow: hidden;
+            aspect-ratio: 4/3;
+        }
+
+        .camera-video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .camera-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            text-align: center;
+        }
+
+        .camera-overlay.hidden {
+            display: none;
+        }
+
+        .overlay-content p {
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+        }
+
+        .camera-enable-btn {
+            padding: 0.75rem 1.5rem;
+            background: #FF9900;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.2s;
+        }
+
+        .camera-enable-btn:hover {
+            background: #e88900;
+        }
+
+        .camera-controls {
+            position: absolute;
+            bottom: 1rem;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .capture-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: #FF9900;
+            border: 3px solid white;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .capture-btn:hover {
+            background: #e88900;
+            transform: scale(1.1);
+        }
+
+        /* Image Preview */
+        .image-preview {
+            position: relative;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            overflow: hidden;
+            aspect-ratio: 4/3;
+        }
+
+        .image-preview.hidden {
+            display: none;
+        }
+
+        .image-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .image-actions {
+            position: absolute;
+            bottom: 1rem;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .action-btn {
+            padding: 0.5rem 1rem;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 6px;
+            cursor: pointer;
             font-size: 0.9rem;
-            line-height: 1.5;
+            transition: background-color 0.2s;
+        }
+
+        .action-btn:hover {
+            background: rgba(0, 0, 0, 0.9);
+        }
+
+        /* Content Section */
+        .content-section {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .prompt-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .prompt-container label {
+            font-weight: 500;
+            color: #FF9900;
+        }
+
+        .prompt-container textarea {
+            padding: 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 1rem;
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .prompt-container textarea::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .prompt-container textarea:focus {
+            outline: none;
+            border-color: #FF9900;
+            box-shadow: 0 0 0 2px rgba(255, 153, 0, 0.2);
+        }
+
+        .prompt-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .voice-btn {
+            padding: 0.75rem 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .voice-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .transform-btn {
+            padding: 0.75rem 1.5rem;
+            background: #FF9900;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background-color 0.2s;
+            flex: 1;
+        }
+
+        .transform-btn:hover:not(:disabled) {
+            background: #e88900;
+        }
+
+        .transform-btn:disabled {
+            background: rgba(255, 153, 0, 0.3);
+            cursor: not-allowed;
+        }
+
+        /* Processing Status */
+        .processing-status {
+            text-align: center;
+            padding: 2rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+        }
+
+        .processing-status.hidden {
+            display: none;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid #FF9900;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .processing-text {
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+            color: #FF9900;
+        }
+
+        .processing-subtext {
+            font-size: 0.9rem;
+            opacity: 0.7;
+        }
+
+        /* Result Container */
+        .result-container {
+            text-align: center;
+        }
+
+        .result-container.hidden {
+            display: none;
+        }
+
+        .result-image, .result-video {
+            width: 100%;
+            max-width: 400px;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+        }
+
+        .result-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+        }
+
+        .download-btn, .new-btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background-color 0.2s;
+        }
+
+        .download-btn {
+            background: #FF9900;
+            color: white;
+        }
+
+        .download-btn:hover {
+            background: #e88900;
+        }
+
+        .new-btn {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .new-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Gesture Recognition */
+        .gesture-feedback {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            right: 1rem;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 0.75rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .gesture-status {
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        /* Rating Section */
+        .rating-container {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .rating-container h3 {
+            color: #FF9900;
+            margin-bottom: 1rem;
+        }
+
+        .rating-container p {
+            margin-bottom: 2rem;
+            opacity: 0.9;
+        }
+
+        .rating-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .rating-btn {
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .rating-btn.positive {
+            background: #28a745;
+            color: white;
+        }
+
+        .rating-btn.positive:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+
+        .rating-btn.negative {
+            background: #dc3545;
+            color: white;
+        }
+
+        .rating-btn.negative:hover {
+            background: #c82333;
+            transform: translateY(-2px);
+        }
+
+        .rating-result {
+            background: rgba(40, 167, 69, 0.2);
+            border: 1px solid #28a745;
+            border-radius: 8px;
+            padding: 1rem;
+            color: #28a745;
+        }
+
+        .rating-result.hidden {
+            display: none;
         }
 
         /* Responsive Design */
@@ -293,13 +713,33 @@
                 gap: 0.5rem;
             }
             
-            .features-grid {
+            .panel-content {
                 grid-template-columns: 1fr;
                 gap: 1rem;
             }
             
-            .feature-card {
-                padding: 1.5rem;
+            .feature-nav {
+                flex-direction: column;
+                gap: 0;
+            }
+            
+            .nav-tab {
+                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+                border-radius: 0;
+            }
+            
+            .prompt-actions {
+                flex-direction: column;
+            }
+            
+            .rating-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .rating-btn {
+                width: 100%;
+                max-width: 300px;
             }
             
             .login-container {
@@ -320,6 +760,21 @@
             .login-header .logo {
                 font-size: 2.5rem;
             }
+            
+            .camera-container {
+                aspect-ratio: 1;
+            }
+        }
+
+        .device-info {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            font-size: 0.9rem;
+            line-height: 1.5;
+            margin-top: 2rem;
         }
     </style>
 </head>
@@ -377,26 +832,197 @@
         </header>
 
         <main class="app-main">
-            <div class="features-grid">
-                <div class="feature-card">
-                    <div class="feature-icon">🖼️</div>
-                    <h3>Transform Pictures</h3>
-                    <p>AI-powered image transformation using Amazon Bedrock Nova Canvas</p>
-                    <button id="transformPictureBtn" class="feature-btn">Start Transform</button>
-                </div>
+            <!-- Feature Navigation -->
+            <nav class="feature-nav">
+                <button class="nav-tab active" data-feature="pictures">
+                    <span class="nav-icon">🖼️</span>
+                    <span>Transform Pictures</span>
+                </button>
+                <button class="nav-tab" data-feature="videos">
+                    <span class="nav-icon">🎥</span>
+                    <span>Transform Videos</span>
+                </button>
+                <button class="nav-tab" data-feature="rating">
+                    <span class="nav-icon">👍</span>
+                    <span>Rate Experience</span>
+                </button>
+            </nav>
 
-                <div class="feature-card">
-                    <div class="feature-icon">🎥</div>
-                    <h3>Transform Video</h3>
-                    <p>Generate video reels from your photos using Nova Reel</p>
-                    <button id="transformVideoBtn" class="feature-btn">Create Video</button>
+            <!-- Feature Panels -->
+            <div class="feature-panels">
+                <!-- Transform Pictures Panel -->
+                <div class="feature-panel active" id="picturesPanel">
+                    <div class="panel-content">
+                        <div class="camera-section">
+                            <!-- Camera Component -->
+                            <div class="camera-container" id="pictureCamera">
+                                <video class="camera-video" id="pictureVideo" autoplay muted playsinline></video>
+                                <div class="camera-overlay" id="pictureOverlay">
+                                    <div class="overlay-content">
+                                        <p>📷 Camera access required</p>
+                                        <button class="camera-enable-btn" id="enablePictureCamera">Enable Camera</button>
+                                    </div>
+                                </div>
+                                <div class="camera-controls hidden" id="pictureControls">
+                                    <button class="capture-btn" id="capturePictureBtn">📸</button>
+                                </div>
+                            </div>
+                            
+                            <!-- Captured Image Preview -->
+                            <div class="image-preview hidden" id="picturePreview">
+                                <img id="capturedPicture" alt="Captured photo" />
+                                <div class="image-actions">
+                                    <button class="action-btn" id="retakePictureBtn">🔄 Retake</button>
+                                    <button class="action-btn" id="deletePictureBtn">🗑️ Delete</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="content-section">
+                            <!-- Prompt Input -->
+                            <div class="prompt-container">
+                                <label for="picturePrompt">Describe your transformation</label>
+                                <textarea 
+                                    id="picturePrompt" 
+                                    placeholder="e.g., Transform my picture into me sitting on a beach sipping a cold beverage on a hot summer's day"
+                                    rows="4"
+                                ></textarea>
+                                
+                                <div class="prompt-actions">
+                                    <button class="voice-btn" id="pictureVoiceBtn">
+                                        🎤 Voice Input
+                                    </button>
+                                    <button class="transform-btn" id="transformPictureBtn" disabled>
+                                        Transform Picture
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Processing Status -->
+                            <div class="processing-status hidden" id="pictureProcessing">
+                                <div class="spinner"></div>
+                                <div class="processing-text">Transforming your image...</div>
+                                <div class="processing-subtext">This may take up to 30 seconds</div>
+                            </div>
+                            
+                            <!-- Result Display -->
+                            <div class="result-container hidden" id="pictureResult">
+                                <img class="result-image" id="transformedPicture" alt="Transformed image" />
+                                <div class="result-actions">
+                                    <button class="download-btn" id="downloadPictureBtn">📥 Download</button>
+                                    <button class="new-btn" id="newPictureBtn">Create New</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-
-                <div class="feature-card">
-                    <div class="feature-icon">👍</div>
-                    <h3>Rate Experience</h3>
-                    <p>Share feedback through gesture recognition with Rekognition</p>
-                    <button id="rateExperienceBtn" class="feature-btn">Rate Now</button>
+                
+                <!-- Transform Videos Panel -->
+                <div class="feature-panel" id="videosPanel">
+                    <div class="panel-content">
+                        <div class="camera-section">
+                            <!-- Camera Component -->
+                            <div class="camera-container" id="videoCamera">
+                                <video class="camera-video" id="videoVideo" autoplay muted playsinline></video>
+                                <div class="camera-overlay" id="videoOverlay">
+                                    <div class="overlay-content">
+                                        <p>📷 Camera access required</p>
+                                        <button class="camera-enable-btn" id="enableVideoCamera">Enable Camera</button>
+                                    </div>
+                                </div>
+                                <div class="camera-controls hidden" id="videoControls">
+                                    <button class="capture-btn" id="captureVideoBtn">📸</button>
+                                </div>
+                            </div>
+                            
+                            <!-- Captured Image Preview -->
+                            <div class="image-preview hidden" id="videoPreview">
+                                <img id="capturedVideo" alt="Captured photo for video" />
+                                <div class="image-actions">
+                                    <button class="action-btn" id="retakeVideoBtn">🔄 Retake</button>
+                                    <button class="action-btn" id="deleteVideoBtn">🗑️ Delete</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="content-section">
+                            <!-- Prompt Input -->
+                            <div class="prompt-container">
+                                <label for="videoPrompt">Describe your video transformation</label>
+                                <textarea 
+                                    id="videoPrompt" 
+                                    placeholder="e.g., Create a video of me dancing on a tropical beach at sunset"
+                                    rows="4"
+                                ></textarea>
+                                
+                                <div class="prompt-actions">
+                                    <button class="voice-btn" id="videoVoiceBtn">
+                                        🎤 Voice Input
+                                    </button>
+                                    <button class="transform-btn" id="transformVideoBtn" disabled>
+                                        Create Video
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Processing Status -->
+                            <div class="processing-status hidden" id="videoProcessing">
+                                <div class="spinner"></div>
+                                <div class="processing-text">Creating your video...</div>
+                                <div class="processing-subtext">This may take up to 60 seconds</div>
+                            </div>
+                            
+                            <!-- Result Display -->
+                            <div class="result-container hidden" id="videoResult">
+                                <video class="result-video" id="transformedVideo" controls></video>
+                                <div class="result-actions">
+                                    <button class="download-btn" id="downloadVideoBtn">📥 Download</button>
+                                    <button class="new-btn" id="newVideoBtn">Create New</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Rate Experience Panel -->
+                <div class="feature-panel" id="ratingPanel">
+                    <div class="panel-content">
+                        <div class="camera-section">
+                            <!-- Camera Component for Gesture Recognition -->
+                            <div class="camera-container" id="ratingCamera">
+                                <video class="camera-video" id="ratingVideo" autoplay muted playsinline></video>
+                                <div class="camera-overlay" id="ratingOverlay">
+                                    <div class="overlay-content">
+                                        <p>📷 Camera access required for gesture recognition</p>
+                                        <button class="camera-enable-btn" id="enableRatingCamera">Enable Camera</button>
+                                    </div>
+                                </div>
+                                <div class="gesture-feedback" id="gestureFeedback">
+                                    <div class="gesture-status">Show thumbs up 👍 or thumbs down 👎</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="content-section">
+                            <div class="rating-container">
+                                <h3>Rate Your SnapMagic Experience</h3>
+                                <p>Use gestures or buttons to share your feedback</p>
+                                
+                                <div class="rating-buttons">
+                                    <button class="rating-btn positive" id="thumbsUpBtn">
+                                        👍 Great Experience
+                                    </button>
+                                    <button class="rating-btn negative" id="thumbsDownBtn">
+                                        👎 Needs Improvement
+                                    </button>
+                                </div>
+                                
+                                <div class="rating-result hidden" id="ratingResult">
+                                    <div class="rating-message">Thank you for your feedback!</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -407,11 +1033,14 @@
     </div>
 
     <script>
-        // SnapMagic Modern App - Single File Version
+        // SnapMagic Modern App with Camera Functionality
         class SnapMagicApp {
             constructor() {
                 this.currentUser = null;
                 this.isAuthenticated = false;
+                this.currentFeature = 'pictures';
+                this.streams = {};
+                this.capturedImages = {};
                 this.init();
             }
 
@@ -456,23 +1085,140 @@
                     logoutBtn.addEventListener('click', () => this.handleLogout());
                 }
 
-                // Feature buttons
-                const transformPictureBtn = document.getElementById('transformPictureBtn');
-                const transformVideoBtn = document.getElementById('transformVideoBtn');
-                const rateExperienceBtn = document.getElementById('rateExperienceBtn');
+                // Feature navigation
+                const navTabs = document.querySelectorAll('.nav-tab');
+                navTabs.forEach(tab => {
+                    tab.addEventListener('click', () => {
+                        const feature = tab.dataset.feature;
+                        this.switchFeature(feature);
+                    });
+                });
 
-                if (transformPictureBtn) {
-                    transformPictureBtn.addEventListener('click', () => this.handleTransformPicture());
-                }
-                if (transformVideoBtn) {
-                    transformVideoBtn.addEventListener('click', () => this.handleTransformVideo());
-                }
-                if (rateExperienceBtn) {
-                    rateExperienceBtn.addEventListener('click', () => this.handleRateExperience());
-                }
+                // Camera enable buttons
+                this.setupCameraButtons();
+                
+                // Capture buttons
+                this.setupCaptureButtons();
+                
+                // Transform buttons
+                this.setupTransformButtons();
+                
+                // Voice buttons
+                this.setupVoiceButtons();
+                
+                // Rating buttons
+                this.setupRatingButtons();
                 
                 // Window resize handler
                 window.addEventListener('resize', () => this.displayDeviceInfo());
+            }
+
+            setupCameraButtons() {
+                const cameraButtons = [
+                    'enablePictureCamera',
+                    'enableVideoCamera', 
+                    'enableRatingCamera'
+                ];
+                
+                cameraButtons.forEach(buttonId => {
+                    const button = document.getElementById(buttonId);
+                    if (button) {
+                        button.addEventListener('click', () => {
+                            const feature = buttonId.replace('enable', '').replace('Camera', '').toLowerCase();
+                            this.enableCamera(feature);
+                        });
+                    }
+                });
+            }
+
+            setupCaptureButtons() {
+                const captureButtons = [
+                    { id: 'capturePictureBtn', feature: 'picture' },
+                    { id: 'captureVideoBtn', feature: 'video' }
+                ];
+                
+                captureButtons.forEach(({ id, feature }) => {
+                    const button = document.getElementById(id);
+                    if (button) {
+                        button.addEventListener('click', () => this.captureImage(feature));
+                    }
+                });
+
+                // Retake and delete buttons
+                const actionButtons = [
+                    { id: 'retakePictureBtn', action: 'retake', feature: 'picture' },
+                    { id: 'deletePictureBtn', action: 'delete', feature: 'picture' },
+                    { id: 'retakeVideoBtn', action: 'retake', feature: 'video' },
+                    { id: 'deleteVideoBtn', action: 'delete', feature: 'video' }
+                ];
+
+                actionButtons.forEach(({ id, action, feature }) => {
+                    const button = document.getElementById(id);
+                    if (button) {
+                        button.addEventListener('click', () => {
+                            if (action === 'retake') {
+                                this.retakeImage(feature);
+                            } else {
+                                this.deleteImage(feature);
+                            }
+                        });
+                    }
+                });
+            }
+
+            setupTransformButtons() {
+                const transformButtons = [
+                    { id: 'transformPictureBtn', feature: 'picture' },
+                    { id: 'transformVideoBtn', feature: 'video' }
+                ];
+                
+                transformButtons.forEach(({ id, feature }) => {
+                    const button = document.getElementById(id);
+                    if (button) {
+                        button.addEventListener('click', () => this.handleTransform(feature));
+                    }
+                });
+
+                // New buttons
+                const newButtons = [
+                    { id: 'newPictureBtn', feature: 'picture' },
+                    { id: 'newVideoBtn', feature: 'video' }
+                ];
+
+                newButtons.forEach(({ id, feature }) => {
+                    const button = document.getElementById(id);
+                    if (button) {
+                        button.addEventListener('click', () => this.startNew(feature));
+                    }
+                });
+            }
+
+            setupVoiceButtons() {
+                const voiceButtons = [
+                    { id: 'pictureVoiceBtn', textareaId: 'picturePrompt' },
+                    { id: 'videoVoiceBtn', textareaId: 'videoPrompt' }
+                ];
+                
+                voiceButtons.forEach(({ id, textareaId }) => {
+                    const button = document.getElementById(id);
+                    if (button) {
+                        button.addEventListener('click', () => this.handleVoiceInput(textareaId));
+                    }
+                });
+            }
+
+            setupRatingButtons() {
+                const ratingButtons = [
+                    { id: 'thumbsUpBtn', rating: 'positive' },
+                    { id: 'thumbsDownBtn', rating: 'negative' }
+                ];
+                
+                ratingButtons.forEach(({ id, rating }) => {
+                    const button = document.getElementById(id);
+                    if (button) {
+                        button.addEventListener('click', () => this.handleRating(rating));
+                    }
+                });
             }
 
             async handleLogin(event) {
@@ -505,6 +1251,14 @@
 
             async handleLogout() {
                 try {
+                    // Stop all camera streams
+                    Object.values(this.streams).forEach(stream => {
+                        if (stream) {
+                            stream.getTracks().forEach(track => track.stop());
+                        }
+                    });
+                    this.streams = {};
+                    
                     this.currentUser = null;
                     this.isAuthenticated = false;
                     console.log('✅ Logout successful');
@@ -512,6 +1266,229 @@
                 } catch (error) {
                     console.error('❌ Logout failed:', error);
                 }
+            }
+
+            switchFeature(feature) {
+                // Update navigation
+                document.querySelectorAll('.nav-tab').forEach(tab => {
+                    tab.classList.remove('active');
+                });
+                document.querySelector(`[data-feature="${feature}"]`).classList.add('active');
+                
+                // Update panels
+                document.querySelectorAll('.feature-panel').forEach(panel => {
+                    panel.classList.remove('active');
+                });
+                document.getElementById(`${feature}Panel`).classList.add('active');
+                
+                this.currentFeature = feature;
+                console.log(`Switched to ${feature} feature`);
+            }
+
+            async enableCamera(feature) {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ 
+                        video: { 
+                            facingMode: 'user',
+                            width: { ideal: 640 },
+                            height: { ideal: 480 }
+                        } 
+                    });
+                    
+                    const video = document.getElementById(`${feature}Video`);
+                    const overlay = document.getElementById(`${feature}Overlay`);
+                    const controls = document.getElementById(`${feature}Controls`);
+                    
+                    if (video) {
+                        video.srcObject = stream;
+                        this.streams[feature] = stream;
+                        
+                        if (overlay) overlay.classList.add('hidden');
+                        if (controls) controls.classList.remove('hidden');
+                        
+                        console.log(`✅ Camera enabled for ${feature}`);
+                    }
+                } catch (error) {
+                    console.error(`❌ Camera access failed for ${feature}:`, error);
+                    alert('Camera access is required for this feature. Please allow camera permissions and try again.');
+                }
+            }
+
+            captureImage(feature) {
+                const video = document.getElementById(`${feature}Video`);
+                const canvas = document.createElement('canvas');
+                const context = canvas.getContext('2d');
+                
+                if (video && video.videoWidth > 0) {
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    context.drawImage(video, 0, 0);
+                    
+                    const imageData = canvas.toDataURL('image/jpeg', 0.8);
+                    this.capturedImages[feature] = imageData;
+                    
+                    // Show preview
+                    const preview = document.getElementById(`${feature}Preview`);
+                    const capturedImg = document.getElementById(`captured${feature.charAt(0).toUpperCase() + feature.slice(1)}`);
+                    const camera = document.getElementById(`${feature}Camera`);
+                    
+                    if (preview && capturedImg && camera) {
+                        capturedImg.src = imageData;
+                        camera.style.display = 'none';
+                        preview.classList.remove('hidden');
+                        
+                        // Enable transform button
+                        const transformBtn = document.getElementById(`transform${feature.charAt(0).toUpperCase() + feature.slice(1)}Btn`);
+                        if (transformBtn) {
+                            transformBtn.disabled = false;
+                        }
+                        
+                        console.log(`📸 Image captured for ${feature}`);
+                    }
+                }
+            }
+
+            retakeImage(feature) {
+                const preview = document.getElementById(`${feature}Preview`);
+                const camera = document.getElementById(`${feature}Camera`);
+                
+                if (preview && camera) {
+                    preview.classList.add('hidden');
+                    camera.style.display = 'block';
+                    
+                    // Disable transform button
+                    const transformBtn = document.getElementById(`transform${feature.charAt(0).toUpperCase() + feature.slice(1)}Btn`);
+                    if (transformBtn) {
+                        transformBtn.disabled = true;
+                    }
+                    
+                    delete this.capturedImages[feature];
+                    console.log(`🔄 Retaking image for ${feature}`);
+                }
+            }
+
+            deleteImage(feature) {
+                this.retakeImage(feature);
+                console.log(`🗑️ Image deleted for ${feature}`);
+            }
+
+            async handleTransform(feature) {
+                const promptId = `${feature}Prompt`;
+                const prompt = document.getElementById(promptId)?.value;
+                
+                if (!prompt.trim()) {
+                    alert('Please enter a description for your transformation.');
+                    return;
+                }
+                
+                if (!this.capturedImages[feature]) {
+                    alert('Please capture an image first.');
+                    return;
+                }
+                
+                // Show processing
+                const processing = document.getElementById(`${feature}Processing`);
+                if (processing) {
+                    processing.classList.remove('hidden');
+                }
+                
+                console.log(`🎨 Starting ${feature} transformation with prompt: "${prompt}"`);
+                
+                // Simulate processing (replace with real Bedrock API call)
+                setTimeout(() => {
+                    this.showTransformResult(feature);
+                }, 3000);
+            }
+
+            showTransformResult(feature) {
+                // Hide processing
+                const processing = document.getElementById(`${feature}Processing`);
+                if (processing) {
+                    processing.classList.add('hidden');
+                }
+                
+                // Show result
+                const result = document.getElementById(`${feature}Result`);
+                if (result) {
+                    result.classList.remove('hidden');
+                    
+                    if (feature === 'picture') {
+                        const resultImg = document.getElementById('transformedPicture');
+                        if (resultImg) {
+                            // For demo, show the captured image (replace with actual transformed result)
+                            resultImg.src = this.capturedImages[feature];
+                        }
+                    } else if (feature === 'video') {
+                        const resultVideo = document.getElementById('transformedVideo');
+                        if (resultVideo) {
+                            // For demo, create a placeholder video (replace with actual video result)
+                            resultVideo.src = 'data:video/mp4;base64,'; // Placeholder
+                        }
+                    }
+                }
+                
+                console.log(`✅ ${feature} transformation complete`);
+            }
+
+            startNew(feature) {
+                // Reset everything for this feature
+                const result = document.getElementById(`${feature}Result`);
+                const processing = document.getElementById(`${feature}Processing`);
+                const prompt = document.getElementById(`${feature}Prompt`);
+                
+                if (result) result.classList.add('hidden');
+                if (processing) processing.classList.add('hidden');
+                if (prompt) prompt.value = '';
+                
+                this.retakeImage(feature);
+                console.log(`🆕 Starting new ${feature} transformation`);
+            }
+
+            handleVoiceInput(textareaId) {
+                if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+                    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                    const recognition = new SpeechRecognition();
+                    
+                    recognition.continuous = false;
+                    recognition.interimResults = false;
+                    recognition.lang = 'en-US';
+                    
+                    recognition.onstart = () => {
+                        console.log('🎤 Voice recognition started');
+                    };
+                    
+                    recognition.onresult = (event) => {
+                        const transcript = event.results[0][0].transcript;
+                        const textarea = document.getElementById(textareaId);
+                        if (textarea) {
+                            textarea.value = transcript;
+                        }
+                        console.log('🎤 Voice input:', transcript);
+                    };
+                    
+                    recognition.onerror = (event) => {
+                        console.error('🎤 Voice recognition error:', event.error);
+                        alert('Voice recognition failed. Please try again or type your prompt.');
+                    };
+                    
+                    recognition.start();
+                } else {
+                    alert('Voice recognition is not supported in your browser. Please type your prompt.');
+                }
+            }
+
+            handleRating(rating) {
+                const result = document.getElementById('ratingResult');
+                if (result) {
+                    result.classList.remove('hidden');
+                    
+                    setTimeout(() => {
+                        result.classList.add('hidden');
+                    }, 3000);
+                }
+                
+                console.log(`👍 User rating: ${rating}`);
+                // TODO: Send rating to analytics backend
             }
 
             showLoginScreen() {
@@ -536,22 +1513,6 @@
                 }
             }
 
-            // Feature handlers (placeholders for now)
-            handleTransformPicture() {
-                console.log('🖼️ Transform Picture feature clicked');
-                alert('🖼️ Transform Picture feature coming soon!\n\nThis will use Amazon Bedrock Nova Canvas to transform your photos with AI.');
-            }
-
-            handleTransformVideo() {
-                console.log('🎥 Transform Video feature clicked');
-                alert('🎥 Transform Video feature coming soon!\n\nThis will use Amazon Bedrock Nova Reel to create video reels from your photos.');
-            }
-
-            handleRateExperience() {
-                console.log('👍 Rate Experience feature clicked');
-                alert('👍 Rate Experience feature coming soon!\n\nThis will use Amazon Rekognition to detect thumbs up/down gestures.');
-            }
-
             displayDeviceInfo() {
                 const deviceInfo = document.getElementById('deviceInfo');
                 if (!deviceInfo) return;
@@ -564,7 +1525,8 @@
                     <strong>Device:</strong> ${deviceType}<br>
                     <strong>Screen:</strong> ${screenWidth} × ${screenHeight}<br>
                     <strong>Status:</strong> ${this.isAuthenticated ? '🟢 Authenticated' : '🔴 Not Authenticated'}<br>
-                    <strong>Version:</strong> SnapMagic Gen 2 (Amplify Ready)
+                    <strong>Feature:</strong> ${this.currentFeature}<br>
+                    <strong>Version:</strong> SnapMagic Gen 2 (Camera Ready)
                 `;
             }
 
