@@ -155,6 +155,14 @@ aws sts get-caller-identity
 # Should return your AWS account information
 ```
 
+### Quick Prerequisites Check
+Run this script to verify everything is set up correctly:
+```bash
+# After cloning the repository
+cd SnapMagic
+./scripts/check-prerequisites.sh
+```
+
 ## 🔑 GitHub Token Setup
 
 1. Go to [GitHub Settings > Tokens](https://github.com/settings/tokens)

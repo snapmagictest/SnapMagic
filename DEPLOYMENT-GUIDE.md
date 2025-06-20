@@ -77,6 +77,14 @@ curl -s https://api.github.com/user -H "Authorization: token YOUR_GITHUB_TOKEN"
 
 All commands should work without errors before proceeding.
 
+**Quick Check Script:**
+```bash
+# After cloning the repository
+cd SnapMagic
+./scripts/check-prerequisites.sh
+```
+This script will verify all prerequisites automatically.
+
 ### Step 2: Fork & Clone Repository
 ```bash
 # 1. Go to https://github.com/snapmagictest/SnapMagic
