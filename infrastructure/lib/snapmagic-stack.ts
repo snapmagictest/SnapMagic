@@ -36,13 +36,13 @@ frontend:
       commands:
         - cd frontend
         - npm ci --only=production
-        - echo "Configuring API URL using Amplify environment variables..."
+        - echo "Configuring API URL using simple replacement..."
         - echo "SNAPMAGIC_API_URL is set to: $SNAPMAGIC_API_URL"
-        - echo "Before substitution:"
-        - grep -A 2 -B 2 "API_URL:" public/index.html || echo "Could not find API_URL in index.html"
-        - sed -i "s|\\\$\{SNAPMAGIC_API_URL\}|$SNAPMAGIC_API_URL|g" public/index.html
-        - echo "After substitution:"
-        - grep -A 2 -B 2 "API_URL:" public/index.html || echo "Could not find API_URL in index.html"
+        - echo "Before replacement:"
+        - grep -A 2 -B 2 "f70ollzwyg" public/index.html || echo "Could not find hardcoded URL"
+        - sed -i "s|https://f70ollzwyg.execute-api.us-east-1.amazonaws.com/dev/|$SNAPMAGIC_API_URL|g" public/index.html
+        - echo "After replacement:"
+        - grep -A 2 -B 2 "$SNAPMAGIC_API_URL" public/index.html || echo "Could not find replaced URL"
     build:
       commands:
         - echo "Frontend is already built - copying static files"
