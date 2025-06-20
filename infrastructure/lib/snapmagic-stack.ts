@@ -29,20 +29,22 @@ export class SnapMagicStack extends Stack {
 env:
   variables:
     # Environment variables are automatically available from CDK
-    API_URL: $SNAPMAGIC_API_URL
+    SNAPMAGIC_API_URL: $SNAPMAGIC_API_URL
 frontend:
   phases:
     preBuild:
       commands:
         - cd frontend
-        - npm ci --only=production
-        - echo "Configuring API URL using CDK Custom Resource approach..."
+        - echo "Configuring API URL..."
         - echo "SNAPMAGIC_API_URL is set to: $SNAPMAGIC_API_URL"
         - echo "Before replacement:"
-        - grep -A 2 -B 2 "PLACEHOLDER_API_URL" public/index.html || echo "Could not find placeholder"
+        - grep -n "PLACEHOLDER_API_URL" public/index.html || echo "Could not find placeholder"
         - sed -i "s|PLACEHOLDER_API_URL|$SNAPMAGIC_API_URL|g" public/index.html
         - echo "After replacement:"
-        - grep -A 2 -B 2 "$SNAPMAGIC_API_URL" public/index.html || echo "Could not find replaced URL"
+        - grep -n "$SNAPMAGIC_API_URL" public/index.html || echo "Could not find replaced URL"
+        - echo "Verifying replacement worked:"
+        - if grep -q "PLACEHOLDER_API_URL" public/index.html; then echo "ERROR: Placeholder still exists!"; exit 1; fi
+        - echo "✅ API URL replacement successful"
     build:
       commands:
         - echo "Frontend is already built - copying static files"
@@ -52,8 +54,7 @@ frontend:
     files:
       - '**/*'
   cache:
-    paths:
-      - frontend/node_modules/**/*`,
+    paths: []`,
       
       // Environment variables
       environmentVariables: [
@@ -205,7 +206,8 @@ def handler(event, context):
             environmentVariables={
                 'NODE_ENV': 'development',
                 'AMPLIFY_BUILD_TIMEOUT': '15',
-                'SNAPMAGIC_API_URL': api_url
+                'SNAPMAGIC_API_URL': api_url,
+                'AMPLIFY_DIFF_DEPLOY': 'false'
             }
         )
         
@@ -346,7 +348,11 @@ def send_response(event, context, status, data):
         },
         {
           name: 'SNAPMAGIC_API_URL',
-          value: api.url  // This is the key - CDK will resolve this to the actual API Gateway URL
+          value: api.url
+        },
+        {
+          name: 'AMPLIFY_DIFF_DEPLOY',
+          value: 'false'
         }
       ]
     });
