@@ -192,6 +192,12 @@
             gap: 1rem;
         }
 
+        .session-info {
+            font-size: 0.8rem;
+            opacity: 0.7;
+            color: #FF9900;
+        }
+
         .logout-btn {
             padding: 0.5rem 1rem;
             background: rgba(255, 255, 255, 0.1);
@@ -826,6 +832,7 @@
                 </div>
                 <div class="user-section">
                     <span id="userInfo">Welcome!</span>
+                    <span id="sessionInfo" class="session-info"></span>
                     <button id="logoutBtn" class="logout-btn">Sign Out</button>
                 </div>
             </div>
@@ -1047,10 +1054,18 @@
             async init() {
                 console.log('🎉 SnapMagic Gen 2 App Initializing...');
                 
+                // Check for existing session first
+                await this.checkExistingSession();
+                
                 // Hide loading screen after short delay
                 setTimeout(() => {
                     this.hideLoadingScreen();
-                    this.showLoginScreen();
+                    // Show appropriate screen based on auth status
+                    if (this.isAuthenticated) {
+                        this.showMainApp();
+                    } else {
+                        this.showLoginScreen();
+                    }
                 }, 2000);
                 
                 // Setup event listeners
@@ -1060,6 +1075,85 @@
                 this.displayDeviceInfo();
                 
                 console.log('✅ SnapMagic App Ready!');
+            }
+
+            async checkExistingSession() {
+                try {
+                    // Update loading text
+                    const loadingText = document.querySelector('.loading-text');
+                    if (loadingText) {
+                        loadingText.textContent = 'Checking existing session...';
+                    }
+                    
+                    // Check localStorage for existing session
+                    const sessionData = localStorage.getItem('snapmagic_session');
+                    if (sessionData) {
+                        const session = JSON.parse(sessionData);
+                        
+                        // Check if session is still valid (24 hours for events)
+                        const sessionAge = Date.now() - session.timestamp;
+                        const maxAge = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+                        
+                        if (sessionAge < maxAge) {
+                            // Session is valid, restore user
+                            this.currentUser = session.user;
+                            this.isAuthenticated = true;
+                            
+                            if (loadingText) {
+                                loadingText.textContent = `Welcome back, ${this.currentUser.username}!`;
+                            }
+                            
+                            console.log('✅ Session restored for user:', this.currentUser.username);
+                            return;
+                        } else {
+                            // Session expired, clear it
+                            localStorage.removeItem('snapmagic_session');
+                            console.log('ℹ️ Session expired, cleared');
+                            
+                            if (loadingText) {
+                                loadingText.textContent = 'Session expired, please login again...';
+                            }
+                        }
+                    } else {
+                        if (loadingText) {
+                            loadingText.textContent = 'Ready for login...';
+                        }
+                    }
+                } catch (error) {
+                    console.error('❌ Error checking session:', error);
+                    localStorage.removeItem('snapmagic_session');
+                    
+                    const loadingText = document.querySelector('.loading-text');
+                    if (loadingText) {
+                        loadingText.textContent = 'Session error, please login...';
+                    }
+                }
+                
+                // No valid session found
+                this.isAuthenticated = false;
+                this.currentUser = null;
+            }
+
+            saveSession() {
+                try {
+                    const sessionData = {
+                        user: this.currentUser,
+                        timestamp: Date.now()
+                    };
+                    localStorage.setItem('snapmagic_session', JSON.stringify(sessionData));
+                    console.log('💾 Session saved');
+                } catch (error) {
+                    console.error('❌ Error saving session:', error);
+                }
+            }
+
+            clearSession() {
+                try {
+                    localStorage.removeItem('snapmagic_session');
+                    console.log('🗑️ Session cleared');
+                } catch (error) {
+                    console.error('❌ Error clearing session:', error);
+                }
             }
 
             hideLoadingScreen() {
@@ -1234,10 +1328,16 @@
                     
                     // Simulate login for now (replace with real Amplify Auth later)
                     if (username && password) {
-                        this.currentUser = { username: username };
+                        this.currentUser = { 
+                            username: username,
+                            loginTime: new Date().toISOString()
+                        };
                         this.isAuthenticated = true;
                         
-                        console.log('✅ Login successful');
+                        // Save session to localStorage
+                        this.saveSession();
+                        
+                        console.log('✅ Login successful - Session saved');
                         this.showMainApp();
                     } else {
                         throw new Error('Please enter both username and password');
@@ -1259,9 +1359,12 @@
                     });
                     this.streams = {};
                     
+                    // Clear session
+                    this.clearSession();
+                    
                     this.currentUser = null;
                     this.isAuthenticated = false;
-                    console.log('✅ Logout successful');
+                    console.log('✅ Logout successful - Session cleared');
                     this.showLoginScreen();
                 } catch (error) {
                     console.error('❌ Logout failed:', error);
@@ -1508,8 +1611,20 @@
                 
                 // Update user info
                 const userInfo = document.getElementById('userInfo');
+                const sessionInfo = document.getElementById('sessionInfo');
+                
                 if (userInfo && this.currentUser) {
                     userInfo.textContent = `Welcome, ${this.currentUser.username}!`;
+                }
+                
+                if (sessionInfo) {
+                    const sessionData = localStorage.getItem('snapmagic_session');
+                    if (sessionData) {
+                        const session = JSON.parse(sessionData);
+                        const sessionAge = Math.floor((Date.now() - session.timestamp) / 1000 / 60); // minutes
+                        const hoursLeft = Math.floor((24 * 60 - sessionAge) / 60);
+                        sessionInfo.textContent = `Session: ${hoursLeft}h remaining`;
+                    }
                 }
             }
 
@@ -1521,12 +1636,22 @@
                 const screenHeight = window.innerHeight;
                 const deviceType = this.getDeviceType(screenWidth);
                 
+                let sessionInfo = '';
+                if (this.isAuthenticated && this.currentUser) {
+                    const sessionData = localStorage.getItem('snapmagic_session');
+                    if (sessionData) {
+                        const session = JSON.parse(sessionData);
+                        const sessionAge = Math.floor((Date.now() - session.timestamp) / 1000 / 60); // minutes
+                        sessionInfo = `<br><strong>Session:</strong> ${sessionAge}m ago (24h expiry)`;
+                    }
+                }
+                
                 deviceInfo.innerHTML = `
                     <strong>Device:</strong> ${deviceType}<br>
                     <strong>Screen:</strong> ${screenWidth} × ${screenHeight}<br>
                     <strong>Status:</strong> ${this.isAuthenticated ? '🟢 Authenticated' : '🔴 Not Authenticated'}<br>
                     <strong>Feature:</strong> ${this.currentFeature}<br>
-                    <strong>Version:</strong> SnapMagic Gen 2 (Camera Ready)
+                    <strong>Version:</strong> SnapMagic Gen 2 (Session Persistent)${sessionInfo}
                 `;
             }
 
