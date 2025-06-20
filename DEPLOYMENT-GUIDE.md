@@ -4,11 +4,80 @@
 
 ### Prerequisites
 - **Node.js 22.x+** installed
-- **AWS CLI** configured with your credentials
+- **AWS CLI** configured with your credentials ⚠️ **REQUIRED**
 - **AWS CDK** installed: `npm install -g aws-cdk`
 - **GitHub account** with a personal access token
 
-### Step 1: Fork & Clone Repository
+### Step 0: Setup AWS CLI (REQUIRED)
+Before you can deploy SnapMagic, you must configure AWS CLI:
+
+#### Install AWS CLI
+```bash
+# Windows: Download from https://aws.amazon.com/cli/
+# macOS: 
+brew install awscli
+
+# Linux:
+sudo apt-get update
+sudo apt-get install awscli
+```
+
+#### Configure AWS CLI
+```bash
+aws configure
+```
+
+You'll be prompted for:
+```
+AWS Access Key ID [None]: AKIAIOSFODNN7EXAMPLE
+AWS Secret Access Key [None]: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+Default region name [None]: us-east-1
+Default output format [None]: json
+```
+
+#### Get AWS Credentials
+1. **Go to AWS Console**: https://console.aws.amazon.com/
+2. **Click your username** (top right) → **Security credentials**
+3. **Scroll to Access keys** → **Create access key**
+4. **Copy the Access Key ID and Secret Access Key**
+5. **Use these in `aws configure`**
+
+#### Verify AWS CLI Works
+```bash
+aws sts get-caller-identity
+```
+
+Should return something like:
+```json
+{
+    "UserId": "AIDACKCEVSQ6C2EXAMPLE",
+    "Account": "123456789012",
+    "Arn": "arn:aws:iam::123456789012:user/YourUsername"
+}
+```
+
+**⚠️ If this doesn't work, CDK deployment will fail!**
+
+### Step 1: Verify Prerequisites
+Before starting, verify everything is installed and configured:
+
+```bash
+# Check Node.js version (should be 22.x+)
+node --version
+
+# Check AWS CLI is configured
+aws sts get-caller-identity
+
+# Check CDK is installed
+cdk --version
+
+# Check you can access GitHub
+curl -s https://api.github.com/user -H "Authorization: token YOUR_GITHUB_TOKEN"
+```
+
+All commands should work without errors before proceeding.
+
+### Step 2: Fork & Clone Repository
 ```bash
 # 1. Go to https://github.com/snapmagictest/SnapMagic
 # 2. Click the "Fork" button (top right)
@@ -17,18 +86,18 @@ git clone https://github.com/YOUR-USERNAME/SnapMagic.git
 cd SnapMagic
 ```
 
-### Step 2: Navigate to Infrastructure
+### Step 3: Navigate to Infrastructure
 ```bash
 cd infrastructure
 npm run setup
 ```
 
-### Step 3: Start Deployment
+### Step 4: Start Deployment
 ```bash
 npm run deploy
 ```
 
-### Step 4: Interactive Prompts
+### Step 5: Interactive Prompts
 The deployment will ask you for the following information:
 
 #### 📁 **GitHub Repository URL**
@@ -84,7 +153,7 @@ Enter: AWSRocks123!
 ```
 (this will be hidden with asterisks)
 
-### Step 5: Wait for Deployment
+### Step 6: Wait for Deployment
 ```
 ✅ Configuration collected successfully!
 🚀 Deploying SnapMagic to AWS...
@@ -98,7 +167,7 @@ Enter: AWSRocks123!
 🚀 Deploying to AWS...
 ```
 
-### Step 6: Get Your Live URL
+### Step 7: Get Your Live URL
 After deployment completes (5-10 minutes), you'll get:
 ```
 ✅ SnapMagic-dev
@@ -113,7 +182,7 @@ SnapMagic-dev.DeploymentStatus = Repository connected - build will start automat
 
 **Your SnapMagic is now live!** 🎉
 
-### Step 7: Share with Event Attendees
+### Step 8: Share with Event Attendees
 If you enabled password protection, share these credentials:
 - **URL**: https://main.d1a2b3c4d5e6f7.amplifyapp.com
 - **Username**: summit2024
@@ -170,6 +239,24 @@ Please provide the following information:
 
 ## 🆘 Troubleshooting
 
+### "Unable to locate credentials"
+```
+Error: Unable to locate credentials. You can configure credentials by running "aws configure".
+```
+**Solution:** You haven't configured AWS CLI. Run `aws configure` and provide your AWS credentials.
+
+### "The security token included in the request is invalid"
+```
+Error: The security token included in the request is invalid
+```
+**Solution:** Your AWS credentials are invalid or expired. Run `aws configure` with new credentials.
+
+### "Access Denied" errors
+```
+Error: User: arn:aws:iam::123456789012:user/username is not authorized to perform: amplify:CreateApp
+```
+**Solution:** Your AWS user needs permissions for Amplify, CloudFormation, and IAM. Contact your AWS administrator.
+
 ### "Invalid GitHub repository URL format"
 - Make sure URL includes `github.com` and has format: `https://github.com/username/repo`
 
@@ -181,6 +268,15 @@ Please provide the following information:
 ### "Password is required when basic auth is enabled"
 - If you choose password protection, you must provide a password
 - Password cannot be empty
+
+### CDK Bootstrap Required
+```
+Error: This stack uses assets, so the toolkit stack must be deployed to the environment
+```
+**Solution:** Run CDK bootstrap first:
+```bash
+cdk bootstrap
+```
 
 ## 🗑️ Cleanup After Event
 ```bash

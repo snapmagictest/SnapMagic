@@ -2,7 +2,17 @@
 
 AI-powered image and video transformation for AWS events. Create amazing content with just a selfie and a prompt!
 
-## 🚀 Quick Start (3 Simple Steps)
+## 🚀 Quick Start (4 Simple Steps)
+
+### Step 0: Setup AWS CLI (REQUIRED FIRST!)
+```bash
+# Install AWS CLI and configure with your credentials
+aws configure
+
+# Verify it works
+aws sts get-caller-identity
+```
+**⚠️ This must work before proceeding!**
 
 ### Step 1: Fork & Clone
 ```bash
@@ -112,6 +122,38 @@ npm run deploy
 - **AWS CLI** configured with your credentials
 - **AWS CDK** installed: `npm install -g aws-cdk`
 - **GitHub account** with a personal access token
+
+### AWS CLI Setup (Required)
+Before deploying SnapMagic, you must configure AWS CLI with your credentials:
+
+```bash
+# Install AWS CLI (if not already installed)
+# Windows: Download from https://aws.amazon.com/cli/
+# macOS: brew install awscli
+# Linux: sudo apt-get install awscli
+
+# Configure AWS CLI with your credentials
+aws configure
+
+# You'll be prompted for:
+# AWS Access Key ID: [Your access key]
+# AWS Secret Access Key: [Your secret key]
+# Default region name: us-east-1
+# Default output format: json
+```
+
+**How to get AWS credentials:**
+1. Go to [AWS Console](https://console.aws.amazon.com/)
+2. Click your username (top right) → **Security credentials**
+3. Scroll to **Access keys** → **Create access key**
+4. Copy the **Access Key ID** and **Secret Access Key**
+5. Use these in `aws configure`
+
+**Verify AWS CLI is working:**
+```bash
+aws sts get-caller-identity
+# Should return your AWS account information
+```
 
 ## 🔑 GitHub Token Setup
 
