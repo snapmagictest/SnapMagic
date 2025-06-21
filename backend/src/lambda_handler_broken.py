@@ -1,6 +1,8 @@
 """
-Rekognition-Based Action Figure Generation
-Analyze selfie with Rekognition → Create descriptive prompt → Generate action figure that looks like the person
+Hybrid Approach: Enhanced Rekognition + Image Influence for Better Resemblance
+- Detailed Rekognition analysis with nuanced characteristics
+- Image-to-image with very high similarity for face influence
+- Improved packaging layout (figure left, 3 items right)
 """
 
 import json
@@ -19,28 +21,30 @@ logger.setLevel(logging.INFO)
 bedrock_runtime = boto3.client('bedrock-runtime', region_name='us-east-1')
 rekognition = boto3.client('rekognition', region_name='us-east-1')
 
-def transform_image_rekognition_approach(prompt: str, image_base64: str, username: str) -> str:
+def transform_image_hybrid_approach(prompt: str, image_base64: str, username: str) -> str:
     """
-    Use Rekognition to analyze selfie, then create action figure that looks like the person
+    Hybrid approach: Enhanced Rekognition analysis + Image influence for better resemblance
     """
     try:
-        logger.info(f"🤖 Using Rekognition approach for user: {username}")
+        logger.info(f"🔄 Using hybrid approach for user: {username}")
         
         # Clean the base64 data
         if ',' in image_base64:
             image_base64 = image_base64.split(',')[1]
         
-        # Step 1: Deep analysis with Rekognition
-        person_analysis = analyze_person_with_rekognition(image_base64)
+        # Step 1: Enhanced Rekognition analysis with nuanced characteristics
+        detailed_analysis = enhanced_rekognition_analysis(image_base64)
         
-        # Step 2: Create descriptive prompt based on analysis (NO image input)
-        descriptive_prompt = create_descriptive_action_figure_prompt(person_analysis, username)
+        # Step 2: Create nuanced prompt with improved packaging layout
+        hybrid_prompt = create_hybrid_prompt(detailed_analysis, username)
         
-        # Step 3: Generate action figure from TEXT ONLY (no image input)
+        # Step 3: Use IMAGE_VARIATION with very high similarity + enhanced prompt
         payload = {
-            "taskType": "TEXT_IMAGE",  # Text-to-image generation
-            "textToImageParams": {
-                "text": descriptive_prompt
+            "taskType": "IMAGE_VARIATION",
+            "imageVariationParams": {
+                "text": hybrid_prompt,
+                "images": [image_base64],
+                "similarityStrength": 0.95  # High similarity for face influence
             },
             "imageGenerationConfig": {
                 "seed": random.randint(0, 858993460),
@@ -48,14 +52,14 @@ def transform_image_rekognition_approach(prompt: str, image_base64: str, usernam
                 "width": 768,
                 "height": 1024,
                 "numberOfImages": 1,
-                "cfgScale": 7.0
+                "cfgScale": 4.0  # Balanced for detail + resemblance
             }
         }
         
-        logger.info("🚀 Generating action figure from Rekognition description...")
-        logger.info(f"📝 Descriptive prompt: {descriptive_prompt}")
+        logger.info("🔄 Generating hybrid action figure with image influence...")
+        logger.info(f"📝 Hybrid prompt: {hybrid_prompt}")
         
-        # Call Nova Canvas with text-only generation
+        # Call Nova Canvas with image influence
         response = bedrock_runtime.invoke_model(
             modelId="amazon.nova-canvas-v1:0",
             body=json.dumps(payload)
@@ -66,173 +70,190 @@ def transform_image_rekognition_approach(prompt: str, image_base64: str, usernam
         
         if 'images' in response_body and len(response_body['images']) > 0:
             transformed_image = response_body['images'][0]
-            logger.info(f"✅ Rekognition-based action figure created: {len(transformed_image)} characters")
+            logger.info(f"✅ Hybrid action figure created: {len(transformed_image)} characters")
             return transformed_image
         else:
-            logger.error("❌ No images returned from Nova Canvas")
-            return "Error: No action figure returned from Rekognition approach"
+            logger.error("❌ No images returned from hybrid approach")
+            return "Error: No hybrid action figure returned"
             
     except Exception as e:
-        logger.error(f"❌ Rekognition approach error: {str(e)}")
-        return f"Error: Rekognition generation failed - {str(e)}"
+        logger.error(f"❌ Hybrid approach error: {str(e)}")
+        return f"Error: Hybrid generation failed - {str(e)}"
 
-def analyze_person_with_rekognition(image_base64: str) -> Dict[str, Any]:
+def enhanced_rekognition_analysis(image_base64: str) -> Dict[str, Any]:
     """
-    Deep analysis of person using Rekognition to create detailed description
+    Enhanced Rekognition analysis with nuanced characteristic detection
     """
     try:
         # Decode base64 image
         image_bytes = base64.b64decode(image_base64)
         
-        # Comprehensive Rekognition analysis
+        # Comprehensive analysis
         face_response = rekognition.detect_faces(
             Image={'Bytes': image_bytes},
             Attributes=['ALL']
         )
         
-        # Also detect labels for additional context
         labels_response = rekognition.detect_labels(
             Image={'Bytes': image_bytes},
-            MaxLabels=20,
-            MinConfidence=70
+            MaxLabels=30,
+            MinConfidence=60
         )
         
-        analysis = {
-            'faces': face_response.get('FaceDetails', []),
-            'labels': labels_response.get('Labels', [])
-        }
+        # Extract nuanced characteristics
+        analysis = extract_nuanced_characteristics(face_response, labels_response)
         
-        # Extract detailed characteristics
-        characteristics = extract_detailed_characteristics(analysis)
-        
-        logger.info(f"🔍 Rekognition analysis: {characteristics}")
-        return characteristics
+        logger.info(f"🔍 Enhanced analysis: {analysis}")
+        return analysis
         
     except Exception as e:
-        logger.error(f"Rekognition analysis failed: {e}")
-        return get_default_characteristics()
+        logger.error(f"Enhanced Rekognition analysis failed: {e}")
+        return get_default_analysis()
 
-def extract_detailed_characteristics(analysis: Dict[str, Any]) -> Dict[str, Any]:
+def extract_nuanced_characteristics(face_response: Dict, labels_response: Dict) -> Dict[str, Any]:
     """
-    Extract detailed visual characteristics from Rekognition analysis
+    Extract nuanced characteristics with confidence-based decisions
     """
     characteristics = {
         'gender': 'person',
         'age_description': 'adult',
-        'hair_description': 'hair',
-        'facial_features': [],
+        'facial_hair': 'clean-shaven',
         'accessories': [],
-        'clothing_context': [],
-        'overall_appearance': 'professional'
+        'build': 'average build',
+        'complexion': 'medium complexion',
+        'expression': 'neutral',
+        'hair_style': 'hair'
     }
     
-    # Analyze face details
-    if analysis['faces']:
-        face = analysis['faces'][0]
+    # Analyze face details with confidence thresholds
+    if face_response.get('FaceDetails'):
+        face = face_response['FaceDetails'][0]
         
-        # Gender
+        # Gender (high confidence only)
         gender_info = face.get('Gender', {})
-        if gender_info.get('Confidence', 0) > 80:
+        if gender_info.get('Confidence', 0) > 90:
             characteristics['gender'] = gender_info.get('Value', 'person').lower()
         
         # Age range
         age_range = face.get('AgeRange', {})
         if age_range:
             low = age_range.get('Low', 25)
-            high = age_range.get('High', 35)
             if low < 25:
                 characteristics['age_description'] = 'young adult'
-            elif low > 45:
+            elif low > 50:
                 characteristics['age_description'] = 'mature adult'
             else:
                 characteristics['age_description'] = 'adult'
         
-        # Facial features
-        if face.get('Beard', {}).get('Value', False):
-            characteristics['facial_features'].append('beard')
-        if face.get('Mustache', {}).get('Value', False):
-            characteristics['facial_features'].append('mustache')
-        if face.get('Eyeglasses', {}).get('Value', False):
+        # Facial hair (nuanced detection)
+        beard_info = face.get('Beard', {})
+        mustache_info = face.get('Mustache', {})
+        
+        if beard_info.get('Confidence', 0) > 85 and beard_info.get('Value', False):
+            characteristics['facial_hair'] = 'beard'
+        elif mustache_info.get('Confidence', 0) > 85 and mustache_info.get('Value', False):
+            characteristics['facial_hair'] = 'mustache'
+        elif beard_info.get('Confidence', 0) > 70 and beard_info.get('Value', False):
+            characteristics['facial_hair'] = 'light facial hair'
+        else:
+            characteristics['facial_hair'] = 'clean-shaven'
+        
+        # Accessories (high confidence only)
+        if face.get('Eyeglasses', {}).get('Confidence', 0) > 85:
             characteristics['accessories'].append('glasses')
-        if face.get('Sunglasses', {}).get('Value', False):
+        if face.get('Sunglasses', {}).get('Confidence', 0) > 85:
             characteristics['accessories'].append('sunglasses')
         
-        # Emotions for expression
+        # Expression
         emotions = face.get('Emotions', [])
         if emotions:
             dominant_emotion = max(emotions, key=lambda x: x.get('Confidence', 0))
-            if dominant_emotion.get('Type') == 'HAPPY':
-                characteristics['expression'] = 'smiling'
-            else:
-                characteristics['expression'] = 'neutral'
+            if dominant_emotion.get('Confidence', 0) > 70:
+                if dominant_emotion.get('Type') == 'HAPPY':
+                    characteristics['expression'] = 'smiling'
+                elif dominant_emotion.get('Type') == 'SURPRISED':
+                    characteristics['expression'] = 'surprised'
     
     # Analyze labels for additional context
-    for label in analysis['labels']:
+    for label in labels_response.get('Labels', []):
         label_name = label.get('Name', '').lower()
         confidence = label.get('Confidence', 0)
         
-        if confidence > 80:
-            # Hair-related
-            if any(hair_word in label_name for hair_word in ['hair', 'blonde', 'brunette', 'black hair', 'brown hair']):
-                characteristics['hair_description'] = label_name
+        if confidence > 75:
+            # Build/body type (respectful detection)
+            if 'person' in label_name and confidence > 80:
+                # Look for additional context without being offensive
+                if any(build_word in label_name for build_word in ['athletic', 'fit']):
+                    characteristics['build'] = 'athletic build'
+                elif any(build_word in label_name for build_word in ['slim', 'lean']):
+                    characteristics['build'] = 'lean build'
+                # Default to average build for respectful representation
             
-            # Clothing context
-            if any(clothing_word in label_name for clothing_word in ['shirt', 'suit', 'formal', 'casual', 'clothing']):
-                characteristics['clothing_context'].append(label_name)
+            # Hair context
+            if any(hair_word in label_name for hair_word in ['hair', 'hairstyle']):
+                characteristics['hair_style'] = label_name
     
     return characteristics
 
-def create_descriptive_action_figure_prompt(characteristics: Dict[str, Any], username: str) -> str:
+def create_hybrid_prompt(analysis: Dict[str, Any], username: str) -> str:
     """
-    Create detailed text prompt for action figure generation based on Rekognition analysis
+    Create hybrid prompt with FULL BLISTER PACKAGING and head-to-toe figure view
     """
     
-    # Build person description
+    # Build nuanced person description
     person_parts = []
     
     # Basic description
-    gender = characteristics.get('gender', 'person')
-    age_desc = characteristics.get('age_description', 'adult')
+    gender = analysis.get('gender', 'person')
+    age_desc = analysis.get('age_description', 'adult')
     person_parts.append(f"{age_desc} {gender}")
     
-    # Facial features
-    facial_features = characteristics.get('facial_features', [])
-    if facial_features:
-        person_parts.extend(facial_features)
+    # Build description (respectful)
+    build = analysis.get('build', 'average build')
+    person_parts.append(f"with {build}")
+    
+    # Complexion (general)
+    complexion = analysis.get('complexion', 'natural complexion')
+    person_parts.append(f"and {complexion}")
+    
+    # Facial hair (nuanced)
+    facial_hair = analysis.get('facial_hair', 'clean-shaven')
+    if facial_hair != 'clean-shaven':
+        person_parts.append(f"with {facial_hair}")
     
     # Accessories
-    accessories = characteristics.get('accessories', [])
+    accessories = analysis.get('accessories', [])
     if accessories:
         person_parts.extend([f"wearing {acc}" for acc in accessories])
     
     # Expression
-    expression = characteristics.get('expression', 'neutral')
+    expression = analysis.get('expression', 'neutral')
     person_parts.append(f"with {expression} expression")
     
     person_description = ", ".join(person_parts)
     
-    # Create comprehensive action figure prompt
-    action_figure_prompt = f"""Professional action figure of {person_description} in modern business attire, standing in clear plastic blister packaging on bright orange cardboard backing. Large '{username}' text at top in beige color. Tech accessories arranged around figure: DSLR camera, tablet, smartphone on left side; game controller, small robot, bicycle on right side; four pairs of sneakers at bottom. Product photography lighting, detailed plastic figure, commercial toy packaging style, portrait orientation."""
+    # Create FULL BLISTER PACK prompt with head-to-toe figure
+    hybrid_prompt = f"""Professional action figure of {person_description} in modern business attire, full body head-to-toe view, standing upright in clear plastic blister packaging on bright orange cardboard backing card. Large '{username}' text at top center in beige color. Figure positioned on left side. Right side has 3 tech accessories: smartphone, tablet, DSLR camera. Clear molded blister pack holds figure and accessories. Product photography lighting, detailed plastic action figure, commercial toy packaging style with hanging hook."""
     
-    return action_figure_prompt
+    return hybrid_prompt
 
-def get_default_characteristics() -> Dict[str, Any]:
-    """Default characteristics when analysis fails"""
+def get_default_analysis() -> Dict[str, Any]:
+    """Default analysis when detection fails"""
     return {
         'gender': 'person',
         'age_description': 'adult',
-        'hair_description': 'hair',
-        'facial_features': [],
+        'facial_hair': 'clean-shaven',
         'accessories': [],
-        'clothing_context': [],
-        'overall_appearance': 'professional',
-        'expression': 'neutral'
+        'build': 'average build',
+        'complexion': 'natural complexion',
+        'expression': 'neutral',
+        'hair_style': 'hair'
     }
 
-# Lambda handler would use this function instead of the image variation approach
+# Lambda handler would use this hybrid approach
 def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     """
-    Lambda handler using Rekognition approach
+    Lambda handler using hybrid approach
     """
     try:
         logger.info(f"Received Lambda event: {json.dumps(event, default=str)}")
@@ -258,7 +279,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         # Handle health check (no authentication required)
         if path == '/health' or path == '/api/health':
-            return create_success_response({'status': 'healthy', 'service': 'snapmagic-rekognition'})
+            return create_success_response({'status': 'healthy', 'service': 'snapmagic-hybrid'})
         
         # All other endpoints require JWT authentication
         token = auth.extract_token_from_headers(headers)
@@ -270,34 +291,34 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         if not is_valid:
             return auth.create_auth_response(False, "Invalid or expired token", status_code=401)
         
-        # Process authenticated AI requests with Rekognition approach
-        return handle_ai_request_rekognition(body, payload)
+        # Process authenticated AI requests with hybrid approach
+        return handle_ai_request_hybrid(body, payload)
         
     except Exception as e:
         logger.error(f"Lambda handler error: {str(e)}")
         return create_error_response(f"Processing failed: {str(e)}", 500)
 
-def handle_ai_request_rekognition(body: Dict[str, Any], token_payload: Dict[str, Any]) -> Dict[str, Any]:
-    """Handle authenticated AI requests with Rekognition approach"""
+def handle_ai_request_hybrid(body: Dict[str, Any], token_payload: Dict[str, Any]) -> Dict[str, Any]:
+    """Handle authenticated AI requests with hybrid approach"""
     try:
         # Extract request parameters
         action = body.get('action', '')
         prompt = body.get('prompt', '')
         image_base64 = body.get('image_base64', '')
         
-        # Handle image transformation with Rekognition approach
+        # Handle image transformation with hybrid approach
         if action == 'transform_image':
             if not image_base64:
                 return create_error_response("Missing image data", 400)
             
-            logger.info(f"🤖 Processing Rekognition-based action figure")
-            result = transform_image_rekognition_approach(prompt, image_base64, token_payload.get('username'))
+            logger.info(f"🔄 Processing hybrid action figure")
+            result = transform_image_hybrid_approach(prompt, image_base64, token_payload.get('username'))
             
             return create_success_response({
                 'result': result,
                 'user': token_payload.get('username'),
                 'session': token_payload.get('session_id'),
-                'message': 'Rekognition-based action figure created - looks like you!'
+                'message': 'Hybrid action figure created - enhanced resemblance with improved packaging!'
             })
             
         else:
