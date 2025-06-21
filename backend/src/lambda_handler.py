@@ -43,7 +43,7 @@ def transform_image_rekognition_approach(prompt: str, image_base64: str, usernam
             "imageVariationParams": {
                 "text": descriptive_prompt,
                 "images": [image_base64],
-                "similarityStrength": 0.85  # High similarity to preserve your look
+                "similarityStrength": 0.7  # Lower for more transformation, higher for more resemblance
             },
             "imageGenerationConfig": {
                 "seed": random.randint(0, 2147483647),
@@ -258,11 +258,11 @@ def create_descriptive_action_figure_prompt(characteristics: Dict[str, Any], use
     else:
         attire = 'professional business clothing'
     
-    # CONSISTENT PACKAGING - same for everyone, only figure changes
-    consistent_prompt = f"""Transform this person into a 3D action figure of {person_description} dressed in {attire}. Place figure in transparent blister packaging on bright orange cardboard backing. Package has white text "{username}" at top and "AWS Professional" below. Right side shows camera, laptop, phone accessories. Minimalist professional toy packaging design with AWS logo top right corner. Keep packaging colors and layout identical, only change the figure to match the person."""
+    # CLEAR TRANSFORMATION INSTRUCTION - shortened for Titan limit
+    transformation_prompt = f"""Transform this photo into 3D action figure toy of {person_description} in {attire}. Place in transparent blister packaging on orange backing. White text "{username}" and "AWS Professional". Right side: camera, laptop, phone. AWS logo top right. Convert person into collectible action figure style, keep recognizable features."""
     
-    logger.info(f"📝 Generated consistent prompt: {consistent_prompt}")
-    return consistent_prompt
+    logger.info(f"📝 Generated transformation prompt: {transformation_prompt}")
+    return transformation_prompt
 
 def get_default_characteristics() -> Dict[str, Any]:
     """Default characteristics when analysis fails"""
