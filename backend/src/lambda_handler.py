@@ -173,15 +173,36 @@ def extract_detailed_characteristics(analysis: Dict[str, Any]) -> Dict[str, Any]
             else:
                 characteristics['expression'] = 'neutral'
         
-        # Complexion/Ethnicity (if available in Rekognition response)
-        # Note: Rekognition may provide ethnicity estimates in some regions
-        ethnicity = face.get('Ethnicity', [])
-        if ethnicity:
-            # Use the highest confidence ethnicity
-            top_ethnicity = max(ethnicity, key=lambda x: x.get('Confidence', 0))
-            if top_ethnicity.get('Confidence', 0) > 70:
-                ethnicity_value = top_ethnicity.get('Value', '').lower()
-                characteristics['complexion'] = ethnicity_value
+        # Complexion/Skin tone detection from labels and face analysis
+        # Check labels for skin tone indicators
+        skin_tone_detected = False
+        for label in analysis['labels']:
+            label_name = label.get('Name', '').lower()
+            confidence = label.get('Confidence', 0)
+            
+            if confidence > 70:
+                # Look for skin tone indicators in labels
+                if any(tone in label_name for tone in ['dark', 'brown', 'black', 'african', 'indian', 'asian', 'latino', 'hispanic']):
+                    characteristics['complexion'] = 'dark'
+                    skin_tone_detected = True
+                    break
+                elif any(tone in label_name for tone in ['light', 'fair', 'pale', 'caucasian', 'white']):
+                    characteristics['complexion'] = 'light'
+                    skin_tone_detected = True
+                    break
+                elif any(tone in label_name for tone in ['medium', 'olive', 'tan', 'brown']):
+                    characteristics['complexion'] = 'medium'
+                    skin_tone_detected = True
+                    break
+        
+        # If no skin tone detected from labels, try ethnicity from face analysis
+        if not skin_tone_detected:
+            ethnicity = face.get('Ethnicity', [])
+            if ethnicity:
+                top_ethnicity = max(ethnicity, key=lambda x: x.get('Confidence', 0))
+                if top_ethnicity.get('Confidence', 0) > 70:
+                    ethnicity_value = top_ethnicity.get('Value', '').lower()
+                    characteristics['complexion'] = ethnicity_value
     
     # Analyze labels for hair color and additional context
     for label in analysis['labels']:
@@ -217,10 +238,13 @@ def create_descriptive_action_figure_prompt(characteristics: Dict[str, Any], use
     if age_desc and age_desc != 'adult':
         description_parts.append(age_desc)
     
-    # Complexion (IMPORTANT - only if detected)
-    complexion = characteristics.get('complexion', '')
+    # Complexion (CRITICAL - must be included for accurate representation)
+    complexion = characteristics.get('complexion', 'natural')
     if complexion and complexion != 'natural':
-        description_parts.append(f"{complexion} complexion")
+        description_parts.append(f"{complexion} skin tone")
+    else:
+        # If no specific complexion detected, still specify to avoid default white
+        description_parts.append("natural skin tone")
     
     # Hair color (only if detected)
     hair_color = characteristics.get('hair_color')
@@ -256,8 +280,8 @@ def create_descriptive_action_figure_prompt(characteristics: Dict[str, Any], use
     else:
         attire = 'professional business clothing'
     
-    # DETAILED ACTION FIGURE DESCRIPTION - back to text-to-image with rich details
-    detailed_prompt = f"""3D collectible action figure toy of {person_description} dressed in {attire}, standing in transparent blister packaging on bright orange cardboard backing. Professional toy packaging with white text "{username}" at top and "AWS Professional" below. Right side shows camera, laptop, phone accessories. AWS logo top right corner. Realistic action figure with detailed sculpting, professional toy photography lighting."""
+    # DETAILED ACTION FIGURE DESCRIPTION - shortened but emphasizes actual appearance
+    detailed_prompt = f"""3D action figure toy of {person_description} in {attire}, in transparent blister packaging on orange backing. Figure accurately represents this person's appearance and skin tone. White text "{username}" and "AWS Professional". Right side: camera, laptop, phone. AWS logo top right. Realistic sculpting matching described features."""
     
     logger.info(f"📝 Generated detailed prompt: {detailed_prompt}")
     return detailed_prompt
