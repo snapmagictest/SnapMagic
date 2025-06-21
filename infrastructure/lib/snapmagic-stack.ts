@@ -111,6 +111,7 @@ frontend:
               resources: [
                 `arn:aws:bedrock:${this.region}::foundation-model/amazon.nova-canvas-v1:0`,
                 `arn:aws:bedrock:${this.region}::foundation-model/amazon.nova-reel-v1:0`,
+                `arn:aws:bedrock:${this.region}::foundation-model/amazon.titan-image-generator-v2:0`,
                 `arn:aws:bedrock:${this.region}::foundation-model/us.anthropic.claude-3-7-sonnet-20250219-v1:0`
               ]
             })

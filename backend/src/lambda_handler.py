@@ -21,10 +21,10 @@ rekognition = boto3.client('rekognition', region_name='us-east-1')
 
 def transform_image_rekognition_approach(prompt: str, image_base64: str, username: str) -> str:
     """
-    Use Rekognition to analyze selfie, then create action figure that looks like the person
+    Use Rekognition to analyze selfie, then create action figure using Titan Image Generator G1 V2
     """
     try:
-        logger.info(f"🤖 Using Rekognition approach for user: {username}")
+        logger.info(f"🤖 Using Rekognition + Titan Image Generator G1 V2 for user: {username}")
         
         # Clean the base64 data
         if ',' in image_base64:
@@ -33,31 +33,31 @@ def transform_image_rekognition_approach(prompt: str, image_base64: str, usernam
         # Step 1: Deep analysis with Rekognition
         person_analysis = analyze_person_with_rekognition(image_base64)
         
-        # Step 2: Create descriptive prompt based on analysis (NO image input)
+        # Step 2: Create descriptive prompt based on analysis
         descriptive_prompt = create_descriptive_action_figure_prompt(person_analysis, username)
         
-        # Step 3: Generate action figure from TEXT ONLY (no image input)
+        # Step 3: Generate action figure using Titan Image Generator G1 V2
         payload = {
-            "taskType": "TEXT_IMAGE",  # Text-to-image generation
+            "taskType": "TEXT_IMAGE",
             "textToImageParams": {
                 "text": descriptive_prompt
             },
             "imageGenerationConfig": {
-                "seed": random.randint(0, 858993460),
+                "seed": random.randint(0, 2147483647),
                 "quality": "premium",
-                "width": 768,
-                "height": 1024,
+                "width": 1024,  # Titan G1 V2 supported dimensions
+                "height": 1024, # Square format for Titan
                 "numberOfImages": 1,
-                "cfgScale": 7.0
+                "cfgScale": 8.0  # Titan works well with higher CFG
             }
         }
         
-        logger.info("🚀 Generating action figure from Rekognition description...")
+        logger.info("🚀 Generating action figure with Titan Image Generator G1 V2...")
         logger.info(f"📝 Descriptive prompt: {descriptive_prompt}")
         
-        # Call Nova Canvas with text-only generation
+        # Call Titan Image Generator G1 V2
         response = bedrock_runtime.invoke_model(
-            modelId="amazon.nova-canvas-v1:0",
+            modelId="amazon.titan-image-generator-v2:0",
             body=json.dumps(payload)
         )
         
@@ -66,15 +66,15 @@ def transform_image_rekognition_approach(prompt: str, image_base64: str, usernam
         
         if 'images' in response_body and len(response_body['images']) > 0:
             transformed_image = response_body['images'][0]
-            logger.info(f"✅ Rekognition-based action figure created: {len(transformed_image)} characters")
+            logger.info(f"✅ Titan-generated action figure created: {len(transformed_image)} characters")
             return transformed_image
         else:
-            logger.error("❌ No images returned from Nova Canvas")
-            return "Error: No action figure returned from Rekognition approach"
+            logger.error("❌ No images returned from Titan Image Generator")
+            return "Error: No action figure returned from Titan"
             
     except Exception as e:
-        logger.error(f"❌ Rekognition approach error: {str(e)}")
-        return f"Error: Rekognition generation failed - {str(e)}"
+        logger.error(f"❌ Titan generation error: {str(e)}")
+        return f"Error: Titan generation failed - {str(e)}"
 
 def analyze_person_with_rekognition(image_base64: str) -> Dict[str, Any]:
     """
@@ -184,7 +184,8 @@ def extract_detailed_characteristics(analysis: Dict[str, Any]) -> Dict[str, Any]
 
 def create_descriptive_action_figure_prompt(characteristics: Dict[str, Any], username: str) -> str:
     """
-    Create detailed text prompt for action figure generation based on Rekognition analysis
+    Create detailed text prompt for figure generation based on Rekognition analysis
+    Optimized for Titan G1 V2 content filters
     """
     
     # Build person description
@@ -211,10 +212,10 @@ def create_descriptive_action_figure_prompt(characteristics: Dict[str, Any], use
     
     person_description = ", ".join(person_parts)
     
-    # Create comprehensive action figure prompt
-    action_figure_prompt = f"""Professional action figure of {person_description} in modern business attire, standing in clear plastic blister packaging on bright orange cardboard backing. Large '{username}' text at top in beige color. Tech accessories arranged around figure: DSLR camera, tablet, smartphone on left side; game controller, small robot, bicycle on right side; four pairs of sneakers at bottom. Product photography lighting, detailed plastic figure, commercial toy packaging style, portrait orientation."""
+    # Create Titan-friendly prompt (avoid "action figure" terminology)
+    titan_prompt = f"""Professional collectible figurine of {person_description} in modern business attire, standing in clear plastic packaging on bright orange cardboard backing. Large '{username}' text at top in beige color. Tech accessories around figure: camera, tablet, smartphone. Product photography lighting, detailed collectible figure, commercial packaging style, square format."""
     
-    return action_figure_prompt
+    return titan_prompt
 
 def get_default_characteristics() -> Dict[str, Any]:
     """Default characteristics when analysis fails"""
@@ -258,7 +259,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         # Handle health check (no authentication required)
         if path == '/health' or path == '/api/health':
-            return create_success_response({'status': 'healthy', 'service': 'snapmagic-rekognition'})
+            return create_success_response({'status': 'healthy', 'service': 'snapmagic-titan-g1-v2'})
         
         # All other endpoints require JWT authentication
         token = auth.extract_token_from_headers(headers)
@@ -297,7 +298,7 @@ def handle_ai_request_rekognition(body: Dict[str, Any], token_payload: Dict[str,
                 'result': result,
                 'user': token_payload.get('username'),
                 'session': token_payload.get('session_id'),
-                'message': 'Rekognition-based action figure created - looks like you!'
+                'message': 'Action figure created with Titan Image Generator G1 V2 - looks like you!'
             })
             
         else:
