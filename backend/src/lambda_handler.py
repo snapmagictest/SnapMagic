@@ -25,7 +25,7 @@ def transform_image_rekognition_approach(prompt: str, image_base64: str, usernam
     Use Rekognition to analyze selfie, then create action figure using Titan Image Generator G1 V2
     """
     try:
-        logger.info(f"🤖 Using IMAGE_VARIATION + consistent packaging for user: {username}")
+        logger.info(f"🔄 Back to TEXT_IMAGE approach with detailed Rekognition for user: {username}")
         
         # Clean the base64 data
         if ',' in image_base64:
@@ -37,13 +37,11 @@ def transform_image_rekognition_approach(prompt: str, image_base64: str, usernam
         # Step 2: Create descriptive prompt based on analysis
         descriptive_prompt = create_descriptive_action_figure_prompt(person_analysis, username)
         
-        # Step 3: Generate action figure using IMAGE_VARIATION (image-to-image)
+        # Use TEXT_IMAGE with detailed Rekognition description for better results
         payload = {
-            "taskType": "IMAGE_VARIATION",
-            "imageVariationParams": {
-                "text": descriptive_prompt,
-                "images": [image_base64],
-                "similarityStrength": 0.7  # Lower for more transformation, higher for more resemblance
+            "taskType": "TEXT_IMAGE",
+            "textToImageParams": {
+                "text": descriptive_prompt
             },
             "imageGenerationConfig": {
                 "seed": random.randint(0, 2147483647),
@@ -51,12 +49,12 @@ def transform_image_rekognition_approach(prompt: str, image_base64: str, usernam
                 "width": 1024,
                 "height": 1024,
                 "numberOfImages": 1,
-                "cfgScale": 6.0  # Balanced for image-to-image
+                "cfgScale": 8.0  # Higher CFG for text-to-image
             }
         }
         
-        logger.info("🎯 Generating with IMAGE_VARIATION (image-to-image) + consistent packaging...")
-        logger.info(f"📝 Consistent packaging prompt: {descriptive_prompt}")
+        logger.info("🔄 Back to TEXT_IMAGE with detailed Rekognition description...")
+        logger.info(f"📝 Detailed action figure prompt: {descriptive_prompt}")
         
         # Call Titan Image Generator G1 V2
         response = bedrock_runtime.invoke_model(
@@ -258,11 +256,11 @@ def create_descriptive_action_figure_prompt(characteristics: Dict[str, Any], use
     else:
         attire = 'professional business clothing'
     
-    # CLEAR TRANSFORMATION INSTRUCTION - shortened for Titan limit
-    transformation_prompt = f"""Transform this photo into 3D action figure toy of {person_description} in {attire}. Place in transparent blister packaging on orange backing. White text "{username}" and "AWS Professional". Right side: camera, laptop, phone. AWS logo top right. Convert person into collectible action figure style, keep recognizable features."""
+    # DETAILED ACTION FIGURE DESCRIPTION - back to text-to-image with rich details
+    detailed_prompt = f"""3D collectible action figure toy of {person_description} dressed in {attire}, standing in transparent blister packaging on bright orange cardboard backing. Professional toy packaging with white text "{username}" at top and "AWS Professional" below. Right side shows camera, laptop, phone accessories. AWS logo top right corner. Realistic action figure with detailed sculpting, professional toy photography lighting."""
     
-    logger.info(f"📝 Generated transformation prompt: {transformation_prompt}")
-    return transformation_prompt
+    logger.info(f"📝 Generated detailed prompt: {detailed_prompt}")
+    return detailed_prompt
 
 def get_default_characteristics() -> Dict[str, Any]:
     """Default characteristics when analysis fails"""
