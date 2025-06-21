@@ -25,7 +25,7 @@ def transform_image_rekognition_approach(prompt: str, image_base64: str, usernam
     Use Rekognition to analyze selfie, then create action figure using Titan Image Generator G1 V2
     """
     try:
-        logger.info(f"🤖 Using Rekognition + Titan Image Generator G1 V2 for user: {username}")
+        logger.info(f"🤖 Using IMAGE_VARIATION + consistent packaging for user: {username}")
         
         # Clean the base64 data
         if ',' in image_base64:
@@ -37,24 +37,26 @@ def transform_image_rekognition_approach(prompt: str, image_base64: str, usernam
         # Step 2: Create descriptive prompt based on analysis
         descriptive_prompt = create_descriptive_action_figure_prompt(person_analysis, username)
         
-        # Step 3: Generate action figure using Titan Image Generator G1 V2
+        # Step 3: Generate action figure using IMAGE_VARIATION (image-to-image)
         payload = {
-            "taskType": "TEXT_IMAGE",
-            "textToImageParams": {
-                "text": descriptive_prompt
+            "taskType": "IMAGE_VARIATION",
+            "imageVariationParams": {
+                "text": descriptive_prompt,
+                "images": [image_base64],
+                "similarityStrength": 0.85  # High similarity to preserve your look
             },
             "imageGenerationConfig": {
                 "seed": random.randint(0, 2147483647),
                 "quality": "premium",
-                "width": 1024,  # Titan G1 V2 supported dimensions
-                "height": 1024, # Square format for Titan
+                "width": 1024,
+                "height": 1024,
                 "numberOfImages": 1,
-                "cfgScale": 8.0  # Titan works well with higher CFG
+                "cfgScale": 6.0  # Balanced for image-to-image
             }
         }
         
-        logger.info("🚀 Generating action figure with Titan G1 V2 + Engineered Prompt...")
-        logger.info(f"📝 Engineered prompt: {descriptive_prompt}")
+        logger.info("🎯 Generating with IMAGE_VARIATION (image-to-image) + consistent packaging...")
+        logger.info(f"📝 Consistent packaging prompt: {descriptive_prompt}")
         
         # Call Titan Image Generator G1 V2
         response = bedrock_runtime.invoke_model(
@@ -201,7 +203,7 @@ def extract_detailed_characteristics(analysis: Dict[str, Any]) -> Dict[str, Any]
 
 def create_descriptive_action_figure_prompt(characteristics: Dict[str, Any], username: str) -> str:
     """
-    Create prompt using ONLY what Rekognition actually detects (no hardcoding)
+    Create prompt with CONSISTENT packaging but personalized figure
     """
     
     # Build description using ONLY detected characteristics
@@ -256,11 +258,11 @@ def create_descriptive_action_figure_prompt(characteristics: Dict[str, Any], use
     else:
         attire = 'professional business clothing'
     
-    # Create final prompt with detected characteristics
-    natural_prompt = f"""Photorealistic 3D action figure of {person_description}, full body standing in transparent blister packaging on orange backing. Dressed in {attire}. Package shows "{username}" text and AWS logo. Right side has camera, laptop, phone. Realistic toy style matching the person's appearance."""
+    # CONSISTENT PACKAGING - same for everyone, only figure changes
+    consistent_prompt = f"""Transform this person into a 3D action figure of {person_description} dressed in {attire}. Place figure in transparent blister packaging on bright orange cardboard backing. Package has white text "{username}" at top and "AWS Professional" below. Right side shows camera, laptop, phone accessories. Minimalist professional toy packaging design with AWS logo top right corner. Keep packaging colors and layout identical, only change the figure to match the person."""
     
-    logger.info(f"📝 Generated prompt: {natural_prompt}")
-    return natural_prompt
+    logger.info(f"📝 Generated consistent prompt: {consistent_prompt}")
+    return consistent_prompt
 
 def get_default_characteristics() -> Dict[str, Any]:
     """Default characteristics when analysis fails"""
@@ -343,7 +345,7 @@ def handle_ai_request_rekognition(body: Dict[str, Any], token_payload: Dict[str,
                 'result': result,
                 'user': token_payload.get('username'),
                 'session': token_payload.get('session_id'),
-                'message': 'Professional action figure created with Titan G1 V2 + Engineered Prompt!'
+                'message': 'Personalized figure with consistent packaging created!'
             })
             
         else:
