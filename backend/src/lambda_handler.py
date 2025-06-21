@@ -197,7 +197,7 @@ def extract_nuanced_characteristics(face_response: Dict, labels_response: Dict) 
 
 def create_hybrid_prompt(analysis: Dict[str, Any], username: str) -> str:
     """
-    Create hybrid prompt with improved packaging layout and nuanced characteristics
+    Create hybrid prompt with FULL BLISTER PACKAGING and head-to-toe figure view
     """
     
     # Build nuanced person description
@@ -232,8 +232,8 @@ def create_hybrid_prompt(analysis: Dict[str, Any], username: str) -> str:
     
     person_description = ", ".join(person_parts)
     
-    # Create improved packaging layout prompt
-    hybrid_prompt = f"""Professional action figure of {person_description} in modern business attire. Figure positioned on LEFT side of clear blister packaging on bright orange cardboard backing. Large '{username}' text at top center in beige. On RIGHT side: 3 tech accessories arranged vertically - smartphone at top, tablet in middle, DSLR camera at bottom. Clean product photography lighting, detailed figure in blister pack, commercial toy packaging."""
+    # Create FULL BLISTER PACK prompt with head-to-toe figure
+    hybrid_prompt = f"""Professional action figure of {person_description} in modern business attire, full body head-to-toe view, standing upright in clear plastic blister packaging on bright orange cardboard backing card. Large '{username}' text at top center in beige color. Figure positioned on left side. Right side has 3 tech accessories: smartphone, tablet, DSLR camera. Clear molded blister pack holds figure and accessories. Product photography lighting, detailed plastic action figure, commercial toy packaging style with hanging hook."""
     
     return hybrid_prompt
 
