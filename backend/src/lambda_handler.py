@@ -106,7 +106,8 @@ def analyze_person_with_rekognition(image_base64: str) -> Dict[str, Any]:
         # Extract detailed characteristics
         characteristics = extract_detailed_characteristics(analysis)
         
-        logger.info(f"🔍 Rekognition analysis: {characteristics}")
+        logger.info(f"🔍 Rekognition detected: {characteristics}")
+        logger.info(f"📝 Generated prompt will use: {list(characteristics.keys())}")
         return characteristics
         
     except Exception as e:
@@ -115,32 +116,32 @@ def analyze_person_with_rekognition(image_base64: str) -> Dict[str, Any]:
 
 def extract_detailed_characteristics(analysis: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Extract detailed visual characteristics from Rekognition analysis
+    Extract ALL actual characteristics detected by Rekognition (not hardcoded)
     """
     characteristics = {
         'gender': 'person',
         'age_description': 'adult',
-        'hair_description': 'hair',
         'facial_features': [],
         'accessories': [],
-        'clothing_context': [],
-        'overall_appearance': 'professional'
+        'expression': 'neutral',
+        'complexion': 'natural',
+        'hair_color': None,
+        'clothing_context': []
     }
     
-    # Analyze face details
+    # Analyze face details - use ACTUAL Rekognition detection
     if analysis['faces']:
         face = analysis['faces'][0]
         
-        # Gender
+        # Gender (actual detection)
         gender_info = face.get('Gender', {})
         if gender_info.get('Confidence', 0) > 80:
             characteristics['gender'] = gender_info.get('Value', 'person').lower()
         
-        # Age range
+        # Age range (actual detection)
         age_range = face.get('AgeRange', {})
         if age_range:
             low = age_range.get('Low', 25)
-            high = age_range.get('High', 35)
             if low < 25:
                 characteristics['age_description'] = 'young adult'
             elif low > 45:
@@ -148,34 +149,49 @@ def extract_detailed_characteristics(analysis: Dict[str, Any]) -> Dict[str, Any]
             else:
                 characteristics['age_description'] = 'adult'
         
-        # Facial features
-        if face.get('Beard', {}).get('Value', False):
+        # Facial features (only if actually detected)
+        if face.get('Beard', {}).get('Value', False) and face.get('Beard', {}).get('Confidence', 0) > 80:
             characteristics['facial_features'].append('beard')
-        if face.get('Mustache', {}).get('Value', False):
+        if face.get('Mustache', {}).get('Value', False) and face.get('Mustache', {}).get('Confidence', 0) > 80:
             characteristics['facial_features'].append('mustache')
-        if face.get('Eyeglasses', {}).get('Value', False):
+        
+        # Accessories (only if actually detected)
+        if face.get('Eyeglasses', {}).get('Value', False) and face.get('Eyeglasses', {}).get('Confidence', 0) > 80:
             characteristics['accessories'].append('glasses')
-        if face.get('Sunglasses', {}).get('Value', False):
+        if face.get('Sunglasses', {}).get('Value', False) and face.get('Sunglasses', {}).get('Confidence', 0) > 80:
             characteristics['accessories'].append('sunglasses')
         
-        # Emotions for expression
+        # Expression (actual emotion detection)
         emotions = face.get('Emotions', [])
         if emotions:
             dominant_emotion = max(emotions, key=lambda x: x.get('Confidence', 0))
-            if dominant_emotion.get('Type') == 'HAPPY':
+            emotion_type = dominant_emotion.get('Type', 'CALM')
+            if emotion_type == 'HAPPY' and dominant_emotion.get('Confidence', 0) > 70:
                 characteristics['expression'] = 'smiling'
+            elif emotion_type == 'CALM':
+                characteristics['expression'] = 'calm'
             else:
                 characteristics['expression'] = 'neutral'
+        
+        # Complexion/Ethnicity (if available in Rekognition response)
+        # Note: Rekognition may provide ethnicity estimates in some regions
+        ethnicity = face.get('Ethnicity', [])
+        if ethnicity:
+            # Use the highest confidence ethnicity
+            top_ethnicity = max(ethnicity, key=lambda x: x.get('Confidence', 0))
+            if top_ethnicity.get('Confidence', 0) > 70:
+                ethnicity_value = top_ethnicity.get('Value', '').lower()
+                characteristics['complexion'] = ethnicity_value
     
-    # Analyze labels for additional context
+    # Analyze labels for hair color and additional context
     for label in analysis['labels']:
         label_name = label.get('Name', '').lower()
         confidence = label.get('Confidence', 0)
         
         if confidence > 80:
-            # Hair-related
-            if any(hair_word in label_name for hair_word in ['hair', 'blonde', 'brunette', 'black hair', 'brown hair']):
-                characteristics['hair_description'] = label_name
+            # Hair color detection
+            if any(hair_word in label_name for hair_word in ['blonde', 'brunette', 'black hair', 'brown hair', 'gray hair', 'white hair']):
+                characteristics['hair_color'] = label_name.replace(' hair', '')
             
             # Clothing context
             if any(clothing_word in label_name for clothing_word in ['shirt', 'suit', 'formal', 'casual', 'clothing']):
@@ -185,31 +201,66 @@ def extract_detailed_characteristics(analysis: Dict[str, Any]) -> Dict[str, Any]
 
 def create_descriptive_action_figure_prompt(characteristics: Dict[str, Any], username: str) -> str:
     """
-    Create photorealistic prompt for Titan G1 V2 - focused on resemblance and clean packaging
+    Create prompt using ONLY what Rekognition actually detects (no hardcoding)
     """
     
-    # Extract detailed Rekognition features for better resemblance
-    gender = characteristics.get('gender', 'person')
-    gender_style = 'male' if gender.lower() == 'male' else 'female' if gender.lower() == 'female' else 'person'
+    # Build description using ONLY detected characteristics
+    description_parts = []
     
-    # Build detailed facial features for resemblance
-    face_features = []
-    if 'beard' in characteristics.get('facial_features', []):
-        face_features.append('with beard')
-    if 'glasses' in characteristics.get('accessories', []):
-        face_features.append('wearing glasses')
+    # Gender (only if detected with confidence)
+    gender = characteristics.get('gender', '')
+    if gender and gender != 'person':
+        description_parts.append(gender)
     
-    # Add expression for personality
+    # Age (only if detected)
+    age_desc = characteristics.get('age_description', '')
+    if age_desc and age_desc != 'adult':
+        description_parts.append(age_desc)
+    
+    # Complexion (IMPORTANT - only if detected)
+    complexion = characteristics.get('complexion', '')
+    if complexion and complexion != 'natural':
+        description_parts.append(f"{complexion} complexion")
+    
+    # Hair color (only if detected)
+    hair_color = characteristics.get('hair_color')
+    if hair_color:
+        description_parts.append(f"{hair_color} hair")
+    
+    # Facial features (only what's actually detected)
+    facial_features = characteristics.get('facial_features', [])
+    for feature in facial_features:
+        description_parts.append(f"with {feature}")
+    
+    # Accessories (only what's actually detected)
+    accessories = characteristics.get('accessories', [])
+    for accessory in accessories:
+        description_parts.append(f"wearing {accessory}")
+    
+    # Expression (only if detected)
     expression = characteristics.get('expression', 'neutral')
-    if expression == 'smiling':
-        face_features.append('smiling')
+    if expression != 'neutral':
+        description_parts.append(expression)
     
-    face_description = f"{gender_style} {' '.join(face_features)}" if face_features else f"{gender_style}"
+    # Create natural person description from detected features
+    if description_parts:
+        person_description = ' '.join(description_parts)
+    else:
+        person_description = 'person'
     
-    # Create photorealistic prompt focused on resemblance and clean design
-    photorealistic_prompt = f"""Photorealistic 3D action figure toy of {face_description} person, full body head-to-toe view, standing straight in transparent blister packaging on bright orange cardboard backing. Figure looks exactly like the person in business attire. Clean packaging with "{username}" text and small AWS logo. Right side has 3 items: camera, laptop, phone. Realistic plastic toy style, detailed facial features, professional lighting."""
+    # Gender-appropriate attire (based on detected gender)
+    if gender == 'male':
+        attire = 'business suit'
+    elif gender == 'female':
+        attire = 'professional business attire'
+    else:
+        attire = 'professional business clothing'
     
-    return photorealistic_prompt
+    # Create final prompt with detected characteristics
+    natural_prompt = f"""Photorealistic 3D action figure of {person_description}, full body standing in transparent blister packaging on orange backing. Dressed in {attire}. Package shows "{username}" text and AWS logo. Right side has camera, laptop, phone. Realistic toy style matching the person's appearance."""
+    
+    logger.info(f"📝 Generated prompt: {natural_prompt}")
+    return natural_prompt
 
 def get_default_characteristics() -> Dict[str, Any]:
     """Default characteristics when analysis fails"""
