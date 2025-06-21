@@ -52,8 +52,8 @@ def transform_image_rekognition_approach(prompt: str, image_base64: str, usernam
             }
         }
         
-        logger.info("🚀 Generating action figure with Titan Image Generator G1 V2...")
-        logger.info(f"📝 Descriptive prompt: {descriptive_prompt}")
+        logger.info("🚀 Generating action figure with Titan G1 V2 + Engineered Prompt...")
+        logger.info(f"📝 Engineered prompt: {descriptive_prompt}")
         
         # Call Titan Image Generator G1 V2
         response = bedrock_runtime.invoke_model(
@@ -184,38 +184,29 @@ def extract_detailed_characteristics(analysis: Dict[str, Any]) -> Dict[str, Any]
 
 def create_descriptive_action_figure_prompt(characteristics: Dict[str, Any], username: str) -> str:
     """
-    Create detailed text prompt for figure generation based on Rekognition analysis
-    Optimized for Titan G1 V2 content filters
+    Create shortened engineered prompt for Titan G1 V2 (512 char limit)
     """
     
-    # Build person description
-    person_parts = []
-    
-    # Basic description
+    # Extract Rekognition features efficiently
     gender = characteristics.get('gender', 'person')
-    age_desc = characteristics.get('age_description', 'adult')
-    person_parts.append(f"{age_desc} {gender}")
+    gender_style = 'male' if gender.lower() == 'male' else 'female' if gender.lower() == 'female' else 'person'
     
-    # Facial features
-    facial_features = characteristics.get('facial_features', [])
-    if facial_features:
-        person_parts.extend(facial_features)
+    # Build concise professional features
+    features = []
+    if 'beard' in characteristics.get('facial_features', []):
+        features.append('beard')
+    if 'glasses' in characteristics.get('accessories', []):
+        features.append('glasses')
     
-    # Accessories
-    accessories = characteristics.get('accessories', [])
-    if accessories:
-        person_parts.extend([f"wearing {acc}" for acc in accessories])
+    feature_text = f"with {', '.join(features)}" if features else "professional"
     
-    # Expression
-    expression = characteristics.get('expression', 'neutral')
-    person_parts.append(f"with {expression} expression")
+    # Determine attire
+    attire = 'business suit' if gender_style == 'male' else 'business attire'
     
-    person_description = ", ".join(person_parts)
+    # Create shortened engineered prompt (under 512 characters)
+    engineered_prompt = f"""3D action figure toy "{username}" in transparent blister packaging. {gender_style.capitalize()} {feature_text}, dressed in {attire}. Package shows "{username}" and "AWS Professional" text. Right side has camera, laptop, phone. Minimalist design, cartoonish cute style, AWS logo top right. Professional toy packaging."""
     
-    # Create Titan-friendly prompt (avoid "action figure" terminology)
-    titan_prompt = f"""Professional collectible figurine of {person_description} in modern business attire, standing in clear plastic packaging on bright orange cardboard backing. Large '{username}' text at top in beige color. Tech accessories around figure: camera, tablet, smartphone. Product photography lighting, detailed collectible figure, commercial packaging style, square format."""
-    
-    return titan_prompt
+    return engineered_prompt
 
 def get_default_characteristics() -> Dict[str, Any]:
     """Default characteristics when analysis fails"""
@@ -298,7 +289,7 @@ def handle_ai_request_rekognition(body: Dict[str, Any], token_payload: Dict[str,
                 'result': result,
                 'user': token_payload.get('username'),
                 'session': token_payload.get('session_id'),
-                'message': 'Action figure created with Titan Image Generator G1 V2 - looks like you!'
+                'message': 'Professional action figure created with Titan G1 V2 + Engineered Prompt!'
             })
             
         else:
