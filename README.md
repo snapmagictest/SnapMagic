@@ -2,7 +2,7 @@
 
 AI-powered image and video transformation for AWS events. Create amazing content with just a selfie and a prompt!
 
-## 🚀 Quick Start (3 Simple Steps)
+## 🚀 Quick Start (2 Simple Steps)
 
 ### Step 1: Fork & Clone
 ```bash
@@ -12,71 +12,67 @@ git clone https://github.com/YOUR-USERNAME/SnapMagic.git
 cd SnapMagic
 ```
 
-### Step 2: Deploy Complete System
+### Step 2: Configure & Deploy
 ```bash
+# 1. Copy the example secrets file
+cp secrets.json.example secrets.json
+
+# 2. Edit secrets.json with your values
+# 3. Deploy the complete system
 cd infrastructure
 npm run setup
 npm run deploy
 ```
 
-### Step 3: Provide Information During Deployment
-The deployment will prompt you for the following information:
+## 🔧 Configuration (secrets.json)
 
-**📁 GitHub Repository URL:**
-```
-https://github.com/YOUR-USERNAME/SnapMagic
-```
+Create a `secrets.json` file in the root directory with your configuration:
 
-**🔑 GitHub Personal Access Token:**
-- Create at: https://github.com/settings/tokens
-- Required permissions: `repo` (Full control of private repositories)
-- Enter your token (will be hidden with asterisks)
-
-**🌿 GitHub Branch:**
-```
-main
-```
-(or your preferred branch name)
-
-**📱 Amplify App Name:**
-```
-my-snapmagic-app
-```
-(choose a unique name for your deployment)
-
-**🔒 Password Protection (Optional):**
-- Enable password protection? `y` or `N`
-- If yes, provide:
-  - **👤 Username:** `summit2024` (for event attendees)
-  - **🔐 Password:** `AWSRocks123!` (for event attendees)
-
-**That's it! Your complete SnapMagic system will be live in 10-15 minutes!** 🎉
-
-### Step 4: Trigger First Build (One-Time Only)
-After deployment completes, CDK will output a command like this:
-
-**Trigger First Build:**
-```bash
-aws amplify start-job --app-id YOUR-APP-ID --branch-name main --job-type RELEASE --region us-east-1
+```json
+{
+  "github": {
+    "repositoryUrl": "https://github.com/YOUR-USERNAME/SnapMagic",
+    "token": "ghp_YOUR_GITHUB_TOKEN_HERE",
+    "branch": "main"
+  },
+  "app": {
+    "name": "my-snapmagic-app",
+    "passwordProtection": {
+      "enabled": true,
+      "username": "demo",
+      "password": "demo"
+    }
+  }
+}
 ```
 
-**Copy and run this command.** After this, your SnapMagic will have:
-- ✅ **Working frontend** with camera functionality
-- ✅ **AI backend** with Bedrock Nova Canvas/Reel
-- ✅ **Complete integration** from camera to AI transformation
-- ✅ **Automatic API configuration** - no manual steps needed!
+### 🔑 GitHub Token Setup
+
+1. Go to [GitHub Settings > Tokens](https://github.com/settings/tokens)
+2. Click **"Generate new token (classic)"**
+3. Select **"repo"** permissions (Full control of private repositories)
+4. Copy the token and add it to your `secrets.json`
+
+### 📋 Configuration Options
+
+- **repositoryUrl**: Your forked SnapMagic repository URL
+- **token**: Your GitHub personal access token
+- **branch**: Git branch to deploy from (use "main")
+- **name**: Choose any name for your Amplify app
+- **passwordProtection**: 
+  - **enabled**: Set to `true` for password protection
+  - **username/password**: Login credentials for your app (default: demo/demo)
 
 ## ✨ Features
 
 ### 🖼️ Transform Pictures
 - Take a selfie with your device camera
-- Add a creative prompt (text or voice)
 - AI transforms your photo using **Amazon Bedrock Nova Canvas**
+- Creates professional blister pack action figures
 - Download and share your creation
 
 ### 🎬 Transform Videos
 - Capture a photo for video generation
-- Describe your desired video scene
 - AI creates a short video reel using **Amazon Bedrock Nova Reel**
 - Perfect for social media sharing
 
@@ -84,7 +80,6 @@ aws amplify start-job --app-id YOUR-APP-ID --branch-name main --job-type RELEASE
 - Real-time gesture recognition using **Amazon Rekognition**
 - Thumbs up/down feedback collection
 - Analytics for event organizers
-- Instant feedback processing
 
 ### 🎤 Voice Input
 - Speech-to-text using **Amazon Transcribe**
@@ -94,12 +89,12 @@ aws amplify start-job --app-id YOUR-APP-ID --branch-name main --job-type RELEASE
 ## 🛠️ Technology Stack
 
 - **Frontend**: Modern JavaScript with AWS Amplify SDK v6.8.0
-- **Backend**: Python with Strands Agents SDK
+- **Backend**: Python with Amazon Bedrock integration
 - **Infrastructure**: AWS CDK v2 with TypeScript
 - **AI/ML**: 
   - Amazon Bedrock Nova Canvas (image transformation)
   - Amazon Bedrock Nova Reel (video generation)
-  - Amazon Rekognition (gesture detection)
+  - Amazon Rekognition (gesture detection & facial analysis)
   - Amazon Transcribe (speech-to-text)
 - **Hosting**: AWS Amplify with CloudFront
 - **API**: AWS API Gateway + Lambda
@@ -112,9 +107,9 @@ Frontend (Amplify)
     ↓ HTTP API calls
 API Gateway
     ↓ triggers
-Lambda (Strands Agents)
+Lambda (Rekognition + Bedrock)
     ↓ orchestrates
-Amazon Bedrock Nova Canvas/Reel + Rekognition + Transcribe
+Amazon Bedrock Nova Canvas + Rekognition + Transcribe
     ↓ AI Results (base64 images/videos/text)
 Frontend displays + download options
 ```
@@ -122,7 +117,7 @@ Frontend displays + download options
 ## 📋 Prerequisites
 
 - **Node.js 22.x+** (required for AWS CDK v2)
-- **Python 3.11+** (for Strands Agents backend)
+- **Python 3.11+** (for backend services)
 - **AWS CLI** configured with your credentials
 - **AWS CDK** installed: `npm install -g aws-cdk`
 - **GitHub account** with a personal access token
@@ -151,7 +146,6 @@ aws configure
 Ensure you have access to the following models in Amazon Bedrock:
 - **Amazon Nova Canvas** (amazon.nova-canvas-v1:0)
 - **Amazon Nova Reel** (amazon.nova-reel-v1:0)
-- **Anthropic Claude 3.7 Sonnet** (us.anthropic.claude-3-7-sonnet-20250219-v1:0)
 
 Request access at: https://console.aws.amazon.com/bedrock/home#/modelaccess
 
@@ -163,18 +157,11 @@ cd SnapMagic
 ./scripts/check-prerequisites.sh
 ```
 
-## 🔑 GitHub Token Setup
-
-1. Go to [GitHub Settings > Tokens](https://github.com/settings/tokens)
-2. Click **"Generate new token (classic)"**
-3. Select **"repo"** permissions (Full control of private repositories)
-4. Copy the token (you'll need it during deployment)
-
 ## 🎯 Perfect for AWS Events
 
 SnapMagic is designed for temporary deployment at AWS events:
 
-- **Complete AI Integration**: Real Bedrock Nova Canvas/Reel transformations
+- **Professional Action Figures**: Creates viral blister pack figurines
 - **Quick Setup**: Deploy entire system in 10-15 minutes
 - **Event-Ready**: Password protection and custom branding
 - **Cost-Optimized**: Easy teardown after events
@@ -184,7 +171,7 @@ SnapMagic is designed for temporary deployment at AWS events:
 ## 🚀 Deployment Commands
 
 ```bash
-# Deploy complete system (frontend + backend)
+# Deploy complete system (uses secrets.json)
 npm run deploy
 
 # Deploy to specific environments
@@ -205,7 +192,7 @@ npm run destroy:prod
 
 ### Test Backend Locally
 ```bash
-# Test Strands Agents backend
+# Test backend services
 cd backend
 python test_agent.py
 
@@ -221,7 +208,8 @@ curl -X GET https://your-api-url/health
 # Transform image (example)
 curl -X POST https://your-api-url/api/transform-image \
   -H "Content-Type: application/json" \
-  -d '{"prompt": "Transform me into a superhero", "image_base64": "..."}'
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -d '{"action": "transform_image", "image_base64": "..."}'
 ```
 
 ## 🗑️ Clean Teardown
@@ -243,29 +231,30 @@ npm run destroy
 - ✅ Your GitHub repository (untouched)
 - ✅ Your local code files
 - ✅ Git history and commits
+- ✅ Your secrets.json file (never uploaded)
 
 ## 🔒 Security
 
+- **secrets.json is never uploaded** - protected by .gitignore
 - **GitHub tokens are used only during deployment** - not stored in AWS
-- **Tokens are never logged or persisted** anywhere
 - **All sensitive data is handled securely** during the deployment process
-- **No credentials are stored in the repository** or AWS resources
 - **IAM roles follow least privilege principle**
-- **API endpoints are secured with proper CORS configuration**
+- **API endpoints are secured with JWT authentication**
+- **Password protection available** for event access control
 
 ## 🎨 AI Capabilities
 
-### Image Transformation Examples
-- "Transform my picture into me sitting on a beach sipping a cold beverage"
-- "Make me look like a superhero flying over the city"
-- "Put me in a professional AWS re:Invent presentation setting"
-- "Transform me into a character from a sci-fi movie"
+### Professional Action Figure Creation
+- **Rekognition Analysis**: Analyzes your facial features and characteristics
+- **Text-to-Image Generation**: Creates clean action figures without face distortion
+- **Professional Packaging**: Viral blister pack presentation
+- **Personalized Branding**: Your name on the packaging
 
-### Video Generation Examples
-- "Create a video of me flying through the clouds"
-- "Generate a video where I'm presenting at AWS Summit"
-- "Make a video of me surfing on digital waves"
-- "Create a time-lapse video of me coding"
+### Example Results
+- "Professional action figure in blister pack packaging"
+- "Tech professional with modern business attire"
+- "Orange backing with personalized name branding"
+- "Complete with tech accessories and commercial presentation"
 
 ## 🤝 Contributing
 
@@ -288,10 +277,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 🎉 Acknowledgments
 
 - Built for AWS Summit events and community
-- Powered by AWS AI/ML services (Bedrock Nova Canvas/Reel, Rekognition, Transcribe)
-- Integrated with Strands Agents for advanced AI orchestration
+- Powered by AWS AI/ML services (Bedrock Nova Canvas, Rekognition, Transcribe)
 - Designed for developers, by developers
 
 ---
 
-**Ready to create some AI-powered magic? Fork, clone, and deploy SnapMagic to your AWS account!** ✨
+**Ready to create some AI-powered magic? Fork, clone, configure your secrets.json, and deploy SnapMagic to your AWS account!** ✨

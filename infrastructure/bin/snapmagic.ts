@@ -3,8 +3,43 @@ import 'source-map-support/register';
 import * as cdk from 'aws-cdk-lib';
 import { SnapMagicStack } from '../lib/snapmagic-stack';
 import { DeploymentInputs } from '../lib/deployment-inputs';
+import * as fs from 'fs';
+import * as path from 'path';
 
-// Synchronous input collection using readline-sync
+// Load configuration from secrets.json
+function loadSecretsConfig(): DeploymentInputs | null {
+  const secretsPath = path.join(__dirname, '../../secrets.json');
+  
+  try {
+    if (fs.existsSync(secretsPath)) {
+      const secretsContent = fs.readFileSync(secretsPath, 'utf8');
+      const secrets = JSON.parse(secretsContent);
+      
+      console.log('✅ Using configuration from secrets.json');
+      console.log(`📁 Repository: ${secrets.github.repositoryUrl}`);
+      console.log(`🌿 Branch: ${secrets.github.branch}`);
+      console.log(`📱 App Name: ${secrets.app.name}`);
+      console.log(`🔒 Password Protection: ${secrets.app.passwordProtection.enabled ? 'Enabled' : 'Disabled'}`);
+      
+      return {
+        githubRepo: secrets.github.repositoryUrl,
+        githubToken: secrets.github.token,
+        githubBranch: secrets.github.branch,
+        appName: secrets.app.name,
+        enableBasicAuth: secrets.app.passwordProtection.enabled,
+        basicAuthUsername: secrets.app.passwordProtection.username,
+        basicAuthPassword: secrets.app.passwordProtection.password
+      };
+    }
+    return null;
+  } catch (error) {
+    console.log('❌ Error reading secrets.json:', (error as Error).message);
+    console.log('💡 Please check your secrets.json format or use interactive mode');
+    return null;
+  }
+}
+
+// Synchronous input collection using readline-sync (fallback)
 function collectInputsSync(): DeploymentInputs {
   const readlineSync = require('readline-sync');
   
@@ -103,8 +138,12 @@ if (isDestroy) {
     enableBasicAuth: false
   };
 } else {
-  // For deploy operations, collect inputs
-  if (process.env.SNAPMAGIC_GITHUB_REPO && process.env.SNAPMAGIC_GITHUB_TOKEN) {
+  // For deploy operations, try secrets.json first, then fallback to interactive
+  const secretsConfig = loadSecretsConfig();
+  
+  if (secretsConfig) {
+    inputs = secretsConfig;
+  } else if (process.env.SNAPMAGIC_GITHUB_REPO && process.env.SNAPMAGIC_GITHUB_TOKEN) {
     console.log('🧪 Using environment variables for testing...');
     inputs = {
       githubRepo: process.env.SNAPMAGIC_GITHUB_REPO,
@@ -116,20 +155,14 @@ if (isDestroy) {
       basicAuthPassword: process.env.SNAPMAGIC_AUTH_PASSWORD
     };
   } else if (process.env.CI || process.env.GITHUB_ACTIONS || process.env.CDK_SKIP_INPUTS) {
-    throw new Error('❌ Interactive input collection not supported in CI/CD. Please use environment variables.');
+    throw new Error('❌ Interactive input collection not supported in CI/CD. Please use secrets.json or environment variables.');
   } else {
-    console.log('🎯 SnapMagic requires some information to connect to your GitHub repository...\n');
+    console.log('🎯 No secrets.json found. Using interactive input collection...\n');
     inputs = collectInputsSync();
   }
 
-  console.log(`✅ CDK stack configured for environment: ${environment}`);
-  console.log(`📁 Repository: ${inputs.githubRepo}`);
-  console.log(`🌿 Branch: ${inputs.githubBranch}`);
-  console.log(`📱 App Name: ${inputs.appName}`);
-  if (inputs.enableBasicAuth) {
-    console.log(`🔒 Basic Auth: Enabled (${inputs.basicAuthUsername})`);
-  }
-  console.log('\n🚀 Deploying to AWS...\n');
+  console.log(`\n✅ CDK stack configured for environment: ${environment}`);
+  console.log(`🚀 Deploying to AWS...\n`);
 }
 
 // Create the complete SnapMagic stack (frontend + backend)
