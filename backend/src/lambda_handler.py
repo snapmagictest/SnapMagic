@@ -47,8 +47,8 @@ def transform_image_bedrock_perfect(prompt: str, image_base64: str, username: st
             "imageGenerationConfig": {
                 "seed": random.randint(0, 858993460),
                 "quality": "premium",
-                "width": 585,    # Exact target dimensions
-                "height": 876,   # Portrait orientation like target
+                "width": 768,    # Standard Nova Canvas dimension
+                "height": 1024,  # Portrait orientation (3:4 ratio)
                 "numberOfImages": 1,
                 "cfgScale": 7.0  # Higher CFG for detailed photorealistic result
             }
