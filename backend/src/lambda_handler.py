@@ -36,13 +36,13 @@ def transform_image_bedrock_perfect(prompt: str, image_base64: str, username: st
         # Step 2: Create the PERFECT prompt based on target analysis
         perfect_prompt = create_perfect_blister_pack_prompt(person_features, username)
         
-        # Step 3: Generate with optimized settings for photorealistic result
+        # Step 3: Generate with MAXIMUM face preservation settings
         payload = {
             "taskType": "IMAGE_VARIATION",
             "imageVariationParams": {
                 "text": perfect_prompt,
                 "images": [image_base64],
-                "similarityStrength": 0.88  # High similarity for face preservation
+                "similarityStrength": 0.98  # MAXIMUM similarity for face preservation
             },
             "imageGenerationConfig": {
                 "seed": random.randint(0, 858993460),
@@ -50,7 +50,7 @@ def transform_image_bedrock_perfect(prompt: str, image_base64: str, username: st
                 "width": 768,    # Standard Nova Canvas dimension
                 "height": 1024,  # Portrait orientation (3:4 ratio)
                 "numberOfImages": 1,
-                "cfgScale": 7.0  # Higher CFG for detailed photorealistic result
+                "cfgScale": 2.5  # Very low CFG for minimal facial changes
             }
         }
         
@@ -133,19 +133,19 @@ def get_default_features() -> Dict[str, Any]:
 
 def create_perfect_blister_pack_prompt(person_features: Dict[str, Any], username: str) -> str:
     """
-    Create the PERFECT prompt - SHORTENED to fit Nova Canvas 1024 character limit
+    Create prompt optimized for MAXIMUM face preservation
     """
     
-    # Build detailed person description
+    # Build detailed person description with face preservation emphasis
     person_desc = build_detailed_person_description(person_features)
     
-    # Create SHORTENED prompt with all essential elements
-    perfect_prompt = f"""Photorealistic action figure in professional blister pack. {person_desc} in business attire, standing centered, facing forward with smile. Clear plastic blister with accessories on orange cardboard backing. Large '{username}' text at top in beige, 'FROM {username}' below. Accessories: left side has DSLR camera, tablet, smartphone; right side has game controller, robot, bicycle; bottom has 4 pairs sneakers. Even lighting, product photography style, portrait orientation 585x876."""
+    # Create FACE-PRESERVING prompt with emphasis on maintaining original features
+    perfect_prompt = f"""Action figure of {person_desc} in business attire, preserve exact facial features and skin tone. Standing in clear blister pack on orange cardboard with '{username}' text. Tech accessories: camera, tablet, phone, controller, robot, bicycle, sneakers. Keep original face unchanged, maintain complexion."""
     
     return perfect_prompt
 
 def build_detailed_person_description(features: Dict[str, Any]) -> str:
-    """Build comprehensive person description for perfect replication"""
+    """Build comprehensive person description emphasizing face preservation"""
     
     desc_parts = []
     
@@ -157,7 +157,7 @@ def build_detailed_person_description(features: Dict[str, Any]) -> str:
     else:
         desc_parts.append("a person")
     
-    # Physical features
+    # Physical features for preservation
     if features['has_glasses']:
         desc_parts.append("wearing glasses")
     if features['has_beard']:
@@ -165,8 +165,8 @@ def build_detailed_person_description(features: Dict[str, Any]) -> str:
     if features['has_mustache']:
         desc_parts.append("with mustache")
     
-    # Add professional appearance
-    desc_parts.append("with professional modern appearance")
+    # Add strong emphasis on face preservation
+    desc_parts.append("with exact same facial features and skin tone")
     
     return " ".join(desc_parts)
 
