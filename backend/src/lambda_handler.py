@@ -25,7 +25,7 @@ def transform_image_rekognition_approach(prompt: str, image_base64: str, usernam
     Use Rekognition to analyze selfie, then create action figure using Titan Image Generator G1 V2
     """
     try:
-        logger.info(f"🔄 Back to TEXT_IMAGE approach with detailed Rekognition for user: {username}")
+        logger.info(f"🎨 Trying INPAINTING approach for user: {username}")
         
         # Clean the base64 data
         if ',' in image_base64:
@@ -34,44 +34,85 @@ def transform_image_rekognition_approach(prompt: str, image_base64: str, usernam
         # Step 1: Deep analysis with Rekognition
         person_analysis = analyze_person_with_rekognition(image_base64)
         
-        # Step 2: Create descriptive prompt based on analysis
-        descriptive_prompt = create_descriptive_action_figure_prompt(person_analysis, username)
-        
-        # Use TEXT_IMAGE with detailed Rekognition description for better results
-        payload = {
-            "taskType": "TEXT_IMAGE",
-            "textToImageParams": {
-                "text": descriptive_prompt
-            },
-            "imageGenerationConfig": {
-                "seed": random.randint(0, 2147483647),
-                "quality": "premium",
-                "width": 1024,
-                "height": 1024,
-                "numberOfImages": 1,
-                "cfgScale": 8.0  # Higher CFG for text-to-image
+        # Step 2: Try both approaches - INPAINTING first, then IMAGE_VARIATION
+        try:
+            # Approach 1: INPAINTING
+            logger.info("🎨 Trying INPAINTING approach first...")
+            inpainting_prompt = create_inpainting_prompt(person_analysis, username)
+            
+            payload = {
+                "taskType": "INPAINTING",
+                "inPaintingParams": {
+                    "text": inpainting_prompt,
+                    "image": image_base64,
+                    "maskPrompt": "person, face, body, clothing"
+                },
+                "imageGenerationConfig": {
+                    "seed": random.randint(0, 2147483647),
+                    "quality": "premium",
+                    "width": 1024,
+                    "height": 1024,
+                    "numberOfImages": 1,
+                    "cfgScale": 8.0
+                }
             }
-        }
-        
-        logger.info("🔄 Back to TEXT_IMAGE with detailed Rekognition description...")
-        logger.info(f"📝 Detailed action figure prompt: {descriptive_prompt}")
-        
-        # Call Titan Image Generator G1 V2
-        response = bedrock_runtime.invoke_model(
-            modelId="amazon.titan-image-generator-v2:0",
-            body=json.dumps(payload)
-        )
-        
-        # Parse response
-        response_body = json.loads(response['body'].read())
-        
-        if 'images' in response_body and len(response_body['images']) > 0:
-            transformed_image = response_body['images'][0]
-            logger.info(f"✅ Titan-generated action figure created: {len(transformed_image)} characters")
-            return transformed_image
-        else:
-            logger.error("❌ No images returned from Titan Image Generator")
-            return "Error: No action figure returned from Titan"
+            
+            response = bedrock_runtime.invoke_model(
+                modelId="amazon.titan-image-generator-v2:0",
+                body=json.dumps(payload)
+            )
+            
+            response_body = json.loads(response['body'].read())
+            
+            if 'images' in response_body and len(response_body['images']) > 0:
+                transformed_image = response_body['images'][0]
+                logger.info(f"✅ INPAINTING success: {len(transformed_image)} characters")
+                return transformed_image
+            else:
+                raise Exception("No images from INPAINTING")
+                
+        except Exception as inpainting_error:
+            logger.warning(f"⚠️ INPAINTING failed: {str(inpainting_error)}")
+            logger.info("🔄 Falling back to IMAGE_VARIATION approach...")
+            
+            # Approach 2: IMAGE_VARIATION with better prompts
+            try:
+                variation_prompt = create_image_variation_prompt(person_analysis, username)
+                
+                payload = {
+                    "taskType": "IMAGE_VARIATION",
+                    "imageVariationParams": {
+                        "text": variation_prompt,
+                        "images": [image_base64],
+                        "similarityStrength": 0.6  # Lower for more transformation
+                    },
+                    "imageGenerationConfig": {
+                        "seed": random.randint(0, 2147483647),
+                        "quality": "premium",
+                        "width": 1024,
+                        "height": 1024,
+                        "numberOfImages": 1,
+                        "cfgScale": 7.0
+                    }
+                }
+                
+                response = bedrock_runtime.invoke_model(
+                    modelId="amazon.titan-image-generator-v2:0",
+                    body=json.dumps(payload)
+                )
+                
+                response_body = json.loads(response['body'].read())
+                
+                if 'images' in response_body and len(response_body['images']) > 0:
+                    transformed_image = response_body['images'][0]
+                    logger.info(f"✅ IMAGE_VARIATION success: {len(transformed_image)} characters")
+                    return transformed_image
+                else:
+                    return "Error: Both transformation approaches failed"
+                    
+            except Exception as variation_error:
+                logger.error(f"❌ Both approaches failed - INPAINTING: {str(inpainting_error)}, IMAGE_VARIATION: {str(variation_error)}")
+                return f"Error: Both approaches failed"
             
     except Exception as e:
         logger.error(f"❌ Titan generation error: {str(e)}")
@@ -220,12 +261,12 @@ def extract_detailed_characteristics(analysis: Dict[str, Any]) -> Dict[str, Any]
     
     return characteristics
 
-def create_descriptive_action_figure_prompt(characteristics: Dict[str, Any], username: str) -> str:
+def create_inpainting_prompt(characteristics: Dict[str, Any], username: str) -> str:
     """
-    Create prompt with CONSISTENT packaging but personalized figure
+    Create prompt for INPAINTING - describe what to paint over masked areas
     """
     
-    # Build description using ONLY detected characteristics
+    # Build description using detected characteristics
     description_parts = []
     
     # Gender (only if detected with confidence)
@@ -233,17 +274,11 @@ def create_descriptive_action_figure_prompt(characteristics: Dict[str, Any], use
     if gender and gender != 'person':
         description_parts.append(gender)
     
-    # Age (only if detected)
-    age_desc = characteristics.get('age_description', '')
-    if age_desc and age_desc != 'adult':
-        description_parts.append(age_desc)
-    
     # Complexion (CRITICAL - must be included for accurate representation)
     complexion = characteristics.get('complexion', 'natural')
     if complexion and complexion != 'natural':
         description_parts.append(f"{complexion} skin tone")
     else:
-        # If no specific complexion detected, still specify to avoid default white
         description_parts.append("natural skin tone")
     
     # Hair color (only if detected)
@@ -261,18 +296,13 @@ def create_descriptive_action_figure_prompt(characteristics: Dict[str, Any], use
     for accessory in accessories:
         description_parts.append(f"wearing {accessory}")
     
-    # Expression (only if detected)
-    expression = characteristics.get('expression', 'neutral')
-    if expression != 'neutral':
-        description_parts.append(expression)
-    
     # Create natural person description from detected features
     if description_parts:
         person_description = ' '.join(description_parts)
     else:
         person_description = 'person'
     
-    # Gender-appropriate attire (based on detected gender)
+    # Gender-appropriate attire
     if gender == 'male':
         attire = 'business suit'
     elif gender == 'female':
@@ -280,11 +310,59 @@ def create_descriptive_action_figure_prompt(characteristics: Dict[str, Any], use
     else:
         attire = 'professional business clothing'
     
-    # DETAILED ACTION FIGURE DESCRIPTION - shortened but emphasizes actual appearance
-    detailed_prompt = f"""3D action figure toy of {person_description} in {attire}, in transparent blister packaging on orange backing. Figure accurately represents this person's appearance and skin tone. White text "{username}" and "AWS Professional". Right side: camera, laptop, phone. AWS logo top right. Realistic sculpting matching described features."""
+    # INPAINTING PROMPT - describe what to paint over the person
+    inpainting_prompt = f"""3D action figure toy of {person_description} in {attire}, in blister packaging on orange backing. Action figure has same features as person. Text "{username}" and "AWS Professional". Camera, laptop, phone accessories. Transform into collectible toy style."""
     
-    logger.info(f"📝 Generated detailed prompt: {detailed_prompt}")
-    return detailed_prompt
+    logger.info(f"📝 Generated inpainting prompt: {inpainting_prompt}")
+    return inpainting_prompt
+
+def create_image_variation_prompt(characteristics: Dict[str, Any], username: str) -> str:
+    """
+    Create prompt for IMAGE_VARIATION - much better transformation instruction
+    """
+    
+    # Build description using detected characteristics (same as inpainting)
+    description_parts = []
+    
+    gender = characteristics.get('gender', '')
+    if gender and gender != 'person':
+        description_parts.append(gender)
+    
+    complexion = characteristics.get('complexion', 'natural')
+    if complexion and complexion != 'natural':
+        description_parts.append(f"{complexion} skin tone")
+    else:
+        description_parts.append("natural skin tone")
+    
+    hair_color = characteristics.get('hair_color')
+    if hair_color:
+        description_parts.append(f"{hair_color} hair")
+    
+    facial_features = characteristics.get('facial_features', [])
+    for feature in facial_features:
+        description_parts.append(f"with {feature}")
+    
+    accessories = characteristics.get('accessories', [])
+    for accessory in accessories:
+        description_parts.append(f"wearing {accessory}")
+    
+    if description_parts:
+        person_description = ' '.join(description_parts)
+    else:
+        person_description = 'person'
+    
+    if gender == 'male':
+        attire = 'business suit'
+    elif gender == 'female':
+        attire = 'professional business attire'
+    else:
+        attire = 'professional business clothing'
+    
+    # IMAGE_VARIATION PROMPT - much better transformation instruction
+    variation_prompt = f"""Transform into 3D action figure: {person_description} in {attire}, blister pack on orange backing. Keep person's features, make toy-like. Text "{username}" "AWS Professional". Camera, laptop, phone. Collectible figure style."""
+    
+    logger.info(f"📝 Generated variation prompt: {variation_prompt}")
+    return variation_prompt
 
 def get_default_characteristics() -> Dict[str, Any]:
     """Default characteristics when analysis fails"""
