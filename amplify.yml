@@ -7,11 +7,7 @@ frontend:
     build:
       commands:
         - echo "Building SnapMagic frontend"
-        - echo "Current API URL environment variable - $SNAPMAGIC_API_URL"
         - ls -la frontend/public/
-        - sed -i "s|API_URL: 'https://[^']*'|API_URL: '$SNAPMAGIC_API_URL'|g" frontend/public/index.html
-        - echo "Updated API URL in frontend configuration"
-        - grep -A 2 -B 2 "API_URL:" frontend/public/index.html
     postBuild:
       commands:
         - echo "Build completed successfully"
