@@ -1730,19 +1730,19 @@
                         return;
                     }
                     
-                    // Create prompt based on selected action figure
+                    // Create prompt based on selected action figure - BALANCED for Nova Canvas
                     const actionFigurePrompts = {
-                        'construction-worker': 'action figure toy of a construction worker in blister packaging with hard hat, hammer, tools, and safety gear',
-                        'superhero': 'action figure toy of a superhero in blister packaging with cape, mask, and heroic pose',
-                        'chef': 'action figure toy of a chef in blister packaging with chef hat, apron, and cooking tools',
-                        'doctor': 'action figure toy of a doctor in blister packaging with stethoscope and medical coat',
-                        'firefighter': 'action figure toy of a firefighter in blister packaging with helmet, hose, and protective gear',
-                        'police': 'action figure toy of a police officer in blister packaging with badge, uniform, and equipment',
-                        'astronaut': 'action figure toy of an astronaut in blister packaging with space suit, helmet, and gear',
-                        'pilot': 'action figure toy of a pilot in blister packaging with captain hat, uniform, and wings'
+                        'construction-worker': 'construction worker action figure toy in blister pack with tools',
+                        'superhero': 'superhero action figure toy in blister pack with cape',
+                        'chef': 'chef action figure toy in blister pack with cooking tools',
+                        'doctor': 'doctor action figure toy in blister pack with stethoscope',
+                        'firefighter': 'firefighter action figure toy in blister pack with helmet',
+                        'police': 'police officer action figure toy in blister pack with badge',
+                        'astronaut': 'astronaut action figure toy in blister pack with helmet',
+                        'pilot': 'pilot action figure toy in blister pack with hat'
                     };
                     
-                    prompt = actionFigurePrompts[this.selectedActionFigure] || 'action figure toy in blister packaging';
+                    prompt = actionFigurePrompts[this.selectedActionFigure] || 'action figure toy';
                     console.log(`🎭 Creating ${this.selectedActionFigure} action figure`);
                 } else {
                     // For videos, use the existing prompt system
