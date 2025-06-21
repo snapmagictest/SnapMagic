@@ -468,6 +468,113 @@
             gap: 1rem;
         }
 
+        /* Action Figure Selection Styles */
+        .action-figure-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .selection-label {
+            font-weight: 500;
+            color: #FF9900;
+            font-size: 1.1rem;
+            text-align: center;
+        }
+
+        .action-figure-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .action-figure-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            padding: 1.5rem;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .action-figure-btn:hover {
+            background: rgba(255, 153, 0, 0.2);
+            border-color: #FF9900;
+            transform: translateY(-2px);
+        }
+
+        .action-figure-btn.selected {
+            background: rgba(255, 153, 0, 0.3);
+            border-color: #FF9900;
+            box-shadow: 0 0 20px rgba(255, 153, 0, 0.3);
+        }
+
+        .figure-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .figure-title {
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: #FF9900;
+        }
+
+        .figure-desc {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.8);
+            line-height: 1.3;
+        }
+
+        .selection-info {
+            background: rgba(255, 153, 0, 0.1);
+            border: 1px solid rgba(255, 153, 0, 0.3);
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .selection-info p {
+            margin: 0.5rem 0;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .transform-actions {
+            display: flex;
+            justify-content: center;
+            margin-top: 1rem;
+        }
+
+        /* Mobile responsive adjustments */
+        @media (max-width: 768px) {
+            .action-figure-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 0.8rem;
+            }
+            
+            .action-figure-btn {
+                padding: 1rem;
+            }
+            
+            .figure-icon {
+                font-size: 2rem;
+            }
+            
+            .figure-title {
+                font-size: 1rem;
+            }
+            
+            .figure-desc {
+                font-size: 0.8rem;
+            }
+        }
+
         .prompt-container label {
             font-weight: 500;
             color: #FF9900;
@@ -886,21 +993,67 @@
                         </div>
                         
                         <div class="content-section">
-                            <!-- Prompt Input -->
-                            <div class="prompt-container">
-                                <label for="picturePrompt">Describe your transformation</label>
-                                <textarea 
-                                    id="picturePrompt" 
-                                    placeholder="e.g., Transform my picture into me sitting on a beach sipping a cold beverage on a hot summer's day"
-                                    rows="4"
-                                ></textarea>
-                                
-                                <div class="prompt-actions">
-                                    <button class="voice-btn" id="pictureVoiceBtn">
-                                        🎤 Voice Input
+                            <!-- Action Figure Selection -->
+                            <div class="action-figure-container">
+                                <label class="selection-label">Choose Your Action Figure Type</label>
+                                <div class="action-figure-grid">
+                                    <button class="action-figure-btn" data-figure="construction-worker">
+                                        <div class="figure-icon">🏗️</div>
+                                        <div class="figure-title">Construction Worker</div>
+                                        <div class="figure-desc">Hard hat, tools, safety gear</div>
                                     </button>
+                                    
+                                    <button class="action-figure-btn" data-figure="superhero">
+                                        <div class="figure-icon">🦸</div>
+                                        <div class="figure-title">Superhero</div>
+                                        <div class="figure-desc">Cape, mask, heroic pose</div>
+                                    </button>
+                                    
+                                    <button class="action-figure-btn" data-figure="chef">
+                                        <div class="figure-icon">👨‍🍳</div>
+                                        <div class="figure-title">Chef</div>
+                                        <div class="figure-desc">Chef hat, apron, cooking tools</div>
+                                    </button>
+                                    
+                                    <button class="action-figure-btn" data-figure="doctor">
+                                        <div class="figure-icon">👨‍⚕️</div>
+                                        <div class="figure-title">Doctor</div>
+                                        <div class="figure-desc">Stethoscope, medical coat</div>
+                                    </button>
+                                    
+                                    <button class="action-figure-btn" data-figure="firefighter">
+                                        <div class="figure-icon">👨‍🚒</div>
+                                        <div class="figure-title">Firefighter</div>
+                                        <div class="figure-desc">Helmet, hose, protective gear</div>
+                                    </button>
+                                    
+                                    <button class="action-figure-btn" data-figure="police">
+                                        <div class="figure-icon">👮</div>
+                                        <div class="figure-title">Police Officer</div>
+                                        <div class="figure-desc">Badge, uniform, equipment</div>
+                                    </button>
+                                    
+                                    <button class="action-figure-btn" data-figure="astronaut">
+                                        <div class="figure-icon">👨‍🚀</div>
+                                        <div class="figure-title">Astronaut</div>
+                                        <div class="figure-desc">Space suit, helmet, gear</div>
+                                    </button>
+                                    
+                                    <button class="action-figure-btn" data-figure="pilot">
+                                        <div class="figure-icon">👨‍✈️</div>
+                                        <div class="figure-title">Pilot</div>
+                                        <div class="figure-desc">Captain hat, uniform, wings</div>
+                                    </button>
+                                </div>
+                                
+                                <div class="selection-info">
+                                    <p>📸 Your action figure will preserve your facial features and look like you!</p>
+                                    <p>🎁 Each figure comes in authentic blister pack packaging</p>
+                                </div>
+                                
+                                <div class="transform-actions">
                                     <button class="transform-btn" id="transformPictureBtn" disabled>
-                                        Transform Picture
+                                        Create My Action Figure
                                     </button>
                                 </div>
                             </div>
@@ -1286,6 +1439,9 @@
                     }
                 });
 
+                // Setup action figure selection buttons
+                this.setupActionFigureSelection();
+
                 // New buttons
                 const newButtons = [
                     { id: 'newPictureBtn', feature: 'picture' },
@@ -1298,6 +1454,42 @@
                         button.addEventListener('click', () => this.startNew(feature));
                     }
                 });
+            }
+
+            setupActionFigureSelection() {
+                // Initialize selected action figure
+                this.selectedActionFigure = null;
+                
+                // Get all action figure buttons
+                const actionFigureButtons = document.querySelectorAll('.action-figure-btn');
+                
+                actionFigureButtons.forEach(button => {
+                    button.addEventListener('click', () => {
+                        // Remove selected class from all buttons
+                        actionFigureButtons.forEach(btn => btn.classList.remove('selected'));
+                        
+                        // Add selected class to clicked button
+                        button.classList.add('selected');
+                        
+                        // Store selected action figure type
+                        this.selectedActionFigure = button.dataset.figure;
+                        
+                        // Enable transform button if image is captured
+                        this.updateTransformButtonState('picture');
+                        
+                        console.log(`🎭 Selected action figure: ${this.selectedActionFigure}`);
+                    });
+                });
+            }
+
+            updateTransformButtonState(feature) {
+                const transformBtn = document.getElementById(`transform${feature.charAt(0).toUpperCase() + feature.slice(1)}Btn`);
+                if (transformBtn) {
+                    // Enable button if both image is captured and action figure is selected
+                    const hasImage = this.capturedImages[feature];
+                    const hasSelection = feature === 'picture' ? this.selectedActionFigure : true;
+                    transformBtn.disabled = !(hasImage && hasSelection);
+                }
             }
 
             setupVoiceButtons() {
@@ -1498,11 +1690,8 @@
                         camera.style.display = 'none';
                         preview.classList.remove('hidden');
                         
-                        // Enable transform button
-                        const transformBtn = document.getElementById(`transform${feature.charAt(0).toUpperCase() + feature.slice(1)}Btn`);
-                        if (transformBtn) {
-                            transformBtn.disabled = false;
-                        }
+                        // Enable transform button using new state management
+                        this.updateTransformButtonState(feature);
                         
                         console.log(`📸 Image captured for ${feature}`);
                     }
@@ -1517,11 +1706,8 @@
                     preview.classList.add('hidden');
                     camera.style.display = 'block';
                     
-                    // Disable transform button
-                    const transformBtn = document.getElementById(`transform${feature.charAt(0).toUpperCase() + feature.slice(1)}Btn`);
-                    if (transformBtn) {
-                        transformBtn.disabled = true;
-                    }
+                    // Update transform button state
+                    this.updateTransformButtonState(feature);
                     
                     delete this.capturedImages[feature];
                     console.log(`🔄 Retaking image for ${feature}`);
@@ -1534,12 +1720,39 @@
             }
 
             async handleTransform(feature) {
-                const promptId = `${feature}Prompt`;
-                const prompt = document.getElementById(promptId)?.value;
+                // For pictures, use action figure selection; for videos, use prompt
+                let prompt;
                 
-                if (!prompt.trim()) {
-                    alert('Please enter a description for your transformation.');
-                    return;
+                if (feature === 'picture') {
+                    // Check if action figure is selected
+                    if (!this.selectedActionFigure) {
+                        alert('Please select an action figure type first.');
+                        return;
+                    }
+                    
+                    // Create prompt based on selected action figure
+                    const actionFigurePrompts = {
+                        'construction-worker': 'action figure toy of a construction worker in blister packaging with hard hat, hammer, tools, and safety gear',
+                        'superhero': 'action figure toy of a superhero in blister packaging with cape, mask, and heroic pose',
+                        'chef': 'action figure toy of a chef in blister packaging with chef hat, apron, and cooking tools',
+                        'doctor': 'action figure toy of a doctor in blister packaging with stethoscope and medical coat',
+                        'firefighter': 'action figure toy of a firefighter in blister packaging with helmet, hose, and protective gear',
+                        'police': 'action figure toy of a police officer in blister packaging with badge, uniform, and equipment',
+                        'astronaut': 'action figure toy of an astronaut in blister packaging with space suit, helmet, and gear',
+                        'pilot': 'action figure toy of a pilot in blister packaging with captain hat, uniform, and wings'
+                    };
+                    
+                    prompt = actionFigurePrompts[this.selectedActionFigure] || 'action figure toy in blister packaging';
+                    console.log(`🎭 Creating ${this.selectedActionFigure} action figure`);
+                } else {
+                    // For videos, use the existing prompt system
+                    const promptId = `${feature}Prompt`;
+                    prompt = document.getElementById(promptId)?.value;
+                    
+                    if (!prompt.trim()) {
+                        alert('Please enter a description for your transformation.');
+                        return;
+                    }
                 }
                 
                 if (!this.capturedImages[feature]) {
