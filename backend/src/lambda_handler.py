@@ -8,6 +8,7 @@ import logging
 import boto3
 import random
 import base64
+import os
 from typing import Dict, Any
 from auth_simple import auth
 
@@ -307,8 +308,14 @@ def handle_login(body: Dict[str, Any]) -> Dict[str, Any]:
         
         logger.info(f"Login attempt for user: {username}")
         
-        # Simple authentication (d/d for demo)
-        if username == 'd' and password == 'd':
+        # Get credentials from environment variables (set by CDK from secrets.json)
+        expected_username = os.environ.get('SNAPMAGIC_USERNAME', 'demo')
+        expected_password = os.environ.get('SNAPMAGIC_PASSWORD', 'demo')
+        
+        logger.info(f"Expected username: {expected_username}")
+        
+        # Authenticate using environment variables
+        if username == expected_username and password == expected_password:
             # Generate JWT token
             token = auth.generate_token(username)
             
