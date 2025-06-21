@@ -185,29 +185,31 @@ def extract_detailed_characteristics(analysis: Dict[str, Any]) -> Dict[str, Any]
 
 def create_descriptive_action_figure_prompt(characteristics: Dict[str, Any], username: str) -> str:
     """
-    Create shortened engineered prompt for Titan G1 V2 (512 char limit)
+    Create photorealistic prompt for Titan G1 V2 - focused on resemblance and clean packaging
     """
     
-    # Extract Rekognition features efficiently
+    # Extract detailed Rekognition features for better resemblance
     gender = characteristics.get('gender', 'person')
     gender_style = 'male' if gender.lower() == 'male' else 'female' if gender.lower() == 'female' else 'person'
     
-    # Build concise professional features
-    features = []
+    # Build detailed facial features for resemblance
+    face_features = []
     if 'beard' in characteristics.get('facial_features', []):
-        features.append('beard')
+        face_features.append('with beard')
     if 'glasses' in characteristics.get('accessories', []):
-        features.append('glasses')
+        face_features.append('wearing glasses')
     
-    feature_text = f"with {', '.join(features)}" if features else "professional"
+    # Add expression for personality
+    expression = characteristics.get('expression', 'neutral')
+    if expression == 'smiling':
+        face_features.append('smiling')
     
-    # Determine attire
-    attire = 'business suit' if gender_style == 'male' else 'business attire'
+    face_description = f"{gender_style} {' '.join(face_features)}" if face_features else f"{gender_style}"
     
-    # Create shortened engineered prompt (under 512 characters)
-    engineered_prompt = f"""3D action figure toy "{username}" in transparent blister packaging. {gender_style.capitalize()} {feature_text}, dressed in {attire}. Package shows "{username}" and "AWS Professional" text. Right side has camera, laptop, phone. Minimalist design, cartoonish cute style, AWS logo top right. Professional toy packaging."""
+    # Create photorealistic prompt focused on resemblance and clean design
+    photorealistic_prompt = f"""Photorealistic 3D action figure toy of {face_description} person, full body head-to-toe view, standing straight in transparent blister packaging on bright orange cardboard backing. Figure looks exactly like the person in business attire. Clean packaging with "{username}" text and small AWS logo. Right side has 3 items: camera, laptop, phone. Realistic plastic toy style, detailed facial features, professional lighting."""
     
-    return engineered_prompt
+    return photorealistic_prompt
 
 def get_default_characteristics() -> Dict[str, Any]:
     """Default characteristics when analysis fails"""
