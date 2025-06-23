@@ -2,6 +2,7 @@
 """
 SnapMagic Production Exact - Standalone Script
 EXACT copy of the working production solution from the app
+Simple seed fallback for reliability
 """
 
 import json
@@ -97,113 +98,50 @@ class SnapMagicProductionExact:
             return {'success': False, 'error': str(e)}
 
     def create_mesh_based_action_figure_prompt(self, mesh_data: Dict[str, Any]) -> str:
-        """Create action figure prompt with blister pack packaging (1-5 variations)"""
+        """Create action figure prompt - FIX complexion + full body generation"""
         
-        prompt_parts = ["Professional 3D action figure in blister pack packaging"]
+        prompt_parts = ["Action figure toy standing on two legs with feet on ground"]
         
-        # CRITICAL: Skin tone preservation
+        # CRITICAL: Enhanced skin tone preservation
         skin_tone_descriptors = mesh_data.get('skin_tone_descriptors', [])
-        complexion_hints = mesh_data.get('complexion_hints', [])
-        
-        # Build skin tone preservation
-        skin_preservation = []
-        
         if skin_tone_descriptors:
-            if skin_tone_descriptors:
-                skin_preservation.append(f"maintain {skin_tone_descriptors[0].lower()} skin tone")
+            prompt_parts.append(f"maintain {skin_tone_descriptors[0].lower()} skin tone")
         
-        if complexion_hints:
-            if complexion_hints:
-                skin_preservation.append(f"preserve {complexion_hints[0].lower()} complexion")
-        
-        # Essential skin preservation
-        skin_preservation.extend([
-            "preserve original skin color",
-            "maintain natural complexion"
+        # FORCE COMPLEXION PRESERVATION
+        prompt_parts.extend([
+            "preserve original skin color exactly",
+            "maintain exact same complexion",
+            "keep original ethnic characteristics",
+            "preserve natural skin tone"
         ])
         
-        # Add skin preservation
-        prompt_parts.extend(skin_preservation)
+        # FULL BODY GENERATION - back to working formula
+        prompt_parts.extend([
+            "generate pelvis waist hips thighs knees shins ankles feet",
+            "create lower body anatomy below torso",
+            "complete figure from head to toes",
+            "standing on both feet"
+        ])
         
-        # Gender-specific styling with blister pack theme
+        # Gender-specific
         gender = mesh_data['gender'].lower()
-        age_midpoint = mesh_data['age_midpoint']
-        
         if gender == 'male':
-            if age_midpoint < 30:
-                prompt_parts.extend([
-                    "young professional businessman action figure",
-                    "business suit with tie",
-                    "professional male collectible figure"
-                ])
-            elif age_midpoint > 50:
-                prompt_parts.extend([
-                    "executive businessman action figure", 
-                    "premium business attire",
-                    "senior executive collectible figure"
-                ])
-            else:
-                prompt_parts.extend([
-                    "professional businessman action figure",
-                    "business suit with tie", 
-                    "corporate executive collectible figure"
-                ])
-                
-        elif gender == 'female':
-            if age_midpoint < 30:
-                prompt_parts.extend([
-                    "young professional businesswoman action figure",
-                    "professional business attire",
-                    "female executive collectible figure"
-                ])
-            elif age_midpoint > 50:
-                prompt_parts.extend([
-                    "executive businesswoman action figure",
-                    "premium professional attire",
-                    "senior female executive collectible figure"
-                ])
-            else:
-                prompt_parts.extend([
-                    "professional businesswoman action figure",
-                    "business professional attire",
-                    "female corporate executive collectible figure"
-                ])
+            prompt_parts.append("male business figure in professional attire")
+        else:
+            prompt_parts.append("female business figure in professional attire")
         
-        # Add detected facial features with cartoon styling
-        if mesh_data['has_beard']:
-            prompt_parts.append("with stylized facial hair")
-        if mesh_data['has_mustache']:
-            prompt_parts.append("with cartoon mustache")
-        if mesh_data['has_glasses']:
-            prompt_parts.append("wearing professional glasses")
-        if mesh_data['has_smile']:
-            prompt_parts.append("with confident smile")
+        # Add detected features
+        if mesh_data.get('has_beard'):
+            prompt_parts.append("with facial hair")
+        if mesh_data.get('has_mustache'):
+            prompt_parts.append("with mustache")
+        if mesh_data.get('has_smile'):
+            prompt_parts.append("with smile")
         
-        # BLISTER PACK SPECIFICATIONS (key focus)
+        # CLEAN STYLING
         prompt_parts.extend([
-            "sealed in clear plastic blister pack",
-            "professional toy packaging",
-            "collectible action figure presentation",
-            "retail blister pack display",
-            "transparent plastic packaging",
-            "cardboard backing with branding",
-            "premium collectible packaging",
-            "toy store quality presentation",
-            "action figure blister pack design",
-            "professional product packaging"
-        ])
-        
-        # 3D cartoon quality specifications
-        prompt_parts.extend([
-            "3D cartoon action figure style",
-            "high-quality toy figure rendering",
-            "detailed facial features matching original",
-            "cartoon proportions",
-            "stylized but recognizable features",
-            "premium toy quality",
-            "collectible figure detail",
-            "professional toy photography",
-            "clean studio lighting"
+            "smooth 3D cartoon action figure style",
+            "isolated on clean background"
         ])
         
         return ", ".join(prompt_parts)
@@ -212,6 +150,7 @@ class SnapMagicProductionExact:
         """
         SnapMagic Face Mesh Action Figure Approach
         Uses Rekognition face mesh data for accurate action figure generation
+        Simple seed fallback for reliability
         """
         try:
             print(f"🎯 Using SnapMagic Face Mesh approach for user: {username}")
@@ -231,42 +170,54 @@ class SnapMagicProductionExact:
                 mesh_prompt = self.create_mesh_based_action_figure_prompt(mesh_data)
                 print(f"📝 Generated mesh-based prompt: {mesh_prompt[:150]}...")
             
-            # Step 2: Generate with Nova Canvas using blister pack optimized settings
-            request_body = {
-                "taskType": "IMAGE_VARIATION",
-                "imageVariationParams": {
-                    "text": mesh_prompt,
-                    "images": [image_base64],
-                    "similarityStrength": 0.93  # Higher similarity for sample-quality facial preservation
-                },
-                "imageGenerationConfig": {
-                    "numberOfImages": 1,
-                    "quality": "premium",
-                    "width": 1024,
-                    "height": 1024,
-                    "cfgScale": 8.5,  # Balanced for blister pack details + facial preservation
-                    "seed": 42
-                }
-            }
+            # Step 2: Generate with Nova Canvas - try multiple seeds for reliability
+            seeds_to_try = [42, 999, 123, 777, 555]
             
-            print("🎨 Generating mesh-based action figure with Nova Canvas...")
+            for seed in seeds_to_try:
+                try:
+                    request_body = {
+                        "taskType": "IMAGE_VARIATION",
+                        "imageVariationParams": {
+                            "text": mesh_prompt,
+                            "images": [image_base64],
+                            "similarityStrength": 0.60  # Back to working full body generation
+                        },
+                        "imageGenerationConfig": {
+                            "numberOfImages": 1,
+                            "quality": "premium",
+                            "width": 1024,
+                            "height": 1024,
+                            "cfgScale": 9.5,  # Higher CFG for better prompt following
+                            "seed": seed
+                        }
+                    }
+                    
+                    print(f"🎨 Generating with seed {seed}...")
+                    
+                    response = self.bedrock_runtime.invoke_model(
+                        modelId="amazon.nova-canvas-v1:0",
+                        body=json.dumps(request_body),
+                        contentType="application/json",
+                        accept="application/json"
+                    )
+                    
+                    response_body = json.loads(response['body'].read())
+                    
+                    if 'images' in response_body and len(response_body['images']) > 0:
+                        result_image = response_body['images'][0]
+                        print(f"✅ Success with seed {seed}!")
+                        return result_image
+                    else:
+                        print(f"⚠️ No images returned with seed {seed}, trying next...")
+                        continue
+                        
+                except Exception as e:
+                    print(f"⚠️ Seed {seed} failed: {str(e)}, trying next...")
+                    continue
             
-            response = self.bedrock_runtime.invoke_model(
-                modelId="amazon.nova-canvas-v1:0",
-                body=json.dumps(request_body),
-                contentType="application/json",
-                accept="application/json"
-            )
-            
-            response_body = json.loads(response['body'].read())
-            
-            if 'images' in response_body and len(response_body['images']) > 0:
-                result_image = response_body['images'][0]
-                print("✅ Mesh-based action figure generation successful!")
-                return result_image
-            else:
-                print("❌ No images returned from Nova Canvas")
-                return ""
+            # All seeds failed
+            print("❌ All seeds failed")
+            return ""
                 
         except Exception as e:
             print(f"❌ Mesh action figure transformation failed: {str(e)}")

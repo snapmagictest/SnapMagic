@@ -3,19 +3,19 @@
   "successful": 8,
   "failed": 0,
   "success_rate": 100.0,
-  "total_time": 96.59608817100525,
-  "avg_time_per_image": 12.074511021375656,
+  "total_time": 171.28900480270386,
+  "avg_time_per_image": 21.411125600337982,
   "bedrock_stats": {
-    "total_requests": 10,
+    "total_requests": 14,
     "successful": 8,
-    "failed": 2,
+    "failed": 6,
     "rate_limited": 0
   },
   "results": [
     {
       "success": true,
       "output_path": "clean_results/clean_Selfie288.jpg",
-      "seed_used": 42,
+      "seed_used": 999,
       "gender": "Female",
       "age_range": "24-32"
     },
@@ -36,7 +36,7 @@
     {
       "success": true,
       "output_path": "clean_results/clean_Selfie482.jpg",
-      "seed_used": 42,
+      "seed_used": 999,
       "gender": "Female",
       "age_range": "20-26"
     },
@@ -50,14 +50,14 @@
     {
       "success": true,
       "output_path": "clean_results/clean_Selfie50.jpg",
-      "seed_used": 42,
+      "seed_used": 999,
       "gender": "Female",
       "age_range": "16-22"
     },
     {
       "success": true,
       "output_path": "clean_results/clean_Selfie55.jpg",
-      "seed_used": 42,
+      "seed_used": 999,
       "gender": "Female",
       "age_range": "24-32"
     },
