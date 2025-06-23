@@ -11,7 +11,7 @@ Simple as that.
 """
 
 import os
-from PIL import Image, ImageFilter
+from PIL import Image, ImageFilter, ImageDraw, ImageFont
 import numpy as np
 from deployer import CleanFunkoPopGenerator
 
@@ -42,7 +42,7 @@ def cut_out_figure(image_path):
     return Image.merge('RGBA', (r, g, b, feathered_mask))
 
 def put_in_billboard(figure_img, output_path):
-    """Put figure in thebillboard.png - SIMPLE SOLUTION SIZE + 2CM, MOVED UP 0.5CM"""
+    """Put figure in thebillboard.png + ADD AWS LOGO AND TEXT ON OTHER SIDE"""
     
     # Load billboard
     billboard = Image.open('thebillboard.png').convert("RGBA")
@@ -83,9 +83,124 @@ def put_in_billboard(figure_img, output_path):
     
     print(f"📍 Position: ({x_pos}, {y_pos}) - moved up {move_up_pixels}px (0.5cm)")
     
-    # Composite
+    # Composite figure
     result = billboard.copy()
     result.paste(scaled_figure, (x_pos, y_pos), scaled_figure)
+    
+    # ADD AWS LOGO AND TEXT ON OTHER SIDE OF BILLBOARD
+    print("📝 Adding AWS logo and text to other side of billboard...")
+    
+    # Load AWS logo
+    try:
+        aws_logo = Image.open('awslogo.png').convert("RGBA")
+        
+        # Scale AWS logo for billboard (smaller than figure)
+        logo_scale = 0.15  # 15% of billboard width
+        logo_width = int(bg_width * logo_scale)
+        logo_aspect = aws_logo.size[1] / aws_logo.size[0]
+        logo_height = int(logo_width * logo_aspect)
+        
+        scaled_logo = aws_logo.resize((logo_width, logo_height), Image.Resampling.LANCZOS)
+        
+        # Position logo on left side of billboard
+        logo_x = int(bg_width * 0.25 - logo_width // 2)  # 25% from left (other side)
+        logo_y = int(bg_height * 0.35 - logo_height // 2)  # Upper area
+        
+        result.paste(scaled_logo, (logo_x, logo_y), scaled_logo)
+        print(f"✅ AWS logo positioned at ({logo_x}, {logo_y})")
+        
+    except Exception as e:
+        print(f"⚠️ AWS logo not found: {e}")
+        logo_y = int(bg_height * 0.35)  # Use this for text positioning
+    
+    # Add text with tech font
+    draw = ImageDraw.Draw(result)
+    
+    # Try to use a tech/computer font, fallback to default
+    try:
+        # Try common tech fonts
+        font_paths = [
+            "/System/Library/Fonts/Monaco.ttc",  # macOS
+            "/usr/share/fonts/truetype/dejavu/DejaVuSansMono-Bold.ttf",  # Linux
+            "C:/Windows/Fonts/consola.ttf",  # Windows Consolas
+            "C:/Windows/Fonts/arial.ttf",  # Windows Arial fallback
+        ]
+        
+        font_large = None
+        font_medium = None
+        
+        for font_path in font_paths:
+            try:
+                if os.path.exists(font_path):
+                    font_large = ImageFont.truetype(font_path, 60)  # Large for JOHANNESBURG
+                    font_medium = ImageFont.truetype(font_path, 50)  # Medium for SUMMIT 2025
+                    print(f"✅ Using font: {font_path}")
+                    break
+            except:
+                continue
+        
+        # Fallback to default font if no custom font found
+        if not font_large:
+            font_large = ImageFont.load_default()
+            font_medium = ImageFont.load_default()
+            print("⚠️ Using default font")
+        
+    except Exception as e:
+        font_large = ImageFont.load_default()
+        font_medium = ImageFont.load_default()
+        print(f"⚠️ Font loading failed, using default: {e}")
+    
+    # Text positioning (left side of billboard)
+    text_x = int(bg_width * 0.25)  # 25% from left (centered on left side)
+    
+    # Position text below logo
+    johannesburg_y = logo_y + 80  # Below logo
+    summit_y = johannesburg_y + 80  # Below JOHANNESBURG
+    
+    # Text styling - white with black outline for visibility
+    text_color = (255, 255, 255)  # White
+    outline_color = (0, 0, 0)  # Black outline
+    
+    # Draw JOHANNESBURG with outline
+    johannesburg_text = "JOHANNESBURG"
+    
+    # Get text size for centering
+    bbox = draw.textbbox((0, 0), johannesburg_text, font=font_large)
+    text_width = bbox[2] - bbox[0]
+    johannesburg_x = text_x - text_width // 2
+    
+    # Draw outline (black)
+    for dx in [-2, -1, 0, 1, 2]:
+        for dy in [-2, -1, 0, 1, 2]:
+            if dx != 0 or dy != 0:
+                draw.text((johannesburg_x + dx, johannesburg_y + dy), johannesburg_text, 
+                         font=font_large, fill=outline_color)
+    
+    # Draw main text (white)
+    draw.text((johannesburg_x, johannesburg_y), johannesburg_text, 
+             font=font_large, fill=text_color)
+    
+    # Draw SUMMIT 2025 with outline
+    summit_text = "SUMMIT 2025"
+    
+    # Get text size for centering
+    bbox = draw.textbbox((0, 0), summit_text, font=font_medium)
+    text_width = bbox[2] - bbox[0]
+    summit_x = text_x - text_width // 2
+    
+    # Draw outline (black)
+    for dx in [-2, -1, 0, 1, 2]:
+        for dy in [-2, -1, 0, 1, 2]:
+            if dx != 0 or dy != 0:
+                draw.text((summit_x + dx, summit_y + dy), summit_text, 
+                         font=font_medium, fill=outline_color)
+    
+    # Draw main text (white)
+    draw.text((summit_x, summit_y), summit_text, 
+             font=font_medium, fill=text_color)
+    
+    print(f"✅ Text added: JOHANNESBURG at ({johannesburg_x}, {johannesburg_y})")
+    print(f"✅ Text added: SUMMIT 2025 at ({summit_x}, {summit_y})")
     
     # Save
     final = result.convert("RGB")
