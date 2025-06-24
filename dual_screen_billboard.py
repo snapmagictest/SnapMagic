@@ -145,12 +145,13 @@ def create_dual_screen_billboard(figure_path, output_path):
         [459, 649]    # Bottom-right of LEFT screen
     ]
     
-    # RIGHT BILLBOARD SCREEN coordinates (for figure) - TO BE PROVIDED
+    # RIGHT BILLBOARD SCREEN coordinates (for figure) - USER PROVIDED
+    # Top-right: [774,266], Bottom-right: [804,708], Left-bottom: [583,627], Left-top: [599,87]
     right_screen_corners = [
-        [580, 170],   # Top-left of RIGHT screen - PLACEHOLDER
-        [900, 180],   # Top-right of RIGHT screen - PLACEHOLDER
-        [560, 510],   # Bottom-left of RIGHT screen - PLACEHOLDER
-        [920, 520]    # Bottom-right of RIGHT screen - PLACEHOLDER
+        [599, 87],    # Top-left of RIGHT screen (left-top)
+        [774, 266],   # Top-right of RIGHT screen  
+        [583, 627],   # Bottom-left of RIGHT screen (left-bottom)
+        [804, 708]    # Bottom-right of RIGHT screen
     ]
     
     print(f"📍 LEFT screen corners: {left_screen_corners}")
