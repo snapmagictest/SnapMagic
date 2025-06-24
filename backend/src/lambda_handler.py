@@ -283,15 +283,19 @@ class SnapMagicFunkoGenerator:
         
         if gender == 'male':
             template_paths = [
+                '/var/task/src/model/male.PNG',
                 '/var/task/model/male.PNG',
                 'model/male.PNG',
-                './model/male.PNG'
+                './model/male.PNG',
+                '../model/male.PNG'
             ]
         else:
             template_paths = [
+                '/var/task/src/model/female.PNG',
                 '/var/task/model/female.PNG',
                 'model/female.PNG', 
-                './model/female.PNG'
+                './model/female.PNG',
+                '../model/female.PNG'
             ]
         
         # Try to load template image
