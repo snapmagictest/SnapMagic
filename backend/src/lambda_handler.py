@@ -221,8 +221,13 @@ class SnapMagicFunkoGenerator:
         
         prompt_parts = ["Full body Funko Pop figure head to toes"]
         
+        # WYSIWYG PRIORITY - Add explicit reference image priority
         prompt_parts.extend([
-            "preserve original skin color",
+            "CRITICAL: Copy appearance exactly from reference image",
+            "preserve original skin color exactly as shown in reference",
+            "preserve original hair texture exactly as shown in reference - afro hair stays afro, straight hair stays straight",
+            "what you see in the reference image is what you get - no generic defaults"
+        ])
             "keep ethnic characteristics"
         ])
         
@@ -243,13 +248,15 @@ class SnapMagicFunkoGenerator:
             prompt_parts.extend([
                 f"female corporate business dress in {branding['primary_color']} and {branding['secondary_color']} colors",
                 f"professional {branding['company_name']} branded office attire",
-                f"{branding['logo_description']} pin on dress lapel"
+                f"{branding['logo_description']} pin on dress lapel",
+                "PRESERVE ORIGINAL HAIR TEXTURE FROM REFERENCE IMAGE"
             ])
         else:
             prompt_parts.extend([
                 f"male corporate business suit with {branding['primary_color']} tie",
                 f"{branding['secondary_color']} suit jacket with {branding['logo_description']} on chest pocket",
-                f"professional {branding['company_name']} branded formal attire"
+                f"professional {branding['company_name']} branded formal attire",
+                "PRESERVE ORIGINAL HAIR TEXTURE FROM REFERENCE IMAGE"
             ])
         
         if gender == 'male':
