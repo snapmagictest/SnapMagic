@@ -321,37 +321,49 @@ class SnapMagicFunkoGenerator:
             # Use ONLY the selfie - absolutely no template interference
             reference_images = [base64.b64encode(mesh_data['validated_image_bytes']).decode('utf-8')]
             
-            # ULTRA-EXPLICIT hair texture detection prompt
+            # EXPERIMENTAL: Ultra-aggressive hair texture detection with negative prompting
             detailed_prompt = f"""Create a professional Funko Pop vinyl collectible figure of the person in the reference image.
 
-HAIR TEXTURE ANALYSIS CRITICAL:
-Examine the person's hair in the reference image very carefully:
-- If you see TEXTURED, KINKY, COILY, AFRO, or NATURAL BLACK HAIR: Create a Funko Pop with short textured afro-style hair
-- If you see STRAIGHT hair: Create straight hair on the Funko Pop
-- If you see CURLY or WAVY hair: Create curly/wavy hair on the Funko Pop
-- If you see BRAIDS, LOCS, DREADLOCKS: Create that exact braided/loc style
-- If the person is BALD or has VERY SHORT hair: Create bald or very short hair
+EXPERIMENTAL HAIR ANALYSIS - LOOK VERY CAREFULLY:
+Study the person's hair texture in the reference image:
+- If you see SHORT, TIGHT, CURLY, NATURAL BLACK HAIR (like an afro): Create SHORT TIGHT CURLY hair on the Funko Pop
+- If you see TEXTURED, KINKY, COILY hair: Create TEXTURED CURLY hair (NOT smooth, NOT straight)
+- If you see NATURAL BLACK HAIR with texture: Create natural textured hair
+- If you see STRAIGHT hair: Create straight hair
+- If you see WAVY hair: Create wavy hair
+- If you see BRAIDS or LOCS: Create braids/locs
+- If BALD: Create bald head
 
-ABSOLUTELY CRITICAL: Do NOT default to slicked-back businessman hair. Look at the actual hair texture in the image and match it exactly.
+CRITICAL NEGATIVE INSTRUCTIONS:
+- DO NOT create slicked-back hair
+- DO NOT create pompadour or quiff styles  
+- DO NOT create smooth styled businessman hair
+- DO NOT create combed-back hair
+- DO NOT default to generic corporate hairstyles
+- DO NOT make textured hair look smooth or styled
+
+HAIR TEXTURE MATCHING:
+- Textured hair should look TEXTURED (bumpy, curly, natural)
+- Smooth hair should look SMOOTH
+- Match the actual texture you see in the reference image
+- Do not smooth out natural texture
 
 APPEARANCE REQUIREMENTS:
-- Hair color: Copy exactly from reference image
-- Skin tone: Copy exactly from reference image (brown, tan, dark, light, etc.)
-- Facial hair: Copy exactly (beard, mustache, clean shaven)
-- Head coverings: Include if present (caps, beanies, hats, hijabs)
+- Hair color: Match exactly from reference
+- Skin tone: Match exactly from reference (brown, tan, dark, light, etc.)
+- Facial hair: Match exactly (beard, mustache, clean shaven)
+- Facial features: Match expressions and characteristics
 
-FUNKO POP STRUCTURE REQUIREMENTS:
-- Full body figure from head to toes (complete standing pose)
+FUNKO POP STRUCTURE:
+- Full body figure head to toes
 - Oversized round head (40% of total height)
-- Large solid black dot eyes, no pupils
-- No nose - just small indented area
-- Small body with short arms and legs
-- Stable standing base
-- Professional vinyl collectible finish
+- Large black dot eyes, no nose (just indentation)
+- Small body, short arms and legs
+- Professional vinyl finish
 
 {prompt}
 
-FINAL REMINDER: Match the person's ACTUAL hair texture from the image - textured afro hair should look textured, not slicked back."""
+FINAL HAIR REMINDER: If the person has natural textured hair, the Funko Pop should have textured hair - NOT slicked back or smooth styled hair."""
 - Copy the EXACT hair texture, style, and color from the reference image (afro, straight, curly, kinky, coily, braided, etc.)
 - Copy the EXACT skin tone as it appears in the reference image
 - Copy facial hair exactly as shown (beard, mustache, clean shaven)
@@ -390,14 +402,14 @@ FINAL REQUIREMENTS:
                 "imageVariationParams": {
                     "text": detailed_prompt,
                     "images": reference_images,
-                    "similarityStrength": 0.95
+                    "similarityStrength": 0.98
                 },
                 "imageGenerationConfig": {
                     "numberOfImages": 1,
                     "quality": "premium",
                     "width": 1024,
                     "height": 1024,
-                    "cfgScale": 8.5,
+                    "cfgScale": 10.0,  # Increased from 8.5 to follow prompt more strictly
                     "seed": seed
                 }
             }
