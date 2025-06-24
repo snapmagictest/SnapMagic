@@ -407,6 +407,7 @@ def lambda_handler(event, context):
                 token = auth_handler.generate_token(username)
                 logger.info("Login successful, token generated")
                 return create_success_response({
+                    'success': True,  # Frontend expects this field
                     'message': 'Login successful',
                     'token': token,
                     'expires_in': 86400,  # 24 hours
