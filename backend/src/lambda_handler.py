@@ -219,31 +219,28 @@ class SnapMagicFunkoGenerator:
                 'logo_description': 'AWS logo'
             }
         
-        # SIMPLIFIED CRYSTAL CLEAR PROMPT - Focus on WYSIWYG
+        # SIMPLIFIED CRYSTAL CLEAR PROMPT - NO template references at all
         prompt_parts = [
-            "Create a professional Funko Pop figure of the person in the first reference image",
-            "CRITICAL: Match EXACTLY what you see in the person's photo:",
-            "- Copy the EXACT hair texture and style visible (afro, straight, curly, wavy, kinky, coily, braided, etc.)",
-            "- Copy the EXACT hair color shown in the photo",
-            "- Copy the EXACT skin tone as it appears",
-            "- Copy any head coverings if present (caps, beanies, hats, hijabs, etc.)",
-            "- Copy facial hair exactly as shown (beard, mustache, clean shaven)",
-            "- Copy facial expressions and features as visible"
+            "Create a professional Funko Pop figure of the person in the reference image",
+            "HAIR TEXTURE CRITICAL - Look at the reference image and identify the hair type:",
+            "- If hair appears TEXTURED, KINKY, COILY, or AFRO-STYLE: Create textured afro hair on the Funko Pop",
+            "- If hair appears STRAIGHT: Create straight hair on the Funko Pop", 
+            "- If hair appears CURLY or WAVY: Create curly/wavy hair on the Funko Pop",
+            "- If hair appears BRAIDED, LOCS, or TWISTED: Create that exact style",
+            "- If person appears BALD or VERY SHORT hair: Create bald or very short hair",
+            "NEVER default to slicked-back businessman hair - match the actual hair texture visible",
+            "Copy the EXACT hair color shown in the photo",
+            "Copy the EXACT skin tone as it appears",
+            "Copy any head coverings if present (caps, beanies, hats, hijabs, etc.)",
+            "Copy facial hair exactly as shown (beard, mustache, clean shaven)",
+            "Copy facial expressions and features as visible"
         ]
         
-        # Use template ONLY for body structure, NOT appearance
-        if len(reference_images) > 1:
-            prompt_parts.extend([
-                "Use the second reference image ONLY for Funko Pop body structure and pose",
-                "DO NOT copy appearance details from the second image",
-                "The second image shows the full-body Funko Pop style - use this for proportions only"
-            ])
-        
-        # Funko Pop structure requirements
+        # Remove ALL template references - clean prompt
         prompt_parts.extend([
             "Full body Funko Pop figure from head to toes",
             "Oversized round head with large black dot eyes",
-            "No nose, just small indentation",
+            "No nose, just small indentation", 
             "Complete standing pose showing legs and feet",
             "Standard Funko Pop proportions and vinyl style"
         ])
@@ -315,54 +312,78 @@ class SnapMagicFunkoGenerator:
         mesh_data = analysis_result['mesh_data']
         prompt = self.create_aws_branded_prompt(mesh_data)
         
-        # Load template image based on gender
-        gender = mesh_data.get('gender', 'Unknown').lower()
-        template_paths = []
-        
-        if gender == 'male':
-            template_paths = [
-                '/var/task/src/model/male.PNG',
-                '/var/task/model/male.PNG',
-                'model/male.PNG',
-                './model/male.PNG',
-                '../model/male.PNG'
-            ]
-        else:
-            template_paths = [
-                '/var/task/src/model/female.PNG',
-                '/var/task/model/female.PNG',
-                'model/female.PNG', 
-                './model/female.PNG',
-                '../model/female.PNG'
-            ]
-        
-        # Try to load template image
-        template_base64 = None
-        for template_path in template_paths:
-            try:
-                with open(template_path, 'rb') as f:
-                    template_bytes = f.read()
-                template_bytes = self.resize_image_for_bedrock(template_bytes)
-                template_base64 = base64.b64encode(template_bytes).decode('utf-8')
-                logger.info(f"Template loaded from: {template_path}")
-                break
-            except Exception as e:
-                logger.debug(f"Template path {template_path} failed: {e}")
-                continue
-        
-        if not template_base64:
-            logger.warning("No template found, continuing without template")
+        # COMPLETELY REMOVE ALL TEMPLATE LOGIC - 100% template-free
+        logger.info("Template system completely disabled - using only selfie reference for 100% accurate appearance")
         
         seeds = [42, 999, 123, 777, 555]
         
         for seed in seeds:
-            # Prioritize selfie for details, template for body structure
+            # Use ONLY the selfie - absolutely no template interference
             reference_images = [base64.b64encode(mesh_data['validated_image_bytes']).decode('utf-8')]
-            if template_base64:
-                reference_images.append(template_base64)
             
-            # Enhanced prompt to prioritize selfie details
-            detailed_prompt = f"""CRITICAL: Use first image for ALL appearance details (hair texture, hair color, skin tone, facial features, facial hair, head coverings). Use second image ONLY for Funko Pop body structure and proportions. MATCH EXACTLY what you see in the person's photo. {prompt}"""
+            # ULTRA-EXPLICIT hair texture detection prompt
+            detailed_prompt = f"""Create a professional Funko Pop vinyl collectible figure of the person in the reference image.
+
+HAIR TEXTURE ANALYSIS CRITICAL:
+Examine the person's hair in the reference image very carefully:
+- If you see TEXTURED, KINKY, COILY, AFRO, or NATURAL BLACK HAIR: Create a Funko Pop with short textured afro-style hair
+- If you see STRAIGHT hair: Create straight hair on the Funko Pop
+- If you see CURLY or WAVY hair: Create curly/wavy hair on the Funko Pop
+- If you see BRAIDS, LOCS, DREADLOCKS: Create that exact braided/loc style
+- If the person is BALD or has VERY SHORT hair: Create bald or very short hair
+
+ABSOLUTELY CRITICAL: Do NOT default to slicked-back businessman hair. Look at the actual hair texture in the image and match it exactly.
+
+APPEARANCE REQUIREMENTS:
+- Hair color: Copy exactly from reference image
+- Skin tone: Copy exactly from reference image (brown, tan, dark, light, etc.)
+- Facial hair: Copy exactly (beard, mustache, clean shaven)
+- Head coverings: Include if present (caps, beanies, hats, hijabs)
+
+FUNKO POP STRUCTURE REQUIREMENTS:
+- Full body figure from head to toes (complete standing pose)
+- Oversized round head (40% of total height)
+- Large solid black dot eyes, no pupils
+- No nose - just small indented area
+- Small body with short arms and legs
+- Stable standing base
+- Professional vinyl collectible finish
+
+{prompt}
+
+FINAL REMINDER: Match the person's ACTUAL hair texture from the image - textured afro hair should look textured, not slicked back."""
+- Copy the EXACT hair texture, style, and color from the reference image (afro, straight, curly, kinky, coily, braided, etc.)
+- Copy the EXACT skin tone as it appears in the reference image
+- Copy facial hair exactly as shown (beard, mustache, clean shaven)
+- Copy any head coverings if present (caps, beanies, hats, etc.)
+
+FUNKO POP STRUCTURE REQUIREMENTS:
+- Full body figure from head to toes (complete standing pose)
+- Oversized round head (approximately 40% of total figure height)
+- Large solid black dot eyes (no pupils, no iris details)
+- No nose - just small indented area where nose would be
+- Small simple mouth (line or small opening)
+- Proportionally small body compared to oversized head
+- Short arms and legs in classic Funko Pop proportions
+- Flat base/feet for standing stability
+- Vinyl collectible toy appearance with smooth surfaces
+
+BODY STRUCTURE DETAILS:
+- Head: Large, round, slightly wider than tall
+- Neck: Very short or barely visible
+- Torso: Rectangular, smaller than head
+- Arms: Short, positioned at sides or slightly forward
+- Legs: Short, thick, stable stance
+- Overall height ratio: Head 40%, Body 35%, Legs 25%
+
+{prompt}
+
+FINAL REQUIREMENTS:
+- Complete figure visible from head to toes
+- Professional vinyl toy finish
+- Clean white background
+- High quality collectible appearance
+- Maintain person's actual appearance while using Funko Pop proportions"""
             
             request_body = {
                 "taskType": "IMAGE_VARIATION",
