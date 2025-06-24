@@ -14,7 +14,7 @@
       "polished black dress shoes",
       "professional cufflinks"
     ],
-    "pose": "confident hands in pockets pose, executive stance"
+    "pose": "confident professional business portrait pose"
   },
   "female_attire": {
     "base_prompt": "female corporate business dress in {primary_color} and {secondary_color} colors, professional {company_name} branded office attire, {logo_description} pin on lapel, executive business styling",
@@ -24,13 +24,13 @@
       "professional black heels",
       "subtle corporate jewelry"
     ],
-    "pose": "confident professional stance, hands at sides"
+    "pose": "confident professional business portrait pose"
   },
-  "funko_structure": {
-    "head": "large oversized round head, large black dot eyes, no nose just small indentation, smooth vinyl texture",
-    "body": "small compact body proportions, full body figure head to toes, complete standing pose not cropped",
-    "preservation": "preserve original skin color exactly, maintain ethnic characteristics, keep natural complexion",
-    "style": "vinyl collectible style, clean white background, professional product photography"
+  "portrait_structure": {
+    "style": "professional digital portrait illustration, clean modern vector art style, bold clear colors",
+    "format": "business portrait orientation, professional headshot to upper torso",
+    "preservation": "preserve original skin color exactly, maintain ethnic characteristics, keep natural complexion, match hair texture exactly as shown",
+    "background": "clean white background, professional portrait lighting"
   },
   "examples": {
     "aws_summit": {
