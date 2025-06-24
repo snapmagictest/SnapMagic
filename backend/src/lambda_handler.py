@@ -73,6 +73,8 @@ class SnapMagicFunkoGenerator:
                 'has_glasses': face.get('Eyeglasses', {}).get('Value', False),
                 'has_sunglasses': face.get('Sunglasses', {}).get('Value', False),
                 'head_wear': [],
+                'skin_tone': [],
+                'facial_hair_style': [],
                 'hair_color': [],
                 'hair_style': [],
                 'facial_accessories': [],
@@ -108,19 +110,62 @@ class SnapMagicFunkoGenerator:
                             features['jewelry'].append(label['Name'])
                             break
                 
-                hair_colors = ['black hair', 'brown hair', 'blonde hair', 'gray hair', 'grey hair', 'white hair', 'red hair']
+                # Comprehensive facial hair detection - actual texture and style
+                facial_hair_types = [
+                    'beard', 'mustache', 'goatee', 'soul patch', 'sideburns',
+                    'full beard', 'stubble', 'five o\'clock shadow', 'clean shaven',
+                    'afro beard', 'curly beard', 'straight beard', 'thick beard', 'thin beard'
+                ]
+                for hair_type in facial_hair_types:
+                    if hair_type in label_name and confidence > 60:
+                        features['facial_hair_style'].append(label['Name'])
+                
+                # Comprehensive skin tone detection from Rekognition labels
+                skin_tones = [
+                    'dark skin', 'light skin', 'fair skin', 'pale skin', 'tan skin',
+                    'olive skin', 'brown skin', 'black skin', 'white skin',
+                    'medium skin', 'deep skin', 'rich skin', 'golden skin'
+                ]
+                for tone in skin_tones:
+                    if tone in label_name and confidence > 60:
+                        features['skin_tone'].append(label['Name'])
+                
+                # Comprehensive hair color detection - what Rekognition actually sees
+                hair_colors = [
+                    'black hair', 'brown hair', 'blonde hair', 'blond hair', 
+                    'gray hair', 'grey hair', 'white hair', 'red hair', 'ginger hair',
+                    'auburn hair', 'dark hair', 'light hair', 'silver hair'
+                ]
                 for color in hair_colors:
-                    if color in label_name and confidence > 70:
+                    if color in label_name and confidence > 60:  # Lower threshold for better detection
                         features['hair_color'].append(label['Name'])
                         break
                 
-                hair_styles = ['curly hair', 'straight hair', 'wavy hair', 'long hair', 'short hair', 'ponytail', 'braid', 'bun']
+                # Comprehensive hair style and texture detection - EXACTLY what we see
+                hair_styles = [
+                    # Texture types
+                    'curly hair', 'straight hair', 'wavy hair', 'kinky hair', 'coily hair',
+                    'afro hair', 'afro', 'natural hair', 'textured hair', 'frizzy hair',
+                    # Length types  
+                    'long hair', 'short hair', 'medium hair', 'shoulder length hair',
+                    # Styles
+                    'ponytail', 'braid', 'braids', 'bun', 'top knot', 'man bun',
+                    'dreadlocks', 'locs', 'cornrows', 'twist', 'twists',
+                    # Cuts and styles
+                    'buzz cut', 'crew cut', 'fade', 'undercut', 'mohawk',
+                    'bob', 'pixie cut', 'layers', 'bangs', 'fringe',
+                    # Conditions
+                    'bald', 'balding', 'receding hairline', 'thinning hair',
+                    # Styling
+                    'slicked back', 'combed', 'messy hair', 'tousled hair',
+                    'side part', 'center part', 'no part'
+                ]
                 for style in hair_styles:
-                    if style in label_name and confidence > 70:
+                    if style in label_name and confidence > 60:  # Lower threshold for better detection
                         features['hair_style'].append(label['Name'])
-                        break
+                        # Don't break - allow multiple hair characteristics
             
-            for key in ['head_wear', 'hair_color', 'hair_style', 'facial_accessories', 'jewelry', 'head_accessories']:
+            for key in ['head_wear', 'skin_tone', 'facial_hair_style', 'hair_color', 'hair_style', 'facial_accessories', 'jewelry', 'head_accessories']:
                 features[key] = list(dict.fromkeys(features[key]))[:3]
             
             features['validated_image_bytes'] = image_bytes
@@ -224,6 +269,16 @@ class SnapMagicFunkoGenerator:
         jewelry = mesh_data.get('jewelry', [])
         for item in jewelry:
             prompt_parts.append(f"{item.lower()}")
+        
+        # Use actual detected skin tone instead of brightness guessing
+        skin_tone = mesh_data.get('skin_tone', [])
+        for tone in skin_tone:
+            prompt_parts.append(f"{tone.lower()}")
+        
+        # Use actual detected facial hair style and texture
+        facial_hair_style = mesh_data.get('facial_hair_style', [])
+        for hair_style in facial_hair_style:
+            prompt_parts.append(f"{hair_style.lower()}")
         
         hair_color = mesh_data.get('hair_color', [])
         for color in hair_color:
