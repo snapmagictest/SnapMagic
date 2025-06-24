@@ -219,108 +219,55 @@ class SnapMagicFunkoGenerator:
                 'logo_description': 'AWS logo'
             }
         
-        # COMPREHENSIVE PROMPT: Combine Rekognition + Nova Canvas Vision
+        # SIMPLIFIED CRYSTAL CLEAR PROMPT - Focus on WYSIWYG
         prompt_parts = [
-            "Create a professional Funko Pop figure based on the person in the reference image",
-            "CRITICAL: Look at the reference image and match EXACTLY what you see:",
-            "- Hair texture (afro, kinky, coily, straight, wavy, curly) as visible in image",
-            "- Hair style (short, long, braids, locs, buzz cut, etc.) as shown",
-            "- Hair color as it appears in the image", 
-            "- Any head coverings (caps, beanies, hats, hijabs, turbans) if present",
-            "- Facial hair texture and style as visible",
-            "- Skin tone as it appears in the reference image",
-            "- Facial features and expressions as shown"
+            "Create a professional Funko Pop figure of the person in the first reference image",
+            "CRITICAL: Match EXACTLY what you see in the person's photo:",
+            "- Copy the EXACT hair texture and style visible (afro, straight, curly, wavy, kinky, coily, braided, etc.)",
+            "- Copy the EXACT hair color shown in the photo",
+            "- Copy the EXACT skin tone as it appears",
+            "- Copy any head coverings if present (caps, beanies, hats, hijabs, etc.)",
+            "- Copy facial hair exactly as shown (beard, mustache, clean shaven)",
+            "- Copy facial expressions and features as visible"
         ]
         
-        # Add Rekognition data for reinforcement
-        gender = mesh_data.get('gender', 'Unknown').lower()
-        if gender != 'unknown':
-            prompt_parts.append(f"{gender} person")
+        # Use template ONLY for body structure, NOT appearance
+        if len(reference_images) > 1:
+            prompt_parts.extend([
+                "Use the second reference image ONLY for Funko Pop body structure and pose",
+                "DO NOT copy appearance details from the second image",
+                "The second image shows the full-body Funko Pop style - use this for proportions only"
+            ])
         
-        # Funko Pop styling
+        # Funko Pop structure requirements
         prompt_parts.extend([
-            "Full body Funko Pop figure head to toes",
-            "standard Funko Pop head shape with oversized round head",
-            "large black dot eyes, no nose just small indentation",
-            "show entire figure with legs and feet visible",
-            "complete standing pose not cropped"
+            "Full body Funko Pop figure from head to toes",
+            "Oversized round head with large black dot eyes",
+            "No nose, just small indentation",
+            "Complete standing pose showing legs and feet",
+            "Standard Funko Pop proportions and vinyl style"
         ])
         
-        # Corporate branding based on gender
+        # Corporate styling
+        gender = mesh_data.get('gender', 'Unknown').lower()
         if gender == 'female':
             prompt_parts.extend([
-                f"female corporate business dress in {branding['primary_color']} and {branding['secondary_color']} colors",
-                f"professional {branding['company_name']} branded office attire",
-                f"{branding['logo_description']} pin on dress lapel"
+                f"Female corporate business dress in {branding['primary_color']} and {branding['secondary_color']}",
+                f"Professional {branding['company_name']} office attire",
+                f"{branding['logo_description']} pin on dress"
             ])
         else:
             prompt_parts.extend([
-                f"male corporate business suit with {branding['primary_color']} tie",
-                f"{branding['secondary_color']} suit jacket with {branding['logo_description']} on chest pocket",
-                f"professional {branding['company_name']} branded formal attire"
+                f"Male corporate business suit with {branding['primary_color']} tie",
+                f"{branding['secondary_color']} suit with {branding['logo_description']} on chest",
+                f"Professional {branding['company_name']} business attire"
             ])
         
-        # Facial features from Rekognition (for reinforcement)
-        if gender == 'male':
-            if mesh_data.get('has_beard'):
-                prompt_parts.append("with beard as shown in reference image")
-            if mesh_data.get('has_mustache'):
-                prompt_parts.append("with mustache as shown in reference image")
-        
-        if mesh_data.get('has_smile'):
-            prompt_parts.append("smiling expression")
-        if mesh_data.get('has_glasses'):
-            prompt_parts.append("wearing eyeglasses")
-        
-        # Head wear detection (critical for caps, beanies, etc.)
-        head_wear = mesh_data.get('head_wear', [])
-        if head_wear:
-            for item in head_wear:
-                prompt_parts.append(f"wearing {item.lower()} as shown in image")
-        
-        # Detected characteristics (but let Nova Canvas see the actual image)
-        skin_tone = mesh_data.get('skin_tone', [])
-        for tone in skin_tone:
-            prompt_parts.append(f"{tone.lower()}")
-        
-        facial_hair_style = mesh_data.get('facial_hair_style', [])
-        for hair_style in facial_hair_style:
-            prompt_parts.append(f"{hair_style.lower()}")
-        
-        hair_color = mesh_data.get('hair_color', [])
-        hair_detected = len(hair_color) > 0
-        for color in hair_color:
-            prompt_parts.append(f"{color.lower()}")
-        
-        hair_style = mesh_data.get('hair_style', [])
-        hair_detected = hair_detected or len(hair_style) > 0
-        for style in hair_style:
-            prompt_parts.append(f"{style.lower()}")
-        
-        # CRITICAL: If no hair detected and no head covering, force Nova Canvas to look
-        if not hair_detected and not head_wear:
-            prompt_parts.extend([
-                "IMPORTANT: Carefully examine the hair in the reference image",
-                "If hair appears textured, kinky, coily, or afro-style - represent it accurately",
-                "If hair appears straight, wavy, or curly - represent it accurately", 
-                "If person appears bald or has very short hair - represent accurately",
-                "Do not default to generic straight hair - match what is actually visible"
-            ])
-        
-        # Accessories
-        facial_accessories = mesh_data.get('facial_accessories', [])
-        for item in facial_accessories:
-            prompt_parts.append(f"{item.lower()}")
-        
-        jewelry = mesh_data.get('jewelry', [])
-        for item in jewelry:
-            prompt_parts.append(f"{item.lower()}")
-        
-        # Final styling
+        # Final requirements
         prompt_parts.extend([
-            "high quality vinyl collectible style",
-            "clean white background",
-            "professional product photography lighting"
+            "High quality vinyl collectible appearance",
+            "Clean white background",
+            "Professional product photography"
         ])
         
         prompt = ", ".join(prompt_parts)
@@ -415,14 +362,14 @@ class SnapMagicFunkoGenerator:
                 reference_images.append(template_base64)
             
             # Enhanced prompt to prioritize selfie details
-            detailed_prompt = f"use first image for all facial details complexion makeup features, use second image only for complete body structure, {prompt}"
+            detailed_prompt = f"""CRITICAL: Use first image for ALL appearance details (hair texture, hair color, skin tone, facial features, facial hair, head coverings). Use second image ONLY for Funko Pop body structure and proportions. MATCH EXACTLY what you see in the person's photo. {prompt}"""
             
             request_body = {
                 "taskType": "IMAGE_VARIATION",
                 "imageVariationParams": {
                     "text": detailed_prompt,
                     "images": reference_images,
-                    "similarityStrength": 0.90
+                    "similarityStrength": 0.95
                 },
                 "imageGenerationConfig": {
                     "numberOfImages": 1,
