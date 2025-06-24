@@ -349,7 +349,25 @@ def lambda_handler(event, context):
         
         # Parse request body
         body = json.loads(event.get('body', '{}'))
-        action = body.get('action', '').lower()
+        
+        # Determine action from URL path or body
+        resource_path = event.get('resource', '')
+        path_info = event.get('pathInfo', '')
+        request_path = resource_path or path_info or ''
+        
+        # Extract action from path or body
+        if '/api/login' in request_path:
+            action = 'login'
+        elif '/api/transform-image' in request_path:
+            action = 'transform_image'
+        elif '/api/generate-video' in request_path:
+            action = 'generate_video'
+        elif '/health' in request_path:
+            action = 'health'
+        else:
+            action = body.get('action', '').lower()
+        
+        logger.info(f"🎯 Processing action: {action} from path: {request_path}")
         
         # Login endpoint (no authentication required)
         if action == 'login':
@@ -397,9 +415,16 @@ def lambda_handler(event, context):
                 result = funko_generator.generate_funko_pop(image_bytes)
                 
                 if result['success']:
+                    # Return the image in the format the frontend expects
                     return create_success_response({
+                        'success': True,
                         'message': 'FunkoPop generated successfully',
-                        'result': result
+                        'result': result['image_base64'],  # Frontend expects result to be the base64 image
+                        'metadata': {
+                            'seed_used': result.get('seed_used'),
+                            'gender': result.get('gender'),
+                            'age_range': result.get('age_range')
+                        }
                     })
                 else:
                     return create_error_response(f"Generation failed: {result.get('error', 'Unknown error')}", 500)
