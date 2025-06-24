@@ -226,8 +226,7 @@ class SnapMagicFunkoGenerator:
             "CRITICAL: Copy appearance exactly from reference image",
             "preserve original skin color exactly as shown in reference",
             "preserve original hair texture exactly as shown in reference - afro hair stays afro, straight hair stays straight",
-            "what you see in the reference image is what you get - no generic defaults"
-        ])
+            "what you see in the reference image is what you get - no generic defaults",
             "keep ethnic characteristics"
         ])
         
