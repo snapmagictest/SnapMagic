@@ -96,11 +96,17 @@ class SnapMagicFunkoGenerator:
                         features['facial_accessories'].append(label['Name'])
                         break
                 
-                jewelry_keywords = ['earring', 'earrings', 'necklace', 'chain', 'pendant']
+                # More precise jewelry detection
+                jewelry_keywords = ['earring', 'earrings', 'necklace', 'chain', 'pendant', 'bracelet', 'ring']
                 for keyword in jewelry_keywords:
-                    if keyword in label_name and confidence > 70:
+                    if keyword == label_name.lower() and confidence > 75:  # Exact match with higher confidence
                         features['jewelry'].append(label['Name'])
                         break
+                    elif keyword in label_name and confidence > 85:  # Partial match needs very high confidence
+                        # Additional check: avoid false positives from body parts
+                        if not any(body_part in label_name.lower() for body_part in ['ear', 'face', 'head', 'neck', 'skin', 'person', 'human']):
+                            features['jewelry'].append(label['Name'])
+                            break
                 
                 hair_colors = ['black hair', 'brown hair', 'blonde hair', 'gray hair', 'grey hair', 'white hair', 'red hair']
                 for color in hair_colors:
