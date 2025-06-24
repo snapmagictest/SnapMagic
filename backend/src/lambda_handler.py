@@ -96,13 +96,13 @@ class SnapMagicFunkoGenerator:
                         features['facial_accessories'].append(label['Name'])
                         break
                 
-                # More precise jewelry detection
+                # Gender-specific jewelry detection thresholds
+                gender = features.get('gender', 'Unknown').lower()
+                jewelry_confidence_threshold = 70 if gender == 'female' else 99  # Women: 70%, Men: 99%
+                
                 jewelry_keywords = ['earring', 'earrings', 'necklace', 'chain', 'pendant', 'bracelet', 'ring']
                 for keyword in jewelry_keywords:
-                    if keyword == label_name.lower() and confidence > 75:  # Exact match with higher confidence
-                        features['jewelry'].append(label['Name'])
-                        break
-                    elif keyword in label_name and confidence > 85:  # Partial match needs very high confidence
+                    if keyword in label_name.lower() and confidence > jewelry_confidence_threshold:
                         # Additional check: avoid false positives from body parts
                         if not any(body_part in label_name.lower() for body_part in ['ear', 'face', 'head', 'neck', 'skin', 'person', 'human']):
                             features['jewelry'].append(label['Name'])
