@@ -274,7 +274,7 @@ class SnapMagicFunkoGenerator:
         
         # Final requirements
         prompt_parts.extend([
-            "High quality vinyl collectible appearance",
+            "High quality digital illustration",
             "Clean white background",
             "Professional product photography"
         ])
@@ -368,33 +368,28 @@ Focus on creating an accurate, professional portrait illustration that captures 
 - Copy facial hair exactly as shown (beard, mustache, clean shaven)
 - Copy any head coverings if present (caps, beanies, hats, etc.)
 
-FUNKO POP STRUCTURE REQUIREMENTS:
-- Full body figure from head to toes (complete standing pose)
-- Oversized round head (approximately 40% of total figure height)
-- Large solid black dot eyes (no pupils, no iris details)
-- No nose - just small indented area where nose would be
-- Small simple mouth (line or small opening)
-- Proportionally small body compared to oversized head
-- Short arms and legs in classic Funko Pop proportions
-- Flat base/feet for standing stability
-- Vinyl collectible toy appearance with smooth surfaces
+PROFESSIONAL PORTRAIT REQUIREMENTS:
+- Business portrait illustration style
+- Professional headshot to upper torso orientation
+- Clean modern vector art aesthetic
+- Bold, clear colors with professional finish
+- Accurate representation of person's actual appearance
 
-BODY STRUCTURE DETAILS:
-- Head: Large, round, slightly wider than tall
-- Neck: Very short or barely visible
-- Torso: Rectangular, smaller than head
-- Arms: Short, positioned at sides or slightly forward
-- Legs: Short, thick, stable stance
-- Overall height ratio: Head 40%, Body 35%, Legs 25%
+APPEARANCE MATCHING:
+- Hair texture: Match exactly as shown in reference (textured, straight, curly, etc.)
+- Hair color: Copy exactly from reference image
+- Skin tone: Copy exactly from reference image
+- Facial features: Match expressions and characteristics
+- Facial hair: Copy exactly (beard, mustache, clean shaven)
 
 {prompt}
 
 FINAL REQUIREMENTS:
-- Complete figure visible from head to toes
-- Professional vinyl toy finish
+- Professional digital portrait illustration
 - Clean white background
-- High quality collectible appearance
-- Maintain person's actual appearance while using Funko Pop proportions"""
+- High quality modern vector art finish
+- Corporate professional styling
+- Accurate individual representation"""
             
             request_body = {
                 "taskType": "IMAGE_VARIATION",
