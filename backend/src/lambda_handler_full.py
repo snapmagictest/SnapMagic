@@ -10,6 +10,8 @@ import base64
 import os
 import time
 from typing import Dict, Any
+from PIL import Image
+import io
 import threading
 from auth_simple import SnapMagicAuthSimple
 
@@ -33,14 +35,33 @@ class SnapMagicFunkoGenerator:
         logger.info(f"🎯 SnapMagic FunkoPop Generator initialized")
 
     def resize_image_for_bedrock(self, image_bytes: bytes, max_pixels: int = 4194304) -> bytes:
-        """Resize image to fit within Bedrock Nova Canvas pixel limits - simplified version"""
+        """Resize image to fit within Bedrock Nova Canvas pixel limits"""
         try:
-            # For now, just return the original image bytes
-            # TODO: Add proper image resizing when Pillow is available
-            logger.info(f"Image size: {len(image_bytes)} bytes (resize skipped - no Pillow)")
-            return image_bytes
+            with Image.open(io.BytesIO(image_bytes)) as img:
+                if img.mode != 'RGB':
+                    img = img.convert('RGB')
+                
+                width, height = img.size
+                total_pixels = width * height
+                
+                if total_pixels > max_pixels:
+                    scale_factor = (max_pixels / total_pixels) ** 0.5
+                    new_width = int(width * scale_factor)
+                    new_height = int(height * scale_factor)
+                    img = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
+                
+                if width < 320 or height < 320:
+                    scale_factor = max(320 / width, 320 / height)
+                    new_width = int(width * scale_factor)
+                    new_height = int(height * scale_factor)
+                    img = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
+                
+                output_buffer = io.BytesIO()
+                img.save(output_buffer, format='JPEG', quality=95, optimize=True)
+                return output_buffer.getvalue()
+                
         except Exception as e:
-            logger.error(f"Image processing failed: {e}")
+            logger.error(f"Image resize failed: {e}")
             return image_bytes
 
     def comprehensive_rekognition_analysis(self, image_bytes: bytes) -> Dict[str, Any]:

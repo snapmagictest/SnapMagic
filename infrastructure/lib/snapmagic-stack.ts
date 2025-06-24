@@ -149,7 +149,7 @@ frontend:
     // Lambda function for SnapMagic AI backend
     const snapMagicLambda = new lambda.Function(this, 'SnapMagicAIFunction', {
       runtime: lambda.Runtime.PYTHON_3_11,
-      handler: 'lambda_handler.lambda_handler',
+      handler: 'src/lambda_handler.lambda_handler',
       code: lambda.Code.fromAsset(path.join(__dirname, '../../backend'), {
         exclude: ['*.md', '__pycache__', '*.pyc', 'test_*', 'run_local.py', 'README.md']
       }),
