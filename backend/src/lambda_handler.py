@@ -86,13 +86,7 @@ class SnapMagicFunkoGenerator:
                 label_name = label['Name'].lower()
                 confidence = label['Confidence']
                 
-                # Comprehensive head wear detection - caps, beanies, hats, religious coverings
-                head_wear_keywords = [
-                    'hat', 'cap', 'baseball cap', 'beanie', 'knit cap', 'winter hat',
-                    'fedora', 'cowboy hat', 'sun hat', 'bucket hat', 'snapback',
-                    'hijab', 'headscarf', 'turban', 'bandana', 'headband',
-                    'helmet', 'hard hat', 'beret', 'headwear', 'head covering'
-                ]
+                head_wear_keywords = ['hat', 'cap', 'helmet', 'headband', 'bandana', 'beanie', 'beret']
                 for keyword in head_wear_keywords:
                     if keyword in label_name and confidence > 70:
                         features['head_wear'].append(label['Name'])
@@ -149,9 +143,13 @@ class SnapMagicFunkoGenerator:
                 
                 # Comprehensive hair style and texture detection - EXACTLY what we see
                 hair_styles = [
-                    # Texture types
+                    # Texture types - PRIORITIZED for better detection
                     'curly hair', 'straight hair', 'wavy hair', 'kinky hair', 'coily hair',
                     'afro hair', 'afro', 'natural hair', 'textured hair', 'frizzy hair',
+                    'tight curls', 'loose curls', 'spiral curls', 'ringlets',
+                    # Additional afro/textured variations
+                    'african hair', 'black natural hair', 'ethnic hair', 'type 4 hair',
+                    'tight coils', 'kinky coils', 'natural texture', 'unprocessed hair',
                     # Length types  
                     'long hair', 'short hair', 'medium hair', 'shoulder length hair',
                     # Styles
@@ -167,7 +165,9 @@ class SnapMagicFunkoGenerator:
                     'side part', 'center part', 'no part'
                 ]
                 for style in hair_styles:
-                    if style in label_name and confidence > 60:  # Lower threshold for better detection
+                    # Lower threshold for textured/afro hair detection
+                    threshold = 50 if any(term in style.lower() for term in ['afro', 'kinky', 'coily', 'curly', 'textured', 'natural', 'tight', 'ethnic']) else 60
+                    if style in label_name and confidence > threshold:
                         features['hair_style'].append(label['Name'])
                         # Don't break - allow multiple hair characteristics
             
@@ -219,52 +219,100 @@ class SnapMagicFunkoGenerator:
                 'logo_description': 'AWS logo'
             }
         
-        # SIMPLIFIED CRYSTAL CLEAR PROMPT - NO template references at all
-        prompt_parts = [
-            "Create a professional Funko Pop figure of the person in the reference image",
-            "HAIR TEXTURE CRITICAL - Look at the reference image and identify the hair type:",
-            "- If hair appears TEXTURED, KINKY, COILY, or AFRO-STYLE: Create textured afro hair on the Funko Pop",
-            "- If hair appears STRAIGHT: Create straight hair on the Funko Pop", 
-            "- If hair appears CURLY or WAVY: Create curly/wavy hair on the Funko Pop",
-            "- If hair appears BRAIDED, LOCS, or TWISTED: Create that exact style",
-            "- If person appears BALD or VERY SHORT hair: Create bald or very short hair",
-            "NEVER default to slicked-back businessman hair - match the actual hair texture visible",
-            "Copy the EXACT hair color shown in the photo",
-            "Copy the EXACT skin tone as it appears",
-            "Copy any head coverings if present (caps, beanies, hats, hijabs, etc.)",
-            "Copy facial hair exactly as shown (beard, mustache, clean shaven)",
-            "Copy facial expressions and features as visible"
-        ]
+        prompt_parts = ["Full body Funko Pop figure head to toes"]
         
-        # Remove ALL template references - clean prompt
+        # WYSIWYG PRIORITY - Add explicit reference image priority
         prompt_parts.extend([
-            "Full body Funko Pop figure from head to toes",
-            "Oversized round head with large black dot eyes",
-            "No nose, just small indentation", 
-            "Complete standing pose showing legs and feet",
-            "Standard Funko Pop proportions and vinyl style"
+            "CRITICAL: Copy appearance exactly from reference image",
+            "preserve original skin color exactly as shown in reference",
+            "preserve original hair texture exactly as shown in reference - afro hair stays afro, straight hair stays straight",
+            "what you see in the reference image is what you get - no generic defaults",
+            "keep ethnic characteristics"
         ])
         
-        # Corporate styling
+        prompt_parts.extend([
+            "show entire figure with legs feet visible",
+            "complete standing pose not cropped"
+        ])
+        
+        prompt_parts.extend([
+            "standard Funko Pop head shape",
+            "oversized round head",
+            "large black dot eyes",
+            "no nose small indentation"
+        ])
+        
         gender = mesh_data.get('gender', 'Unknown').lower()
         if gender == 'female':
             prompt_parts.extend([
-                f"Female corporate business dress in {branding['primary_color']} and {branding['secondary_color']}",
-                f"Professional {branding['company_name']} office attire",
-                f"{branding['logo_description']} pin on dress"
+                f"female corporate business dress in {branding['primary_color']} and {branding['secondary_color']} colors",
+                f"professional {branding['company_name']} branded office attire",
+                f"{branding['logo_description']} pin on dress lapel",
+                "PRESERVE ORIGINAL HAIR TEXTURE FROM REFERENCE IMAGE"
             ])
         else:
             prompt_parts.extend([
-                f"Male corporate business suit with {branding['primary_color']} tie",
-                f"{branding['secondary_color']} suit with {branding['logo_description']} on chest",
-                f"Professional {branding['company_name']} business attire"
+                f"male corporate business suit with {branding['primary_color']} tie",
+                f"{branding['secondary_color']} suit jacket with {branding['logo_description']} on chest pocket",
+                f"professional {branding['company_name']} branded formal attire",
+                "PRESERVE ORIGINAL HAIR TEXTURE FROM REFERENCE IMAGE"
             ])
         
-        # Final requirements
+        if gender == 'male':
+            if mesh_data.get('has_beard'):
+                prompt_parts.append("beard")
+            if mesh_data.get('has_mustache'):
+                prompt_parts.append("mustache")
+        
+        if mesh_data.get('has_smile'):
+            prompt_parts.append("smile")
+        
+        if mesh_data.get('has_glasses'):
+            prompt_parts.append("glasses")
+        
+        head_wear = mesh_data.get('head_wear', [])
+        for item in head_wear:
+            prompt_parts.append(f"{item.lower()}")
+        
+        facial_accessories = mesh_data.get('facial_accessories', [])
+        for item in facial_accessories:
+            prompt_parts.append(f"{item.lower()}")
+        
+        jewelry = mesh_data.get('jewelry', [])
+        for item in jewelry:
+            prompt_parts.append(f"{item.lower()}")
+        
+        # Use actual detected skin tone instead of brightness guessing
+        skin_tone = mesh_data.get('skin_tone', [])
+        for tone in skin_tone:
+            prompt_parts.append(f"{tone.lower()}")
+        
+        # Use actual detected facial hair style and texture
+        facial_hair_style = mesh_data.get('facial_hair_style', [])
+        for hair_style in facial_hair_style:
+            prompt_parts.append(f"{hair_style.lower()}")
+        
+        hair_color = mesh_data.get('hair_color', [])
+        for color in hair_color:
+            prompt_parts.append(f"{color.lower()}")
+        
+        hair_style = mesh_data.get('hair_style', [])
+        # Prioritize textured hair characteristics in prompt
+        textured_hair_found = False
+        for style in hair_style:
+            style_lower = style.lower()
+            prompt_parts.append(f"{style_lower}")
+            # Check if we detected textured/afro hair
+            if any(term in style_lower for term in ['afro', 'kinky', 'coily', 'curly', 'textured', 'natural', 'tight']):
+                textured_hair_found = True
+        
+        # Add explicit textured hair emphasis if detected
+        if textured_hair_found:
+            prompt_parts.append("textured natural hair not slicked back")
+        
         prompt_parts.extend([
-            "High quality vinyl collectible appearance",
-            "Clean white background",
-            "Professional product photography"
+            "vinyl collectible style",
+            "clean white background"
         ])
         
         prompt = ", ".join(prompt_parts)
@@ -312,85 +360,61 @@ class SnapMagicFunkoGenerator:
         mesh_data = analysis_result['mesh_data']
         prompt = self.create_aws_branded_prompt(mesh_data)
         
-        # COMPLETELY REMOVE ALL TEMPLATE LOGIC - 100% template-free
-        logger.info("Template system completely disabled - using only selfie reference for 100% accurate appearance")
+        # Load template image based on gender
+        gender = mesh_data.get('gender', 'Unknown').lower()
+        template_paths = []
+        
+        if gender == 'male':
+            template_paths = [
+                '/var/task/src/model/male.PNG',
+                '/var/task/model/male.PNG',
+                'model/male.PNG',
+                './model/male.PNG',
+                '../model/male.PNG'
+            ]
+        else:
+            template_paths = [
+                '/var/task/src/model/female.PNG',
+                '/var/task/model/female.PNG',
+                'model/female.PNG', 
+                './model/female.PNG',
+                '../model/female.PNG'
+            ]
+        
+        # Try to load template image
+        template_base64 = None
+        for template_path in template_paths:
+            try:
+                with open(template_path, 'rb') as f:
+                    template_bytes = f.read()
+                template_bytes = self.resize_image_for_bedrock(template_bytes)
+                template_base64 = base64.b64encode(template_bytes).decode('utf-8')
+                logger.info(f"Template loaded from: {template_path}")
+                break
+            except Exception as e:
+                logger.debug(f"Template path {template_path} failed: {e}")
+                continue
+        
+        if not template_base64:
+            logger.warning("No template found, continuing without template")
         
         seeds = [42, 999, 123, 777, 555]
         
         for seed in seeds:
-            # Use ONLY the selfie - absolutely no template interference
+            # Prioritize selfie for details, template for body structure
             reference_images = [base64.b64encode(mesh_data['validated_image_bytes']).decode('utf-8')]
+            if template_base64:
+                reference_images.append(template_base64)
             
-            # ULTRA-EXPLICIT hair texture detection prompt
-            detailed_prompt = f"""Create a professional Funko Pop vinyl collectible figure of the person in the reference image.
-
-HAIR TEXTURE ANALYSIS CRITICAL:
-Examine the person's hair in the reference image very carefully:
-- If you see TEXTURED, KINKY, COILY, AFRO, or NATURAL BLACK HAIR: Create a Funko Pop with short textured afro-style hair
-- If you see STRAIGHT hair: Create straight hair on the Funko Pop
-- If you see CURLY or WAVY hair: Create curly/wavy hair on the Funko Pop
-- If you see BRAIDS, LOCS, DREADLOCKS: Create that exact braided/loc style
-- If the person is BALD or has VERY SHORT hair: Create bald or very short hair
-
-ABSOLUTELY CRITICAL: Do NOT default to slicked-back businessman hair. Look at the actual hair texture in the image and match it exactly.
-
-APPEARANCE REQUIREMENTS:
-- Hair color: Copy exactly from reference image
-- Skin tone: Copy exactly from reference image (brown, tan, dark, light, etc.)
-- Facial hair: Copy exactly (beard, mustache, clean shaven)
-- Head coverings: Include if present (caps, beanies, hats, hijabs)
-
-FUNKO POP STRUCTURE REQUIREMENTS:
-- Full body figure from head to toes (complete standing pose)
-- Oversized round head (40% of total height)
-- Large solid black dot eyes, no pupils
-- No nose - just small indented area
-- Small body with short arms and legs
-- Stable standing base
-- Professional vinyl collectible finish
-
-{prompt}
-
-FINAL REMINDER: Match the person's ACTUAL hair texture from the image - textured afro hair should look textured, not slicked back."""
-- Copy the EXACT hair texture, style, and color from the reference image (afro, straight, curly, kinky, coily, braided, etc.)
-- Copy the EXACT skin tone as it appears in the reference image
-- Copy facial hair exactly as shown (beard, mustache, clean shaven)
-- Copy any head coverings if present (caps, beanies, hats, etc.)
-
-FUNKO POP STRUCTURE REQUIREMENTS:
-- Full body figure from head to toes (complete standing pose)
-- Oversized round head (approximately 40% of total figure height)
-- Large solid black dot eyes (no pupils, no iris details)
-- No nose - just small indented area where nose would be
-- Small simple mouth (line or small opening)
-- Proportionally small body compared to oversized head
-- Short arms and legs in classic Funko Pop proportions
-- Flat base/feet for standing stability
-- Vinyl collectible toy appearance with smooth surfaces
-
-BODY STRUCTURE DETAILS:
-- Head: Large, round, slightly wider than tall
-- Neck: Very short or barely visible
-- Torso: Rectangular, smaller than head
-- Arms: Short, positioned at sides or slightly forward
-- Legs: Short, thick, stable stance
-- Overall height ratio: Head 40%, Body 35%, Legs 25%
-
-{prompt}
-
-FINAL REQUIREMENTS:
-- Complete figure visible from head to toes
-- Professional vinyl toy finish
-- Clean white background
-- High quality collectible appearance
-- Maintain person's actual appearance while using Funko Pop proportions"""
+            # Enhanced prompt to prioritize selfie details
+            detailed_prompt = f"use first image for all facial details complexion makeup features, use second image only for complete body structure, {prompt}"
             
             request_body = {
                 "taskType": "IMAGE_VARIATION",
                 "imageVariationParams": {
                     "text": detailed_prompt,
                     "images": reference_images,
-                    "similarityStrength": 0.95
+                    "similarityStrength": 0.90
                 },
                 "imageGenerationConfig": {
                     "numberOfImages": 1,

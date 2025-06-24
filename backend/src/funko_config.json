@@ -7,7 +7,7 @@
     "logo_description": "AWS logo"
   },
   "male_attire": {
-    "base_prompt": "male corporate business suit with {primary_color} tie, {secondary_color} suit jacket, {accent_color} dress shirt, {logo_description} embroidered on chest pocket, professional {company_name} branded attire, corporate executive styling",
+    "base_prompt": "male corporate business suit with {primary_color} tie, {secondary_color} suit jacket, {accent_color} dress shirt, {logo_description} embroidered on chest pocket, professional {company_name} branded attire, PRESERVE ORIGINAL HAIR TEXTURE AND STYLE FROM REFERENCE IMAGE",
     "accessories": [
       "{primary_color} tie with subtle pattern",
       "{logo_description} on suit pocket",
@@ -17,7 +17,7 @@
     "pose": "confident hands in pockets pose, executive stance"
   },
   "female_attire": {
-    "base_prompt": "female corporate business dress in {primary_color} and {secondary_color} colors, professional {company_name} branded office attire, {logo_description} pin on lapel, executive business styling",
+    "base_prompt": "female corporate business dress in {primary_color} and {secondary_color} colors, professional {company_name} branded office attire, {logo_description} pin on lapel, PRESERVE ORIGINAL HAIR TEXTURE AND STYLE FROM REFERENCE IMAGE",
     "accessories": [
       "{primary_color} accent belt or trim",
       "{logo_description} pin on dress",
@@ -29,8 +29,13 @@
   "funko_structure": {
     "head": "large oversized round head, large black dot eyes, no nose just small indentation, smooth vinyl texture",
     "body": "small compact body proportions, full body figure head to toes, complete standing pose not cropped",
-    "preservation": "preserve original skin color exactly, maintain ethnic characteristics, keep natural complexion",
+    "preservation": "preserve original skin color exactly, maintain ethnic characteristics, keep natural complexion, MATCH HAIR TEXTURE EXACTLY FROM REFERENCE IMAGE - afro hair stays afro, straight hair stays straight, curly hair stays curly",
     "style": "vinyl collectible style, clean white background, professional product photography"
+  },
+  "wysiwyg_priority": {
+    "hair_instruction": "CRITICAL: Copy hair texture exactly from reference image - textured/afro hair should remain textured, NOT slicked back or styled",
+    "skin_instruction": "CRITICAL: Copy skin tone exactly from reference image",
+    "feature_instruction": "CRITICAL: What you see in the reference image is what you get - no generic defaults"
   },
   "examples": {
     "aws_summit": {
