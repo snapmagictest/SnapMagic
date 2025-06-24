@@ -468,75 +468,11 @@
             gap: 1rem;
         }
 
-        /* Perfect Figurine Styles */
-        .perfect-figurine-container {
-            display: flex;
-            flex-direction: column;
-            gap: 2rem;
-            max-width: 600px;
-            margin: 0 auto;
-        }
-
-        .figurine-preview {
-            text-align: center;
-            background: rgba(255, 153, 0, 0.1);
-            border: 2px solid rgba(255, 153, 0, 0.3);
-            border-radius: 16px;
-            padding: 2rem;
-        }
-
-        .preview-icon {
-            font-size: 4rem;
-            margin-bottom: 1rem;
-            display: block;
-        }
-
-        .figurine-preview h2 {
-            color: #FF9900;
-            font-size: 1.8rem;
-            font-weight: 700;
-            margin-bottom: 1rem;
-        }
-
-        .figurine-preview p {
-            color: rgba(255, 255, 255, 0.9);
-            font-size: 1.1rem;
-            line-height: 1.5;
-            margin-bottom: 2rem;
-        }
-
-        .features-list {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-            text-align: left;
-        }
-
-        .feature {
-            display: flex;
-            align-items: flex-start;
-            gap: 0.75rem;
-            padding: 0.75rem;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 8px;
-            border-left: 3px solid #FF9900;
-        }
-
-        .feature-icon {
-            font-size: 1.2rem;
-            flex-shrink: 0;
-            margin-top: 0.1rem;
-        }
-
-        .feature-text {
-            color: rgba(255, 255, 255, 0.9);
-            font-size: 0.95rem;
-            line-height: 1.4;
-        }
-
+        /* Simplified Action Styles */
         .create-action {
             display: flex;
             justify-content: center;
+            margin: 2rem 0;
         }
 
         .create-figurine-btn {
@@ -581,23 +517,6 @@
 
         /* Mobile responsive adjustments */
         @media (max-width: 768px) {
-            .perfect-figurine-container {
-                max-width: 100%;
-                gap: 1.5rem;
-            }
-            
-            .figurine-preview {
-                padding: 1.5rem;
-            }
-            
-            .figurine-preview h2 {
-                font-size: 1.5rem;
-            }
-            
-            .figurine-preview p {
-                font-size: 1rem;
-            }
-            
             .create-figurine-btn {
                 padding: 1rem 2rem;
                 font-size: 1.1rem;
@@ -917,16 +836,6 @@
             }
         }
 
-        .device-info {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 12px;
-            padding: 1rem;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            font-size: 0.9rem;
-            line-height: 1.5;
-            margin-top: 2rem;
-        }
     </style>
 </head>
 <body>
@@ -1031,43 +940,12 @@
                         </div>
                         
                         <div class="content-section">
-                            <!-- Perfect Figurine Creation -->
-                            <div class="perfect-figurine-container">
-                                <div class="figurine-preview">
-                                    <div class="preview-icon">🎁</div>
-                                    <h2>Create Your Perfect Figurine</h2>
-                                    <p>Transform your selfie into a photorealistic action figure in professional blister pack packaging!</p>
-                                    
-                                    <div class="features-list">
-                                        <div class="feature">
-                                            <span class="feature-icon">📦</span>
-                                            <span class="feature-text">Professional blister pack packaging with orange backing</span>
-                                        </div>
-                                        <div class="feature">
-                                            <span class="feature-icon">🎯</span>
-                                            <span class="feature-text">Tech professional in modern business attire</span>
-                                        </div>
-                                        <div class="feature">
-                                            <span class="feature-icon">📱</span>
-                                            <span class="feature-text">Complete accessory set: Camera, tablet, phone, controller, robot, bicycle, sneakers</span>
-                                        </div>
-                                        <div class="feature">
-                                            <span class="feature-icon">🏷️</span>
-                                            <span class="feature-text">Personalized with your name on packaging</span>
-                                        </div>
-                                        <div class="feature">
-                                            <span class="feature-icon">📸</span>
-                                            <span class="feature-text">Photorealistic product photography style</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <div class="create-action">
-                                    <button class="create-figurine-btn" id="transformPictureBtn" disabled>
-                                        <span class="btn-icon">✨</span>
-                                        <span class="btn-text">Create My Perfect Figurine</span>
-                                    </button>
-                                </div>
+                            <!-- Simplified Action Section -->
+                            <div class="create-action">
+                                <button class="create-figurine-btn" id="transformPictureBtn" disabled>
+                                    <span class="btn-icon">✨</span>
+                                    <span class="btn-text">Create My Perfect Figurine</span>
+                                </button>
                             </div>
                             
                             <!-- Processing Status -->
@@ -1198,9 +1076,6 @@
                 </div>
             </div>
 
-            <div class="device-info">
-                <div id="deviceInfo">Loading device info...</div>
-            </div>
         </main>
     </div>
 
@@ -1249,8 +1124,7 @@
                 // Setup event listeners
                 this.setupEventListeners();
                 
-                // Display device information
-                this.displayDeviceInfo();
+                // Display device information - REMOVED
                 
                 console.log('✅ SnapMagic App Ready!');
             }
@@ -1381,8 +1255,7 @@
                 // Rating buttons
                 this.setupRatingButtons();
                 
-                // Window resize handler
-                window.addEventListener('resize', () => this.displayDeviceInfo());
+                // Window resize handler - device info removed
             }
 
             setupCameraButtons() {
@@ -1991,32 +1864,7 @@
                 }
             }
 
-            displayDeviceInfo() {
-                const deviceInfo = document.getElementById('deviceInfo');
-                if (!deviceInfo) return;
-                
-                const screenWidth = window.innerWidth;
-                const screenHeight = window.innerHeight;
-                const deviceType = this.getDeviceType(screenWidth);
-                
-                let sessionInfo = '';
-                if (this.isAuthenticated && this.currentUser) {
-                    const sessionData = localStorage.getItem('snapmagic_session');
-                    if (sessionData) {
-                        const session = JSON.parse(sessionData);
-                        const sessionAge = Math.floor((Date.now() - session.timestamp) / 1000 / 60); // minutes
-                        sessionInfo = `<br><strong>Session:</strong> ${sessionAge}m ago (24h expiry)`;
-                    }
-                }
-                
-                deviceInfo.innerHTML = `
-                    <strong>Device:</strong> ${deviceType}<br>
-                    <strong>Screen:</strong> ${screenWidth} × ${screenHeight}<br>
-                    <strong>Status:</strong> ${this.isAuthenticated ? '🟢 Authenticated' : '🔴 Not Authenticated'}<br>
-                    <strong>Feature:</strong> ${this.currentFeature}<br>
-                    <strong>Version:</strong> SnapMagic Gen 2 (Session Persistent)${sessionInfo}
-                `;
-            }
+            // Device info functions removed for cleaner UI
 
             getDeviceType(width) {
                 if (width < 768) return '📱 Mobile';
