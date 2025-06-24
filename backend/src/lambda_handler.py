@@ -418,7 +418,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         logger.info(f"✅ Authenticated user: {token_payload.get('username')}")
         
-        # Handle image transformation
+        # Handle image transformation - NOW CREATES TIMES SQUARE BILLBOARD
         action = body.get('action', '')
         if action == 'transform_image':
             image_base64 = body.get('image_base64', '')
@@ -427,19 +427,29 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             if not image_base64:
                 return create_error_response("Missing image data", 400)
             
-            logger.info(f"🎯 Processing SnapMagic Face Mesh action figure transformation")
-            result = transform_image_mesh_approach(prompt, image_base64, token_payload.get('username'))
+            logger.info(f"🎯 Processing Times Square Billboard creation for user: {token_payload.get('username')}")
             
-            return create_success_response({
-                'result': result,
-                'user': token_payload.get('username'),
-                'config_used': {
-                    'similarity': 0.95,
-                    'cfg_scale': 9.0,
-                    'seed': 42,
-                    'quality': 'premium'
-                }
-            })
+            # Import and use the simplified billboard service
+            try:
+                from services.billboard_generator_simple import create_times_square_billboard_simple
+                result = create_times_square_billboard_simple(image_base64)
+                
+                return create_success_response({
+                    'result': result,
+                    'user': token_payload.get('username'),
+                    'type': 'times_square_billboard',
+                    'message': 'Your Times Square billboard is ready!',
+                    'config_used': {
+                        'approach': 'simplified_single_step_billboard',
+                        'method': 'bedrock_nova_canvas_only',
+                        'features': 'times_square_funko_pop_billboard',
+                        'quality': 'premium'
+                    }
+                })
+                
+            except Exception as e:
+                logger.error(f"Billboard creation failed: {str(e)}")
+                return create_error_response(f"Billboard creation failed: {str(e)}", 500)
         
         return create_error_response(f"Unknown action: {action}", 400)
         
