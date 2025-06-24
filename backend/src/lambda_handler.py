@@ -225,7 +225,7 @@ class SnapMagicFunkoGenerator:
         prompt_parts.extend([
             "CRITICAL: Copy appearance exactly from reference image",
             "preserve original skin color exactly as shown in reference",
-            "preserve original hair texture exactly as shown in reference - afro hair stays afro, straight hair stays straight",
+            "preserve original hair exactly as shown in reference image",
             "what you see in the reference image is what you get - no generic defaults",
             "keep ethnic characteristics"
         ])
@@ -306,9 +306,9 @@ class SnapMagicFunkoGenerator:
             if any(term in style_lower for term in ['afro', 'kinky', 'coily', 'curly', 'textured', 'natural', 'tight']):
                 textured_hair_found = True
         
-        # Add explicit textured hair emphasis if detected
+        # Add emphasis for natural hair styling if textured hair detected
         if textured_hair_found:
-            prompt_parts.append("textured natural hair not slicked back")
+            prompt_parts.append("natural hair styling from reference image")
         
         prompt_parts.extend([
             "vinyl collectible style",

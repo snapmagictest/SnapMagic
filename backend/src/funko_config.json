@@ -29,13 +29,13 @@
   "funko_structure": {
     "head": "large oversized round head, large black dot eyes, no nose just small indentation, smooth vinyl texture",
     "body": "small compact body proportions, full body figure head to toes, complete standing pose not cropped",
-    "preservation": "preserve original skin color exactly, maintain ethnic characteristics, keep natural complexion, MATCH HAIR TEXTURE EXACTLY FROM REFERENCE IMAGE - afro hair stays afro, straight hair stays straight, curly hair stays curly",
+    "preservation": "preserve original skin color exactly, maintain ethnic characteristics, keep natural complexion, MATCH APPEARANCE EXACTLY FROM REFERENCE IMAGE",
     "style": "vinyl collectible style, clean white background, professional product photography"
   },
   "wysiwyg_priority": {
-    "hair_instruction": "CRITICAL: Copy hair texture exactly from reference image - textured/afro hair should remain textured, NOT slicked back or styled",
+    "hair_instruction": "CRITICAL: Copy hair exactly from reference image - match what you see exactly",
     "skin_instruction": "CRITICAL: Copy skin tone exactly from reference image",
-    "feature_instruction": "CRITICAL: What you see in the reference image is what you get - no generic defaults"
+    "feature_instruction": "CRITICAL: What you see in the reference image is what you get - no assumptions"
   },
   "examples": {
     "aws_summit": {
