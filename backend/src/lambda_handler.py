@@ -219,30 +219,42 @@ class SnapMagicFunkoGenerator:
                 'logo_description': 'AWS logo'
             }
         
-        # SIMPLIFIED CRYSTAL CLEAR PROMPT - NO template references at all
+        # NOVA CANVAS OPTIMIZED - What it does BEST with person characteristics
         prompt_parts = [
-            "Create a professional Funko Pop figure of the person in the reference image",
-            "HAIR TEXTURE CRITICAL - Look at the reference image and identify the hair type:",
-            "- If hair appears TEXTURED, KINKY, COILY, or AFRO-STYLE: Create textured afro hair on the Funko Pop",
-            "- If hair appears STRAIGHT: Create straight hair on the Funko Pop", 
-            "- If hair appears CURLY or WAVY: Create curly/wavy hair on the Funko Pop",
-            "- If hair appears BRAIDED, LOCS, or TWISTED: Create that exact style",
-            "- If person appears BALD or VERY SHORT hair: Create bald or very short hair",
-            "NEVER default to slicked-back businessman hair - match the actual hair texture visible",
-            "Copy the EXACT hair color shown in the photo",
-            "Copy the EXACT skin tone as it appears",
-            "Copy any head coverings if present (caps, beanies, hats, hijabs, etc.)",
-            "Copy facial hair exactly as shown (beard, mustache, clean shaven)",
-            "Copy facial expressions and features as visible"
+            "Create a professional digital portrait illustration of the person in the reference image",
+            "Style: Clean vector art illustration with bold colors",
+            "Match the person's actual appearance from the reference image:",
+            "- Hair texture, style, and color exactly as shown",
+            "- Skin tone exactly as it appears", 
+            "- Facial features and expressions as visible",
+            "- Facial hair exactly as shown",
+            "- Any accessories or head coverings if present"
         ]
         
-        # Remove ALL template references - clean prompt
+        # Add corporate styling that Nova can handle well
+        gender = mesh_data.get('gender', 'Unknown').lower()
+        if gender == 'female':
+            prompt_parts.extend([
+                f"Professional business portrait style",
+                f"Corporate attire in {branding['primary_color']} and {branding['secondary_color']}",
+                f"Clean modern illustration style",
+                f"{branding['company_name']} professional branding"
+            ])
+        else:
+            prompt_parts.extend([
+                f"Professional business portrait style", 
+                f"Corporate suit with {branding['primary_color']} tie",
+                f"Clean modern illustration style",
+                f"{branding['company_name']} professional branding"
+            ])
+        
+        # Final styling that Nova excels at
         prompt_parts.extend([
-            "Full body Funko Pop figure from head to toes",
-            "Oversized round head with large black dot eyes",
-            "No nose, just small indentation", 
-            "Complete standing pose showing legs and feet",
-            "Standard Funko Pop proportions and vinyl style"
+            "High quality digital illustration",
+            "Professional portrait style",
+            "Clean white background",
+            "Bold clear colors",
+            "Modern vector art aesthetic"
         ])
         
         # Corporate styling
@@ -321,49 +333,36 @@ class SnapMagicFunkoGenerator:
             # Use ONLY the selfie - absolutely no template interference
             reference_images = [base64.b64encode(mesh_data['validated_image_bytes']).decode('utf-8')]
             
-            # EXPERIMENTAL: Ultra-aggressive hair texture detection with negative prompting
-            detailed_prompt = f"""Create a professional Funko Pop vinyl collectible figure of the person in the reference image.
+            # NOVA CANVAS OPTIMIZED - Professional Portrait Illustration
+            detailed_prompt = f"""Create a professional digital portrait illustration of the person in the reference image.
 
-EXPERIMENTAL HAIR ANALYSIS - LOOK VERY CAREFULLY:
-Study the person's hair texture in the reference image:
-- If you see SHORT, TIGHT, CURLY, NATURAL BLACK HAIR (like an afro): Create SHORT TIGHT CURLY hair on the Funko Pop
-- If you see TEXTURED, KINKY, COILY hair: Create TEXTURED CURLY hair (NOT smooth, NOT straight)
-- If you see NATURAL BLACK HAIR with texture: Create natural textured hair
-- If you see STRAIGHT hair: Create straight hair
-- If you see WAVY hair: Create wavy hair
-- If you see BRAIDS or LOCS: Create braids/locs
-- If BALD: Create bald head
+STYLE: Clean modern vector art illustration with bold colors and professional finish
 
-CRITICAL NEGATIVE INSTRUCTIONS:
-- DO NOT create slicked-back hair
-- DO NOT create pompadour or quiff styles  
-- DO NOT create smooth styled businessman hair
-- DO NOT create combed-back hair
-- DO NOT default to generic corporate hairstyles
-- DO NOT make textured hair look smooth or styled
+APPEARANCE MATCHING (Nova's strength):
+- Copy the person's hair texture, style, and color exactly as shown in the reference
+- Copy the skin tone exactly as it appears in the reference
+- Copy facial features, expressions, and characteristics as visible
+- Copy facial hair exactly as shown (beard, mustache, clean shaven)
+- Copy any accessories, glasses, or head coverings if present
 
-HAIR TEXTURE MATCHING:
-- Textured hair should look TEXTURED (bumpy, curly, natural)
-- Smooth hair should look SMOOTH
-- Match the actual texture you see in the reference image
-- Do not smooth out natural texture
-
-APPEARANCE REQUIREMENTS:
-- Hair color: Match exactly from reference
-- Skin tone: Match exactly from reference (brown, tan, dark, light, etc.)
-- Facial hair: Match exactly (beard, mustache, clean shaven)
-- Facial features: Match expressions and characteristics
-
-FUNKO POP STRUCTURE:
-- Full body figure head to toes
-- Oversized round head (40% of total height)
-- Large black dot eyes, no nose (just indentation)
-- Small body, short arms and legs
-- Professional vinyl finish
+ILLUSTRATION STYLE:
+- Professional business portrait illustration
+- Clean vector art aesthetic with bold, clear colors
+- Modern digital art style (not cartoon, not realistic photo)
+- High contrast, well-defined features
+- Professional corporate presentation
 
 {prompt}
 
-FINAL HAIR REMINDER: If the person has natural textured hair, the Funko Pop should have textured hair - NOT slicked back or smooth styled hair."""
+OUTPUT REQUIREMENTS:
+- High quality digital illustration
+- Professional portrait orientation
+- Clean white background
+- Bold, vibrant colors
+- Modern vector art finish
+- Corporate professional styling
+
+Focus on creating an accurate, professional portrait illustration that captures the person's actual appearance."""
 - Copy the EXACT hair texture, style, and color from the reference image (afro, straight, curly, kinky, coily, braided, etc.)
 - Copy the EXACT skin tone as it appears in the reference image
 - Copy facial hair exactly as shown (beard, mustache, clean shaven)
@@ -409,7 +408,7 @@ FINAL REQUIREMENTS:
                     "quality": "premium",
                     "width": 1024,
                     "height": 1024,
-                    "cfgScale": 10.0,  # Increased from 8.5 to follow prompt more strictly
+                    "cfgScale": 7.5,  # Optimal for portrait illustrations
                     "seed": seed
                 }
             }
