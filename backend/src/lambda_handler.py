@@ -86,7 +86,13 @@ class SnapMagicFunkoGenerator:
                 label_name = label['Name'].lower()
                 confidence = label['Confidence']
                 
-                head_wear_keywords = ['hat', 'cap', 'helmet', 'headband', 'bandana', 'beanie', 'beret']
+                # Comprehensive head wear detection - caps, beanies, hats, religious coverings
+                head_wear_keywords = [
+                    'hat', 'cap', 'baseball cap', 'beanie', 'knit cap', 'winter hat',
+                    'fedora', 'cowboy hat', 'sun hat', 'bucket hat', 'snapback',
+                    'hijab', 'headscarf', 'turban', 'bandana', 'headband',
+                    'helmet', 'hard hat', 'beret', 'headwear', 'head covering'
+                ]
                 for keyword in head_wear_keywords:
                     if keyword in label_name and confidence > 70:
                         features['head_wear'].append(label['Name'])
@@ -213,26 +219,34 @@ class SnapMagicFunkoGenerator:
                 'logo_description': 'AWS logo'
             }
         
-        prompt_parts = ["Full body Funko Pop figure head to toes"]
+        # COMPREHENSIVE PROMPT: Combine Rekognition + Nova Canvas Vision
+        prompt_parts = [
+            "Create a professional Funko Pop figure based on the person in the reference image",
+            "CRITICAL: Look at the reference image and match EXACTLY what you see:",
+            "- Hair texture (afro, kinky, coily, straight, wavy, curly) as visible in image",
+            "- Hair style (short, long, braids, locs, buzz cut, etc.) as shown",
+            "- Hair color as it appears in the image", 
+            "- Any head coverings (caps, beanies, hats, hijabs, turbans) if present",
+            "- Facial hair texture and style as visible",
+            "- Skin tone as it appears in the reference image",
+            "- Facial features and expressions as shown"
+        ]
         
-        prompt_parts.extend([
-            "preserve original skin color",
-            "keep ethnic characteristics"
-        ])
+        # Add Rekognition data for reinforcement
+        gender = mesh_data.get('gender', 'Unknown').lower()
+        if gender != 'unknown':
+            prompt_parts.append(f"{gender} person")
         
+        # Funko Pop styling
         prompt_parts.extend([
-            "show entire figure with legs feet visible",
+            "Full body Funko Pop figure head to toes",
+            "standard Funko Pop head shape with oversized round head",
+            "large black dot eyes, no nose just small indentation",
+            "show entire figure with legs and feet visible",
             "complete standing pose not cropped"
         ])
         
-        prompt_parts.extend([
-            "standard Funko Pop head shape",
-            "oversized round head",
-            "large black dot eyes",
-            "no nose small indentation"
-        ])
-        
-        gender = mesh_data.get('gender', 'Unknown').lower()
+        # Corporate branding based on gender
         if gender == 'female':
             prompt_parts.extend([
                 f"female corporate business dress in {branding['primary_color']} and {branding['secondary_color']} colors",
@@ -246,22 +260,54 @@ class SnapMagicFunkoGenerator:
                 f"professional {branding['company_name']} branded formal attire"
             ])
         
+        # Facial features from Rekognition (for reinforcement)
         if gender == 'male':
             if mesh_data.get('has_beard'):
-                prompt_parts.append("beard")
+                prompt_parts.append("with beard as shown in reference image")
             if mesh_data.get('has_mustache'):
-                prompt_parts.append("mustache")
+                prompt_parts.append("with mustache as shown in reference image")
         
         if mesh_data.get('has_smile'):
-            prompt_parts.append("smile")
-        
+            prompt_parts.append("smiling expression")
         if mesh_data.get('has_glasses'):
-            prompt_parts.append("glasses")
+            prompt_parts.append("wearing eyeglasses")
         
+        # Head wear detection (critical for caps, beanies, etc.)
         head_wear = mesh_data.get('head_wear', [])
-        for item in head_wear:
-            prompt_parts.append(f"{item.lower()}")
+        if head_wear:
+            for item in head_wear:
+                prompt_parts.append(f"wearing {item.lower()} as shown in image")
         
+        # Detected characteristics (but let Nova Canvas see the actual image)
+        skin_tone = mesh_data.get('skin_tone', [])
+        for tone in skin_tone:
+            prompt_parts.append(f"{tone.lower()}")
+        
+        facial_hair_style = mesh_data.get('facial_hair_style', [])
+        for hair_style in facial_hair_style:
+            prompt_parts.append(f"{hair_style.lower()}")
+        
+        hair_color = mesh_data.get('hair_color', [])
+        hair_detected = len(hair_color) > 0
+        for color in hair_color:
+            prompt_parts.append(f"{color.lower()}")
+        
+        hair_style = mesh_data.get('hair_style', [])
+        hair_detected = hair_detected or len(hair_style) > 0
+        for style in hair_style:
+            prompt_parts.append(f"{style.lower()}")
+        
+        # CRITICAL: If no hair detected and no head covering, force Nova Canvas to look
+        if not hair_detected and not head_wear:
+            prompt_parts.extend([
+                "IMPORTANT: Carefully examine the hair in the reference image",
+                "If hair appears textured, kinky, coily, or afro-style - represent it accurately",
+                "If hair appears straight, wavy, or curly - represent it accurately", 
+                "If person appears bald or has very short hair - represent accurately",
+                "Do not default to generic straight hair - match what is actually visible"
+            ])
+        
+        # Accessories
         facial_accessories = mesh_data.get('facial_accessories', [])
         for item in facial_accessories:
             prompt_parts.append(f"{item.lower()}")
@@ -270,27 +316,11 @@ class SnapMagicFunkoGenerator:
         for item in jewelry:
             prompt_parts.append(f"{item.lower()}")
         
-        # Use actual detected skin tone instead of brightness guessing
-        skin_tone = mesh_data.get('skin_tone', [])
-        for tone in skin_tone:
-            prompt_parts.append(f"{tone.lower()}")
-        
-        # Use actual detected facial hair style and texture
-        facial_hair_style = mesh_data.get('facial_hair_style', [])
-        for hair_style in facial_hair_style:
-            prompt_parts.append(f"{hair_style.lower()}")
-        
-        hair_color = mesh_data.get('hair_color', [])
-        for color in hair_color:
-            prompt_parts.append(f"{color.lower()}")
-        
-        hair_style = mesh_data.get('hair_style', [])
-        for style in hair_style:
-            prompt_parts.append(f"{style.lower()}")
-        
+        # Final styling
         prompt_parts.extend([
-            "vinyl collectible style",
-            "clean white background"
+            "high quality vinyl collectible style",
+            "clean white background",
+            "professional product photography lighting"
         ])
         
         prompt = ", ".join(prompt_parts)
