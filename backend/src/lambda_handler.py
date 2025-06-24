@@ -1,6 +1,6 @@
 """
-SnapMagic Lambda Handler - Face Mesh Action Figure Version
-Uses Rekognition face mesh data to generate accurate action figures with Nova Canvas
+SnapMagic Lambda Handler - Clean FunkoPop Generator Integration
+Integrates the CleanFunkoPopGenerator functionality with SnapMagic authentication
 """
 
 import json
@@ -8,398 +8,363 @@ import logging
 import boto3
 import base64
 import os
+import time
 from typing import Dict, Any
+from PIL import Image
+import io
+import threading
 from auth_simple import SnapMagicAuthSimple
 
 # Configure logging
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
-# Initialize AWS clients
-bedrock_runtime = boto3.client('bedrock-runtime', region_name='us-east-1')
-rekognition = boto3.client('rekognition', region_name='us-east-1')
+class SnapMagicFunkoGenerator:
+    """SnapMagic integration of CleanFunkoPopGenerator"""
+    
+    def __init__(self, region: str = "us-east-1", rate_limit_delay: float = 8.0):
+        self.region = region
+        self.rate_limit_delay = rate_limit_delay
+        
+        self.bedrock_runtime = boto3.client('bedrock-runtime', region_name=region)
+        self.rekognition = boto3.client('rekognition', region_name=region)
+        
+        self.last_request_time = 0
+        self.request_lock = threading.Lock()
+        
+        logger.info(f"🎯 SnapMagic FunkoPop Generator initialized")
 
-def extract_face_mesh_data(image_base64: str) -> Dict[str, Any]:
-    """Extract detailed face mesh and features using Rekognition + skin tone analysis"""
-    try:
-        # Clean the base64 data
-        if ',' in image_base64:
-            image_base64 = image_base64.split(',')[1]
-            
-        image_bytes = base64.b64decode(image_base64)
-        
-        response = rekognition.detect_faces(
-            Image={'Bytes': image_bytes},
-            Attributes=['ALL']
-        )
-        
-        if not response['FaceDetails']:
-            logger.warning("No face detected in image")
-            return {'success': False, 'error': 'No face detected'}
-        
-        face = response['FaceDetails'][0]
-        
-        # Get comprehensive label analysis for skin tone detection
-        label_response = rekognition.detect_labels(
-            Image={'Bytes': image_bytes},
-            MaxLabels=100,
-            MinConfidence=40  # Lower threshold to catch skin tone descriptors
-        )
-        
-        # Extract skin tone descriptors from labels
-        skin_tone_descriptors = []
-        complexion_hints = []
-        
-        for label in label_response['Labels']:
-            label_name = label['Name'].lower()
-            confidence = label['Confidence']
-            
-            # Look for skin tone and complexion descriptors
-            if any(word in label_name for word in ['brown', 'tan', 'dark', 'light', 'olive', 'fair', 'medium', 'pale', 'deep']):
-                if confidence > 50:
-                    skin_tone_descriptors.append(f"{label['Name']}")
-            
-            # Look for ethnic/regional descriptors that indicate complexion
-            if any(word in label_name for word in ['indian', 'south asian', 'asian', 'african', 'european', 'middle eastern', 'hispanic', 'latino']):
-                if confidence > 40:
-                    complexion_hints.append(f"{label['Name']}")
-        
-        # Extract comprehensive features
-        mesh_data = {
-            'gender': face.get('Gender', {}).get('Value', 'Unknown'),
-            'gender_confidence': face.get('Gender', {}).get('Confidence', 0),
-            'age_range': f"{face['AgeRange']['Low']}-{face['AgeRange']['High']}",
-            'age_midpoint': (face['AgeRange']['Low'] + face['AgeRange']['High']) // 2,
-            'has_beard': face.get('Beard', {}).get('Value', False),
-            'has_mustache': face.get('Mustache', {}).get('Value', False),
-            'has_glasses': face.get('Eyeglasses', {}).get('Value', False),
-            'has_smile': face.get('Smile', {}).get('Value', False),
-            'eyes_open': face.get('EyesOpen', {}).get('Value', True),
-            'mouth_open': face.get('MouthOpen', {}).get('Value', False),
-            'landmarks_count': len(face.get('Landmarks', [])),
-            'skin_tone_descriptors': skin_tone_descriptors,
-            'complexion_hints': complexion_hints
-        }
-        
-        logger.info(f"🔍 Face mesh extracted: {mesh_data['gender']} ({mesh_data['gender_confidence']:.1f}%), "
-                   f"Age: {mesh_data['age_range']}, Features: {[k for k, v in mesh_data.items() if k.startswith('has_') and v]}")
-        logger.info(f"🎨 Skin tone descriptors: {skin_tone_descriptors}")
-        logger.info(f"🌍 Complexion hints: {complexion_hints}")
-        
-        return {'success': True, 'mesh_data': mesh_data}
-        
-    except Exception as e:
-        logger.error(f"Face mesh extraction failed: {str(e)}")
-        return {'success': False, 'error': str(e)}
+    def resize_image_for_bedrock(self, image_bytes: bytes, max_pixels: int = 4194304) -> bytes:
+        """Resize image to fit within Bedrock Nova Canvas pixel limits"""
+        try:
+            with Image.open(io.BytesIO(image_bytes)) as img:
+                if img.mode != 'RGB':
+                    img = img.convert('RGB')
+                
+                width, height = img.size
+                total_pixels = width * height
+                
+                if total_pixels > max_pixels:
+                    scale_factor = (max_pixels / total_pixels) ** 0.5
+                    new_width = int(width * scale_factor)
+                    new_height = int(height * scale_factor)
+                    img = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
+                
+                if width < 320 or height < 320:
+                    scale_factor = max(320 / width, 320 / height)
+                    new_width = int(width * scale_factor)
+                    new_height = int(height * scale_factor)
+                    img = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
+                
+                output_buffer = io.BytesIO()
+                img.save(output_buffer, format='JPEG', quality=95, optimize=True)
+                return output_buffer.getvalue()
+                
+        except Exception as e:
+            logger.error(f"Image resize failed: {e}")
+            return image_bytes
 
-def create_mesh_based_action_figure_prompt(mesh_data: Dict[str, Any]) -> str:
-    """Create action figure prompt with blister pack packaging (1-5 variations)"""
-    
-    prompt_parts = ["Professional 3D action figure in blister pack packaging"]
-    
-    # CRITICAL: Skin tone preservation
-    skin_tone_descriptors = mesh_data.get('skin_tone_descriptors', [])
-    complexion_hints = mesh_data.get('complexion_hints', [])
-    
-    # Build skin tone preservation
-    skin_preservation = []
-    
-    if skin_tone_descriptors:
-        if skin_tone_descriptors:
-            skin_preservation.append(f"maintain {skin_tone_descriptors[0].lower()} skin tone")
-    
-    if complexion_hints:
-        if complexion_hints:
-            skin_preservation.append(f"preserve {complexion_hints[0].lower()} complexion")
-    
-    # Essential skin preservation
-    skin_preservation.extend([
-        "preserve original skin color",
-        "maintain natural complexion"
-    ])
-    
-    # Add skin preservation
-    prompt_parts.extend(skin_preservation)
-    
-    # Gender-specific styling with blister pack theme
-    gender = mesh_data['gender'].lower()
-    age_midpoint = mesh_data['age_midpoint']
-    
-    if gender == 'male':
-        if age_midpoint < 30:
-            prompt_parts.extend([
-                "young professional businessman action figure",
-                "business suit with tie",
-                "professional male collectible figure"
-            ])
-        elif age_midpoint > 50:
-            prompt_parts.extend([
-                "executive businessman action figure", 
-                "premium business attire",
-                "senior executive collectible figure"
-            ])
-        else:
-            prompt_parts.extend([
-                "professional businessman action figure",
-                "business suit with tie", 
-                "corporate executive collectible figure"
-            ])
+    def comprehensive_rekognition_analysis(self, image_bytes: bytes) -> Dict[str, Any]:
+        """Comprehensive Rekognition analysis"""
+        try:
+            image_bytes = self.resize_image_for_bedrock(image_bytes)
             
-    elif gender == 'female':
-        if age_midpoint < 30:
-            prompt_parts.extend([
-                "young professional businesswoman action figure",
-                "professional business attire",
-                "female executive collectible figure"
-            ])
-        elif age_midpoint > 50:
-            prompt_parts.extend([
-                "executive businesswoman action figure",
-                "premium professional attire",
-                "senior female executive collectible figure"
-            ])
-        else:
-            prompt_parts.extend([
-                "professional businesswoman action figure",
-                "business professional attire",
-                "female corporate executive collectible figure"
-            ])
-    
-    # Add detected facial features with cartoon styling
-    if mesh_data['has_beard']:
-        prompt_parts.append("with stylized facial hair")
-    if mesh_data['has_mustache']:
-        prompt_parts.append("with cartoon mustache")
-    if mesh_data['has_glasses']:
-        prompt_parts.append("wearing professional glasses")
-    if mesh_data['has_smile']:
-        prompt_parts.append("with confident smile")
-    
-    # BLISTER PACK SPECIFICATIONS (key focus)
-    prompt_parts.extend([
-        "sealed in clear plastic blister pack",
-        "professional toy packaging",
-        "collectible action figure presentation",
-        "retail blister pack display",
-        "transparent plastic packaging",
-        "cardboard backing with branding",
-        "premium collectible packaging",
-        "toy store quality presentation",
-        "action figure blister pack design",
-        "professional product packaging"
-    ])
-    
-    # 3D cartoon quality specifications
-    prompt_parts.extend([
-        "3D cartoon action figure style",
-        "high-quality toy figure rendering",
-        "detailed facial features matching original",
-        "cartoon proportions",
-        "stylized but recognizable features",
-        "premium toy quality",
-        "collectible figure detail",
-        "professional toy photography",
-        "clean studio lighting"
-    ])
-    
-    return ", ".join(prompt_parts)
-
-def transform_image_mesh_approach(prompt: str, image_base64: str, username: str) -> str:
-    """
-    SnapMagic Face Mesh Action Figure Approach
-    Uses Rekognition face mesh data for accurate action figure generation
-    """
-    try:
-        logger.info(f"🎯 Using SnapMagic Face Mesh approach for user: {username}")
-        
-        # Clean the base64 data
-        if ',' in image_base64:
-            image_base64 = image_base64.split(',')[1]
-        
-        # Step 1: Extract face mesh data
-        mesh_result = extract_face_mesh_data(image_base64)
-        if not mesh_result['success']:
-            logger.error(f"Face mesh extraction failed: {mesh_result['error']}")
-            # Fallback to simple prompt
-            mesh_prompt = "Professional 3D action figure, business professional, confident pose, high-quality rendering"
-        else:
-            mesh_data = mesh_result['mesh_data']
-            mesh_prompt = create_mesh_based_action_figure_prompt(mesh_data)
-            logger.info(f"📝 Generated mesh-based prompt: {mesh_prompt[:150]}...")
-        
-        # Step 2: Generate with Nova Canvas using blister pack optimized settings
-        request_body = {
-            "taskType": "IMAGE_VARIATION",
-            "imageVariationParams": {
-                "text": mesh_prompt,
-                "images": [image_base64],
-                "similarityStrength": 0.93  # Higher similarity for sample-quality facial preservation
-            },
-            "imageGenerationConfig": {
-                "numberOfImages": 1,
-                "quality": "premium",
-                "width": 1024,
-                "height": 1024,
-                "cfgScale": 8.5,  # Balanced for blister pack details + facial preservation
-                "seed": 42
+            face_response = self.rekognition.detect_faces(
+                Image={'Bytes': image_bytes},
+                Attributes=['ALL']
+            )
+            
+            label_response = self.rekognition.detect_labels(
+                Image={'Bytes': image_bytes},
+                MaxLabels=100,
+                MinConfidence=60
+            )
+            
+            if not face_response['FaceDetails']:
+                return {'success': False, 'error': 'No face detected'}
+            
+            face = face_response['FaceDetails'][0]
+            
+            features = {
+                'gender': face.get('Gender', {}).get('Value', 'Unknown'),
+                'age_range': f"{face['AgeRange']['Low']}-{face['AgeRange']['High']}",
+                'has_beard': face.get('Beard', {}).get('Value', False),
+                'has_mustache': face.get('Mustache', {}).get('Value', False),
+                'has_smile': face.get('Smile', {}).get('Value', False),
+                'has_glasses': face.get('Eyeglasses', {}).get('Value', False),
+                'has_sunglasses': face.get('Sunglasses', {}).get('Value', False),
+                'head_wear': [],
+                'hair_color': [],
+                'hair_style': [],
+                'facial_accessories': [],
+                'jewelry': [],
+                'head_accessories': []
             }
-        }
-        
-        logger.info("🎨 Generating mesh-based action figure with Nova Canvas...")
-        
-        response = bedrock_runtime.invoke_model(
-            modelId="amazon.nova-canvas-v1:0",
-            body=json.dumps(request_body),
-            contentType="application/json",
-            accept="application/json"
-        )
-        
-        response_body = json.loads(response['body'].read())
-        
-        if 'images' in response_body and len(response_body['images']) > 0:
-            result_image = response_body['images'][0]
-            logger.info("✅ Mesh-based action figure generation successful!")
-            return result_image
-        else:
-            logger.error("No images returned from Nova Canvas")
-            return ""
             
-    except Exception as e:
-        logger.error(f"Mesh action figure transformation failed: {str(e)}")
-        return ""
+            for label in label_response['Labels']:
+                label_name = label['Name'].lower()
+                confidence = label['Confidence']
+                
+                head_wear_keywords = ['hat', 'cap', 'helmet', 'headband', 'bandana', 'beanie', 'beret']
+                for keyword in head_wear_keywords:
+                    if keyword in label_name and confidence > 70:
+                        features['head_wear'].append(label['Name'])
+                        break
+                
+                eye_accessories = ['glasses', 'sunglasses', 'eyeglasses', 'spectacles', 'goggles']
+                for keyword in eye_accessories:
+                    if keyword in label_name and confidence > 75:
+                        features['facial_accessories'].append(label['Name'])
+                        break
+                
+                jewelry_keywords = ['earring', 'earrings', 'necklace', 'chain', 'pendant']
+                for keyword in jewelry_keywords:
+                    if keyword in label_name and confidence > 70:
+                        features['jewelry'].append(label['Name'])
+                        break
+                
+                hair_colors = ['black hair', 'brown hair', 'blonde hair', 'gray hair', 'grey hair', 'white hair', 'red hair']
+                for color in hair_colors:
+                    if color in label_name and confidence > 70:
+                        features['hair_color'].append(label['Name'])
+                        break
+                
+                hair_styles = ['curly hair', 'straight hair', 'wavy hair', 'long hair', 'short hair', 'ponytail', 'braid', 'bun']
+                for style in hair_styles:
+                    if style in label_name and confidence > 70:
+                        features['hair_style'].append(label['Name'])
+                        break
+            
+            for key in ['head_wear', 'hair_color', 'hair_style', 'facial_accessories', 'jewelry', 'head_accessories']:
+                features[key] = list(dict.fromkeys(features[key]))[:3]
+            
+            features['validated_image_bytes'] = image_bytes
+            
+            return {'success': True, 'mesh_data': features}
+            
+        except Exception as e:
+            return {'success': False, 'error': str(e)}
+
+    def create_aws_branded_prompt(self, mesh_data: Dict[str, Any]) -> str:
+        """Create AWS branded prompt"""
         
-        # EXACT WINNING REQUEST BODY - DO NOT CHANGE THESE VALUES
-        payload = {
-            "taskType": "IMAGE_VARIATION",
-            "imageVariationParams": {
-                "text": winning_prompt,
-                "images": [image_base64],
-                "similarityStrength": 0.95  # LOCKED WINNING VALUE
-            },
-            "imageGenerationConfig": {
-                "numberOfImages": 1,
-                "quality": "premium",  # LOCKED WINNING VALUE
-                "width": 1024,
-                "height": 1024,
-                "cfgScale": 9.0,  # LOCKED WINNING VALUE
-                "seed": 42  # LOCKED WINNING VALUE
+        try:
+            with open('/var/task/funko_config.json', 'r') as f:
+                config = json.load(f)
+            branding = config['event_branding']
+        except:
+            branding = {
+                'company_name': 'AWS',
+                'primary_color': 'orange',
+                'secondary_color': 'black',
+                'logo_description': 'AWS logo'
             }
-        }
         
-        logger.info(f"🎨 Transforming with WINNING config: similarity=0.95, cfg=9.0, seed=42, quality=premium")
+        prompt_parts = ["Full body Funko Pop figure head to toes"]
         
-        # Call Nova Canvas with winning configuration
-        response = bedrock_runtime.invoke_model(
-            modelId="amazon.nova-canvas-v1:0",
-            body=json.dumps(payload),
-            contentType="application/json",
-            accept="application/json"
-        )
+        prompt_parts.extend([
+            "preserve original skin color",
+            "keep ethnic characteristics"
+        ])
         
-        response_body = json.loads(response['body'].read())
+        prompt_parts.extend([
+            "show entire figure with legs feet visible",
+            "complete standing pose not cropped"
+        ])
         
-        if 'images' in response_body and len(response_body['images']) > 0:
-            logger.info("✅ SnapMagic WINNING transformation completed successfully!")
-            return response_body['images'][0]
+        prompt_parts.extend([
+            "standard Funko Pop head shape",
+            "oversized round head",
+            "large black dot eyes",
+            "no nose small indentation"
+        ])
+        
+        gender = mesh_data.get('gender', 'Unknown').lower()
+        if gender == 'female':
+            prompt_parts.extend([
+                f"female corporate business dress in {branding['primary_color']} and {branding['secondary_color']} colors",
+                f"professional {branding['company_name']} branded office attire",
+                f"{branding['logo_description']} pin on dress lapel"
+            ])
         else:
-            raise Exception("No transformed image returned from Nova Canvas")
-            
-    except Exception as e:
-        logger.error(f"❌ SnapMagic WINNING transformation failed: {str(e)}")
-        raise Exception(f"Winning transformation failed: {str(e)}")
-
-
-# Helper functions for response formatting
-def create_success_response(data: Dict[str, Any]) -> Dict[str, Any]:
-    """Create successful response with CORS headers"""
-    return {
-        'statusCode': 200,
-        'headers': {
-            'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Headers': 'Content-Type,Authorization',
-            'Access-Control-Allow-Methods': 'GET,POST,OPTIONS'
-        },
-        'body': json.dumps({
-            'success': True,
-            'timestamp': '2025-06-22T15:00:00Z',
-            **data
-        })
-    }
-
-
-def create_error_response(message: str, status_code: int = 500) -> Dict[str, Any]:
-    """Create error response with CORS headers"""
-    return {
-        'statusCode': status_code,
-        'headers': {
-            'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Headers': 'Content-Type,Authorization',
-            'Access-Control-Allow-Methods': 'GET,POST,OPTIONS'
-        },
-        'body': json.dumps({
-            'success': False,
-            'error': message,
-            'timestamp': '2025-06-22T15:00:00Z'
-        })
-    }
-
-
-def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
-    """
-    SnapMagic Lambda handler using Face Mesh approach
-    """
-    try:
-        logger.info("🎯 SnapMagic Lambda Handler - Face Mesh Configuration")
+            prompt_parts.extend([
+                f"male corporate business suit with {branding['primary_color']} tie",
+                f"{branding['secondary_color']} suit jacket with {branding['logo_description']} on chest pocket",
+                f"professional {branding['company_name']} branded formal attire"
+            ])
         
-        # Handle CORS preflight
-        if event.get('httpMethod') == 'OPTIONS':
-            return {
-                'statusCode': 200,
-                'headers': {
-                    'Access-Control-Allow-Origin': '*',
-                    'Access-Control-Allow-Headers': 'Content-Type,Authorization',
-                    'Access-Control-Allow-Methods': 'GET,POST,OPTIONS'
+        if gender == 'male':
+            if mesh_data.get('has_beard'):
+                prompt_parts.append("beard")
+            if mesh_data.get('has_mustache'):
+                prompt_parts.append("mustache")
+        
+        if mesh_data.get('has_smile'):
+            prompt_parts.append("smile")
+        
+        if mesh_data.get('has_glasses'):
+            prompt_parts.append("glasses")
+        
+        head_wear = mesh_data.get('head_wear', [])
+        for item in head_wear:
+            prompt_parts.append(f"{item.lower()}")
+        
+        facial_accessories = mesh_data.get('facial_accessories', [])
+        for item in facial_accessories:
+            prompt_parts.append(f"{item.lower()}")
+        
+        jewelry = mesh_data.get('jewelry', [])
+        for item in jewelry:
+            prompt_parts.append(f"{item.lower()}")
+        
+        hair_color = mesh_data.get('hair_color', [])
+        for color in hair_color:
+            prompt_parts.append(f"{color.lower()}")
+        
+        hair_style = mesh_data.get('hair_style', [])
+        for style in hair_style:
+            prompt_parts.append(f"{style.lower()}")
+        
+        prompt_parts.extend([
+            "vinyl collectible style",
+            "clean white background"
+        ])
+        
+        prompt = ", ".join(prompt_parts)
+        return prompt
+
+    def rate_limited_bedrock_call(self, request_body: Dict[str, Any]) -> Dict[str, Any]:
+        """Rate limited Bedrock call"""
+        
+        with self.request_lock:
+            current_time = time.time()
+            time_since_last = current_time - self.last_request_time
+            if time_since_last < self.rate_limit_delay:
+                sleep_time = self.rate_limit_delay - time_since_last
+                logger.info(f"Rate limiting: sleeping {sleep_time:.2f}s")
+                time.sleep(sleep_time)
+            self.last_request_time = time.time()
+        
+        try:
+            response = self.bedrock_runtime.invoke_model(
+                modelId="amazon.nova-canvas-v1:0",
+                body=json.dumps(request_body)
+            )
+            
+            response_body = json.loads(response['body'].read())
+            
+            if 'images' in response_body and response_body['images']:
+                return {'success': True, 'image': response_body['images'][0]}
+            else:
+                return {'success': False, 'error': 'No image in response'}
+                
+        except Exception as e:
+            error_str = str(e)
+            if 'throttling' in error_str.lower() or 'rate' in error_str.lower():
+                time.sleep(10)
+            return {'success': False, 'error': error_str}
+
+    def generate_funko_pop(self, image_bytes: bytes) -> Dict[str, Any]:
+        """Generate Funko Pop from image bytes"""
+        
+        analysis_result = self.comprehensive_rekognition_analysis(image_bytes)
+        
+        if not analysis_result['success']:
+            return analysis_result
+        
+        mesh_data = analysis_result['mesh_data']
+        prompt = self.create_aws_branded_prompt(mesh_data)
+        
+        # Load template image based on gender
+        gender = mesh_data.get('gender', 'Unknown').lower()
+        if gender == 'male':
+            template_path = '/var/task/model/male.PNG'
+        else:
+            template_path = '/var/task/model/female.PNG'
+        
+        # Load template image
+        try:
+            with open(template_path, 'rb') as f:
+                template_bytes = f.read()
+            template_bytes = self.resize_image_for_bedrock(template_bytes)
+            template_base64 = base64.b64encode(template_bytes).decode('utf-8')
+        except Exception as e:
+            logger.warning(f"Template loading failed: {e}, continuing without template")
+            template_base64 = None
+        
+        seeds = [42, 999, 123, 777, 555]
+        
+        for seed in seeds:
+            # Prioritize selfie for details, template for body structure
+            reference_images = [base64.b64encode(mesh_data['validated_image_bytes']).decode('utf-8')]
+            if template_base64:
+                reference_images.append(template_base64)
+            
+            # Enhanced prompt to prioritize selfie details
+            detailed_prompt = f"use first image for all facial details complexion makeup features, use second image only for complete body structure, {prompt}"
+            
+            request_body = {
+                "taskType": "IMAGE_VARIATION",
+                "imageVariationParams": {
+                    "text": detailed_prompt,
+                    "images": reference_images,
+                    "similarityStrength": 0.90
                 },
-                'body': json.dumps({'message': 'CORS preflight'})
-            }
-        
-        # Health check
-        if event.get('path') == '/health':
-            return create_success_response({
-                'service': 'SnapMagic Backend',
-                'status': 'healthy',
-                'blister_pack_config': {
-                    'similarity': 0.93,  # Higher for sample-quality preservation
-                    'cfg_scale': 8.5,    # Balanced for packaging details
-                    'seed': 42,
-                    'quality': 'premium',
-                    'model': 'amazon.nova-canvas-v1:0',
-                    'approach': 'blister_pack_action_figure_with_skin_tone_preservation',
-                    'packaging': 'professional_blister_pack_1_to_5_variations'
+                "imageGenerationConfig": {
+                    "numberOfImages": 1,
+                    "quality": "premium",
+                    "width": 1024,
+                    "height": 1024,
+                    "cfgScale": 8.5,
+                    "seed": seed
                 }
-            })
+            }
+            
+            result = self.rate_limited_bedrock_call(request_body)
+            
+            if result['success']:
+                return {
+                    'success': True,
+                    'image_base64': result['image'],
+                    'seed_used': seed,
+                    'gender': mesh_data.get('gender'),
+                    'age_range': mesh_data.get('age_range'),
+                    'prompt_used': detailed_prompt
+                }
+        
+        return {'success': False, 'error': 'All seeds failed'}
+
+# Global generator instance
+funko_generator = SnapMagicFunkoGenerator()
+
+def lambda_handler(event, context):
+    """
+    SnapMagic Lambda Handler with CleanFunkoPopGenerator functionality
+    Maintains authentication system while replacing business logic
+    """
+    try:
+        # Handle CORS preflight requests
+        if event.get('httpMethod') == 'OPTIONS':
+            return create_cors_response()
         
         # Parse request body
-        try:
-            body = json.loads(event.get('body', '{}'))
-        except json.JSONDecodeError:
-            return create_error_response("Invalid JSON in request body", 400)
+        body = json.loads(event.get('body', '{}'))
+        action = body.get('action', '').lower()
         
-        # Handle login
-        if event.get('path') == '/api/login':
+        # Login endpoint (no authentication required)
+        if action == 'login':
             username = body.get('username', '')
             password = body.get('password', '')
             
             if username == 'demo' and password == 'demo':
-                # Create simple token using the existing auth module
+                # Create token using the existing auth module
                 auth_handler = SnapMagicAuthSimple()
                 token = auth_handler.generate_token(username)
                 return create_success_response({
                     'message': 'Login successful',
                     'token': token,
-                    'expires_in': 86400
+                    'expires_in': 86400,  # 24 hours
+                    'user': {'username': username}
                 })
             else:
                 return create_error_response("Invalid credentials", 401)
@@ -418,46 +383,84 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         logger.info(f"✅ Authenticated user: {token_payload.get('username')}")
         
-        # Handle image transformation
-        action = body.get('action', '')
-        if action == 'transform_image':
+        # Handle FunkoPop generation
+        if action == 'transform_image' or action == 'generate_funko':
             image_base64 = body.get('image_base64', '')
-            prompt = body.get('prompt', '')
-            
             if not image_base64:
-                return create_error_response("Missing image data", 400)
+                return create_error_response("Missing image_base64 parameter", 400)
             
-            logger.info(f"🎯 Processing SnapMagic Face Mesh action figure transformation")
-            result = transform_image_mesh_approach(prompt, image_base64, token_payload.get('username'))
-            
+            try:
+                # Decode base64 image
+                image_bytes = base64.b64decode(image_base64)
+                
+                # Generate FunkoPop
+                result = funko_generator.generate_funko_pop(image_bytes)
+                
+                if result['success']:
+                    return create_success_response({
+                        'message': 'FunkoPop generated successfully',
+                        'result': result
+                    })
+                else:
+                    return create_error_response(f"Generation failed: {result.get('error', 'Unknown error')}", 500)
+                    
+            except Exception as e:
+                logger.error(f"Image processing error: {str(e)}")
+                return create_error_response(f"Image processing failed: {str(e)}", 500)
+        
+        # Health check endpoint
+        elif action == 'health':
             return create_success_response({
-                'result': result,
-                'user': token_payload.get('username'),
-                'config_used': {
-                    'similarity': 0.95,
-                    'cfg_scale': 9.0,
-                    'seed': 42,
-                    'quality': 'premium'
-                }
+                'status': 'healthy',
+                'service': 'SnapMagic FunkoPop Generator',
+                'timestamp': '2025-06-24T17:00:00Z'
             })
         
-        return create_error_response(f"Unknown action: {action}", 400)
-        
+        else:
+            return create_error_response(f"Unknown action: {action}", 400)
+            
     except Exception as e:
-        logger.error(f"❌ Lambda handler error: {str(e)}")
+        logger.error(f"Lambda handler error: {str(e)}")
         return create_error_response(f"Internal server error: {str(e)}", 500)
 
-
-if __name__ == "__main__":
-    # Test the handler
-    test_event = {
-        'httpMethod': 'GET',
-        'path': '/health',
-        'headers': {},
-        'body': '{}'
+def create_success_response(data):
+    """Create standardized success response"""
+    return {
+        'statusCode': 200,
+        'headers': {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Headers': 'Content-Type,Authorization,X-Auth-Token',
+            'Access-Control-Allow-Methods': 'GET,POST,OPTIONS'
+        },
+        'body': json.dumps(data)
     }
-    
-    print("🧪 Testing SnapMagic WINNING Lambda Handler...")
-    result = lambda_handler(test_event, None)
-    print("📋 Result:")
-    print(json.dumps(result, indent=2))
+
+def create_error_response(message, status_code):
+    """Create standardized error response"""
+    return {
+        'statusCode': status_code,
+        'headers': {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Headers': 'Content-Type,Authorization,X-Auth-Token',
+            'Access-Control-Allow-Methods': 'GET,POST,OPTIONS'
+        },
+        'body': json.dumps({
+            'success': False,
+            'error': message,
+            'timestamp': '2025-06-24T17:00:00Z'
+        })
+    }
+
+def create_cors_response():
+    """Handle CORS preflight requests"""
+    return {
+        'statusCode': 200,
+        'headers': {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Headers': 'Content-Type,Authorization,X-Auth-Token',
+            'Access-Control-Allow-Methods': 'GET,POST,OPTIONS'
+        },
+        'body': json.dumps({'message': 'CORS preflight successful'})
+    }
