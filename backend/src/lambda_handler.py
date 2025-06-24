@@ -143,9 +143,13 @@ class SnapMagicFunkoGenerator:
                 
                 # Comprehensive hair style and texture detection - EXACTLY what we see
                 hair_styles = [
-                    # Texture types
+                    # Texture types - PRIORITIZED for better detection
                     'curly hair', 'straight hair', 'wavy hair', 'kinky hair', 'coily hair',
                     'afro hair', 'afro', 'natural hair', 'textured hair', 'frizzy hair',
+                    'tight curls', 'loose curls', 'spiral curls', 'ringlets',
+                    # Additional afro/textured variations
+                    'african hair', 'black natural hair', 'ethnic hair', 'type 4 hair',
+                    'tight coils', 'kinky coils', 'natural texture', 'unprocessed hair',
                     # Length types  
                     'long hair', 'short hair', 'medium hair', 'shoulder length hair',
                     # Styles
@@ -161,7 +165,9 @@ class SnapMagicFunkoGenerator:
                     'side part', 'center part', 'no part'
                 ]
                 for style in hair_styles:
-                    if style in label_name and confidence > 60:  # Lower threshold for better detection
+                    # Lower threshold for textured/afro hair detection
+                    threshold = 50 if any(term in style.lower() for term in ['afro', 'kinky', 'coily', 'curly', 'textured', 'natural', 'tight', 'ethnic']) else 60
+                    if style in label_name and confidence > threshold:
                         features['hair_style'].append(label['Name'])
                         # Don't break - allow multiple hair characteristics
             
@@ -285,8 +291,18 @@ class SnapMagicFunkoGenerator:
             prompt_parts.append(f"{color.lower()}")
         
         hair_style = mesh_data.get('hair_style', [])
+        # Prioritize textured hair characteristics in prompt
+        textured_hair_found = False
         for style in hair_style:
-            prompt_parts.append(f"{style.lower()}")
+            style_lower = style.lower()
+            prompt_parts.append(f"{style_lower}")
+            # Check if we detected textured/afro hair
+            if any(term in style_lower for term in ['afro', 'kinky', 'coily', 'curly', 'textured', 'natural', 'tight']):
+                textured_hair_found = True
+        
+        # Add explicit textured hair emphasis if detected
+        if textured_hair_found:
+            prompt_parts.append("textured natural hair not slicked back")
         
         prompt_parts.extend([
             "vinyl collectible style",
