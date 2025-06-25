@@ -244,22 +244,57 @@ class SnapMagicApp {
 
     validatePrompt() {
         const prompt = this.elements.promptInput.value.trim();
-        const isValid = prompt.length >= 3;
+        const length = prompt.length;
         
+        // Check character limits
+        const minLength = 10; // More reasonable minimum for meaningful content
+        const maxLength = 1023; // Nova Canvas maximum
+        
+        // Enforce maximum length
+        if (length > maxLength) {
+            this.elements.promptInput.value = prompt.substring(0, maxLength);
+            return;
+        }
+        
+        const isValid = length >= minLength && length <= maxLength;
         this.elements.generateBtn.disabled = !isValid;
         
         if (isValid) {
             this.elements.generateBtn.textContent = '✨ Generate My Trading Card';
+        } else if (length < minLength) {
+            this.elements.generateBtn.textContent = `Enter description (min ${minLength} characters)`;
         } else {
-            this.elements.generateBtn.textContent = 'Enter a description (min 3 characters)';
+            this.elements.generateBtn.textContent = 'Description too long';
         }
+        
+        // Update character counter
+        this.updateCharacterCounter(length, maxLength);
+    }
+    
+    updateCharacterCounter(current, max) {
+        // Find or create character counter
+        let counter = document.getElementById('characterCounter');
+        if (!counter) {
+            counter = document.createElement('div');
+            counter.id = 'characterCounter';
+            counter.style.cssText = 'font-size: 0.9rem; opacity: 0.8; margin-top: 0.5rem; text-align: right;';
+            this.elements.promptInput.parentNode.appendChild(counter);
+        }
+        
+        counter.textContent = `${current}/${max} characters`;
+        counter.style.color = current > max * 0.9 ? '#ff6b6b' : 'rgba(255, 255, 255, 0.8)';
     }
 
     async handleGenerate() {
         const prompt = this.elements.promptInput.value.trim();
         
-        if (!prompt || prompt.length < 3) {
-            alert('Please enter a description of at least 3 characters');
+        if (!prompt || prompt.length < 10) {
+            alert('Please enter a description of at least 10 characters');
+            return;
+        }
+        
+        if (prompt.length > 1023) {
+            alert('Description must be less than 1023 characters');
             return;
         }
 
@@ -336,8 +371,16 @@ class SnapMagicApp {
     showResult(imageBase64, metadata) {
         this.hideProcessing();
         
+        // Ensure we have the base64 prefix
+        let imageSrc;
+        if (imageBase64.startsWith('data:image/')) {
+            imageSrc = imageBase64;
+        } else {
+            imageSrc = `data:image/png;base64,${imageBase64}`;
+        }
+        
         // Display the result image
-        this.elements.resultImage.src = `data:image/png;base64,${imageBase64}`;
+        this.elements.resultImage.src = imageSrc;
         this.elements.resultImage.alt = `Trading card: ${metadata?.prompt_used || 'Generated content'}`;
         
         // Show result container
@@ -347,34 +390,60 @@ class SnapMagicApp {
         this.elements.resultContainer.scrollIntoView({ behavior: 'smooth' });
         
         console.log('✅ Card generated successfully:', metadata);
+        console.log('🖼️ Image data length:', imageBase64.length);
     }
 
     handleDownload() {
         const imageData = this.elements.resultImage.src;
         
-        if (!imageData || imageData.includes('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAAB')) {
-            alert('No card to download');
+        if (!imageData || imageData === '' || imageData.includes('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAAB')) {
+            alert('No card available to download');
             return;
         }
         
-        // Create download link
-        const link = document.createElement('a');
-        link.href = imageData;
-        link.download = `snapmagic-card-${Date.now()}.png`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        
-        console.log('📥 Card downloaded');
+        try {
+            // Create download link
+            const link = document.createElement('a');
+            link.href = imageData;
+            link.download = `snapmagic-trading-card-${Date.now()}.png`;
+            
+            // Ensure the link works on all browsers
+            link.style.display = 'none';
+            document.body.appendChild(link);
+            
+            // Trigger download
+            link.click();
+            
+            // Clean up
+            setTimeout(() => {
+                document.body.removeChild(link);
+            }, 100);
+            
+            console.log('📥 Trading card downloaded successfully');
+            
+            // Show success message
+            const originalText = this.elements.downloadBtn.textContent;
+            this.elements.downloadBtn.textContent = '✅ Downloaded!';
+            setTimeout(() => {
+                this.elements.downloadBtn.textContent = originalText;
+            }, 2000);
+            
+        } catch (error) {
+            console.error('Download failed:', error);
+            alert('Download failed. Please try again.');
+        }
     }
 
     handleNewCard() {
         // Reset the interface for new card creation
         this.elements.promptInput.value = '';
         this.elements.generateBtn.disabled = true;
-        this.elements.generateBtn.textContent = 'Enter a description (min 3 characters)';
+        this.elements.generateBtn.textContent = 'Enter description (min 10 characters)';
         this.elements.resultContainer.classList.add('hidden');
         this.elements.processingStatus.classList.add('hidden');
+        
+        // Reset character counter
+        this.updateCharacterCounter(0, 1023);
         
         // Focus on prompt input
         this.elements.promptInput.focus();

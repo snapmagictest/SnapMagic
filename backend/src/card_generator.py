@@ -116,10 +116,10 @@ class SnapMagicCardGenerator:
         if not prompt or not prompt.strip():
             return False, "Prompt cannot be empty"
         
-        if len(prompt.strip()) < 3:
-            return False, "Prompt must be at least 3 characters"
+        if len(prompt.strip()) < 10:
+            return False, "Prompt must be at least 10 characters"
         
-        if len(prompt) > 1000:
-            return False, "Prompt must be less than 1000 characters"
+        if len(prompt) > 1023:
+            return False, "Prompt must be less than 1023 characters"
         
         return True, None
