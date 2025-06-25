@@ -192,31 +192,51 @@ frontend:
     
     // Login endpoint (no authentication required)
     const loginResource = apiResource.addResource('login');
-    loginResource.addMethod('POST', lambdaIntegration);
+    loginResource.addMethod('POST', lambdaIntegration, {
+      authorizationType: apigateway.AuthorizationType.NONE
+    });
     
-    // Transform image endpoint
+    // Transform card endpoint (our new endpoint)
+    const transformCardResource = apiResource.addResource('transform-card');
+    transformCardResource.addMethod('POST', lambdaIntegration, {
+      authorizationType: apigateway.AuthorizationType.NONE
+    });
+    
+    // Transform image endpoint (keep for compatibility)
     const transformImageResource = apiResource.addResource('transform-image');
-    transformImageResource.addMethod('POST', lambdaIntegration);
+    transformImageResource.addMethod('POST', lambdaIntegration, {
+      authorizationType: apigateway.AuthorizationType.NONE
+    });
     
     // Generate video endpoint
     const generateVideoResource = apiResource.addResource('generate-video');
-    generateVideoResource.addMethod('POST', lambdaIntegration);
+    generateVideoResource.addMethod('POST', lambdaIntegration, {
+      authorizationType: apigateway.AuthorizationType.NONE
+    });
 
     // Detect gesture endpoint
     const detectGestureResource = apiResource.addResource('detect-gesture');
-    detectGestureResource.addMethod('POST', lambdaIntegration);
+    detectGestureResource.addMethod('POST', lambdaIntegration, {
+      authorizationType: apigateway.AuthorizationType.NONE
+    });
 
     // Transcribe audio endpoint
     const transcribeAudioResource = apiResource.addResource('transcribe-audio');
-    transcribeAudioResource.addMethod('POST', lambdaIntegration);
+    transcribeAudioResource.addMethod('POST', lambdaIntegration, {
+      authorizationType: apigateway.AuthorizationType.NONE
+    });
 
     // Generic SnapMagic endpoint
     const snapMagicResource = apiResource.addResource('snapmagic');
-    snapMagicResource.addMethod('POST', lambdaIntegration);
+    snapMagicResource.addMethod('POST', lambdaIntegration, {
+      authorizationType: apigateway.AuthorizationType.NONE
+    });
 
     // Health check endpoint
     const healthResource = api.root.addResource('health');
-    healthResource.addMethod('GET', lambdaIntegration);
+    healthResource.addMethod('GET', lambdaIntegration, {
+      authorizationType: apigateway.AuthorizationType.NONE
+    });
 
     // Create main branch connected to GitHub (now that we have the API URL)
     const mainBranch = new amplify.CfnBranch(this, 'MainBranch', {
