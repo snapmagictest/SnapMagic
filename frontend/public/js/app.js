@@ -248,7 +248,7 @@ class SnapMagicApp {
         
         // Check character limits
         const minLength = 10; // More reasonable minimum for meaningful content
-        const maxLength = 1023; // Nova Canvas maximum
+        const maxLength = 1024; // Nova Canvas maximum (corrected)
         
         // Enforce maximum length
         if (length > maxLength) {
@@ -293,8 +293,8 @@ class SnapMagicApp {
             return;
         }
         
-        if (prompt.length > 1023) {
-            alert('Description must be less than 1023 characters');
+        if (prompt.length > 1024) {
+            alert('Description must be less than 1024 characters');
             return;
         }
 
@@ -333,11 +333,19 @@ class SnapMagicApp {
             });
             
             const result = await response.json();
-            console.log('🎴 Card generation response:', result);
+            console.log('🎴 Card generation response:', {
+                success: result.success,
+                hasResult: !!result.result,
+                resultLength: result.result ? result.result.length : 0,
+                resultPreview: result.result ? result.result.substring(0, 100) + '...' : 'null',
+                metadata: result.metadata,
+                error: result.error
+            });
             
             if (result.success && result.result) {
                 this.showResult(result.result, result.metadata);
             } else {
+                console.error('❌ API returned error:', result.error);
                 throw new Error(result.error || 'Card generation failed');
             }
             
@@ -369,7 +377,20 @@ class SnapMagicApp {
     }
 
     showResult(imageBase64, metadata) {
+        console.log('🎴 showResult called with:', {
+            imageBase64Length: imageBase64 ? imageBase64.length : 0,
+            imageBase64Preview: imageBase64 ? imageBase64.substring(0, 100) + '...' : 'null',
+            metadata: metadata
+        });
+        
         this.hideProcessing();
+        
+        // Check if we have valid image data
+        if (!imageBase64 || imageBase64.length < 100) {
+            console.error('❌ Invalid image data received');
+            alert('Error: No image data received from server');
+            return;
+        }
         
         // Ensure we have the base64 prefix
         let imageSrc;
@@ -379,9 +400,21 @@ class SnapMagicApp {
             imageSrc = `data:image/png;base64,${imageBase64}`;
         }
         
+        console.log('🖼️ Setting image src:', imageSrc.substring(0, 100) + '...');
+        
         // Display the result image
         this.elements.resultImage.src = imageSrc;
         this.elements.resultImage.alt = `Trading card: ${metadata?.prompt_used || 'Generated content'}`;
+        
+        // Add error handler for image loading
+        this.elements.resultImage.onerror = () => {
+            console.error('❌ Failed to load generated image');
+            alert('Error: Failed to display generated card');
+        };
+        
+        this.elements.resultImage.onload = () => {
+            console.log('✅ Image loaded successfully');
+        };
         
         // Show result container
         this.elements.resultContainer.classList.remove('hidden');
@@ -389,15 +422,21 @@ class SnapMagicApp {
         // Scroll to result
         this.elements.resultContainer.scrollIntoView({ behavior: 'smooth' });
         
-        console.log('✅ Card generated successfully:', metadata);
-        console.log('🖼️ Image data length:', imageBase64.length);
+        console.log('✅ Card display setup complete');
     }
 
     handleDownload() {
         const imageData = this.elements.resultImage.src;
         
+        console.log('📥 Download attempt - Image data:', {
+            hasImageData: !!imageData,
+            imageDataLength: imageData ? imageData.length : 0,
+            imageDataPreview: imageData ? imageData.substring(0, 50) + '...' : 'null'
+        });
+        
         if (!imageData || imageData === '' || imageData.includes('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAAB')) {
-            alert('No card available to download');
+            console.error('❌ No valid image data for download');
+            alert('No card available to download. Please generate a card first.');
             return;
         }
         
@@ -419,7 +458,7 @@ class SnapMagicApp {
                 document.body.removeChild(link);
             }, 100);
             
-            console.log('📥 Trading card downloaded successfully');
+            console.log('📥 Trading card download initiated successfully');
             
             // Show success message
             const originalText = this.elements.downloadBtn.textContent;
@@ -429,7 +468,7 @@ class SnapMagicApp {
             }, 2000);
             
         } catch (error) {
-            console.error('Download failed:', error);
+            console.error('❌ Download failed:', error);
             alert('Download failed. Please try again.');
         }
     }
@@ -443,7 +482,7 @@ class SnapMagicApp {
         this.elements.processingStatus.classList.add('hidden');
         
         // Reset character counter
-        this.updateCharacterCounter(0, 1023);
+        this.updateCharacterCounter(0, 1024);
         
         // Focus on prompt input
         this.elements.promptInput.focus();
