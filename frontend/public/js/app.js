@@ -288,6 +288,9 @@ class SnapMagicApp {
     async handleGenerate() {
         const prompt = this.elements.promptInput.value.trim();
         
+        console.log('🎴 Generate button clicked with prompt:', prompt);
+        console.log('🔧 API Configuration:', window.SNAPMAGIC_CONFIG);
+        
         if (!prompt || prompt.length < 10) {
             alert('Please enter a description of at least 10 characters');
             return;
@@ -309,16 +312,18 @@ class SnapMagicApp {
             this.showProcessing();
             
             const apiBaseUrl = window.SNAPMAGIC_CONFIG.API_URL;
+            console.log('🌐 API Base URL:', apiBaseUrl);
             
-            if (apiBaseUrl === 'demo-mode') {
-                // Demo mode - simulate processing
-                await this.simulateCardGeneration(prompt);
-                return;
-            }
+            // Real API call - no demo mode
+            const endpoint = `${apiBaseUrl}api/transform-card`;
+            console.log('🎯 Making API call to:', endpoint);
+            console.log('🔑 Using token:', this.currentUser.token ? 'Present' : 'Missing');
             
-            // Real API call
-            const endpoint = `${apiBaseUrl}/api/transform-card`;
-            console.log('🎴 Generating card with prompt:', prompt);
+            const requestBody = {
+                action: 'transform_card',
+                prompt: prompt
+            };
+            console.log('📤 Request body:', requestBody);
             
             const response = await fetch(endpoint, {
                 method: 'POST',
@@ -326,11 +331,17 @@ class SnapMagicApp {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${this.currentUser.token}`
                 },
-                body: JSON.stringify({
-                    action: 'transform_card',
-                    prompt: prompt
-                })
+                body: JSON.stringify(requestBody)
             });
+            
+            console.log('📥 Response status:', response.status);
+            console.log('📥 Response headers:', Object.fromEntries(response.headers.entries()));
+            
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('❌ API Error Response:', errorText);
+                throw new Error(`API request failed with status ${response.status}: ${response.statusText}. ${errorText}`);
+            }
             
             const result = await response.json();
             console.log('🎴 Card generation response:', {
@@ -345,14 +356,32 @@ class SnapMagicApp {
             if (result.success && result.result) {
                 this.showResult(result.result, result.metadata);
             } else {
-                console.error('❌ API returned error:', result.error);
-                throw new Error(result.error || 'Card generation failed');
+                const errorMsg = result.error || 'Card generation failed - no error message provided';
+                console.error('❌ API returned error:', errorMsg);
+                this.hideProcessing();
+                alert(`Sorry, card generation failed: ${errorMsg}\n\nPlease try again with a different description.`);
             }
             
         } catch (error) {
-            console.error('Card generation error:', error);
+            console.error('❌ Card generation error:', error);
             this.hideProcessing();
-            alert(`Card generation failed: ${error.message}`);
+            
+            let userMessage = 'Sorry, we couldn\'t generate your trading card. ';
+            if (error.message.includes('Failed to fetch')) {
+                userMessage += 'Please check your internet connection and try again.';
+            } else if (error.message.includes('401')) {
+                userMessage += 'Your session has expired. Please log in again.';
+                this.handleLogout();
+                return;
+            } else if (error.message.includes('500')) {
+                userMessage += 'Our servers are experiencing issues. Please try again in a moment.';
+            } else if (error.message.includes('timeout')) {
+                userMessage += 'The request took too long. Please try again.';
+            } else {
+                userMessage += 'Please try again with a different description.';
+            }
+            
+            alert(userMessage);
         }
     }
 
