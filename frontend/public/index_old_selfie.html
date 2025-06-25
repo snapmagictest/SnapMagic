@@ -1,0 +1,1895 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SnapMagic - AI-powered transformation</title>
+    <style>
+        /* Reset and base styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #232F3E 0%, #4B9CD3 100%);
+            min-height: 100vh;
+            color: white;
+        }
+
+        /* Loading screen styles */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #232F3E 0%, #4B9CD3 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            z-index: 9999;
+            transition: opacity 0.5s ease;
+        }
+        .loading-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        .loading-container { text-align: center; padding: 2rem; }
+        .loading-logo { font-size: 4rem; margin-bottom: 1rem; }
+        .loading-title { font-size: 2.5rem; margin-bottom: 1rem; color: #FF9900; }
+        .loading-subtitle { font-size: 1.2rem; margin-bottom: 2rem; opacity: 0.9; }
+        .loading-text { font-size: 1rem; opacity: 0.7; }
+
+        /* Login Screen Styles */
+        .login-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #232F3E 0%, #4B9CD3 100%);
+        }
+
+        .login-container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 2rem;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .login-header .logo {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .login-header h1 {
+            font-size: 2rem;
+            color: #FF9900;
+            margin-bottom: 0.5rem;
+        }
+
+        .login-header p {
+            opacity: 0.9;
+            font-size: 0.9rem;
+        }
+
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .form-group label {
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .form-group input {
+            padding: 0.75rem;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 1rem;
+        }
+
+        .form-group input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #FF9900;
+            box-shadow: 0 0 0 2px rgba(255, 153, 0, 0.2);
+        }
+
+        .login-btn {
+            padding: 0.75rem;
+            background: #FF9900;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .login-btn:hover {
+            background: #e88900;
+        }
+
+        .error-message {
+            color: #ff6b6b;
+            font-size: 0.9rem;
+            text-align: center;
+            margin-top: 0.5rem;
+        }
+
+        /* Main App Styles */
+        .main-app {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .app-header {
+            background: rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 1rem 0;
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .logo-section .logo {
+            font-size: 2rem;
+        }
+
+        .logo-section h1 {
+            font-size: 1.5rem;
+            color: #FF9900;
+        }
+
+        .user-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .session-info {
+            font-size: 0.8rem;
+            opacity: 0.7;
+            color: #FF9900;
+        }
+
+        .logout-btn {
+            padding: 0.5rem 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .app-main {
+            flex: 1;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+            width: 100%;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .feature-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 2rem;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .feature-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: #FF9900;
+        }
+
+        .feature-card p {
+            opacity: 0.9;
+            margin-bottom: 1.5rem;
+            line-height: 1.5;
+        }
+
+        .feature-btn {
+            padding: 0.75rem 1.5rem;
+            background: #FF9900;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            width: 100%;
+        }
+
+        .feature-btn:hover {
+            background: #e88900;
+        }
+
+        /* Feature Navigation */
+        .feature-nav {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .nav-tab {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 1rem 1.5rem;
+            background: transparent;
+            border: none;
+            color: rgba(255, 255, 255, 0.7);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .nav-tab:hover {
+            color: white;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .nav-tab.active {
+            color: #FF9900;
+            border-bottom-color: #FF9900;
+        }
+
+        .nav-icon {
+            font-size: 1.2rem;
+        }
+
+        /* Feature Panels */
+        .feature-panels {
+            position: relative;
+        }
+
+        .feature-panel {
+            display: none;
+        }
+
+        .feature-panel.active {
+            display: block;
+        }
+
+        .panel-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            align-items: start;
+        }
+
+        /* Camera Section */
+        .camera-section {
+            position: relative;
+        }
+
+        .camera-container {
+            position: relative;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            overflow: hidden;
+            aspect-ratio: 4/3;
+        }
+
+        .camera-video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .camera-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            text-align: center;
+        }
+
+        .camera-overlay.hidden {
+            display: none;
+        }
+
+        .overlay-content p {
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+        }
+
+        .camera-enable-btn {
+            padding: 0.75rem 1.5rem;
+            background: #FF9900;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.2s;
+        }
+
+        .camera-enable-btn:hover {
+            background: #e88900;
+        }
+
+        .camera-controls {
+            position: absolute;
+            bottom: 1rem;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .capture-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: #FF9900;
+            border: 3px solid white;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .capture-btn:hover {
+            background: #e88900;
+            transform: scale(1.1);
+        }
+
+        /* Image Preview */
+        .image-preview {
+            position: relative;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            overflow: hidden;
+            aspect-ratio: 4/3;
+        }
+
+        .image-preview.hidden {
+            display: none;
+        }
+
+        .image-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .image-actions {
+            position: absolute;
+            bottom: 1rem;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .action-btn {
+            padding: 0.5rem 1rem;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background-color 0.2s;
+        }
+
+        .action-btn:hover {
+            background: rgba(0, 0, 0, 0.9);
+        }
+
+        /* Content Section */
+        .content-section {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .prompt-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        /* Simplified Action Styles */
+        .create-action {
+            display: flex;
+            justify-content: center;
+            margin: 2rem 0;
+        }
+
+        .create-figurine-btn {
+            background: linear-gradient(135deg, #FF9900, #FFB84D);
+            border: none;
+            border-radius: 12px;
+            padding: 1.25rem 2.5rem;
+            color: white;
+            font-size: 1.2rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            box-shadow: 0 4px 15px rgba(255, 153, 0, 0.3);
+            min-width: 280px;
+            justify-content: center;
+        }
+
+        .create-figurine-btn:hover:not(:disabled) {
+            background: linear-gradient(135deg, #FFB84D, #FF9900);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 153, 0, 0.4);
+        }
+
+        .create-figurine-btn:disabled {
+            background: rgba(255, 255, 255, 0.2);
+            color: rgba(255, 255, 255, 0.5);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-icon {
+            font-size: 1.3rem;
+        }
+
+        .btn-text {
+            font-size: 1.1rem;
+        }
+
+        /* Mobile responsive adjustments */
+        @media (max-width: 768px) {
+            .create-figurine-btn {
+                padding: 1rem 2rem;
+                font-size: 1.1rem;
+                min-width: 250px;
+            }
+            
+            .feature {
+                padding: 0.6rem;
+            }
+            
+            .feature-text {
+                font-size: 0.9rem;
+            }
+        }
+
+        .prompt-container label {
+            font-weight: 500;
+            color: #FF9900;
+        }
+
+        .prompt-container textarea {
+            padding: 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 1rem;
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .prompt-container textarea::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .prompt-container textarea:focus {
+            outline: none;
+            border-color: #FF9900;
+            box-shadow: 0 0 0 2px rgba(255, 153, 0, 0.2);
+        }
+
+        .prompt-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .voice-btn {
+            padding: 0.75rem 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .voice-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .transform-btn {
+            padding: 0.75rem 1.5rem;
+            background: #FF9900;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background-color 0.2s;
+            flex: 1;
+        }
+
+        .transform-btn:hover:not(:disabled) {
+            background: #e88900;
+        }
+
+        .transform-btn:disabled {
+            background: rgba(255, 153, 0, 0.3);
+            cursor: not-allowed;
+        }
+
+        /* Processing Status */
+        .processing-status {
+            text-align: center;
+            padding: 2rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+        }
+
+        .processing-status.hidden {
+            display: none;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid #FF9900;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .processing-text {
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+            color: #FF9900;
+        }
+
+        .processing-subtext {
+            font-size: 0.9rem;
+            opacity: 0.7;
+        }
+
+        /* Result Container */
+        .result-container {
+            text-align: center;
+        }
+
+        .result-container.hidden {
+            display: none;
+        }
+
+        .result-image, .result-video {
+            width: 100%;
+            max-width: 400px;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+        }
+
+        .result-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+        }
+
+        .download-btn, .new-btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background-color 0.2s;
+        }
+
+        .download-btn {
+            background: #FF9900;
+            color: white;
+        }
+
+        .download-btn:hover {
+            background: #e88900;
+        }
+
+        .new-btn {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .new-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Gesture Recognition */
+        .gesture-feedback {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            right: 1rem;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 0.75rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .gesture-status {
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        /* Rating Section */
+        .rating-container {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .rating-container h3 {
+            color: #FF9900;
+            margin-bottom: 1rem;
+        }
+
+        .rating-container p {
+            margin-bottom: 2rem;
+            opacity: 0.9;
+        }
+
+        .rating-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .rating-btn {
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .rating-btn.positive {
+            background: #28a745;
+            color: white;
+        }
+
+        .rating-btn.positive:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+
+        .rating-btn.negative {
+            background: #dc3545;
+            color: white;
+        }
+
+        .rating-btn.negative:hover {
+            background: #c82333;
+            transform: translateY(-2px);
+        }
+
+        .rating-result {
+            background: rgba(40, 167, 69, 0.2);
+            border: 1px solid #28a745;
+            border-radius: 8px;
+            padding: 1rem;
+            color: #28a745;
+        }
+
+        .rating-result.hidden {
+            display: none;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+            
+            .user-section {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            
+            .panel-content {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .feature-nav {
+                flex-direction: column;
+                gap: 0;
+            }
+            
+            .nav-tab {
+                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+                border-radius: 0;
+            }
+            
+            .prompt-actions {
+                flex-direction: column;
+            }
+            
+            .rating-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .rating-btn {
+                width: 100%;
+                max-width: 300px;
+            }
+            
+            .login-container {
+                margin: 1rem;
+                padding: 1.5rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .app-main {
+                padding: 1rem 0.5rem;
+            }
+            
+            .login-header h1 {
+                font-size: 1.5rem;
+            }
+            
+            .login-header .logo {
+                font-size: 2.5rem;
+            }
+            
+            .camera-container {
+                aspect-ratio: 1;
+            }
+        }
+
+    </style>
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loadingScreen" class="loading-screen">
+        <div class="loading-container">
+            <div class="loading-logo">📸</div>
+            <h1 class="loading-title">SnapMagic</h1>
+            <p class="loading-subtitle">AI-powered transformation for AWS events</p>
+            <p class="loading-text">Initializing modern interface...</p>
+        </div>
+    </div>
+
+    <!-- Login Screen -->
+    <div id="loginScreen" class="login-screen" style="display: none;">
+        <div class="login-container">
+            <div class="login-header">
+                <div class="logo">📸</div>
+                <h1>SnapMagic</h1>
+                <p>AI-powered transformation for AWS events</p>
+            </div>
+            
+            <form id="loginForm" class="login-form">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" required placeholder="Enter your username">
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required placeholder="Enter your password">
+                </div>
+                
+                <button type="submit" class="login-btn">Sign In</button>
+                
+                <div id="loginError" class="error-message"></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="mainApp" class="main-app" style="display: none;">
+        <header class="app-header">
+            <div class="header-content">
+                <div class="logo-section">
+                    <span class="logo">📸</span>
+                    <h1>SnapMagic</h1>
+                </div>
+                <div class="user-section">
+                    <span id="userInfo">Welcome!</span>
+                    <span id="sessionInfo" class="session-info"></span>
+                    <button id="logoutBtn" class="logout-btn">Sign Out</button>
+                </div>
+            </div>
+        </header>
+
+        <main class="app-main">
+            <!-- Feature Navigation -->
+            <nav class="feature-nav">
+                <button class="nav-tab active" data-feature="pictures">
+                    <span class="nav-icon">🎁</span>
+                    <span>Perfect Figurine</span>
+                </button>
+                <button class="nav-tab" data-feature="videos">
+                    <span class="nav-icon">🎥</span>
+                    <span>Transform Videos</span>
+                </button>
+                <button class="nav-tab" data-feature="rating">
+                    <span class="nav-icon">👍</span>
+                    <span>Rate Experience</span>
+                </button>
+            </nav>
+
+            <!-- Feature Panels -->
+            <div class="feature-panels">
+                <!-- Transform Pictures Panel -->
+                <div class="feature-panel active" id="picturesPanel">
+                    <div class="panel-content">
+                        <div class="camera-section">
+                            <!-- Camera Component -->
+                            <div class="camera-container" id="pictureCamera">
+                                <video class="camera-video" id="pictureVideo" autoplay muted playsinline></video>
+                                <div class="camera-overlay" id="pictureOverlay">
+                                    <div class="overlay-content">
+                                        <p>📷 Camera access required</p>
+                                        <button class="camera-enable-btn" id="enablePictureCamera">Enable Camera</button>
+                                    </div>
+                                </div>
+                                <div class="camera-controls hidden" id="pictureControls">
+                                    <button class="capture-btn" id="capturePictureBtn">📸</button>
+                                </div>
+                            </div>
+                            
+                            <!-- Captured Image Preview -->
+                            <div class="image-preview hidden" id="picturePreview">
+                                <img id="capturedPicture" alt="Captured photo" />
+                                <div class="image-actions">
+                                    <button class="action-btn" id="retakePictureBtn">🔄 Retake</button>
+                                    <button class="action-btn" id="deletePictureBtn">🗑️ Delete</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="content-section">
+                            <!-- Simplified Action Section -->
+                            <div class="create-action">
+                                <button class="create-figurine-btn" id="transformPictureBtn" disabled>
+                                    <span class="btn-icon">✨</span>
+                                    <span class="btn-text">Create My Perfect Figurine</span>
+                                </button>
+                            </div>
+                            
+                            <!-- Processing Status -->
+                            <div class="processing-status hidden" id="pictureProcessing">
+                                <div class="spinner"></div>
+                                <div class="processing-text">Transforming your image...</div>
+                                <div class="processing-subtext">This may take up to 30 seconds</div>
+                            </div>
+                            
+                            <!-- Result Display -->
+                            <div class="result-container hidden" id="pictureResult">
+                                <img class="result-image" id="transformedPicture" alt="Transformed image" />
+                                <div class="result-actions">
+                                    <button class="download-btn" id="downloadPictureBtn">📥 Download</button>
+                                    <button class="new-btn" id="newPictureBtn">Create New</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Transform Videos Panel -->
+                <div class="feature-panel" id="videosPanel">
+                    <div class="panel-content">
+                        <div class="camera-section">
+                            <!-- Camera Component -->
+                            <div class="camera-container" id="videoCamera">
+                                <video class="camera-video" id="videoVideo" autoplay muted playsinline></video>
+                                <div class="camera-overlay" id="videoOverlay">
+                                    <div class="overlay-content">
+                                        <p>📷 Camera access required</p>
+                                        <button class="camera-enable-btn" id="enableVideoCamera">Enable Camera</button>
+                                    </div>
+                                </div>
+                                <div class="camera-controls hidden" id="videoControls">
+                                    <button class="capture-btn" id="captureVideoBtn">📸</button>
+                                </div>
+                            </div>
+                            
+                            <!-- Captured Image Preview -->
+                            <div class="image-preview hidden" id="videoPreview">
+                                <img id="capturedVideo" alt="Captured photo for video" />
+                                <div class="image-actions">
+                                    <button class="action-btn" id="retakeVideoBtn">🔄 Retake</button>
+                                    <button class="action-btn" id="deleteVideoBtn">🗑️ Delete</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="content-section">
+                            <!-- Prompt Input -->
+                            <div class="prompt-container">
+                                <label for="videoPrompt">Describe your video transformation</label>
+                                <textarea 
+                                    id="videoPrompt" 
+                                    placeholder="e.g., Create a video of me dancing on a tropical beach at sunset"
+                                    rows="4"
+                                ></textarea>
+                                
+                                <div class="prompt-actions">
+                                    <button class="voice-btn" id="videoVoiceBtn">
+                                        🎤 Voice Input
+                                    </button>
+                                    <button class="transform-btn" id="transformVideoBtn" disabled>
+                                        Create Video
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Processing Status -->
+                            <div class="processing-status hidden" id="videoProcessing">
+                                <div class="spinner"></div>
+                                <div class="processing-text">Creating your video...</div>
+                                <div class="processing-subtext">This may take up to 60 seconds</div>
+                            </div>
+                            
+                            <!-- Result Display -->
+                            <div class="result-container hidden" id="videoResult">
+                                <video class="result-video" id="transformedVideo" controls></video>
+                                <div class="result-actions">
+                                    <button class="download-btn" id="downloadVideoBtn">📥 Download</button>
+                                    <button class="new-btn" id="newVideoBtn">Create New</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Rate Experience Panel -->
+                <div class="feature-panel" id="ratingPanel">
+                    <div class="panel-content">
+                        <div class="camera-section">
+                            <!-- Camera Component for Gesture Recognition -->
+                            <div class="camera-container" id="ratingCamera">
+                                <video class="camera-video" id="ratingVideo" autoplay muted playsinline></video>
+                                <div class="camera-overlay" id="ratingOverlay">
+                                    <div class="overlay-content">
+                                        <p>📷 Camera access required for gesture recognition</p>
+                                        <button class="camera-enable-btn" id="enableRatingCamera">Enable Camera</button>
+                                    </div>
+                                </div>
+                                <div class="gesture-feedback" id="gestureFeedback">
+                                    <div class="gesture-status">Show thumbs up 👍 or thumbs down 👎</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="content-section">
+                            <div class="rating-container">
+                                <h3>Rate Your SnapMagic Experience</h3>
+                                <p>Use gestures or buttons to share your feedback</p>
+                                
+                                <div class="rating-buttons">
+                                    <button class="rating-btn positive" id="thumbsUpBtn">
+                                        👍 Great Experience
+                                    </button>
+                                    <button class="rating-btn negative" id="thumbsDownBtn">
+                                        👎 Needs Improvement
+                                    </button>
+                                </div>
+                                
+                                <div class="rating-result hidden" id="ratingResult">
+                                    <div class="rating-message">Thank you for your feedback!</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+        // SnapMagic Configuration - Dynamic API URL from CDK deployment
+        window.SNAPMAGIC_CONFIG = {
+            // API URL will be set by CDK Custom Resource during deployment
+            API_URL: 'https://0fxew5t0q0.execute-api.us-east-1.amazonaws.com/dev/',
+            VERSION: '1.0.0',
+            FEATURES: {
+                TRANSFORM_IMAGES: true,
+                GENERATE_VIDEOS: true,
+                DETECT_GESTURES: true,
+                VOICE_INPUT: true
+            }
+        };
+
+        // SnapMagic Modern App with Camera Functionality
+        class SnapMagicApp {
+            constructor() {
+                this.currentUser = null;
+                this.isAuthenticated = false;
+                this.currentFeature = 'pictures';
+                this.streams = {};
+                this.capturedImages = {};
+                this.init();
+            }
+
+            async init() {
+                console.log('🎉 SnapMagic Gen 2 App Initializing...');
+                
+                // Check for existing session first
+                await this.checkExistingSession();
+                
+                // Hide loading screen after short delay
+                setTimeout(() => {
+                    this.hideLoadingScreen();
+                    // Show appropriate screen based on auth status
+                    if (this.isAuthenticated) {
+                        this.showMainApp();
+                    } else {
+                        this.showLoginScreen();
+                    }
+                }, 2000);
+                
+                // Setup event listeners
+                this.setupEventListeners();
+                
+                // Display device information - REMOVED
+                
+                console.log('✅ SnapMagic App Ready!');
+            }
+
+            async checkExistingSession() {
+                try {
+                    // Update loading text
+                    const loadingText = document.querySelector('.loading-text');
+                    if (loadingText) {
+                        loadingText.textContent = 'Checking existing session...';
+                    }
+                    
+                    // Check localStorage for existing session
+                    const sessionData = localStorage.getItem('snapmagic_session');
+                    if (sessionData) {
+                        const session = JSON.parse(sessionData);
+                        
+                        // Check if session is still valid (24 hours for events)
+                        const sessionAge = Date.now() - session.timestamp;
+                        const maxAge = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+                        
+                        if (sessionAge < maxAge) {
+                            // Session is valid, restore user
+                            this.currentUser = session.user;
+                            this.isAuthenticated = true;
+                            
+                            if (loadingText) {
+                                loadingText.textContent = `Welcome back, ${this.currentUser.username}!`;
+                            }
+                            
+                            console.log('✅ Session restored for user:', this.currentUser.username);
+                            return;
+                        } else {
+                            // Session expired, clear it
+                            localStorage.removeItem('snapmagic_session');
+                            console.log('ℹ️ Session expired, cleared');
+                            
+                            if (loadingText) {
+                                loadingText.textContent = 'Session expired, please login again...';
+                            }
+                        }
+                    } else {
+                        if (loadingText) {
+                            loadingText.textContent = 'Ready for login...';
+                        }
+                    }
+                } catch (error) {
+                    console.error('❌ Error checking session:', error);
+                    localStorage.removeItem('snapmagic_session');
+                    
+                    const loadingText = document.querySelector('.loading-text');
+                    if (loadingText) {
+                        loadingText.textContent = 'Session error, please login...';
+                    }
+                }
+                
+                // No valid session found
+                this.isAuthenticated = false;
+                this.currentUser = null;
+            }
+
+            saveSession() {
+                try {
+                    const sessionData = {
+                        user: this.currentUser,
+                        timestamp: Date.now()
+                    };
+                    localStorage.setItem('snapmagic_session', JSON.stringify(sessionData));
+                    console.log('💾 Session saved');
+                } catch (error) {
+                    console.error('❌ Error saving session:', error);
+                }
+            }
+
+            clearSession() {
+                try {
+                    localStorage.removeItem('snapmagic_session');
+                    console.log('🗑️ Session cleared');
+                } catch (error) {
+                    console.error('❌ Error clearing session:', error);
+                }
+            }
+
+            hideLoadingScreen() {
+                const loadingScreen = document.getElementById('loadingScreen');
+                if (loadingScreen) {
+                    loadingScreen.classList.add('hidden');
+                    setTimeout(() => {
+                        loadingScreen.style.display = 'none';
+                    }, 500);
+                }
+            }
+
+            setupEventListeners() {
+                // Login form handling
+                const loginForm = document.getElementById('loginForm');
+                if (loginForm) {
+                    loginForm.addEventListener('submit', (e) => this.handleLogin(e));
+                }
+
+                // Logout button
+                const logoutBtn = document.getElementById('logoutBtn');
+                if (logoutBtn) {
+                    logoutBtn.addEventListener('click', () => this.handleLogout());
+                }
+
+                // Feature navigation
+                const navTabs = document.querySelectorAll('.nav-tab');
+                navTabs.forEach(tab => {
+                    tab.addEventListener('click', () => {
+                        const feature = tab.dataset.feature;
+                        this.switchFeature(feature);
+                    });
+                });
+
+                // Camera enable buttons
+                this.setupCameraButtons();
+                
+                // Capture buttons
+                this.setupCaptureButtons();
+                
+                // Transform buttons
+                this.setupTransformButtons();
+                
+                // Voice buttons
+                this.setupVoiceButtons();
+                
+                // Rating buttons
+                this.setupRatingButtons();
+                
+                // Window resize handler - device info removed
+            }
+
+            setupCameraButtons() {
+                const cameraButtons = [
+                    'enablePictureCamera',
+                    'enableVideoCamera', 
+                    'enableRatingCamera'
+                ];
+                
+                cameraButtons.forEach(buttonId => {
+                    const button = document.getElementById(buttonId);
+                    if (button) {
+                        button.addEventListener('click', () => {
+                            const feature = buttonId.replace('enable', '').replace('Camera', '').toLowerCase();
+                            this.enableCamera(feature);
+                        });
+                    }
+                });
+            }
+
+            setupCaptureButtons() {
+                const captureButtons = [
+                    { id: 'capturePictureBtn', feature: 'picture' },
+                    { id: 'captureVideoBtn', feature: 'video' }
+                ];
+                
+                captureButtons.forEach(({ id, feature }) => {
+                    const button = document.getElementById(id);
+                    if (button) {
+                        button.addEventListener('click', () => this.captureImage(feature));
+                    }
+                });
+
+                // Retake and delete buttons
+                const actionButtons = [
+                    { id: 'retakePictureBtn', action: 'retake', feature: 'picture' },
+                    { id: 'deletePictureBtn', action: 'delete', feature: 'picture' },
+                    { id: 'retakeVideoBtn', action: 'retake', feature: 'video' },
+                    { id: 'deleteVideoBtn', action: 'delete', feature: 'video' }
+                ];
+
+                actionButtons.forEach(({ id, action, feature }) => {
+                    const button = document.getElementById(id);
+                    if (button) {
+                        button.addEventListener('click', () => {
+                            if (action === 'retake') {
+                                this.retakeImage(feature);
+                            } else {
+                                this.deleteImage(feature);
+                            }
+                        });
+                    }
+                });
+            }
+
+            setupTransformButtons() {
+                const transformButtons = [
+                    { id: 'transformPictureBtn', feature: 'picture' },
+                    { id: 'transformVideoBtn', feature: 'video' }
+                ];
+                
+                transformButtons.forEach(({ id, feature }) => {
+                    const button = document.getElementById(id);
+                    if (button) {
+                        button.addEventListener('click', () => this.handleTransform(feature));
+                    }
+                });
+
+                // New buttons
+                const newButtons = [
+                    { id: 'newPictureBtn', feature: 'picture' },
+                    { id: 'newVideoBtn', feature: 'video' }
+                ];
+
+                newButtons.forEach(({ id, feature }) => {
+                    const button = document.getElementById(id);
+                    if (button) {
+                        button.addEventListener('click', () => this.startNew(feature));
+                    }
+                });
+            }
+
+            updateTransformButtonState(feature) {
+                const transformBtn = document.getElementById(`transform${feature.charAt(0).toUpperCase() + feature.slice(1)}Btn`);
+                if (transformBtn) {
+                    // Enable button if image is captured (no selection needed for perfect figurine)
+                    const hasImage = this.capturedImages[feature];
+                    transformBtn.disabled = !hasImage;
+                }
+            }
+
+            setupVoiceButtons() {
+                const voiceButtons = [
+                    { id: 'pictureVoiceBtn', textareaId: 'picturePrompt' },
+                    { id: 'videoVoiceBtn', textareaId: 'videoPrompt' }
+                ];
+                
+                voiceButtons.forEach(({ id, textareaId }) => {
+                    const button = document.getElementById(id);
+                    if (button) {
+                        button.addEventListener('click', () => this.handleVoiceInput(textareaId));
+                    }
+                });
+            }
+
+            setupRatingButtons() {
+                const ratingButtons = [
+                    { id: 'thumbsUpBtn', rating: 'positive' },
+                    { id: 'thumbsDownBtn', rating: 'negative' }
+                ];
+                
+                ratingButtons.forEach(({ id, rating }) => {
+                    const button = document.getElementById(id);
+                    if (button) {
+                        button.addEventListener('click', () => this.handleRating(rating));
+                    }
+                });
+            }
+
+            async handleLogin(event) {
+                event.preventDefault();
+                
+                const username = document.getElementById('username').value;
+                const password = document.getElementById('password').value;
+                const loginError = document.getElementById('loginError');
+                
+                try {
+                    loginError.textContent = '';
+                    console.log('🔐 Attempting login...');
+                    
+                    // Get the API endpoint from configuration
+                    const apiBaseUrl = window.SNAPMAGIC_CONFIG.API_URL;
+                    
+                    if (apiBaseUrl === 'demo-mode') {
+                        // Demo mode - use simple validation
+                        if (username && password) {
+                            this.currentUser = { 
+                                username: username,
+                                loginTime: new Date().toISOString(),
+                                token: 'demo-token' // Demo token for offline mode
+                            };
+                            this.isAuthenticated = true;
+                            this.saveSession();
+                            console.log('✅ Demo login successful - Session saved');
+                            this.showMainApp();
+                            return;
+                        } else {
+                            throw new Error('Please enter both username and password');
+                        }
+                    }
+                    
+                    // Real API login with JWT
+                    const loginEndpoint = `${apiBaseUrl}/api/login`;
+                    console.log(`🌐 Calling login API: ${loginEndpoint}`);
+                    
+                    const response = await fetch(loginEndpoint, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            username: username,
+                            password: password
+                        })
+                    });
+                    
+                    if (!response.ok) {
+                        const errorData = await response.json().catch(() => ({}));
+                        throw new Error(errorData.message || `Login failed: ${response.status} ${response.statusText}`);
+                    }
+                    
+                    const result = await response.json();
+                    
+                    if (result.success && result.token) {
+                        // Store user data with JWT token
+                        this.currentUser = { 
+                            username: username,
+                            loginTime: new Date().toISOString(),
+                            token: result.token,
+                            expiresIn: result.expires_in || 86400 // 24 hours default
+                        };
+                        this.isAuthenticated = true;
+                        
+                        // Save session to localStorage
+                        this.saveSession();
+                        
+                        console.log('✅ Login successful - JWT token received and session saved');
+                        this.showMainApp();
+                    } else {
+                        throw new Error(result.message || 'Login failed - no token received');
+                    }
+                    
+                } catch (error) {
+                    console.error('❌ Login failed:', error);
+                    loginError.textContent = error.message || 'Login failed. Please check your credentials.';
+                }
+            }
+
+            async handleLogout() {
+                try {
+                    // Stop all camera streams
+                    Object.values(this.streams).forEach(stream => {
+                        if (stream) {
+                            stream.getTracks().forEach(track => track.stop());
+                        }
+                    });
+                    this.streams = {};
+                    
+                    // Clear session
+                    this.clearSession();
+                    
+                    this.currentUser = null;
+                    this.isAuthenticated = false;
+                    console.log('✅ Logout successful - Session cleared');
+                    this.showLoginScreen();
+                } catch (error) {
+                    console.error('❌ Logout failed:', error);
+                }
+            }
+
+            switchFeature(feature) {
+                // Update navigation
+                document.querySelectorAll('.nav-tab').forEach(tab => {
+                    tab.classList.remove('active');
+                });
+                document.querySelector(`[data-feature="${feature}"]`).classList.add('active');
+                
+                // Update panels
+                document.querySelectorAll('.feature-panel').forEach(panel => {
+                    panel.classList.remove('active');
+                });
+                document.getElementById(`${feature}Panel`).classList.add('active');
+                
+                this.currentFeature = feature;
+                console.log(`Switched to ${feature} feature`);
+            }
+
+            async enableCamera(feature) {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ 
+                        video: { 
+                            facingMode: 'user',
+                            width: { ideal: 640 },
+                            height: { ideal: 480 }
+                        } 
+                    });
+                    
+                    const video = document.getElementById(`${feature}Video`);
+                    const overlay = document.getElementById(`${feature}Overlay`);
+                    const controls = document.getElementById(`${feature}Controls`);
+                    
+                    if (video) {
+                        video.srcObject = stream;
+                        this.streams[feature] = stream;
+                        
+                        if (overlay) overlay.classList.add('hidden');
+                        if (controls) controls.classList.remove('hidden');
+                        
+                        console.log(`✅ Camera enabled for ${feature}`);
+                    }
+                } catch (error) {
+                    console.error(`❌ Camera access failed for ${feature}:`, error);
+                    alert('Camera access is required for this feature. Please allow camera permissions and try again.');
+                }
+            }
+
+            captureImage(feature) {
+                const video = document.getElementById(`${feature}Video`);
+                const canvas = document.createElement('canvas');
+                const context = canvas.getContext('2d');
+                
+                if (video && video.videoWidth > 0) {
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    context.drawImage(video, 0, 0);
+                    
+                    const imageData = canvas.toDataURL('image/jpeg', 0.8);
+                    this.capturedImages[feature] = imageData;
+                    
+                    // Show preview
+                    const preview = document.getElementById(`${feature}Preview`);
+                    const capturedImg = document.getElementById(`captured${feature.charAt(0).toUpperCase() + feature.slice(1)}`);
+                    const camera = document.getElementById(`${feature}Camera`);
+                    
+                    if (preview && capturedImg && camera) {
+                        capturedImg.src = imageData;
+                        camera.style.display = 'none';
+                        preview.classList.remove('hidden');
+                        
+                        // Enable transform button using new state management
+                        this.updateTransformButtonState(feature);
+                        
+                        console.log(`📸 Image captured for ${feature}`);
+                    }
+                }
+            }
+
+            retakeImage(feature) {
+                const preview = document.getElementById(`${feature}Preview`);
+                const camera = document.getElementById(`${feature}Camera`);
+                
+                if (preview && camera) {
+                    preview.classList.add('hidden');
+                    camera.style.display = 'block';
+                    
+                    // Update transform button state
+                    this.updateTransformButtonState(feature);
+                    
+                    delete this.capturedImages[feature];
+                    console.log(`🔄 Retaking image for ${feature}`);
+                }
+            }
+
+            deleteImage(feature) {
+                this.retakeImage(feature);
+                console.log(`🗑️ Image deleted for ${feature}`);
+            }
+
+            async handleTransform(feature) {
+                // Simplified for perfect figurine concept - no selection needed
+                let prompt = '';
+                
+                if (feature === 'picture') {
+                    // Perfect figurine - no prompt needed, backend handles everything
+                    prompt = 'perfect-figurine';
+                    console.log('🎯 Creating perfect blister pack figurine');
+                } else {
+                    // For videos, use the existing prompt system
+                    const promptId = `${feature}Prompt`;
+                    prompt = document.getElementById(promptId)?.value;
+                    
+                    if (!prompt.trim()) {
+                        alert('Please enter a description for your transformation.');
+                        return;
+                    }
+                }
+                
+                if (!this.capturedImages[feature]) {
+                    alert('Please capture an image first.');
+                    return;
+                }
+                
+                // Show processing
+                const processing = document.getElementById(`${feature}Processing`);
+                if (processing) {
+                    processing.classList.remove('hidden');
+                }
+                
+                console.log(`🎨 Starting ${feature} transformation with prompt: "${prompt}"`);
+                
+                try {
+                    // Get the API endpoint from configuration
+                    const apiBaseUrl = window.SNAPMAGIC_CONFIG.API_URL;
+                    
+                    if (apiBaseUrl === 'demo-mode') {
+                        console.log('🎭 Running in demo mode - no API calls');
+                        throw new Error('Demo mode - API not configured');
+                    }
+                    
+                    // Check if user is authenticated and has token
+                    if (!this.currentUser || !this.currentUser.token) {
+                        throw new Error('Authentication required - please login again');
+                    }
+                    
+                    // Convert image to base64
+                    const imageBase64 = this.capturedImages[feature].split(',')[1]; // Remove data:image/jpeg;base64, prefix
+                    
+                    let endpoint, requestBody;
+                    
+                    if (feature === 'picture') {
+                        endpoint = `${apiBaseUrl}/api/transform-image`;
+                        requestBody = {
+                            action: 'transform_image',
+                            prompt: prompt,
+                            image_base64: imageBase64
+                        };
+                    } else if (feature === 'video') {
+                        endpoint = `${apiBaseUrl}/api/generate-video`;
+                        requestBody = {
+                            action: 'generate_video',
+                            prompt: prompt,
+                            image_base64: imageBase64
+                        };
+                    }
+                    
+                    console.log(`🌐 Calling API: ${endpoint}`);
+                    
+                    const response = await fetch(endpoint, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${this.currentUser.token}`,
+                            'X-Auth-Token': this.currentUser.token
+                        },
+                        body: JSON.stringify(requestBody)
+                    });
+                    
+                    if (!response.ok) {
+                        // Handle authentication errors
+                        if (response.status === 401) {
+                            console.warn('🔒 Authentication failed - token may be expired');
+                            this.handleLogout();
+                            throw new Error('Session expired - please login again');
+                        }
+                        throw new Error(`API call failed: ${response.status} ${response.statusText}`);
+                    }
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        console.log('✅ Transformation successful');
+                        this.showTransformResult(feature, result.result);
+                    } else {
+                        throw new Error(result.message || 'Transformation failed');
+                    }
+                    
+                } catch (error) {
+                    console.error('❌ Transformation error:', error);
+                    
+                    // Hide processing
+                    if (processing) {
+                        processing.classList.add('hidden');
+                    }
+                    
+                    // Show error message
+                    alert(`Transformation failed: ${error.message}\n\nFalling back to demo mode...`);
+                    
+                    // Fallback to demo mode
+                    setTimeout(() => {
+                        this.showTransformResult(feature);
+                    }, 1000);
+                }
+            }
+
+            showTransformResult(feature, apiResult = null) {
+                // Hide processing
+                const processing = document.getElementById(`${feature}Processing`);
+                if (processing) {
+                    processing.classList.add('hidden');
+                }
+                
+                // Show result
+                const result = document.getElementById(`${feature}Result`);
+                if (result) {
+                    result.classList.remove('hidden');
+                    
+                    if (feature === 'picture') {
+                        const resultImg = document.getElementById('transformedPicture');
+                        if (resultImg) {
+                            if (apiResult) {
+                                // Use the transformed image from API (base64)
+                                resultImg.src = `data:image/png;base64,${apiResult}`;
+                                console.log('🖼️ Displaying AI-transformed image');
+                            } else {
+                                // Fallback: show the captured image
+                                resultImg.src = this.capturedImages[feature];
+                                console.log('🖼️ Displaying original image (demo mode)');
+                            }
+                        }
+                    } else if (feature === 'video') {
+                        const resultVideo = document.getElementById('transformedVideo');
+                        if (resultVideo) {
+                            if (apiResult) {
+                                // Use the generated video from API (base64)
+                                resultVideo.src = `data:video/mp4;base64,${apiResult}`;
+                                console.log('🎥 Displaying AI-generated video');
+                            } else {
+                                // Fallback: create a placeholder video
+                                resultVideo.src = 'data:video/mp4;base64,'; // Placeholder
+                                console.log('🎥 Displaying demo video placeholder');
+                            }
+                        }
+                    }
+                }
+                
+                console.log(`✅ ${feature} transformation complete`);
+            }
+
+            startNew(feature) {
+                // Reset everything for this feature
+                const result = document.getElementById(`${feature}Result`);
+                const processing = document.getElementById(`${feature}Processing`);
+                const prompt = document.getElementById(`${feature}Prompt`);
+                
+                if (result) result.classList.add('hidden');
+                if (processing) processing.classList.add('hidden');
+                if (prompt) prompt.value = '';
+                
+                this.retakeImage(feature);
+                console.log(`🆕 Starting new ${feature} transformation`);
+            }
+
+            handleVoiceInput(textareaId) {
+                if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+                    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                    const recognition = new SpeechRecognition();
+                    
+                    recognition.continuous = false;
+                    recognition.interimResults = false;
+                    recognition.lang = 'en-US';
+                    
+                    recognition.onstart = () => {
+                        console.log('🎤 Voice recognition started');
+                    };
+                    
+                    recognition.onresult = (event) => {
+                        const transcript = event.results[0][0].transcript;
+                        const textarea = document.getElementById(textareaId);
+                        if (textarea) {
+                            textarea.value = transcript;
+                        }
+                        console.log('🎤 Voice input:', transcript);
+                    };
+                    
+                    recognition.onerror = (event) => {
+                        console.error('🎤 Voice recognition error:', event.error);
+                        alert('Voice recognition failed. Please try again or type your prompt.');
+                    };
+                    
+                    recognition.start();
+                } else {
+                    alert('Voice recognition is not supported in your browser. Please type your prompt.');
+                }
+            }
+
+            async handleRating(rating) {
+                const result = document.getElementById('ratingResult');
+                if (result) {
+                    result.classList.remove('hidden');
+                    
+                    setTimeout(() => {
+                        result.classList.add('hidden');
+                    }, 3000);
+                }
+                
+                console.log(`👍 User rating: ${rating}`);
+                
+                // Send rating to backend API
+                try {
+                    const apiBaseUrl = window.SNAPMAGIC_CONFIG.API_URL;
+                    
+                    if (apiBaseUrl !== 'demo-mode' && this.currentUser && this.currentUser.token) {
+                        const endpoint = `${apiBaseUrl}/api/detect-gesture`;
+                        
+                        const response = await fetch(endpoint, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${this.currentUser.token}`,
+                                'X-Auth-Token': this.currentUser.token
+                            },
+                            body: JSON.stringify({
+                                action: 'detect_gesture',
+                                rating: rating,
+                                timestamp: new Date().toISOString(),
+                                user: this.currentUser.username
+                            })
+                        });
+                        
+                        if (response.ok) {
+                            const result = await response.json();
+                            console.log('✅ Rating sent to backend:', result);
+                        } else if (response.status === 401) {
+                            console.warn('🔒 Authentication failed - token may be expired');
+                            this.handleLogout();
+                        } else {
+                            console.warn('⚠️ Failed to send rating to backend:', response.statusText);
+                        }
+                    }
+                } catch (error) {
+                    console.error('❌ Error sending rating:', error);
+                }
+            }
+
+            showLoginScreen() {
+                const loginScreen = document.getElementById('loginScreen');
+                const mainApp = document.getElementById('mainApp');
+                
+                if (loginScreen) loginScreen.style.display = 'flex';
+                if (mainApp) mainApp.style.display = 'none';
+            }
+
+            showMainApp() {
+                const loginScreen = document.getElementById('loginScreen');
+                const mainApp = document.getElementById('mainApp');
+                
+                if (loginScreen) loginScreen.style.display = 'none';
+                if (mainApp) mainApp.style.display = 'block';
+                
+                // Update user info
+                const userInfo = document.getElementById('userInfo');
+                const sessionInfo = document.getElementById('sessionInfo');
+                
+                if (userInfo && this.currentUser) {
+                    userInfo.textContent = `Welcome, ${this.currentUser.username}!`;
+                }
+                
+                if (sessionInfo) {
+                    const sessionData = localStorage.getItem('snapmagic_session');
+                    if (sessionData) {
+                        const session = JSON.parse(sessionData);
+                        const sessionAge = Math.floor((Date.now() - session.timestamp) / 1000 / 60); // minutes
+                        const hoursLeft = Math.floor((24 * 60 - sessionAge) / 60);
+                        sessionInfo.textContent = `Session: ${hoursLeft}h remaining`;
+                    }
+                }
+            }
+
+            // Device info functions removed for cleaner UI
+
+            getDeviceType(width) {
+                if (width < 768) return '📱 Mobile';
+                if (width < 1024) return '📱 Tablet';
+                if (width < 1920) return '💻 Desktop';
+                return '📺 Large Screen';
+            }
+        }
+
+        // Initialize the app when DOM is ready
+        document.addEventListener('DOMContentLoaded', () => {
+            window.snapMagicApp = new SnapMagicApp();
+            
+            console.log(`
+            ╔══════════════════════════════════════╗
+            ║            SNAPMAGIC                 ║
+            ║         Gen 2 Ready! ✨              ║
+            ║                                      ║
+            ║  📱 Mobile Ready                     ║
+            ║  💻 Desktop Optimized                ║
+            ║  🔐 Modern Auth Ready                ║
+            ║  ⚡ Amplify Compatible               ║
+            ╚══════════════════════════════════════╝
+            `);
+        });
+    </script>
+</body>
+</html>

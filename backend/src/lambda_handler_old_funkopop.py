@@ -10,8 +10,6 @@ import base64
 import os
 import time
 from typing import Dict, Any
-from PIL import Image
-import io
 import threading
 from auth_simple import SnapMagicAuthSimple
 
@@ -35,33 +33,14 @@ class SnapMagicFunkoGenerator:
         logger.info(f"🎯 SnapMagic FunkoPop Generator initialized")
 
     def resize_image_for_bedrock(self, image_bytes: bytes, max_pixels: int = 4194304) -> bytes:
-        """Resize image to fit within Bedrock Nova Canvas pixel limits"""
+        """Resize image to fit within Bedrock Nova Canvas pixel limits - simplified version"""
         try:
-            with Image.open(io.BytesIO(image_bytes)) as img:
-                if img.mode != 'RGB':
-                    img = img.convert('RGB')
-                
-                width, height = img.size
-                total_pixels = width * height
-                
-                if total_pixels > max_pixels:
-                    scale_factor = (max_pixels / total_pixels) ** 0.5
-                    new_width = int(width * scale_factor)
-                    new_height = int(height * scale_factor)
-                    img = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
-                
-                if width < 320 or height < 320:
-                    scale_factor = max(320 / width, 320 / height)
-                    new_width = int(width * scale_factor)
-                    new_height = int(height * scale_factor)
-                    img = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
-                
-                output_buffer = io.BytesIO()
-                img.save(output_buffer, format='JPEG', quality=95, optimize=True)
-                return output_buffer.getvalue()
-                
+            # For now, just return the original image bytes
+            # TODO: Add proper image resizing when Pillow is available
+            logger.info(f"Image size: {len(image_bytes)} bytes (resize skipped - no Pillow)")
+            return image_bytes
         except Exception as e:
-            logger.error(f"Image resize failed: {e}")
+            logger.error(f"Image processing failed: {e}")
             return image_bytes
 
     def comprehensive_rekognition_analysis(self, image_bytes: bytes) -> Dict[str, Any]:
@@ -94,6 +73,8 @@ class SnapMagicFunkoGenerator:
                 'has_glasses': face.get('Eyeglasses', {}).get('Value', False),
                 'has_sunglasses': face.get('Sunglasses', {}).get('Value', False),
                 'head_wear': [],
+                'skin_tone': [],
+                'facial_hair_style': [],
                 'hair_color': [],
                 'hair_style': [],
                 'facial_accessories': [],
@@ -117,25 +98,80 @@ class SnapMagicFunkoGenerator:
                         features['facial_accessories'].append(label['Name'])
                         break
                 
-                jewelry_keywords = ['earring', 'earrings', 'necklace', 'chain', 'pendant']
-                for keyword in jewelry_keywords:
-                    if keyword in label_name and confidence > 70:
-                        features['jewelry'].append(label['Name'])
-                        break
+                # Gender-specific jewelry detection thresholds
+                gender = features.get('gender', 'Unknown').lower()
+                jewelry_confidence_threshold = 70 if gender == 'female' else 99  # Women: 70%, Men: 99%
                 
-                hair_colors = ['black hair', 'brown hair', 'blonde hair', 'gray hair', 'grey hair', 'white hair', 'red hair']
+                jewelry_keywords = ['earring', 'earrings', 'necklace', 'chain', 'pendant', 'bracelet', 'ring']
+                for keyword in jewelry_keywords:
+                    if keyword in label_name.lower() and confidence > jewelry_confidence_threshold:
+                        # Additional check: avoid false positives from body parts
+                        if not any(body_part in label_name.lower() for body_part in ['ear', 'face', 'head', 'neck', 'skin', 'person', 'human']):
+                            features['jewelry'].append(label['Name'])
+                            break
+                
+                # Comprehensive facial hair detection - actual texture and style
+                facial_hair_types = [
+                    'beard', 'mustache', 'goatee', 'soul patch', 'sideburns',
+                    'full beard', 'stubble', 'five o\'clock shadow', 'clean shaven',
+                    'afro beard', 'curly beard', 'straight beard', 'thick beard', 'thin beard'
+                ]
+                for hair_type in facial_hair_types:
+                    if hair_type in label_name and confidence > 60:
+                        features['facial_hair_style'].append(label['Name'])
+                
+                # Comprehensive skin tone detection from Rekognition labels
+                skin_tones = [
+                    'dark skin', 'light skin', 'fair skin', 'pale skin', 'tan skin',
+                    'olive skin', 'brown skin', 'black skin', 'white skin',
+                    'medium skin', 'deep skin', 'rich skin', 'golden skin'
+                ]
+                for tone in skin_tones:
+                    if tone in label_name and confidence > 60:
+                        features['skin_tone'].append(label['Name'])
+                
+                # Comprehensive hair color detection - what Rekognition actually sees
+                hair_colors = [
+                    'black hair', 'brown hair', 'blonde hair', 'blond hair', 
+                    'gray hair', 'grey hair', 'white hair', 'red hair', 'ginger hair',
+                    'auburn hair', 'dark hair', 'light hair', 'silver hair'
+                ]
                 for color in hair_colors:
-                    if color in label_name and confidence > 70:
+                    if color in label_name and confidence > 60:  # Lower threshold for better detection
                         features['hair_color'].append(label['Name'])
                         break
                 
-                hair_styles = ['curly hair', 'straight hair', 'wavy hair', 'long hair', 'short hair', 'ponytail', 'braid', 'bun']
+                # Comprehensive hair style and texture detection - EXACTLY what we see
+                hair_styles = [
+                    # Texture types - PRIORITIZED for better detection
+                    'curly hair', 'straight hair', 'wavy hair', 'kinky hair', 'coily hair',
+                    'afro hair', 'afro', 'natural hair', 'textured hair', 'frizzy hair',
+                    'tight curls', 'loose curls', 'spiral curls', 'ringlets',
+                    # Additional afro/textured variations
+                    'african hair', 'black natural hair', 'ethnic hair', 'type 4 hair',
+                    'tight coils', 'kinky coils', 'natural texture', 'unprocessed hair',
+                    # Length types  
+                    'long hair', 'short hair', 'medium hair', 'shoulder length hair',
+                    # Styles
+                    'ponytail', 'braid', 'braids', 'bun', 'top knot', 'man bun',
+                    'dreadlocks', 'locs', 'cornrows', 'twist', 'twists',
+                    # Cuts and styles
+                    'buzz cut', 'crew cut', 'fade', 'undercut', 'mohawk',
+                    'bob', 'pixie cut', 'layers', 'bangs', 'fringe',
+                    # Conditions
+                    'bald', 'balding', 'receding hairline', 'thinning hair',
+                    # Styling
+                    'slicked back', 'combed', 'messy hair', 'tousled hair',
+                    'side part', 'center part', 'no part'
+                ]
                 for style in hair_styles:
-                    if style in label_name and confidence > 70:
+                    # Lower threshold for textured/afro hair detection
+                    threshold = 50 if any(term in style.lower() for term in ['afro', 'kinky', 'coily', 'curly', 'textured', 'natural', 'tight', 'ethnic']) else 60
+                    if style in label_name and confidence > threshold:
                         features['hair_style'].append(label['Name'])
-                        break
+                        # Don't break - allow multiple hair characteristics
             
-            for key in ['head_wear', 'hair_color', 'hair_style', 'facial_accessories', 'jewelry', 'head_accessories']:
+            for key in ['head_wear', 'skin_tone', 'facial_hair_style', 'hair_color', 'hair_style', 'facial_accessories', 'jewelry', 'head_accessories']:
                 features[key] = list(dict.fromkeys(features[key]))[:3]
             
             features['validated_image_bytes'] = image_bytes
@@ -185,8 +221,12 @@ class SnapMagicFunkoGenerator:
         
         prompt_parts = ["Full body Funko Pop figure head to toes"]
         
+        # WYSIWYG PRIORITY - Add explicit reference image priority
         prompt_parts.extend([
-            "preserve original skin color",
+            "CRITICAL: Copy appearance exactly from reference image",
+            "preserve original skin color exactly as shown in reference",
+            "preserve original hair exactly as shown in reference image",
+            "what you see in the reference image is what you get - no generic defaults",
             "keep ethnic characteristics"
         ])
         
@@ -207,13 +247,15 @@ class SnapMagicFunkoGenerator:
             prompt_parts.extend([
                 f"female corporate business dress in {branding['primary_color']} and {branding['secondary_color']} colors",
                 f"professional {branding['company_name']} branded office attire",
-                f"{branding['logo_description']} pin on dress lapel"
+                f"{branding['logo_description']} pin on dress lapel",
+                "PRESERVE ORIGINAL HAIR TEXTURE FROM REFERENCE IMAGE"
             ])
         else:
             prompt_parts.extend([
                 f"male corporate business suit with {branding['primary_color']} tie",
                 f"{branding['secondary_color']} suit jacket with {branding['logo_description']} on chest pocket",
-                f"professional {branding['company_name']} branded formal attire"
+                f"professional {branding['company_name']} branded formal attire",
+                "PRESERVE ORIGINAL HAIR TEXTURE FROM REFERENCE IMAGE"
             ])
         
         if gender == 'male':
@@ -240,13 +282,33 @@ class SnapMagicFunkoGenerator:
         for item in jewelry:
             prompt_parts.append(f"{item.lower()}")
         
+        # Use actual detected skin tone instead of brightness guessing
+        skin_tone = mesh_data.get('skin_tone', [])
+        for tone in skin_tone:
+            prompt_parts.append(f"{tone.lower()}")
+        
+        # Use actual detected facial hair style and texture
+        facial_hair_style = mesh_data.get('facial_hair_style', [])
+        for hair_style in facial_hair_style:
+            prompt_parts.append(f"{hair_style.lower()}")
+        
         hair_color = mesh_data.get('hair_color', [])
         for color in hair_color:
             prompt_parts.append(f"{color.lower()}")
         
         hair_style = mesh_data.get('hair_style', [])
+        # Prioritize textured hair characteristics in prompt
+        textured_hair_found = False
         for style in hair_style:
-            prompt_parts.append(f"{style.lower()}")
+            style_lower = style.lower()
+            prompt_parts.append(f"{style_lower}")
+            # Check if we detected textured/afro hair
+            if any(term in style_lower for term in ['afro', 'kinky', 'coily', 'curly', 'textured', 'natural', 'tight']):
+                textured_hair_found = True
+        
+        # Add emphasis for natural hair styling if textured hair detected
+        if textured_hair_found:
+            prompt_parts.append("natural hair styling from reference image")
         
         prompt_parts.extend([
             "vinyl collectible style",
@@ -304,15 +366,19 @@ class SnapMagicFunkoGenerator:
         
         if gender == 'male':
             template_paths = [
+                '/var/task/src/model/male.PNG',
                 '/var/task/model/male.PNG',
                 'model/male.PNG',
-                './model/male.PNG'
+                './model/male.PNG',
+                '../model/male.PNG'
             ]
         else:
             template_paths = [
+                '/var/task/src/model/female.PNG',
                 '/var/task/model/female.PNG',
                 'model/female.PNG', 
-                './model/female.PNG'
+                './model/female.PNG',
+                '../model/female.PNG'
             ]
         
         # Try to load template image
@@ -428,6 +494,7 @@ def lambda_handler(event, context):
                 token = auth_handler.generate_token(username)
                 logger.info("Login successful, token generated")
                 return create_success_response({
+                    'success': True,  # Frontend expects this field
                     'message': 'Login successful',
                     'token': token,
                     'expires_in': 86400,  # 24 hours
