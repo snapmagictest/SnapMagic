@@ -159,8 +159,8 @@ frontend:
       environment: {
         PYTHONPATH: '/var/task:/var/task/src',
         LOG_LEVEL: 'INFO',
-        SNAPMAGIC_USERNAME: inputs.basicAuthUsername || 'd',
-        SNAPMAGIC_PASSWORD: inputs.basicAuthPassword || 'd'
+        EVENT_USERNAME: inputs.basicAuthUsername || 'demo',
+        EVENT_PASSWORD: inputs.basicAuthPassword || 'demo'
       },
       description: 'SnapMagic AI backend using Strands Agents'
     });

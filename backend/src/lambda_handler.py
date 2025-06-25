@@ -14,6 +14,26 @@ from card_generator import SnapMagicCardGenerator
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
+def load_event_credentials() -> Dict[str, str]:
+    """Load event credentials from environment variables (set by CDK from secrets.json)"""
+    try:
+        # CDK should set these environment variables from secrets.json
+        username = os.environ.get('EVENT_USERNAME', 'demo')  # fallback for local testing
+        password = os.environ.get('EVENT_PASSWORD', 'demo')  # fallback for local testing
+        
+        logger.info(f"Event credentials loaded - Username: {username}")
+        return {
+            'username': username,
+            'password': password
+        }
+    except Exception as e:
+        logger.error(f"Failed to load event credentials: {str(e)}")
+        # Fallback to demo credentials for safety
+        return {
+            'username': 'demo',
+            'password': 'demo'
+        }
+
 # Global card generator instance
 card_generator = SnapMagicCardGenerator()
 
@@ -65,7 +85,10 @@ def lambda_handler(event, context):
             
             logger.info(f"Login attempt for user: {username}")
             
-            if username == 'demo' and password == 'demo':
+            # Load event credentials from environment variables
+            event_creds = load_event_credentials()
+            
+            if username == event_creds['username'] and password == event_creds['password']:
                 # Create token using the existing auth module
                 auth_handler = SnapMagicAuthSimple()
                 token = auth_handler.generate_token(username)
