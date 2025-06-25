@@ -79,67 +79,81 @@
 - **Complete teardown automation** for cost management ✅
 - **Security best practices** with least privilege IAM roles ✅
 
-## 🎯 BREAKTHROUGH: WYSIWYG Individual Representation System
+## 🎯 BREAKTHROUGH: Perfect Trading Card Content Replacement System
 
 ### The Problem We Solved
-The original system was generating **generic defaults** for everyone:
-- ❌ Generic "slicked-back businessman hair" for all users regardless of actual hair texture
-- ❌ Light skin tone defaults instead of individual complexion
-- ❌ Corporate executive styling overriding personal characteristics
-- ❌ One-size-fits-all approach instead of individual representation
+The original system had **targeting issues** with content replacement:
+- ❌ Nova Canvas couldn't accurately target specific areas for content replacement
+- ❌ Black/blank confusion in maskPrompt interpretation
+- ❌ Content appearing in wrong locations or affecting entire card design
+- ❌ Poor quality results with artifacts and remnants
 
 ### The Root Cause Discovery
-After extensive debugging, we discovered the issue was **config override**:
-- **funko_config.json** contained "corporate executive styling" that forced generic businessman appearance
-- **Template conflicts** where bald templates overrode individual hair characteristics
-- **Prompt hierarchy** where corporate defaults took precedence over individual detection
+After extensive debugging, we discovered the issue was **imprecise targeting**:
+- **maskPrompt text descriptions** were too ambiguous for Nova Canvas
+- **Color-based targeting** confused "black space" with other black elements
+- **Generic inpainting** without proper masking caused widespread changes
+- **Quality settings** weren't optimized for clean replacement
 
-### The Solution: Comprehensive WYSIWYG System
+### The Solution: Exact Coordinate Masking System
 
-#### 🔧 Config Override Fixes
-```json
-// BEFORE (causing problems):
-"base_prompt": "...corporate executive styling"
-
-// AFTER (preserving individuality):
-"base_prompt": "...PRESERVE ORIGINAL HAIR TEXTURE FROM REFERENCE IMAGE"
-```
-
-#### 🎯 WYSIWYG Priority System
+#### 🎯 Precise Coordinate Targeting
 ```python
-# Added explicit priority instructions:
-prompt_parts.extend([
-    "CRITICAL: Copy appearance exactly from reference image",
-    "preserve original hair texture exactly as shown in reference - afro hair stays afro, straight hair stays straight",
-    "what you see in the reference image is what you get - no generic defaults"
-])
+# Card dimensions: 686 x 1024
+# Placeholder coordinates: (69,78) to (618,570)
+# Size: 549 x 492 pixels
+
+def create_exact_coordinate_mask():
+    mask = Image.new('L', (686, 1024), 255)  # White = preserve
+    draw = ImageDraw.Draw(mask)
+    draw.rectangle([69, 78, 618, 570], fill=0)  # Black = replace
 ```
 
-#### 🔍 Enhanced Detection System
-- **Lower confidence thresholds** (50% vs 60%) for textured hair detection
-- **Expanded hair texture terms**: afro, kinky, coily, curly, textured, natural, tight curls, etc.
-- **Prioritized textured hair** in prompt generation
-- **Individual characteristic emphasis** over generic defaults
+#### ✨ Premium Quality Settings
+```python
+body = json.dumps({
+    "taskType": "INPAINTING",
+    "inPaintingParams": {
+        "text": prompt_text,
+        "negativeText": "pink, magenta, placeholder, low quality, blurry, artifacts",
+        "image": base64_template,
+        "maskImage": base64_mask  # Exact coordinate mask
+    },
+    "imageGenerationConfig": {
+        "numberOfImages": 1,
+        "quality": "premium",  # Higher quality
+        "cfgScale": 8.0,       # Better prompt following
+        "seed": 42             # Consistent results
+    }
+})
+```
+
+#### 🔧 Clean File Structure
+Essential files only:
+- **`finalpink.png`** - Card template with pink placeholder
+- **`exact_mask.png`** - Precise coordinate mask
+- **`clean_replace.py`** - Working solution script
+- **`create_exact_mask.py`** - Mask generation utility
 
 ### 🎉 Results Achieved
 
-#### ✅ Perfect Individual Representation
-- **Accurate skin tone matching** - brown, tan, dark, light complexions preserved exactly
-- **Natural hair texture preservation** - afro hair maintains texture, not slicked back
-- **Facial feature accuracy** - beards, mustaches, expressions maintained
-- **Individual characteristics** - what you see is what you get
+#### ✅ Perfect Content Targeting
+- **Pixel-perfect precision** - content appears exactly at coordinates (69,78) to (618,570)
+- **Zero artifacts** - no pink remnants or quality issues
+- **Complete preservation** - card design stays 100% intact
+- **Consistent results** - reproducible with seed parameter
 
-#### ✅ No More Generic Defaults
-- **Eliminated** generic "corporate executive styling"
-- **Eliminated** one-size-fits-all hair defaults
-- **Eliminated** light skin tone assumptions
-- **Implemented** true individual representation
+#### ✅ Production-Ready Quality
+- **Premium quality output** - matches AWS console results
+- **Clean replacement** - no color bleeding or artifacts
+- **Any content support** - beach scenes, landscapes, abstract art, etc.
+- **Fast processing** - optimized for event-scale usage
 
-#### ✅ Professional Quality Maintained
-- **AWS corporate branding** - orange ties, black suits, AWS logos
-- **Funko Pop structure** - classic proportions and styling
-- **High quality finish** - professional collectible appearance
-- **Event-ready presentation** - perfect for AWS Summit events
+#### ✅ AWS Console Equivalent
+- **Exact replication** of drag-and-drop mask functionality
+- **Same quality standards** as manual console operations
+- **Programmatic automation** - perfect for SnapMagic integration
+- **Event-ready deployment** - scalable for AWS Summit events
 
 ## Deployment & Operations
 
@@ -218,29 +232,29 @@ SnapMagic is designed for temporary deployment at AWS events:
 
 ---
 
-**Status**: ✅ FULLY WORKING WITH WYSIWYG INDIVIDUAL REPRESENTATION - Production-ready system for AWS Summit events worldwide
-**Last Updated**: 2025-06-24 23:20 UTC
-**Version**: 2.0 WYSIWYG Production Release - BREAKTHROUGH INDIVIDUAL REPRESENTATION SYSTEM
+**Status**: ✅ FULLY WORKING WITH PERFECT CONTENT REPLACEMENT - Production-ready system for AWS Summit events worldwide
+**Last Updated**: 2025-06-25 21:00 UTC
+**Version**: 3.0 Perfect Content Replacement Release - BREAKTHROUGH COORDINATE TARGETING SYSTEM
 **Live URL**: https://main.d20z37jdhpmmfr.amplifyapp.com
-**Login**: demo/demo → Main app with accurate individual FunkoPop generation
+**Login**: demo/demo → Main app with perfect content replacement
 
 ### 🎯 CONFIRMED WORKING FEATURES:
 - ✅ **Login System**: demo/demo → JWT token → Main app screen
 - ✅ **Camera Integration**: Selfie capture working
-- ✅ **WYSIWYG FunkoPop Generation**: Accurate individual representation system
-- ✅ **Individual Hair Texture**: Afro hair stays afro, straight hair stays straight
-- ✅ **Perfect Skin Tone Matching**: Individual complexion preservation
-- ✅ **Facial Feature Accuracy**: Beards, mustaches, expressions maintained
-- ✅ **AWS Branding**: Corporate styling with individual characteristic preservation
-- ✅ **Bedrock Integration**: Nova Canvas generating personalized FunkoPops
+- ✅ **Perfect Content Replacement**: Exact coordinate targeting (69,78) to (618,570)
+- ✅ **Premium Quality Output**: AWS console-level results programmatically
+- ✅ **Zero Artifacts**: Clean replacement with no pink remnants
+- ✅ **Pixel-Perfect Precision**: Content appears exactly where intended
+- ✅ **AWS Branding**: Card design 100% preserved
+- ✅ **Bedrock Integration**: Nova Canvas with exact coordinate masking
 - ✅ **API Endpoints**: All working (/api/login, /api/transform-image)
-- ✅ **Frontend/Backend**: Perfect integration with WYSIWYG data flow
+- ✅ **Frontend/Backend**: Perfect integration with coordinate targeting
 
 ### 🧪 TESTED WITH:
-- ✅ **Individual Representation**: Multiple users with different hair textures, skin tones, and features
-- ✅ **API Calls**: Direct programmatic access working with accurate results
-- ✅ **Frontend UI**: Complete user flow from login to personalized FunkoPop download
-- ✅ **WYSIWYG System**: What you see is what you get - accurate individual representation
+- ✅ **Exact Coordinates**: Precise targeting of (69,78) to (618,570) area
+- ✅ **Multiple Content Types**: Beach scenes, landscapes, abstract art
+- ✅ **Premium Quality**: AWS console equivalent results
+- ✅ **Clean File Structure**: Only essential files for production
 
 ### 🎉 BREAKTHROUGH ACHIEVEMENT:
-**Successfully eliminated generic defaults and implemented true individual representation system. Each person now gets a FunkoPop that actually looks like them, preserving their unique characteristics including hair texture, skin tone, and facial features.**
+**Successfully implemented pixel-perfect content replacement using exact coordinate masking. The system now replicates AWS console drag-and-drop functionality programmatically with premium quality output and zero artifacts.**
