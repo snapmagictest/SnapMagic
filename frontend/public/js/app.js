@@ -652,7 +652,7 @@ class SnapMagicApp {
     async letterboxCardForVideo(cardImageBase64) {
         return new Promise((resolve, reject) => {
             try {
-                console.log('📐 Starting frontend letterboxing for Nova Reel...');
+                console.log('📐 Starting letterboxing for Nova Reel...');
                 
                 // Create canvas for letterboxing
                 const canvas = document.createElement('canvas');
@@ -668,7 +668,7 @@ class SnapMagicApp {
                 
                 // Load the card image
                 const img = new Image();
-                img.crossOrigin = 'anonymous'; // Handle CORS if needed
+                img.crossOrigin = 'anonymous';
                 
                 img.onload = function() {
                     console.log(`📏 Original card: ${img.width}x${img.height}`);
@@ -684,38 +684,13 @@ class SnapMagicApp {
                     
                     console.log(`📐 Scaled card: ${newWidth.toFixed(0)}x${newHeight.toFixed(0)} at (${x.toFixed(0)}, ${y.toFixed(0)})`);
                     
-                    // Ensure proper alpha blending - draw image with full opacity
-                    ctx.globalAlpha = 1.0;
-                    ctx.globalCompositeOperation = 'source-over';
-                    
-                    // FIXED: Ensure proper alpha blending - draw image with full opacity
-                    ctx.globalAlpha = 1.0;
-                    ctx.globalCompositeOperation = 'source-over';
-                    
-                    // FIXED: Ensure proper alpha blending
-                    ctx.globalAlpha = 1.0;
-                    ctx.globalCompositeOperation = 'source-over';
-
                     // Draw the card on black background
                     ctx.drawImage(img, x, y, newWidth, newHeight);
                     
-                    // FIXED: Force complete opacity by creating a new canvas with opaque background
-                    const opaqueCanvas = document.createElement('canvas');
-                    opaqueCanvas.width = 1280;
-                    opaqueCanvas.height = 720;
-                    const opaqueCtx = opaqueCanvas.getContext('2d');
+                    // Convert to JPEG (guaranteed no transparency)
+                    const letterboxedBase64 = canvas.toDataURL('image/jpeg', 1.0).split(',')[1];
                     
-                    // Fill with solid black (no transparency)
-                    opaqueCtx.fillStyle = '#000000';
-                    opaqueCtx.fillRect(0, 0, 1280, 720);
-                    
-                    // Draw the current canvas content on top
-                    opaqueCtx.drawImage(canvas, 0, 0);
-                    
-                    // Convert the opaque canvas to PNG
-                    const letterboxedBase64 = opaqueCanvas.toDataURL('image/png').split(',')[1];
-                    
-                    console.log('✅ FIXED Letterboxing complete: 1280x720 PNG with guaranteed opaque background');
+                    console.log('✅ Letterboxing complete: 1280x720 JPEG with opaque black background');
                     resolve(letterboxedBase64);
                 };
                 
