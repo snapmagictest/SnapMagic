@@ -62,7 +62,7 @@ class VideoGenerator:
                     "text": f"{animation_prompt}. Keep the trading card format intact while adding subtle movement and effects.",
                     "images": [
                         {
-                            "format": "jpeg",
+                            "format": "png",
                             "source": {
                                 "bytes": card_image_base64
                             }
