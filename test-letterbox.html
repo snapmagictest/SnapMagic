@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Letterbox Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f0f0f0;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .image-display {
+            margin: 20px 0;
+            text-align: center;
+        }
+        .image-display img {
+            max-width: 100%;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .dimensions {
+            font-family: monospace;
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎴 SnapMagic Letterbox Test</h1>
+        
+        <div class="test-section">
+            <h2>Test Letterboxing Function</h2>
+            <p>This test simulates the letterboxing process that happens before sending cards to Nova Reel.</p>
+            
+            <button onclick="testWithSampleCard()">Test with Sample Trading Card</button>
+            <button onclick="testWithCustomImage()">Test with Custom Image</button>
+            
+            <div id="results"></div>
+        </div>
+    </div>
+
+    <script>
+        // Copy the letterboxing function from SnapMagic
+        async function letterboxCardForVideo(cardImageBase64) {
+            return new Promise((resolve, reject) => {
+                try {
+                    console.log('📐 Starting letterboxing for Nova Reel...');
+                    
+                    // Create canvas for letterboxing
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    
+                    // Set Nova Reel required dimensions
+                    canvas.width = 1280;
+                    canvas.height = 720;
+                    
+                    // Fill with solid black background
+                    ctx.fillStyle = '#000000';
+                    ctx.fillRect(0, 0, 1280, 720);
+                    
+                    // Load the card image
+                    const img = new Image();
+                    img.crossOrigin = 'anonymous';
+                    
+                    img.onload = function() {
+                        console.log(`📏 Original card: ${img.width}x${img.height}`);
+                        
+                        // Calculate scaling to fit within 1280x720 while maintaining aspect ratio
+                        const scale = Math.min(1280 / img.width, 720 / img.height);
+                        const newWidth = img.width * scale;
+                        const newHeight = img.height * scale;
+                        
+                        // Center the card
+                        const x = (1280 - newWidth) / 2;
+                        const y = (720 - newHeight) / 2;
+                        
+                        console.log(`📐 Scaled card: ${newWidth.toFixed(0)}x${newHeight.toFixed(0)} at (${x.toFixed(0)}, ${y.toFixed(0)})`);
+                        
+                        // Draw the card on black background
+                        ctx.drawImage(img, x, y, newWidth, newHeight);
+                        
+                        // Convert to PNG (Nova Reel expects PNG format)
+                        const letterboxedBase64 = canvas.toDataURL('image/png').split(',')[1];
+                        
+                        console.log('✅ Letterboxing complete: 1280x720 PNG with opaque black background');
+                        resolve(letterboxedBase64);
+                    };
+                    
+                    img.onerror = function() {
+                        console.error('❌ Failed to load card image for letterboxing');
+                        reject(new Error('Failed to load card image'));
+                    };
+                    
+                    // Set image source (add data URL prefix if needed)
+                    const imageData = cardImageBase64.startsWith('data:image/') 
+                        ? cardImageBase64 
+                        : `data:image/png;base64,${cardImageBase64}`;
+                    img.src = imageData;
+                    
+                } catch (error) {
+                    console.error('❌ Letterboxing error:', error);
+                    reject(error);
+                }
+            });
+        }
+
+        // Create a sample trading card image (768x1024 - typical card dimensions)
+        function createSampleCard() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 768;
+            canvas.height = 1024;
+            const ctx = canvas.getContext('2d');
+            
+            // Create a sample trading card design
+            ctx.fillStyle = '#ff6b35';
+            ctx.fillRect(0, 0, 768, 1024);
+            
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 48px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('SAMPLE', 384, 200);
+            ctx.fillText('TRADING CARD', 384, 280);
+            
+            ctx.font = '32px Arial';
+            ctx.fillText('768 x 1024', 384, 400);
+            
+            // Add border
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 8;
+            ctx.strokeRect(4, 4, 760, 1016);
+            
+            return canvas.toDataURL('image/png').split(',')[1];
+        }
+
+        async function testWithSampleCard() {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<p>🔄 Testing letterboxing...</p>';
+            
+            try {
+                // Create sample card
+                const sampleCardBase64 = createSampleCard();
+                
+                // Show original
+                resultsDiv.innerHTML += `
+                    <div class="image-display">
+                        <h3>Original Trading Card (768x1024)</h3>
+                        <img src="data:image/png;base64,${sampleCardBase64}" alt="Original Card">
+                        <div class="dimensions">Original: 768px × 1024px</div>
+                    </div>
+                `;
+                
+                // Apply letterboxing
+                const letterboxedBase64 = await letterboxCardForVideo(sampleCardBase64);
+                
+                // Show result
+                resultsDiv.innerHTML += `
+                    <div class="image-display">
+                        <h3>Letterboxed for Nova Reel (1280x720)</h3>
+                        <img src="data:image/png;base64,${letterboxedBase64}" alt="Letterboxed Card">
+                        <div class="dimensions">Letterboxed: 1280px × 720px (PNG, opaque black background)</div>
+                    </div>
+                `;
+                
+                resultsDiv.innerHTML += '<p>✅ <strong>Letterboxing test successful!</strong> Card is now ready for Nova Reel processing.</p>';
+                
+            } catch (error) {
+                resultsDiv.innerHTML += `<p>❌ <strong>Test failed:</strong> ${error.message}</p>`;
+                console.error('Test error:', error);
+            }
+        }
+
+        async function testWithCustomImage() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            
+            input.onchange = async function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                const reader = new FileReader();
+                reader.onload = async function(e) {
+                    const base64 = e.target.result.split(',')[1];
+                    
+                    const resultsDiv = document.getElementById('results');
+                    resultsDiv.innerHTML = '<p>🔄 Testing with your image...</p>';
+                    
+                    try {
+                        // Show original
+                        resultsDiv.innerHTML += `
+                            <div class="image-display">
+                                <h3>Your Original Image</h3>
+                                <img src="${e.target.result}" alt="Your Image">
+                            </div>
+                        `;
+                        
+                        // Apply letterboxing
+                        const letterboxedBase64 = await letterboxCardForVideo(base64);
+                        
+                        // Show result
+                        resultsDiv.innerHTML += `
+                            <div class="image-display">
+                                <h3>Letterboxed for Nova Reel (1280x720)</h3>
+                                <img src="data:image/png;base64,${letterboxedBase64}" alt="Letterboxed Image">
+                                <div class="dimensions">Letterboxed: 1280px × 720px (PNG, opaque black background)</div>
+                            </div>
+                        `;
+                        
+                        resultsDiv.innerHTML += '<p>✅ <strong>Custom image letterboxing successful!</strong></p>';
+                        
+                    } catch (error) {
+                        resultsDiv.innerHTML += `<p>❌ <strong>Test failed:</strong> ${error.message}</p>`;
+                        console.error('Test error:', error);
+                    }
+                };
+                reader.readAsDataURL(file);
+            };
+            
+            input.click();
+        }
+    </script>
+</body>
+</html>

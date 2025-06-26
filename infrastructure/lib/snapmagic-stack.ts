@@ -94,7 +94,7 @@ frontend:
     // S3 BUCKET FOR VIDEO STORAGE WITH CDK CLEANUP ONLY
     // ========================================
     const videoBucket = new s3.Bucket(this, 'SnapMagicVideoBucket', {
-      bucketName: `snapmagic-videos-${props.environment}-${this.account}`,
+      bucketName: `snapmagic-videos-${props.environment}-${this.account}-${Date.now()}`,
       
       // 🗑️ CLEANUP ONLY WHEN EVENT ENDS (CDK DESTROY)
       removalPolicy: RemovalPolicy.DESTROY,

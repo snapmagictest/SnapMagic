@@ -687,13 +687,7 @@ class SnapMagicApp {
                     // Draw the card on black background
                     ctx.drawImage(img, x, y, newWidth, newHeight);
                     
-                    // Force fully opaque PNG for Nova Reel
-                    // First ensure the canvas is fully opaque with black background
-                    ctx.globalCompositeOperation = 'destination-over';
-                    ctx.fillStyle = '#000000';
-                    ctx.fillRect(0, 0, 1280, 720);
-                    
-                    // Convert to PNG as required by Nova Reel
+                    // Convert to PNG (Nova Reel expects PNG format)
                     const letterboxedBase64 = canvas.toDataURL('image/png').split(',')[1];
                     
                     console.log('✅ Letterboxing complete: 1280x720 PNG with opaque black background - Ready for Nova Reel!');
