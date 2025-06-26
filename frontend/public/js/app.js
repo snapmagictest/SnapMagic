@@ -645,32 +645,99 @@ class SnapMagicApp {
         }
     }
 
+    /**
+     * Letterbox trading card image to 1280x720 for Nova Reel
+     * Places 768x1024 card centered on black background
+     */
+    async letterboxCardForVideo(cardImageBase64) {
+        return new Promise((resolve, reject) => {
+            try {
+                console.log('📐 Starting frontend letterboxing for Nova Reel...');
+                
+                // Create canvas for letterboxing
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                
+                // Set Nova Reel required dimensions
+                canvas.width = 1280;
+                canvas.height = 720;
+                
+                // Fill with black background
+                ctx.fillStyle = '#000000';
+                ctx.fillRect(0, 0, 1280, 720);
+                
+                // Load the card image
+                const img = new Image();
+                img.onload = function() {
+                    console.log(`📏 Original card: ${img.width}x${img.height}`);
+                    
+                    // Calculate scaling to fit within 1280x720 while maintaining aspect ratio
+                    const scale = Math.min(1280 / img.width, 720 / img.height);
+                    const newWidth = img.width * scale;
+                    const newHeight = img.height * scale;
+                    
+                    // Center the card
+                    const x = (1280 - newWidth) / 2;
+                    const y = (720 - newHeight) / 2;
+                    
+                    console.log(`📐 Scaled card: ${newWidth.toFixed(0)}x${newHeight.toFixed(0)} at (${x.toFixed(0)}, ${y.toFixed(0)})`);
+                    
+                    // Draw the card on black background
+                    ctx.drawImage(img, x, y, newWidth, newHeight);
+                    
+                    // Convert to base64 (remove data URL prefix)
+                    const letterboxedBase64 = canvas.toDataURL('image/png').split(',')[1];
+                    
+                    console.log('✅ Letterboxing complete: 1280x720 with centered card');
+                    resolve(letterboxedBase64);
+                };
+                
+                img.onerror = function() {
+                    console.error('❌ Failed to load card image for letterboxing');
+                    reject(new Error('Failed to load card image'));
+                };
+                
+                // Set image source (add data URL prefix if needed)
+                const imageData = cardImageBase64.startsWith('data:image/') 
+                    ? cardImageBase64 
+                    : `data:image/png;base64,${cardImageBase64}`;
+                img.src = imageData;
+                
+            } catch (error) {
+                console.error('❌ Letterboxing error:', error);
+                reject(error);
+            }
+        });
+    }
+
     async generateVideo(cardImageBase64, animationPrompt) {
         console.log('🎬 Generating video with Nova Reel...');
         
         try {
+            // STEP 1: Letterbox the card image in frontend
+            console.log('📐 Step 1: Letterboxing card for Nova Reel...');
+            const letterboxedImage = await this.letterboxCardForVideo(cardImageBase64);
+            
+            // STEP 2: Send letterboxed image to Nova Reel
+            console.log('🎬 Step 2: Sending to Nova Reel...');
+            
             // Get API base URL
             const apiBaseUrl = window.SNAPMAGIC_API_URL || 'https://jlnqp1gs21.execute-api.us-east-1.amazonaws.com/dev/';
             const endpoint = `${apiBaseUrl}api/transform-card`;  // Same endpoint, different action
             
             console.log('🎯 Making video API call to:', endpoint);
             
-            // Clean the base64 data - remove data URL prefix if present
-            let cleanBase64 = cardImageBase64;
-            if (cardImageBase64.startsWith('data:image/')) {
-                cleanBase64 = cardImageBase64.split(',')[1];
-            }
-            
             const requestBody = {
                 action: 'generate_video',
-                card_image: cleanBase64,  // Send clean base64 without prefix
+                card_image: letterboxedImage,  // Send letterboxed 1280x720 image
                 animation_prompt: animationPrompt
             };
             
             console.log('📤 Request body:', {
                 action: requestBody.action,
-                card_image_length: cleanBase64.length,
-                animation_prompt: animationPrompt
+                card_image_length: letterboxedImage.length,
+                animation_prompt: animationPrompt,
+                letterboxed: '1280x720'
             });
             
             const response = await fetch(endpoint, {
@@ -836,7 +903,14 @@ class SnapMagicApp {
     showVideoProcessing() {
         this.elements.videoProcessingStatus.classList.remove('hidden');
         this.elements.generateVideoBtn.disabled = true;
-        this.elements.generateVideoBtn.textContent = '🎬 Creating Video...';
+        this.elements.generateVideoBtn.textContent = '📐 Preparing Image...';
+        
+        // Update to show Nova Reel processing after letterboxing
+        setTimeout(() => {
+            if (this.elements.generateVideoBtn.textContent === '📐 Preparing Image...') {
+                this.elements.generateVideoBtn.textContent = '🎬 Creating Video...';
+            }
+        }, 1000);
     }
 
     hideVideoProcessing() {
