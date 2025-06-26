@@ -737,7 +737,7 @@ class SnapMagicApp {
             
             console.log('📤 Request body:', {
                 action: requestBody.action,
-                card_image_length: opaqueImage.length,
+                card_image_length: letterboxedImage.length,
                 animation_prompt: animationPrompt,
                 letterboxed: '1280x720'
             });
