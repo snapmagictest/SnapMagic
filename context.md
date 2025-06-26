@@ -528,7 +528,7 @@ import boto3  # Only external dependency
 - **Deployment Speed**: Much faster uploads
 - **Memory Efficiency**: Images loaded only when needed
 
-### 🔥 Event-Optimized Lambda Configuration
+### 🔥 Cost-Effective Lambda Configuration (No Provisioned Concurrency)
 **For High-Traffic Events:**
 ```typescript
 const snapMagicLambda = new Function(this, 'SnapMagicFunction', {
@@ -537,23 +537,119 @@ const snapMagicLambda = new Function(this, 'SnapMagicFunction', {
   timeout: Duration.minutes(2),        // Reduced from 5 minutes
   reservedConcurrentExecutions: 1000,  // Handle 1000+ concurrent users
   
-  // 🚀 PROVISIONED CONCURRENCY (eliminates cold starts)
-  currentVersionOptions: {
-    provisionedConcurrencyConfig: {
-      provisionedConcurrentExecutions: 100  // Pre-warmed instances
-    }
+  // ✅ NO PROVISIONED CONCURRENCY (cost-effective)
+  // 2-3 second cold start is acceptable for events
+  
+  environment: {
+    TEMPLATE_BUCKET: 'snapmagic-assets',
+    MASK_BUCKET: 'snapmagic-assets'
   }
 });
 ```
 
-### 📈 Expected Performance Gains
+### 📈 Expected Performance Gains (Cost-Optimized)
 **Current**: Cold Start ~2-3 seconds, 976KB package
-**Optimized**: Cold Start ~200-500ms, 30KB package, 100 pre-warmed instances
-**Result**: 1000+ concurrent users with zero cold start delays
+**Optimized**: Cold Start ~2-3 seconds, 30KB package (faster deployment)
+**Burst Handling**: 1000 concurrent executions (AWS default scaling)
+**Cost**: Pay only when Lambda executes (no pre-warming costs)
 
-### 🎯 Implementation Priority for Events
-1. **Move Images to S3** (biggest performance impact)
-2. **Add Provisioned Concurrency** (eliminate cold starts entirely)  
-3. **Increase Reserved Concurrency** to 1000 (handle event traffic)
+### 🎯 Cost-Effective Implementation Priority
+1. **Move Images to S3** (faster deployments, smaller package)
+2. **Increase Reserved Concurrency** to 1000 (handle event bursts)
+3. **Skip Provisioned Concurrency** (cost optimization)
+
+**Rationale**: 2-3 second cold start is acceptable for event users, and AWS Lambda scales automatically to handle burst traffic without additional costs.
 
 **Status**: 📋 Ready for implementation - will provide instant response times for event users
+
+## 💰 COST-BENEFIT ANALYSIS: S3 Image Optimization
+
+### 📊 Current Lambda Package Analysis
+```
+Package Size: 976KB (954,488 bytes actual)
+├── finalpink.png: 943KB (97% of package)
+├── exact_mask.png: 2.8KB
+├── Python files: ~30KB (all .py files)
+```
+
+### 🤔 S3 Optimization Cost-Benefit Analysis
+
+#### **Benefits of Moving Images to S3:**
+- ✅ Package size: 976KB → 30KB (97% reduction)
+- ✅ Cold start improvement: ~2-3 seconds → ~2-2.5 seconds (minimal)
+- ✅ Faster deployments (smaller package upload)
+
+#### **Costs of Moving Images to S3:**
+- ❌ Additional S3 bucket setup and management
+- ❌ Code complexity: S3 API calls during Lambda execution
+- ❌ Potential S3 latency on first image load
+- ❌ Additional deployment complexity
+- ❌ S3 storage costs (minimal but ongoing)
+- ❌ S3 GET request costs per Lambda invocation
+
+### 🎯 **DECISION: Keep Images in Lambda Package**
+
+**Rationale:**
+- **976KB is tiny** in modern deployment standards
+- **2-3 second cold start is acceptable** for event users generating trading cards
+- **Complexity vs benefit ratio** doesn't justify the optimization
+- **Event users expect processing time** anyway for AI generation
+- **Simplicity over micro-optimization** for event deployment
+
+## ⚡ LAMBDA CONCURRENCY OPTIMIZATION
+
+### 📊 Current Concurrency Settings
+```
+Function: SnapMagic-dev-SnapMagicAIFunction9B219E3A-cdhLWi27SsHe
+├── Reserved Concurrency: None (uses account default)
+├── Account Limit: 1000 concurrent executions
+├── Current Behavior: Shares concurrency with other Lambda functions
+```
+
+### 🎯 Recommended Concurrency Update
+```typescript
+// CDK Configuration Update
+const snapMagicLambda = new Function(this, 'SnapMagicFunction', {
+  // ... existing config
+  reservedConcurrentExecutions: 800,  // Reserve 800 of 1000 account limit
+  
+  // Keep current settings (no provisioned concurrency)
+  timeout: Duration.minutes(5),       // Current: 300 seconds
+  memorySize: 1024,                   // Current: 1024MB
+});
+```
+
+### 📈 Concurrency Optimization Impact
+**Current State:**
+- **Reserved Concurrency**: None (competes with other functions)
+- **Available Concurrency**: Up to 1000 (shared across account)
+- **Event Risk**: Other Lambda functions could consume concurrency
+
+**Optimized State:**
+- **Reserved Concurrency**: 800 dedicated to SnapMagic
+- **Guaranteed Capacity**: 800 concurrent card generations
+- **Event Protection**: No interference from other functions
+- **Remaining Buffer**: 200 concurrency for other account functions
+
+### 💰 Cost Analysis: Concurrency vs Provisioned
+```
+Reserved Concurrency (Recommended):
+├── Cost: $0 (no additional charges)
+├── Benefit: Guaranteed 800 concurrent executions
+├── Cold Start: 2-3 seconds (acceptable for events)
+└── Scaling: Automatic burst handling
+
+Provisioned Concurrency (Rejected):
+├── Cost: ~$4.17/month per pre-warmed instance
+├── 100 instances: ~$417/month ongoing cost
+├── Benefit: ~200-500ms cold start
+└── ROI: Not justified for 0.5 second improvement
+```
+
+### 🚀 Implementation Plan
+1. **Update CDK Stack**: Add `reservedConcurrentExecutions: 800`
+2. **Deploy Infrastructure**: Single CDK deployment
+3. **Test Concurrency**: Verify 800 concurrent executions available
+4. **Monitor Performance**: CloudWatch metrics for concurrent usage
+
+**Status**: 📋 Ready for implementation - will guarantee event capacity without additional costs
