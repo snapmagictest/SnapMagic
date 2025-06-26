@@ -724,7 +724,7 @@ class SnapMagicApp {
             console.log('🎬 Step 2: Sending to Nova Reel...');
             
             // Get API base URL
-            const apiBaseUrl = window.SNAPMAGIC_API_URL || 'https://jlnqp1gs21.execute-api.us-east-1.amazonaws.com/dev/';
+            const apiBaseUrl = window.SNAPMAGIC_CONFIG.API_URL;
             const endpoint = `${apiBaseUrl}api/transform-card`;  // Same endpoint, different action
             
             console.log('🎯 Making video API call to:', endpoint);
