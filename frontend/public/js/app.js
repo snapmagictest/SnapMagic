@@ -687,10 +687,10 @@ class SnapMagicApp {
                     // Draw the card on black background
                     ctx.drawImage(img, x, y, newWidth, newHeight);
                     
-                    // Convert to PNG (Nova Reel expects PNG format)
-                    const letterboxedBase64 = canvas.toDataURL('image/png').split(',')[1];
+                    // CRITICAL: Use JPEG format to guarantee no transparency
+                    const letterboxedBase64 = canvas.toDataURL('image/jpeg', 1.0).split(',')[1];
                     
-                    console.log('✅ Letterboxing complete: 1280x720 PNG with opaque black background - Ready for Nova Reel!');
+                    console.log('✅ Letterboxing complete: 1280x720 JPEG (no transparency possible)');
                     resolve(letterboxedBase64);
                 };
                 
@@ -712,64 +712,16 @@ class SnapMagicApp {
         });
     }
 
-    // Ensure image is completely opaque (remove any transparency)
-    async makeImageOpaque(base64Image) {
-        return new Promise((resolve, reject) => {
-            const img = new Image();
-            img.src = base64Image.startsWith('data:') ? base64Image : `data:image/png;base64,${base64Image}`;
-
-            img.onload = () => {
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
-
-                // Set canvas dimensions to match the image
-                canvas.width = img.width;
-                canvas.height = img.height;
-
-                // Fill with opaque white background first
-                ctx.fillStyle = '#000000'; // Black background (opaque)
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-                // Draw the original image on top
-                ctx.drawImage(img, 0, 0);
-
-                // Get the image data and ensure all pixels are opaque
-                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                const data = imageData.data;
-
-                // Force all alpha values to 255 (completely opaque)
-                for (let i = 0; i < data.length; i += 4) {
-                    data[i + 3] = 255; // Set alpha to fully opaque
-                }
-
-                // Put the modified image data back
-                ctx.putImageData(imageData, 0, 0);
-
-                // Convert to PNG base64 (without data URL prefix)
-                const opaqueBase64 = canvas.toDataURL('image/png').split(',')[1];
-                resolve(opaqueBase64);
-            };
-
-            img.onerror = (error) => {
-                reject("Failed to load image for opacity removal: " + error);
-            };
-        });
-    }
-
     async generateVideo(cardImageBase64, animationPrompt) {
         console.log('🎬 Generating video with Nova Reel...');
         
         try {
-            // STEP 1: Letterbox the card image in frontend
+            // STEP 1: Letterbox the card image in frontend (now outputs JPEG - no transparency possible)
             console.log('📐 Step 1: Letterboxing card for Nova Reel...');
             const letterboxedImage = await this.letterboxCardForVideo(cardImageBase64);
             
-            // STEP 2: Ensure image is completely opaque (Nova Reel requirement)
-            console.log('🎨 Step 2: Removing transparency for Nova Reel...');
-            const opaqueImage = await this.makeImageOpaque(letterboxedImage);
-            
-            // STEP 3: Send opaque letterboxed image to Nova Reel
-            console.log('🎬 Step 3: Sending to Nova Reel...');
+            // STEP 2: Send letterboxed JPEG image to Nova Reel (transparency already impossible)
+            console.log('🎬 Step 2: Sending JPEG to Nova Reel...');
             
             // Get API base URL
             const apiBaseUrl = window.SNAPMAGIC_CONFIG.API_URL;
@@ -779,7 +731,7 @@ class SnapMagicApp {
             
             const requestBody = {
                 action: 'generate_video',
-                card_image: opaqueImage,  // Send opaque letterboxed 1280x720 image
+                card_image: letterboxedImage,  // Send JPEG letterboxed 1280x720 image (no transparency)
                 animation_prompt: animationPrompt
             };
             
