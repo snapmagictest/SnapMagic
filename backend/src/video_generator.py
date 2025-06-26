@@ -81,7 +81,7 @@ class VideoGenerator:
             
             if status == 'Completed':
                 # Video generation completed - now get the video from S3
-                logger.info("✅ Video generation completed, retrieving from S3...")
+                logger.info("✅ Video generation completed, creating presigned URL...")
                 
                 # Extract invocation ID from ARN for S3 path
                 # ARN format: arn:aws:bedrock:region:account:async-invoke/invocation-id
@@ -89,26 +89,33 @@ class VideoGenerator:
                 video_key = f"videos/{invocation_id}/output.mp4"
                 
                 try:
-                    # Get the video file from S3
-                    video_response = self.s3_client.get_object(Bucket=self.video_bucket, Key=video_key)
-                    video_data = video_response['Body'].read()
+                    # First check if video exists in S3
+                    self.s3_client.head_object(Bucket=self.video_bucket, Key=video_key)
                     
-                    # Convert to base64 for frontend
-                    import base64
-                    video_base64 = base64.b64encode(video_data).decode('utf-8')
+                    # Generate presigned URL for video streaming (valid for 1 hour)
+                    presigned_url = self.s3_client.generate_presigned_url(
+                        'get_object',
+                        Params={'Bucket': self.video_bucket, 'Key': video_key},
+                        ExpiresIn=3600  # 1 hour
+                    )
                     
-                    logger.info(f"✅ Video retrieved! Size: {len(video_data)} bytes")
+                    logger.info(f"✅ Presigned URL created for video streaming")
+                    
+                    # Also get video size for metadata
+                    video_response = self.s3_client.head_object(Bucket=self.video_bucket, Key=video_key)
+                    video_size = video_response['ContentLength']
                     
                     return {
                         'success': True,
                         'status': 'completed',
-                        'video_base64': video_base64,
-                        'video_size': len(video_data),
+                        'video_url': presigned_url,  # ← Use presigned URL for streaming
+                        'video_base64': None,        # ← No base64 data
+                        'video_size': video_size,
                         'message': 'Video generation completed successfully'
                     }
                     
                 except Exception as e:
-                    logger.error(f"❌ Error downloading completed video: {str(e)}")
+                    logger.error(f"❌ Error creating presigned URL: {str(e)}")
                     return {
                         'success': False,
                         'status': 'error',
