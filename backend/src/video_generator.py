@@ -56,7 +56,7 @@ class VideoGenerator:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             
             # Prepare the request for Nova Reel (Image-to-Video)
-            request_body = {
+            model_input = {
                 "taskType": "TEXT_VIDEO",
                 "textToVideoParams": {
                     "text": f"{animation_prompt}. Keep the trading card format intact while adding subtle movement and effects.",
@@ -81,7 +81,7 @@ class VideoGenerator:
             logger.info("📡 Calling Amazon Bedrock Nova Reel with StartAsyncInvoke...")
             response = self.bedrock_runtime.start_async_invoke(
                 modelId='amazon.nova-reel-v1:1',  # Correct model ID
-                modelInput=json.dumps(request_body),
+                modelInput=model_input,  # Pass as dict, not JSON string
                 outputDataConfig={
                     's3OutputDataConfig': {
                         's3Uri': f's3://{self.video_bucket}/videos/'
