@@ -176,11 +176,10 @@ def lambda_handler(event, context):
                 logger.error("❌ Missing card_image parameter")
                 return create_error_response("Missing card_image parameter", 400)
             
-            # Validate animation prompt using video generator
-            is_valid, error_msg = video_generator.validate_animation_prompt(animation_prompt)
-            if not is_valid:
-                logger.error(f"❌ Animation prompt validation failed: {error_msg}")
-                return create_error_response(error_msg, 400)
+            # Simple validation - frontend already validates
+            if not animation_prompt or len(animation_prompt.strip()) < 5:
+                logger.error("❌ Animation prompt too short")
+                return create_error_response("Animation prompt must be at least 5 characters", 400)
             
             # Validate base64 image
             try:

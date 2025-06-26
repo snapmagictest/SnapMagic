@@ -662,8 +662,8 @@ class SnapMagicApp {
                 canvas.width = 1280;
                 canvas.height = 720;
                 
-                // Fill with solid white background (better compatibility with Nova Reel)
-                ctx.fillStyle = '#FFFFFF';
+                // Fill with solid black background
+                ctx.fillStyle = '#000000';
                 ctx.fillRect(0, 0, 1280, 720);
                 
                 // Load the card image
