@@ -72,7 +72,17 @@ class SnapMagicApp {
             resultVideo: document.getElementById('resultVideo'),
             animateBtn: document.getElementById('animateBtn'),
             downloadVideoBtn: document.getElementById('downloadVideoBtn'),
-            videoProcessingStatus: document.getElementById('videoProcessingStatus')
+            videoProcessingStatus: document.getElementById('videoProcessingStatus'),
+            
+            // Animation modal elements
+            animationModal: document.getElementById('animationModal'),
+            animationPrompt: document.getElementById('animationPrompt'),
+            animationCharCount: document.getElementById('animationCharCount'),
+            animationCharStatus: document.getElementById('animationCharStatus'),
+            closeModal: document.getElementById('closeModal'),
+            cancelAnimation: document.getElementById('cancelAnimation'),
+            startAnimation: document.getElementById('startAnimation'),
+            presetButtons: document.querySelectorAll('.preset-btn')
         };
         
         // Store current card data for video generation
@@ -97,8 +107,26 @@ class SnapMagicApp {
         this.elements.newCardBtn.addEventListener('click', () => this.handleNewCard());
         
         // Video actions - NEW
-        this.elements.animateBtn.addEventListener('click', () => this.handleAnimateCard());
+        this.elements.animateBtn.addEventListener('click', () => this.showAnimationModal());
         this.elements.downloadVideoBtn.addEventListener('click', () => this.handleDownloadVideo());
+        
+        // Animation modal events
+        this.elements.closeModal.addEventListener('click', () => this.hideAnimationModal());
+        this.elements.cancelAnimation.addEventListener('click', () => this.hideAnimationModal());
+        this.elements.startAnimation.addEventListener('click', () => this.handleStartAnimation());
+        this.elements.animationPrompt.addEventListener('input', () => this.validateAnimationPrompt());
+        
+        // Preset buttons
+        this.elements.presetButtons.forEach(btn => {
+            btn.addEventListener('click', () => this.handlePresetClick(btn));
+        });
+        
+        // Close modal on outside click
+        this.elements.animationModal.addEventListener('click', (e) => {
+            if (e.target === this.elements.animationModal) {
+                this.hideAnimationModal();
+            }
+        });
     }
 
     loadTemplate() {
@@ -374,26 +402,26 @@ class SnapMagicApp {
                 const errorMsg = result.error || 'Card generation failed - no error message provided';
                 console.error('❌ API returned error:', errorMsg);
                 this.hideProcessing();
-                alert(`Sorry, card generation failed: ${errorMsg}\n\nPlease try again with a different description.`);
+                alert(`Card generation failed: ${errorMsg}\n\nPlease try again with a different description.`);
             }
             
         } catch (error) {
             console.error('❌ Card generation error:', error);
             this.hideProcessing();
             
-            let userMessage = 'Sorry, we couldn\'t generate your trading card. ';
+            // Show actual error instead of generic message
+            let userMessage = `Card generation failed: ${error.message}`;
+            
             if (error.message.includes('Failed to fetch')) {
-                userMessage += 'Please check your internet connection and try again.';
+                userMessage += '\n\nPossible causes:\n• Network connectivity issues\n• API Gateway problems\n• Server timeout';
             } else if (error.message.includes('401')) {
-                userMessage += 'Your session has expired. Please log in again.';
+                userMessage += '\n\nYour session has expired. Please log in again.';
                 this.handleLogout();
                 return;
             } else if (error.message.includes('500')) {
-                userMessage += 'Our servers are experiencing issues. Please try again in a moment.';
+                userMessage += '\n\nServer error - this might be a Nova Canvas service issue.';
             } else if (error.message.includes('timeout')) {
-                userMessage += 'The request took too long. Please try again.';
-            } else {
-                userMessage += 'Please try again with a different description.';
+                userMessage += '\n\nThe request took too long. Nova Canvas might be busy.';
             }
             
             alert(userMessage);
@@ -548,37 +576,80 @@ class SnapMagicApp {
     // VIDEO GENERATION METHODS - NEW
     // ========================================
 
-    async handleAnimateCard() {
+    showAnimationModal() {
         if (!this.currentCardData) {
             alert('No card available to animate. Please generate a card first.');
             return;
         }
 
-        console.log('🎬 Starting card animation...');
+        console.log('🎬 Opening animation modal...');
+        
+        // Reset modal state
+        this.elements.animationPrompt.value = '';
+        this.elements.animationCharCount.textContent = '0';
+        this.elements.animationCharStatus.textContent = 'Enter animation description (min 5 characters)';
+        this.elements.startAnimation.disabled = true;
+        
+        // Show modal
+        this.elements.animationModal.classList.remove('hidden');
+        this.elements.animationPrompt.focus();
+    }
+
+    hideAnimationModal() {
+        this.elements.animationModal.classList.add('hidden');
+    }
+
+    handlePresetClick(button) {
+        const preset = button.getAttribute('data-preset');
+        this.elements.animationPrompt.value = preset;
+        this.validateAnimationPrompt();
+    }
+
+    validateAnimationPrompt() {
+        const prompt = this.elements.animationPrompt.value;
+        const length = prompt.length;
+        
+        // Update character count
+        this.elements.animationCharCount.textContent = length;
+        
+        // Validate length
+        if (length < 5) {
+            this.elements.animationCharStatus.textContent = `Enter animation description (min 5 characters)`;
+            this.elements.animationCharStatus.className = 'char-status char-invalid';
+            this.elements.startAnimation.disabled = true;
+        } else if (length > 512) {
+            this.elements.animationCharStatus.textContent = `Too long! Maximum 512 characters`;
+            this.elements.animationCharStatus.className = 'char-status char-invalid';
+            this.elements.startAnimation.disabled = true;
+        } else {
+            this.elements.animationCharStatus.textContent = `Ready to animate!`;
+            this.elements.animationCharStatus.className = 'char-status char-valid';
+            this.elements.startAnimation.disabled = false;
+        }
+    }
+
+    async handleStartAnimation() {
+        const animationPrompt = this.elements.animationPrompt.value.trim();
+        
+        if (!animationPrompt || animationPrompt.length < 5) {
+            alert('Please enter a valid animation description (minimum 5 characters).');
+            return;
+        }
+
+        console.log('🎬 Starting card animation with prompt:', animationPrompt);
         
         try {
-            // Show video processing status
+            // Hide modal and show processing
+            this.hideAnimationModal();
             this.showVideoProcessing();
             
-            // Get animation prompt from user (optional)
-            const animationPrompt = prompt(
-                'How would you like to animate your trading card?',
-                'Make this trading card come alive with magical energy and subtle movement'
-            );
-            
-            if (animationPrompt === null) {
-                // User cancelled
-                this.hideVideoProcessing();
-                return;
-            }
-
             // Generate video
-            await this.generateVideo(this.currentCardData.imageBase64, animationPrompt || 'Make this trading card come alive with subtle animation');
+            await this.generateVideo(this.currentCardData.imageBase64, animationPrompt);
             
         } catch (error) {
             console.error('❌ Video generation error:', error);
             this.hideVideoProcessing();
-            alert('Video generation failed. Please try again.');
+            alert(`Video generation failed: ${error.message}`);
         }
     }
 
@@ -632,17 +703,20 @@ class SnapMagicApp {
             console.error('❌ Video generation failed:', error);
             this.hideVideoProcessing();
             
-            let userMessage = 'Sorry, we couldn\'t generate your animated card. ';
+            // Show actual error message instead of generic ones
+            let userMessage = `Video generation failed: ${error.message}`;
+            
+            // Add specific guidance based on error type
             if (error.message.includes('Failed to fetch')) {
-                userMessage += 'Please check your internet connection and try again.';
+                userMessage += '\n\nThis could be due to:\n• Network connectivity issues\n• API Gateway timeout\n• CORS configuration problems';
             } else if (error.message.includes('401')) {
-                userMessage += 'Your session has expired. Please log in again.';
+                userMessage += '\n\nYour session has expired. Please log in again.';
                 this.handleLogout();
                 return;
+            } else if (error.message.includes('400')) {
+                userMessage += '\n\nPlease check your animation prompt and try again.';
             } else if (error.message.includes('500')) {
-                userMessage += 'Our servers are experiencing issues. Please try again in a moment.';
-            } else {
-                userMessage += 'Please try again with a different animation style.';
+                userMessage += '\n\nServer error - this might be a Nova Reel service issue.';
             }
             
             alert(userMessage);
