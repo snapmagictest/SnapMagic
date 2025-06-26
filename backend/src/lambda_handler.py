@@ -166,13 +166,26 @@ def lambda_handler(event, context):
             card_image = body.get('card_image', '')
             animation_prompt = body.get('animation_prompt', 'Make this trading card come alive with subtle animation')
             
+            logger.info(f"🎬 Video generation request - card_image length: {len(card_image)}, prompt: {animation_prompt[:50]}...")
+            
             if not card_image:
+                logger.error("❌ Missing card_image parameter")
                 return create_error_response("Missing card_image parameter", 400)
             
             # Validate animation prompt
             is_valid, error_msg = card_generator.validate_animation_prompt(animation_prompt)
             if not is_valid:
+                logger.error(f"❌ Animation prompt validation failed: {error_msg}")
                 return create_error_response(error_msg, 400)
+            
+            # Validate base64 image
+            try:
+                import base64
+                base64.b64decode(card_image)
+                logger.info("✅ Card image base64 validation passed")
+            except Exception as e:
+                logger.error(f"❌ Invalid base64 image data: {str(e)}")
+                return create_error_response("Invalid card image data - must be valid base64", 400)
             
             try:
                 # Generate video from trading card

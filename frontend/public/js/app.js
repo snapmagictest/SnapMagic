@@ -655,11 +655,23 @@ class SnapMagicApp {
             
             console.log('🎯 Making video API call to:', endpoint);
             
+            // Clean the base64 data - remove data URL prefix if present
+            let cleanBase64 = cardImageBase64;
+            if (cardImageBase64.startsWith('data:image/')) {
+                cleanBase64 = cardImageBase64.split(',')[1];
+            }
+            
             const requestBody = {
                 action: 'generate_video',
-                card_image: cardImageBase64,
+                card_image: cleanBase64,  // Send clean base64 without prefix
                 animation_prompt: animationPrompt
             };
+            
+            console.log('📤 Request body:', {
+                action: requestBody.action,
+                card_image_length: cleanBase64.length,
+                animation_prompt: animationPrompt
+            });
             
             const response = await fetch(endpoint, {
                 method: 'POST',
