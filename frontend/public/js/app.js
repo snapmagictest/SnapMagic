@@ -952,17 +952,27 @@ class SnapMagicApp {
             console.log('⏰ 3 minutes elapsed - starting polling every 10 seconds');
             this.updateVideoProcessingStatus('Checking video status...');
             
-            // Start polling every 10 seconds
-            this.pollVideoStatus(invocationId, metadata);
+            // Start polling every 10 seconds with retry counter
+            this.pollVideoStatus(invocationId, metadata, 0);
         }, 3 * 60 * 1000); // 3 minutes in milliseconds
     }
 
     /**
-     * Poll video status every 10 seconds until ready
+     * Poll video status every 10 seconds until ready (max 10 retries)
      */
-    async pollVideoStatus(invocationId, metadata) {
+    async pollVideoStatus(invocationId, metadata, retryCount = 0) {
+        const MAX_RETRIES = 10;
+        
+        // Check if we've exceeded max retries
+        if (retryCount >= MAX_RETRIES) {
+            console.error(`❌ Max retries (${MAX_RETRIES}) exceeded for video polling`);
+            this.hideVideoProcessing();
+            alert(`Video generation timed out after ${MAX_RETRIES} attempts. Please try again.`);
+            return;
+        }
+        
         try {
-            console.log('🔍 Polling video status for:', invocationId);
+            console.log(`🔍 Polling video status for: ${invocationId} (attempt ${retryCount + 1}/${MAX_RETRIES})`);
             
             const apiBaseUrl = window.SNAPMAGIC_CONFIG.API_URL;
             const endpoint = `${apiBaseUrl}api/transform-card`;
@@ -971,6 +981,8 @@ class SnapMagicApp {
                 action: 'get_video_status',
                 invocation_id: invocationId
             };
+
+            console.log('📤 Sending video status request:', requestBody);
             
             const response = await fetch(endpoint, {
                 method: 'POST',
@@ -981,8 +993,12 @@ class SnapMagicApp {
                 body: JSON.stringify(requestBody)
             });
 
+            console.log('📥 Response status:', response.status, response.statusText);
+
             if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                const errorText = await response.text();
+                console.error('❌ HTTP Error Response:', errorText);
+                throw new Error(`HTTP ${response.status}: ${response.statusText} - ${errorText}`);
             }
 
             const result = await response.json();
@@ -1011,24 +1027,34 @@ class SnapMagicApp {
                 
             } else {
                 // Still processing - continue polling
-                console.log('⏳ Video still processing, will check again in 10 seconds');
-                this.updateVideoProcessingStatus(`Video processing... ${result.message || 'Checking again in 10 seconds'}`);
+                console.log(`⏳ Video still processing, will check again in 10 seconds (attempt ${retryCount + 1}/${MAX_RETRIES})`);
+                this.updateVideoProcessingStatus(`Video processing... Attempt ${retryCount + 1}/${MAX_RETRIES}. ${result.message || 'Checking again in 10 seconds'}`);
                 
-                // Poll again in 10 seconds
+                // Poll again in 10 seconds with incremented retry count
                 setTimeout(() => {
-                    this.pollVideoStatus(invocationId, metadata);
+                    this.pollVideoStatus(invocationId, metadata, retryCount + 1);
                 }, 10 * 1000); // 10 seconds
             }
 
         } catch (error) {
             console.error('❌ Error polling video status:', error);
             
+            // Increment retry count for errors too
+            const nextRetryCount = retryCount + 1;
+            
+            if (nextRetryCount >= MAX_RETRIES) {
+                console.error(`❌ Max retries (${MAX_RETRIES}) exceeded due to errors`);
+                this.hideVideoProcessing();
+                alert(`Video status check failed after ${MAX_RETRIES} attempts. Error: ${error.message}`);
+                return;
+            }
+            
             // Continue polling on error (might be temporary)
-            console.log('⚠️ Polling error, retrying in 10 seconds...');
-            this.updateVideoProcessingStatus('Error checking status, retrying...');
+            console.log(`⚠️ Polling error, retrying in 10 seconds... (attempt ${nextRetryCount}/${MAX_RETRIES})`);
+            this.updateVideoProcessingStatus(`Error checking status (attempt ${nextRetryCount}/${MAX_RETRIES}), retrying...`);
             
             setTimeout(() => {
-                this.pollVideoStatus(invocationId, metadata);
+                this.pollVideoStatus(invocationId, metadata, nextRetryCount);
             }, 10 * 1000); // 10 seconds
         }
     }
