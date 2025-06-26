@@ -662,8 +662,8 @@ class SnapMagicApp {
                 canvas.width = 1280;
                 canvas.height = 720;
                 
-                // Fill with solid black background
-                ctx.fillStyle = '#000000';
+                // Fill with solid white background (better compatibility with Nova Reel)
+                ctx.fillStyle = '#FFFFFF';
                 ctx.fillRect(0, 0, 1280, 720);
                 
                 // Load the card image
@@ -690,7 +690,9 @@ class SnapMagicApp {
                     // CRITICAL: Use JPEG format to guarantee no transparency
                     const letterboxedBase64 = canvas.toDataURL('image/jpeg', 1.0).split(',')[1];
                     
-                    console.log('✅ Letterboxing complete: 1280x720 JPEG (no transparency possible)');
+                    console.log('✅ Letterboxing complete: 1280x720 JPEG on white background (no transparency possible)');
+                    console.log(`📊 Base64 length: ${letterboxedBase64.length} characters`);
+                    console.log(`🔍 Base64 starts with: ${letterboxedBase64.substring(0, 50)}...`);
                     resolve(letterboxedBase64);
                 };
                 

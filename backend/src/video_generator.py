@@ -24,7 +24,25 @@ class VideoGenerator:
         self.video_bucket = os.environ.get('VIDEO_BUCKET_NAME', 'snapmagic-videos-default')
         logger.info("🎬 VideoGenerator initialized")
     
-    def validate_animation_prompt(self, prompt: str) -> tuple[bool, Optional[str]]:
+    def validate_image_format(self, image_base64: str) -> tuple[bool, Optional[str]]:
+        """Validate that the image is in JPEG format and has no transparency"""
+        try:
+            import base64
+            
+            # Decode base64 to check format
+            image_data = base64.b64decode(image_base64)
+            
+            # Check JPEG magic bytes (FF D8 FF)
+            if not image_data.startswith(b'\xff\xd8\xff'):
+                return False, "Image is not in JPEG format"
+            
+            # JPEG cannot have transparency by design
+            logger.info("✅ Image validation passed: JPEG format confirmed")
+            return True, None
+            
+        except Exception as e:
+            logger.error(f"❌ Image validation failed: {str(e)}")
+            return False, f"Image validation error: {str(e)}"
         """Validate animation prompt for video generation"""
         if not prompt or not prompt.strip():
             return False, "Animation prompt cannot be empty"
@@ -50,6 +68,15 @@ class VideoGenerator:
         """
         try:
             logger.info("🎬 Starting Nova Reel video generation...")
+            
+            # Validate image format first
+            is_valid_image, image_error = self.validate_image_format(card_image_base64)
+            if not is_valid_image:
+                logger.error(f"❌ Image validation failed: {image_error}")
+                return {
+                    'success': False,
+                    'error': f"Image format error: {image_error}"
+                }
             
             # Generate unique video ID
             video_id = str(uuid.uuid4())
