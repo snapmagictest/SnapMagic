@@ -699,15 +699,23 @@ class SnapMagicApp {
                     // Draw the card on black background
                     ctx.drawImage(img, x, y, newWidth, newHeight);
                     
-                    // FIXED: Ensure no transparency before PNG conversion for Nova Reel
-                    ctx.globalCompositeOperation = 'destination-over';
-                    ctx.fillStyle = '#000000';
-                    ctx.fillRect(0, 0, 1280, 720);
+                    // FIXED: Force complete opacity by creating a new canvas with opaque background
+                    const opaqueCanvas = document.createElement('canvas');
+                    opaqueCanvas.width = 1280;
+                    opaqueCanvas.height = 720;
+                    const opaqueCtx = opaqueCanvas.getContext('2d');
                     
-                    // Now convert to PNG (fully opaque)
-                    const letterboxedBase64 = canvas.toDataURL('image/png').split(',')[1];
+                    // Fill with solid black (no transparency)
+                    opaqueCtx.fillStyle = '#000000';
+                    opaqueCtx.fillRect(0, 0, 1280, 720);
                     
-                    console.log('✅ FIXED Letterboxing complete: 1280x720 PNG with fully opaque background');
+                    // Draw the current canvas content on top
+                    opaqueCtx.drawImage(canvas, 0, 0);
+                    
+                    // Convert the opaque canvas to PNG
+                    const letterboxedBase64 = opaqueCanvas.toDataURL('image/png').split(',')[1];
+                    
+                    console.log('✅ FIXED Letterboxing complete: 1280x720 PNG with guaranteed opaque background');
                     resolve(letterboxedBase64);
                 };
                 
