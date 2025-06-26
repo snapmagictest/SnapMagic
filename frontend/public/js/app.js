@@ -699,10 +699,10 @@ class SnapMagicApp {
                     // Draw the card on black background
                     ctx.drawImage(img, x, y, newWidth, newHeight);
                     
-                    // FIXED: Convert to JPEG to avoid transparency issues
-                    const letterboxedBase64 = canvas.toDataURL('image/jpeg', 1.0).split(',')[1];
+                    // FIXED: Convert to PNG for Nova Reel compatibility (requires PNG format)
+                    const letterboxedBase64 = canvas.toDataURL('image/png').split(',')[1];
                     
-                    console.log('✅ FIXED Letterboxing complete: 1280x720 JPEG with opaque centered card');
+                    console.log('✅ FIXED Letterboxing complete: 1280x720 PNG with opaque centered card');
                     resolve(letterboxedBase64);
                 };
                 
