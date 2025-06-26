@@ -662,12 +662,14 @@ class SnapMagicApp {
                 canvas.width = 1280;
                 canvas.height = 720;
                 
-                // Fill with black background
+                // Fill with solid black background
                 ctx.fillStyle = '#000000';
                 ctx.fillRect(0, 0, 1280, 720);
                 
                 // Load the card image
                 const img = new Image();
+                img.crossOrigin = 'anonymous'; // Handle CORS if needed
+                
                 img.onload = function() {
                     console.log(`📏 Original card: ${img.width}x${img.height}`);
                     
@@ -682,13 +684,25 @@ class SnapMagicApp {
                     
                     console.log(`📐 Scaled card: ${newWidth.toFixed(0)}x${newHeight.toFixed(0)} at (${x.toFixed(0)}, ${y.toFixed(0)})`);
                     
+                    // Ensure proper alpha blending - draw image with full opacity
+                    ctx.globalAlpha = 1.0;
+                    ctx.globalCompositeOperation = 'source-over';
+                    
+                    // FIXED: Ensure proper alpha blending - draw image with full opacity
+                    ctx.globalAlpha = 1.0;
+                    ctx.globalCompositeOperation = 'source-over';
+                    
+                    // FIXED: Ensure proper alpha blending
+                    ctx.globalAlpha = 1.0;
+                    ctx.globalCompositeOperation = 'source-over';
+
                     // Draw the card on black background
                     ctx.drawImage(img, x, y, newWidth, newHeight);
                     
-                    // Convert to base64 (remove data URL prefix)
-                    const letterboxedBase64 = canvas.toDataURL('image/png').split(',')[1];
+                    // FIXED: Convert to JPEG to avoid transparency issues
+                    const letterboxedBase64 = canvas.toDataURL('image/jpeg', 1.0).split(',')[1];
                     
-                    console.log('✅ Letterboxing complete: 1280x720 with centered card');
+                    console.log('✅ FIXED Letterboxing complete: 1280x720 JPEG with opaque centered card');
                     resolve(letterboxedBase64);
                 };
                 
