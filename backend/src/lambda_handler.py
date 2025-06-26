@@ -172,11 +172,20 @@ def lambda_handler(event, context):
                 logger.error("❌ Missing card_image parameter")
                 return create_error_response("Missing card_image parameter", 400)
             
-            # Validate animation prompt
-            is_valid, error_msg = card_generator.validate_animation_prompt(animation_prompt)
-            if not is_valid:
-                logger.error(f"❌ Animation prompt validation failed: {error_msg}")
-                return create_error_response(error_msg, 400)
+            # Validate animation prompt directly (don't rely on card_generator method)
+            if not animation_prompt or not animation_prompt.strip():
+                logger.error("❌ Animation prompt is empty")
+                return create_error_response("Animation prompt cannot be empty", 400)
+            
+            if len(animation_prompt.strip()) < 5:
+                logger.error(f"❌ Animation prompt too short: {len(animation_prompt.strip())} characters")
+                return create_error_response("Animation prompt must be at least 5 characters", 400)
+            
+            if len(animation_prompt) > 512:
+                logger.error(f"❌ Animation prompt too long: {len(animation_prompt)} characters")
+                return create_error_response("Animation prompt must be less than 512 characters", 400)
+            
+            logger.info(f"✅ Animation prompt validation passed: {len(animation_prompt)} characters")
             
             # Validate base64 image
             try:
@@ -189,9 +198,12 @@ def lambda_handler(event, context):
             
             try:
                 # Generate video from trading card
+                logger.info("🎬 Starting video generation with Nova Reel...")
                 result = card_generator.generate_video_from_card(card_image, animation_prompt)
+                logger.info(f"🎬 Video generation result: {result.get('success', False)}")
                 
                 if result['success']:
+                    logger.info("✅ Video generation successful")
                     return create_success_response({
                         'success': True,
                         'message': 'Video generated successfully',
@@ -207,10 +219,12 @@ def lambda_handler(event, context):
                         }
                     })
                 else:
-                    return create_error_response(result.get('error', 'Video generation failed'), 500)
+                    error_msg = result.get('error', 'Video generation failed')
+                    logger.error(f"❌ Video generation failed: {error_msg}")
+                    return create_error_response(error_msg, 500)
                     
             except Exception as e:
-                logger.error(f"Video generation error: {str(e)}")
+                logger.error(f"❌ Video generation exception: {str(e)}")
                 return create_error_response(f"Video generation failed: {str(e)}", 500)
         
         # ========================================

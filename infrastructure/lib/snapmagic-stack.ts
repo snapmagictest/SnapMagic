@@ -90,6 +90,29 @@ frontend:
     // AI BACKEND INFRASTRUCTURE (Created first to get API URL)
     // ========================================
 
+    // ========================================
+    // S3 BUCKET FOR VIDEO STORAGE WITH CDK CLEANUP ONLY
+    // ========================================
+    const videoBucket = new s3.Bucket(this, 'SnapMagicVideoBucket', {
+      bucketName: `snapmagic-videos-${props.environment}-${this.account}`,
+      
+      // 🗑️ CLEANUP ONLY WHEN EVENT ENDS (CDK DESTROY)
+      removalPolicy: RemovalPolicy.DESTROY,
+      autoDeleteObjects: true,  // Removes all videos when stack is destroyed
+      
+      // 🔒 SECURITY SETTINGS
+      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+      encryption: s3.BucketEncryption.S3_MANAGED,
+      
+      // 📊 MONITORING
+      eventBridgeEnabled: true
+    });
+
+    // Add tags to the video bucket
+    Tags.of(videoBucket).add('Purpose', 'Event-Video-Storage');
+    Tags.of(videoBucket).add('Cleanup', 'CDK-Destroy-Only');
+    Tags.of(videoBucket).add('Environment', props.environment);
+
     // IAM Role for Lambda with Bedrock and other AI service permissions
     const lambdaRole = new iam.Role(this, 'SnapMagicLambdaRole', {
       assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
@@ -161,31 +184,6 @@ frontend:
           ]
         })
       }
-    });
-
-    // ========================================
-    // S3 BUCKET FOR VIDEO STORAGE WITH CDK CLEANUP ONLY
-    // ========================================
-    const videoBucket = new s3.Bucket(this, 'SnapMagicVideoBucket', {
-      bucketName: `snapmagic-videos-${props.environment}-${this.account}`,
-      
-      // 🗑️ CLEANUP ONLY WHEN EVENT ENDS (CDK DESTROY)
-      removalPolicy: RemovalPolicy.DESTROY,
-      autoDeleteObjects: true,  // Removes all videos when stack is destroyed
-      
-      // 🔒 SECURITY SETTINGS
-      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
-      encryption: s3.BucketEncryption.S3_MANAGED,
-      
-      // 📊 MONITORING
-      eventBridgeEnabled: true,
-      
-      // 🏷️ TAGGING
-      tags: [
-        { key: 'Purpose', value: 'Event-Video-Storage' },
-        { key: 'Cleanup', value: 'CDK-Destroy-Only' },
-        { key: 'Environment', value: props.environment }
-      ]
     });
 
     // ========================================
@@ -328,8 +326,7 @@ def lambda_handler(event, context):
         LOG_LEVEL: 'INFO',
         EVENT_USERNAME: inputs.basicAuthUsername || 'demo',
         EVENT_PASSWORD: inputs.basicAuthPassword || 'demo',
-        VIDEO_BUCKET_NAME: videoBucket.bucketName,
-        AWS_REGION: this.region
+        VIDEO_BUCKET_NAME: videoBucket.bucketName
       },
       description: 'SnapMagic AI backend - Trading Cards & Video Generation'
     });
