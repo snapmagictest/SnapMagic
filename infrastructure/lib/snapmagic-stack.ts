@@ -104,6 +104,14 @@ frontend:
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
       encryption: s3.BucketEncryption.S3_MANAGED,
       
+      // 🌐 CORS CONFIGURATION FOR PRESIGNED URLS
+      cors: [{
+        allowedMethods: [s3.HttpMethods.GET, s3.HttpMethods.HEAD],
+        allowedOrigins: ['*'], // Allow all origins for presigned URLs
+        allowedHeaders: ['*'],
+        maxAge: 3600
+      }],
+      
       // 📊 MONITORING
       eventBridgeEnabled: true
     });

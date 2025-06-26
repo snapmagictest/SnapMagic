@@ -1008,11 +1008,11 @@ class SnapMagicApp {
                 message: result.message
             });
 
-            if (result.success && result.status === 'completed' && result.video_base64) {
+            if (result.success && result.status === 'completed' && (result.video_url || result.video_base64)) {
                 // Video is ready!
                 console.log('✅ Video generation completed!');
                 this.hideVideoProcessing();
-                this.showVideoResult(result.video_base64, null, {
+                this.showVideoResult(result.video_base64, result.video_url, {
                     ...metadata,
                     video_size: result.video_size,
                     completion_time: new Date().toISOString()
