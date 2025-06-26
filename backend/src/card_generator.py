@@ -1,122 +1,44 @@
 """
-SnapMagic Trading Card Generator
-Uses exact coordinate masking for perfect content replacement
+Amazon Bedrock Nova Canvas Trading Card Generation Module
+Handles trading card generation using coordinate-based content replacement
 """
 
 import json
 import logging
-import boto3
-import base64
 import os
+import base64
 import uuid
 from datetime import datetime
 from typing import Dict, Any, Optional
+import boto3
 
-logger = logging.getLogger()
+# Configure logging
+logger = logging.getLogger(__name__)
 
-class SnapMagicCardGenerator:
-    """Trading card generator using exact coordinate masking"""
+class CardGenerator:
+    """Handles trading card generation using Amazon Bedrock Nova Canvas"""
     
-    def __init__(self, region: str = "us-east-1"):
-        self.region = region
-        self.bedrock_runtime = boto3.client('bedrock-runtime', region_name=region)
-        self.s3_client = boto3.client('s3', region_name=region)
-        self.video_bucket = os.environ.get('VIDEO_BUCKET_NAME')
+    def __init__(self):
+        """Initialize the card generator with AWS clients and template assets"""
+        self.bedrock_runtime = boto3.client('bedrock-runtime')
         
-        # Load template and mask files
-        self.template_path = os.path.join(os.path.dirname(__file__), 'finalpink.png')
-        self.mask_path = os.path.join(os.path.dirname(__file__), 'exact_mask.png')
+        # Load template and mask from the same directory
+        current_dir = os.path.dirname(os.path.abspath(__file__))
         
-        logger.info("🎴 SnapMagic Card Generator initialized")
-    
-    def load_template_and_mask(self) -> tuple[str, str]:
-        """Load template and mask as base64 strings"""
-        try:
-            # Load template
-            with open(self.template_path, "rb") as f:
-                template_base64 = base64.b64encode(f.read()).decode('utf8')
-            
-            # Load mask
-            with open(self.mask_path, "rb") as f:
-                mask_base64 = base64.b64encode(f.read()).decode('utf8')
-            
-            logger.info("✅ Template and mask loaded successfully")
-            return template_base64, mask_base64
-            
-        except Exception as e:
-            logger.error(f"Failed to load template/mask: {e}")
-            raise Exception(f"Template loading failed: {e}")
-    
-    def generate_trading_card(self, prompt: str) -> Dict[str, Any]:
-        """
-        Generate trading card with content in exact coordinates (69,78) to (618,570)
+        # Load trading card template
+        template_path = os.path.join(current_dir, 'finalpink.png')
+        with open(template_path, 'rb') as f:
+            self.template_base64 = base64.b64encode(f.read()).decode('utf-8')
         
-        Args:
-            prompt: Text description of content to place in card
-            
-        Returns:
-            Dict with success status and result data
-        """
-        try:
-            logger.info(f"🎯 Generating card with prompt: {prompt}")
-            
-            # Load template and mask
-            template_base64, mask_base64 = self.load_template_and_mask()
-            
-            # Prepare Nova Canvas request
-            body = json.dumps({
-                "taskType": "INPAINTING",
-                "inPaintingParams": {
-                    "text": prompt,
-                    "negativeText": "pink, magenta, placeholder, low quality, blurry, artifacts",
-                    "image": template_base64,
-                    "maskImage": mask_base64  # Exact coordinate mask
-                },
-                "imageGenerationConfig": {
-                    "numberOfImages": 1,
-                    "quality": "premium",  # Higher quality
-                    "cfgScale": 8.0,       # Better prompt following
-                    "seed": 42             # Consistent results
-                }
-            })
-            
-            # Call Nova Canvas
-            logger.info("🎨 Calling Nova Canvas for card generation...")
-            response = self.bedrock_runtime.invoke_model(
-                modelId="amazon.nova-canvas-v1:0", 
-                body=body
-            )
-            
-            # Parse response
-            result = json.loads(response['body'].read().decode('utf-8'))
-            
-            if 'images' in result and result['images']:
-                image_base64 = result['images'][0]
-                logger.info("✅ Card generated successfully")
-                
-                return {
-                    'success': True,
-                    'image_base64': image_base64,
-                    'prompt_used': prompt,
-                    'coordinates': '(69,78) to (618,570)',
-                    'method': 'exact_coordinate_masking'
-                }
-            else:
-                logger.error("No images in Nova Canvas response")
-                return {
-                    'success': False,
-                    'error': 'No images generated by Nova Canvas'
-                }
-                
-        except Exception as e:
-            logger.error(f"Card generation failed: {str(e)}")
-            return {
-                'success': False,
-                'error': f"Generation failed: {str(e)}"
-            }
+        # Load exact coordinate mask
+        mask_path = os.path.join(current_dir, 'exact_mask.png')
+        with open(mask_path, 'rb') as f:
+            self.mask_base64 = base64.b64encode(f.read()).decode('utf-8')
+        
+        logger.info("🎴 CardGenerator initialized")
     
     def validate_prompt(self, prompt: str) -> tuple[bool, Optional[str]]:
-        """Validate prompt for card generation"""
+        """Validate the prompt for card generation"""
         if not prompt or not prompt.strip():
             return False, "Prompt cannot be empty"
         
@@ -127,170 +49,78 @@ class SnapMagicCardGenerator:
             return False, "Prompt must be less than 1024 characters"
         
         return True, None
-    def generate_video_from_card(self, card_image_base64: str, animation_prompt: str = "Make this trading card come alive with subtle animation") -> Dict[str, Any]:
+    
+    def generate_trading_card(self, prompt: str) -> Dict[str, Any]:
         """
-        Generate video from trading card using Amazon Bedrock Nova Reel
-        Store video in S3 with automatic cleanup after 7 days
+        Generate a trading card using Amazon Bedrock Nova Canvas
         
         Args:
-            card_image_base64: Base64 encoded trading card image
-            animation_prompt: Description of how to animate the card
+            prompt: Text description of the desired card content
             
         Returns:
-            Dictionary with success status and video URL or error message
+            Dictionary with success status and image data
         """
         try:
-            logger.info("🎬 Starting Nova Reel video generation...")
+            logger.info(f"🎨 Generating trading card for prompt: {prompt[:50]}...")
             
-            # Generate unique video ID
-            video_id = str(uuid.uuid4())
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            video_key = f"videos/{timestamp}_{video_id}.mp4"
-            
-            # Prepare the request for Nova Reel
+            # Prepare the request for Nova Canvas
             request_body = {
-                "taskType": "TEXT_VIDEO",
-                "textToVideoParams": {
-                    "text": f"{animation_prompt}. Keep the trading card format intact while adding subtle movement and effects.",
-                    "images": [
-                        {
-                            "format": "png",
-                            "source": {
-                                "bytes": card_image_base64
-                            }
-                        }
-                    ]
+                "taskType": "INPAINTING",
+                "inPaintingParams": {
+                    "text": f"Professional trading card artwork: {prompt}. High quality, detailed illustration suitable for a collectible trading card.",
+                    "image": self.template_base64,
+                    "maskImage": self.mask_base64
                 },
-                "videoGenerationConfig": {
-                    "durationSeconds": 6,
-                    "fps": 24,
-                    "dimension": "1280x720",
+                "imageGenerationConfig": {
+                    "numberOfImages": 1,
+                    "quality": "premium",
+                    "width": 768,
+                    "height": 1024,
+                    "cfgScale": 7.0,
                     "seed": 42
                 }
             }
             
-            # Call Nova Reel with ASYNC API (Nova Reel doesn't support sync InvokeModel)
-            logger.info("📡 Calling Amazon Bedrock Nova Reel with StartAsyncInvoke...")
-            response = self.bedrock_runtime.start_async_invoke(
-                modelId='amazon.nova-reel-v1:1',  # Correct model ID
-                modelInput=json.dumps(request_body),
-                outputDataConfig={
-                    's3OutputDataConfig': {
-                        's3Uri': f's3://{video_bucket_name}/videos/'
-                    }
-                }
+            # Call Nova Canvas
+            logger.info("📡 Calling Amazon Bedrock Nova Canvas...")
+            response = self.bedrock_runtime.invoke_model(
+                modelId='amazon.nova-canvas-v1:0',
+                body=json.dumps(request_body),
+                contentType='application/json'
             )
             
-            # Parse async response
-            invocation_arn = response.get('invocationArn', '')
-            logger.info(f"📡 Nova Reel async job started: {invocation_arn}")
+            # Parse response
+            response_body = json.loads(response['body'].read())
+            logger.info("✅ Nova Canvas response received")
             
-            # For now, return a placeholder response since Nova Reel is async
-            # In production, you'd poll for completion or use webhooks
-            return {
-                'success': True,
-                'video_id': video_id,
-                'invocation_arn': invocation_arn,
-                'message': 'Video generation started - this is async processing',
-                'status': 'processing',
-                'estimated_time': '30-60 seconds',
-                'video_base64': None,  # Not available immediately with async
-                'video_url': None,     # Will be available when processing completes
-                'timestamp': datetime.now().isoformat()
-            }
-                video_base64 = response_body['videoDataB64']
+            if 'images' in response_body and len(response_body['images']) > 0:
+                image_base64 = response_body['images'][0]
                 
-                # Store video in S3 with automatic cleanup
-                if self.video_bucket:
-                    try:
-                        # Decode base64 video for S3 storage
-                        video_bytes = base64.b64decode(video_base64)
-                        
-                        # Upload to S3 with metadata
-                        self.s3_client.put_object(
-                            Bucket=self.video_bucket,
-                            Key=video_key,
-                            Body=video_bytes,
-                            ContentType='video/mp4',
-                            Metadata={
-                                'video-id': video_id,
-                                'animation-prompt': animation_prompt[:100],  # Truncate for metadata
-                                'generated-at': timestamp,
-                                'cleanup': 'cdk-destroy-only'
-                            },
-                            # Add tags for better management
-                            Tagging=f'Purpose=EventVideo&Cleanup=CDKDestroy&VideoId={video_id}'
-                        )
-                        
-                        # Generate presigned URL for frontend access (valid for 1 hour)
-                        video_url = self.s3_client.generate_presigned_url(
-                            'get_object',
-                            Params={'Bucket': self.video_bucket, 'Key': video_key},
-                            ExpiresIn=3600  # 1 hour
-                        )
-                        
-                        logger.info(f"🎥 Video stored in S3: {video_key}")
-                        
-                        return {
-                            'success': True,
-                            'video_url': video_url,  # Presigned URL for direct access
-                            'video_base64': video_base64,  # Also return base64 for immediate use
-                            'video_id': video_id,
-                            'duration': '6 seconds',
-                            'format': 'mp4',
-                            'storage': 'S3 with CDK cleanup (event end only)',
-                            'generation_time': response_body.get('generationTime', 'Unknown'),
-                            'prompt_used': animation_prompt
-                        }
-                    except Exception as s3_error:
-                        logger.warning(f"S3 storage failed, returning base64 only: {str(s3_error)}")
-                        # Fallback to base64 only if S3 fails
-                        return {
-                            'success': True,
-                            'video_base64': video_base64,
-                            'video_id': video_id,
-                            'duration': '6 seconds',
-                            'format': 'mp4',
-                            'storage': 'Base64 only (S3 unavailable)',
-                            'generation_time': response_body.get('generationTime', 'Unknown'),
-                            'prompt_used': animation_prompt
-                        }
-                else:
-                    # No S3 bucket configured, return base64 only
-                    logger.info("🎥 Video generated (base64 only - no S3 bucket)")
-                    return {
-                        'success': True,
-                        'video_base64': video_base64,
-                        'video_id': video_id,
-                        'duration': '6 seconds',
-                        'format': 'mp4',
-                        'storage': 'Base64 only',
-                        'generation_time': response_body.get('generationTime', 'Unknown'),
-                        'prompt_used': animation_prompt
+                # Create data URL for frontend
+                image_src = f"data:image/png;base64,{image_base64}"
+                
+                return {
+                    'success': True,
+                    'result': image_base64,
+                    'imageSrc': image_src,
+                    'metadata': {
+                        'prompt': prompt,
+                        'model': 'amazon.nova-canvas-v1:0',
+                        'quality': 'premium',
+                        'dimensions': '768x1024',
+                        'generated_at': datetime.now().isoformat()
                     }
+                }
             else:
-                logger.error("No video data in Nova Reel response")
+                logger.error("❌ No image data in Nova Canvas response")
                 return {
                     'success': False,
-                    'error': 'No video generated by Nova Reel'
+                    'error': 'No image data received from Nova Canvas'
                 }
                 
         except Exception as e:
-            logger.error(f"Video generation failed: {str(e)}")
+            logger.error(f"❌ Trading card generation failed: {str(e)}")
             return {
                 'success': False,
-                'error': f"Video generation failed: {str(e)}"
+                'error': f"Card generation failed: {str(e)}"
             }
-    
-    def validate_animation_prompt(self, prompt: str) -> tuple[bool, Optional[str]]:
-        """Validate animation prompt for video generation"""
-        if not prompt or not prompt.strip():
-            return False, "Animation prompt cannot be empty"
-        
-        if len(prompt.strip()) < 5:
-            return False, "Animation prompt must be at least 5 characters"
-        
-        if len(prompt) > 512:
-            return False, "Animation prompt must be less than 512 characters"
-        
-        return True, None

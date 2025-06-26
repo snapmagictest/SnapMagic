@@ -8,7 +8,8 @@ import logging
 import os
 from typing import Dict, Any
 from auth_simple import SnapMagicAuthSimple
-from card_generator import SnapMagicCardGenerator
+from card_generator import CardGenerator
+from video_generator import VideoGenerator
 
 # Configure logging
 logger = logging.getLogger()
@@ -34,8 +35,9 @@ def load_event_credentials() -> Dict[str, str]:
             'password': 'demo'
         }
 
-# Global card generator instance
-card_generator = SnapMagicCardGenerator()
+# Global instances
+card_generator = CardGenerator()
+video_generator = VideoGenerator()
 
 def lambda_handler(event, context):
     """
@@ -177,20 +179,11 @@ def lambda_handler(event, context):
                 logger.error("❌ Missing card_image parameter")
                 return create_error_response("Missing card_image parameter", 400)
             
-            # Validate animation prompt directly (don't rely on card_generator method)
-            if not animation_prompt or not animation_prompt.strip():
-                logger.error("❌ Animation prompt is empty")
-                return create_error_response("Animation prompt cannot be empty", 400)
-            
-            if len(animation_prompt.strip()) < 5:
-                logger.error(f"❌ Animation prompt too short: {len(animation_prompt.strip())} characters")
-                return create_error_response("Animation prompt must be at least 5 characters", 400)
-            
-            if len(animation_prompt) > 512:
-                logger.error(f"❌ Animation prompt too long: {len(animation_prompt)} characters")
-                return create_error_response("Animation prompt must be less than 512 characters", 400)
-            
-            logger.info(f"✅ Animation prompt validation passed: {len(animation_prompt)} characters")
+            # Validate animation prompt using video generator
+            is_valid, error_msg = video_generator.validate_animation_prompt(animation_prompt)
+            if not is_valid:
+                logger.error(f"❌ Animation prompt validation failed: {error_msg}")
+                return create_error_response(error_msg, 400)
             
             # Validate base64 image
             try:
@@ -202,25 +195,25 @@ def lambda_handler(event, context):
                 return create_error_response("Invalid card image data - must be valid base64", 400)
             
             try:
-                # Generate video from trading card
-                logger.info("🎬 Starting video generation with Nova Reel...")
-                result = card_generator.generate_video_from_card(card_image, animation_prompt)
+                # Generate video using video generator
+                logger.info("🎬 Starting video generation with VideoGenerator...")
+                result = video_generator.generate_video_from_card(card_image, animation_prompt)
                 logger.info(f"🎬 Video generation result: {result.get('success', False)}")
                 
                 if result['success']:
                     logger.info("✅ Video generation successful")
                     return create_success_response({
                         'success': True,
-                        'message': 'Video generated successfully',
-                        'result': result.get('video_base64'),  # Base64 for immediate use
-                        'video_url': result.get('video_url'),  # S3 URL for direct access
+                        'message': 'Video generation started successfully',
+                        'result': result.get('video_base64'),
+                        'video_url': result.get('video_url'),
                         'metadata': {
                             'video_id': result.get('video_id'),
+                            'invocation_arn': result.get('invocation_arn'),
                             'animation_prompt': animation_prompt,
-                            'duration': result.get('duration', '6 seconds'),
-                            'format': result.get('format', 'mp4'),
-                            'storage': result.get('storage', 'S3 with CDK cleanup'),
-                            'generation_time': result.get('generation_time')
+                            'status': result.get('status'),
+                            'estimated_time': result.get('estimated_time'),
+                            'timestamp': result.get('timestamp')
                         }
                     })
                 else:
