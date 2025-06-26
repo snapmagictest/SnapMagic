@@ -57,12 +57,12 @@ class VideoGenerator:
             
             # Prepare the request for Nova Reel (Image-to-Video)
             model_input = {
-                "taskType": "TEXT_VIDEO",
-                "textToVideoParams": {
+                "taskType": "IMAGE_VIDEO",
+                "imageToVideoParams": {
                     "text": f"{animation_prompt}. Keep the trading card format intact while adding subtle movement and effects.",
                     "images": [
                         {
-                            "format": "png",
+                            "format": "jpeg",
                             "source": {
                                 "bytes": card_image_base64
                             }
