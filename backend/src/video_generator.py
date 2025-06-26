@@ -58,6 +58,84 @@ class VideoGenerator:
         
         return True, None
     
+    def get_video_status(self, invocation_id: str) -> Dict[str, Any]:
+        """
+        Check if video is ready in S3 and return it if available
+        
+        Args:
+            invocation_id: The invocation ID from Nova Reel async call
+            
+        Returns:
+            Dictionary with video status and data if ready
+        """
+        try:
+            logger.info(f"🔍 Checking S3 for video: {invocation_id}")
+            
+            # Check if video exists in S3
+            video_key = f"videos/{invocation_id}/output.mp4"
+            status_key = f"videos/{invocation_id}/video-generation-status.json"
+            
+            try:
+                # Check if status file exists
+                status_response = self.s3_client.get_object(Bucket=self.video_bucket, Key=status_key)
+                status_data = json.loads(status_response['Body'].read().decode('utf-8'))
+                
+                logger.info(f"📄 Status file found: {status_data}")
+                
+                # Check if video generation was successful
+                if status_data.get('fullVideo', {}).get('status') == 'SUCCESS':
+                    # Video is ready, get the video file
+                    try:
+                        video_response = self.s3_client.get_object(Bucket=self.video_bucket, Key=video_key)
+                        video_data = video_response['Body'].read()
+                        
+                        # Convert to base64 for frontend
+                        import base64
+                        video_base64 = base64.b64encode(video_data).decode('utf-8')
+                        
+                        logger.info(f"✅ Video ready! Size: {len(video_data)} bytes")
+                        
+                        return {
+                            'success': True,
+                            'status': 'completed',
+                            'video_base64': video_base64,
+                            'video_size': len(video_data),
+                            'message': 'Video generation completed successfully'
+                        }
+                        
+                    except Exception as e:
+                        logger.error(f"❌ Error downloading video: {str(e)}")
+                        return {
+                            'success': False,
+                            'status': 'error',
+                            'message': f'Video file not accessible: {str(e)}'
+                        }
+                else:
+                    # Video generation failed
+                    logger.warning(f"❌ Video generation failed: {status_data}")
+                    return {
+                        'success': False,
+                        'status': 'failed',
+                        'message': 'Video generation failed'
+                    }
+                    
+            except self.s3_client.exceptions.NoSuchKey:
+                # Status file doesn't exist yet - still processing
+                logger.info("⏳ Video still processing - status file not found")
+                return {
+                    'success': False,
+                    'status': 'processing',
+                    'message': 'Video is still being generated'
+                }
+                
+        except Exception as e:
+            logger.error(f"❌ Error checking video status: {str(e)}")
+            return {
+                'success': False,
+                'status': 'error',
+                'message': f'Error checking video status: {str(e)}'
+            }
+    
     def generate_video_from_card(self, card_image_base64: str, animation_prompt: str) -> Dict[str, Any]:
         """
         Generate animated video from trading card using Amazon Nova Reel

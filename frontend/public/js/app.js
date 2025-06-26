@@ -760,16 +760,25 @@ class SnapMagicApp {
             const result = await response.json();
             console.log('🎬 Video API response:', {
                 success: result.success,
-                hasVideoBase64: !!result.result,
-                hasVideoUrl: !!result.video_url,
-                metadata: result.metadata
+                invocation_arn: result.metadata?.invocation_arn,
+                video_id: result.metadata?.video_id,
+                status: result.metadata?.status
             });
 
-            if (result.success && (result.result || result.video_url)) {
-                console.log('✅ Video generation successful');
-                this.showVideoResult(result.result, result.video_url, result.metadata);
+            if (result.success && result.metadata?.invocation_arn) {
+                console.log('✅ Video generation started - beginning polling');
+                
+                // Extract invocation ID from ARN
+                const invocationArn = result.metadata.invocation_arn;
+                const invocationId = invocationArn.split('/').pop(); // Get last part after final slash
+                
+                console.log('🔍 Extracted invocation ID:', invocationId);
+                
+                // Start polling for video completion
+                this.startVideoPolling(invocationId, result.metadata);
+                
             } else {
-                const errorMsg = result.error || 'Video generation failed';
+                const errorMsg = result.error || 'Video generation failed to start';
                 console.error('❌ Video API error:', errorMsg);
                 throw new Error(errorMsg);
             }
@@ -926,6 +935,113 @@ class SnapMagicApp {
     hideVideoResult() {
         this.elements.videoResultContainer.classList.add('hidden');
         this.currentVideoData = null;
+    }
+
+    /**
+     * Start polling for video completion with specified timing
+     * Wait 3 minutes initially, then poll every 10 seconds
+     */
+    startVideoPolling(invocationId, metadata) {
+        console.log('⏰ Starting video polling - waiting 3 minutes before first check...');
+        
+        // Update UI to show waiting status
+        this.updateVideoProcessingStatus('Video is being generated... Please wait 3 minutes for initial processing.');
+        
+        // Wait 3 minutes (180 seconds) before first check
+        setTimeout(() => {
+            console.log('⏰ 3 minutes elapsed - starting polling every 10 seconds');
+            this.updateVideoProcessingStatus('Checking video status...');
+            
+            // Start polling every 10 seconds
+            this.pollVideoStatus(invocationId, metadata);
+        }, 3 * 60 * 1000); // 3 minutes in milliseconds
+    }
+
+    /**
+     * Poll video status every 10 seconds until ready
+     */
+    async pollVideoStatus(invocationId, metadata) {
+        try {
+            console.log('🔍 Polling video status for:', invocationId);
+            
+            const apiBaseUrl = window.SNAPMAGIC_CONFIG.API_URL;
+            const endpoint = `${apiBaseUrl}api/transform-card`;
+            
+            const requestBody = {
+                action: 'get_video_status',
+                invocation_id: invocationId
+            };
+            
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.currentUser.token}`
+                },
+                body: JSON.stringify(requestBody)
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            const result = await response.json();
+            console.log('📊 Video status response:', {
+                success: result.success,
+                status: result.status,
+                hasVideo: !!result.video_base64,
+                message: result.message
+            });
+
+            if (result.success && result.status === 'completed' && result.video_base64) {
+                // Video is ready!
+                console.log('✅ Video generation completed!');
+                this.hideVideoProcessing();
+                this.showVideoResult(result.video_base64, null, {
+                    ...metadata,
+                    video_size: result.video_size,
+                    completion_time: new Date().toISOString()
+                });
+                
+            } else if (result.status === 'failed') {
+                // Video generation failed
+                console.error('❌ Video generation failed:', result.message);
+                this.hideVideoProcessing();
+                alert(`Video generation failed: ${result.message}`);
+                
+            } else {
+                // Still processing - continue polling
+                console.log('⏳ Video still processing, will check again in 10 seconds');
+                this.updateVideoProcessingStatus(`Video processing... ${result.message || 'Checking again in 10 seconds'}`);
+                
+                // Poll again in 10 seconds
+                setTimeout(() => {
+                    this.pollVideoStatus(invocationId, metadata);
+                }, 10 * 1000); // 10 seconds
+            }
+
+        } catch (error) {
+            console.error('❌ Error polling video status:', error);
+            
+            // Continue polling on error (might be temporary)
+            console.log('⚠️ Polling error, retrying in 10 seconds...');
+            this.updateVideoProcessingStatus('Error checking status, retrying...');
+            
+            setTimeout(() => {
+                this.pollVideoStatus(invocationId, metadata);
+            }, 10 * 1000); // 10 seconds
+        }
+    }
+
+    /**
+     * Update video processing status message
+     */
+    updateVideoProcessingStatus(message) {
+        const statusElement = document.querySelector('#video-processing-status');
+        if (statusElement) {
+            statusElement.textContent = message;
+        }
+        console.log('📢 Status update:', message);
     }
 }
 

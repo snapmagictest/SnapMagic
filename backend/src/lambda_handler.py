@@ -163,6 +163,45 @@ def lambda_handler(event, context):
                 return create_error_response(f"Card generation failed: {str(e)}", 500)
         
         # ========================================
+        # NEW: VIDEO STATUS CHECK
+        # CHECK S3 FOR COMPLETED VIDEOS
+        # ========================================
+        elif action == 'get_video_status':
+            invocation_id = body.get('invocation_id', '')
+            
+            if not invocation_id:
+                logger.error("❌ Missing invocation_id parameter")
+                return create_error_response("Missing invocation_id parameter", 400)
+            
+            try:
+                # Check video status in S3
+                logger.info(f"🔍 Checking video status for: {invocation_id}")
+                result = video_generator.get_video_status(invocation_id)
+                
+                if result['success']:
+                    logger.info(f"✅ Video status check successful: {result.get('status')}")
+                    return create_success_response({
+                        'success': True,
+                        'status': result.get('status'),
+                        'video_base64': result.get('video_base64'),
+                        'video_url': result.get('video_url'),
+                        'message': result.get('message'),
+                        'invocation_id': invocation_id
+                    })
+                else:
+                    logger.info(f"⏳ Video not ready yet: {result.get('message')}")
+                    return create_success_response({
+                        'success': True,
+                        'status': 'processing',
+                        'message': result.get('message', 'Video is still processing'),
+                        'invocation_id': invocation_id
+                    })
+                    
+            except Exception as e:
+                logger.error(f"❌ Video status check exception: {str(e)}")
+                return create_error_response(f"Video status check failed: {str(e)}", 500)
+        
+        # ========================================
         # NEW: NOVA REEL VIDEO GENERATION
         # ANIMATE TRADING CARDS WITH S3 STORAGE
         # ========================================
