@@ -43,6 +43,8 @@ class VideoGenerator:
         except Exception as e:
             logger.error(f"❌ Image validation failed: {str(e)}")
             return False, f"Image validation error: {str(e)}"
+    
+    def validate_animation_prompt(self, prompt: str) -> tuple[bool, Optional[str]]:
         """Validate animation prompt for video generation"""
         if not prompt or not prompt.strip():
             return False, "Animation prompt cannot be empty"
