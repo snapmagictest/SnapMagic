@@ -67,22 +67,18 @@ class SnapMagicApp {
             downloadBtn: document.getElementById('downloadBtn'),
             newCardBtn: document.getElementById('newCardBtn'),
             
-            // Video elements - NEW
-            videoContainer: document.getElementById('videoContainer'),
-            resultVideo: document.getElementById('resultVideo'),
-            animateBtn: document.getElementById('animateBtn'),
-            downloadVideoBtn: document.getElementById('downloadVideoBtn'),
-            videoProcessingStatus: document.getElementById('videoProcessingStatus'),
-            
-            // Animation modal elements
-            animationModal: document.getElementById('animationModal'),
+            // Video elements - SIMPLIFIED
+            videoSection: document.getElementById('videoSection'),
             animationPrompt: document.getElementById('animationPrompt'),
             animationCharCount: document.getElementById('animationCharCount'),
             animationCharStatus: document.getElementById('animationCharStatus'),
-            closeModal: document.getElementById('closeModal'),
-            cancelAnimation: document.getElementById('cancelAnimation'),
-            startAnimation: document.getElementById('startAnimation'),
-            presetButtons: document.querySelectorAll('.preset-btn')
+            generateVideoBtn: document.getElementById('generateVideoBtn'),
+            presetButtons: document.querySelectorAll('.preset-btn'),
+            videoProcessingStatus: document.getElementById('videoProcessingStatus'),
+            videoResultContainer: document.getElementById('videoResultContainer'),
+            resultVideo: document.getElementById('resultVideo'),
+            downloadVideoBtn: document.getElementById('downloadVideoBtn'),
+            createAnotherVideoBtn: document.getElementById('createAnotherVideoBtn')
         };
         
         // Store current card data for video generation
@@ -106,26 +102,15 @@ class SnapMagicApp {
         this.elements.downloadBtn.addEventListener('click', () => this.handleDownload());
         this.elements.newCardBtn.addEventListener('click', () => this.handleNewCard());
         
-        // Video actions - NEW
-        this.elements.animateBtn.addEventListener('click', () => this.showAnimationModal());
+        // Video actions - SIMPLIFIED
+        this.elements.generateVideoBtn.addEventListener('click', () => this.handleGenerateVideo());
         this.elements.downloadVideoBtn.addEventListener('click', () => this.handleDownloadVideo());
-        
-        // Animation modal events
-        this.elements.closeModal.addEventListener('click', () => this.hideAnimationModal());
-        this.elements.cancelAnimation.addEventListener('click', () => this.hideAnimationModal());
-        this.elements.startAnimation.addEventListener('click', () => this.handleStartAnimation());
+        this.elements.createAnotherVideoBtn.addEventListener('click', () => this.showVideoSection());
         this.elements.animationPrompt.addEventListener('input', () => this.validateAnimationPrompt());
         
         // Preset buttons
         this.elements.presetButtons.forEach(btn => {
             btn.addEventListener('click', () => this.handlePresetClick(btn));
-        });
-        
-        // Close modal on outside click
-        this.elements.animationModal.addEventListener('click', (e) => {
-            if (e.target === this.elements.animationModal) {
-                this.hideAnimationModal();
-            }
         });
     }
 
@@ -498,6 +483,9 @@ class SnapMagicApp {
         // Reset video display
         this.hideVideoResult();
         
+        // Show video section for animation
+        this.showVideoSection();
+        
         // Show result container
         this.elements.resultContainer.classList.remove('hidden');
         
@@ -573,30 +561,30 @@ class SnapMagicApp {
     }
 
     // ========================================
-    // VIDEO GENERATION METHODS - NEW
+    // VIDEO GENERATION METHODS - SIMPLIFIED
     // ========================================
 
-    showAnimationModal() {
+    showVideoSection() {
         if (!this.currentCardData) {
-            alert('No card available to animate. Please generate a card first.');
+            console.log('No card data available for video generation');
             return;
         }
 
-        console.log('🎬 Opening animation modal...');
+        console.log('🎬 Showing video generation section...');
         
-        // Reset modal state
+        // Reset video section state
         this.elements.animationPrompt.value = '';
         this.elements.animationCharCount.textContent = '0';
         this.elements.animationCharStatus.textContent = 'Enter animation description (min 5 characters)';
-        this.elements.startAnimation.disabled = true;
+        this.elements.generateVideoBtn.disabled = true;
         
-        // Show modal
-        this.elements.animationModal.classList.remove('hidden');
+        // Show video section
+        this.elements.videoSection.classList.remove('hidden');
         this.elements.animationPrompt.focus();
     }
 
-    hideAnimationModal() {
-        this.elements.animationModal.classList.add('hidden');
+    hideVideoSection() {
+        this.elements.videoSection.classList.add('hidden');
     }
 
     handlePresetClick(button) {
@@ -616,19 +604,19 @@ class SnapMagicApp {
         if (length < 5) {
             this.elements.animationCharStatus.textContent = `Enter animation description (min 5 characters)`;
             this.elements.animationCharStatus.className = 'char-status char-invalid';
-            this.elements.startAnimation.disabled = true;
+            this.elements.generateVideoBtn.disabled = true;
         } else if (length > 512) {
             this.elements.animationCharStatus.textContent = `Too long! Maximum 512 characters`;
             this.elements.animationCharStatus.className = 'char-status char-invalid';
-            this.elements.startAnimation.disabled = true;
+            this.elements.generateVideoBtn.disabled = true;
         } else {
             this.elements.animationCharStatus.textContent = `Ready to animate!`;
             this.elements.animationCharStatus.className = 'char-status char-valid';
-            this.elements.startAnimation.disabled = false;
+            this.elements.generateVideoBtn.disabled = false;
         }
     }
 
-    async handleStartAnimation() {
+    async handleGenerateVideo() {
         const animationPrompt = this.elements.animationPrompt.value.trim();
         
         if (!animationPrompt || animationPrompt.length < 5) {
@@ -636,11 +624,15 @@ class SnapMagicApp {
             return;
         }
 
-        console.log('🎬 Starting card animation with prompt:', animationPrompt);
+        if (!this.currentCardData) {
+            alert('No card available to animate. Please generate a card first.');
+            return;
+        }
+
+        console.log('🎬 Starting video generation with prompt:', animationPrompt);
         
         try {
-            // Hide modal and show processing
-            this.hideAnimationModal();
+            // Show processing
             this.showVideoProcessing();
             
             // Generate video
@@ -744,8 +736,10 @@ class SnapMagicApp {
         
         // Set video source and show container
         this.elements.resultVideo.src = videoSrc;
-        this.elements.videoContainer.classList.remove('hidden');
-        this.elements.downloadVideoBtn.classList.remove('hidden');
+        this.elements.videoResultContainer.classList.remove('hidden');
+        
+        // Hide video input section
+        this.hideVideoSection();
         
         // Store video data for download
         this.currentVideoData = {
@@ -765,7 +759,7 @@ class SnapMagicApp {
         };
         
         // Scroll to video
-        this.elements.videoContainer.scrollIntoView({ behavior: 'smooth' });
+        this.elements.videoResultContainer.scrollIntoView({ behavior: 'smooth' });
         
         console.log('✅ Video display setup complete');
     }
@@ -829,19 +823,18 @@ class SnapMagicApp {
 
     showVideoProcessing() {
         this.elements.videoProcessingStatus.classList.remove('hidden');
-        this.elements.animateBtn.disabled = true;
-        this.elements.animateBtn.textContent = '🎬 Creating Video...';
+        this.elements.generateVideoBtn.disabled = true;
+        this.elements.generateVideoBtn.textContent = '🎬 Creating Video...';
     }
 
     hideVideoProcessing() {
         this.elements.videoProcessingStatus.classList.add('hidden');
-        this.elements.animateBtn.disabled = false;
-        this.elements.animateBtn.textContent = '🎬 Animate Card';
+        this.elements.generateVideoBtn.disabled = false;
+        this.elements.generateVideoBtn.textContent = '🎬 Generate Animated Video';
     }
 
     hideVideoResult() {
-        this.elements.videoContainer.classList.add('hidden');
-        this.elements.downloadVideoBtn.classList.add('hidden');
+        this.elements.videoResultContainer.classList.add('hidden');
         this.currentVideoData = null;
     }
 }

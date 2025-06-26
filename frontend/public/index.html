@@ -526,80 +526,39 @@
             box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
         }
 
-        .animate-btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
+        /* Video Section Styles - SIMPLIFIED */
+        .video-section {
+            margin-top: 2rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 2rem;
+            border: 1px solid rgba(255, 153, 0, 0.2);
         }
 
-        /* Animation Modal Styles */
-        .animation-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-
-        .animation-modal.hidden {
+        .video-section.hidden {
             display: none;
         }
 
-        .modal-content {
-            background: linear-gradient(135deg, #1a1a2e, #16213e);
-            border-radius: 20px;
-            padding: 2rem;
-            max-width: 600px;
-            width: 90%;
-            max-height: 80vh;
-            overflow-y: auto;
-            border: 2px solid rgba(255, 153, 0, 0.3);
+        .section-header {
+            text-align: center;
+            margin-bottom: 2rem;
         }
 
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.5rem;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            padding-bottom: 1rem;
-        }
-
-        .modal-header h3 {
+        .section-header h3 {
             color: #FF9900;
-            margin: 0;
             font-size: 1.5rem;
+            margin: 0 0 0.5rem 0;
         }
 
-        .close-btn {
-            background: none;
-            border: none;
-            color: #FF9900;
-            font-size: 2rem;
-            cursor: pointer;
-            padding: 0;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s ease;
-        }
-
-        .close-btn:hover {
-            background: rgba(255, 153, 0, 0.1);
-        }
-
-        .modal-description {
+        .section-header p {
             color: rgba(255, 255, 255, 0.8);
-            margin-bottom: 1.5rem;
+            margin: 0;
             line-height: 1.6;
+        }
+
+        .animation-input-section {
+            max-width: 600px;
+            margin: 0 auto;
         }
 
         .animation-input {
@@ -611,7 +570,7 @@
             color: white;
             font-size: 1rem;
             resize: vertical;
-            min-height: 100px;
+            min-height: 80px;
             font-family: inherit;
         }
 
@@ -622,26 +581,27 @@
         }
 
         .animation-presets {
-            margin-top: 1.5rem;
+            margin: 1.5rem 0;
         }
 
         .presets-label {
             color: #FF9900;
             font-weight: 600;
             margin-bottom: 1rem;
+            text-align: center;
         }
 
         .preset-buttons {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 0.5rem;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 0.75rem;
         }
 
         .preset-btn {
             background: rgba(255, 255, 255, 0.1);
             color: white;
             border: 1px solid rgba(255, 255, 255, 0.2);
-            padding: 0.75rem 1rem;
+            padding: 1rem;
             border-radius: 10px;
             cursor: pointer;
             transition: all 0.3s ease;
@@ -652,51 +612,65 @@
         .preset-btn:hover {
             background: rgba(255, 153, 0, 0.2);
             border-color: #FF9900;
+            transform: translateY(-2px);
         }
 
-        .modal-footer {
-            display: flex;
-            gap: 1rem;
-            justify-content: flex-end;
+        .animation-actions {
+            text-align: center;
             margin-top: 2rem;
-            padding-top: 1rem;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-        .cancel-btn {
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            padding: 1rem 2rem;
-            border-radius: 25px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .cancel-btn:hover {
-            background: rgba(255, 255, 255, 0.2);
-        }
-
-        .start-animation-btn {
+        .generate-video-btn {
             background: linear-gradient(135deg, #FF6B6B, #FF8E53);
             color: white;
             border: none;
             padding: 1rem 2rem;
             border-radius: 25px;
+            font-size: 1.1rem;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
         }
 
-        .start-animation-btn:hover:not(:disabled) {
+        .generate-video-btn:hover:not(:disabled) {
             transform: translateY(-2px);
             box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
         }
 
-        .start-animation-btn:disabled {
+        .generate-video-btn:disabled {
             opacity: 0.6;
             cursor: not-allowed;
             transform: none;
+        }
+
+        /* Video Result Styles */
+        .video-result-container {
+            margin-top: 2rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 2rem;
+            border: 1px solid rgba(255, 153, 0, 0.2);
+            text-align: center;
+        }
+
+        .video-result-container.hidden {
+            display: none;
+        }
+
+        .result-video {
+            max-width: 100%;
+            height: auto;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            background: rgba(0, 0, 0, 0.5);
+            margin: 1rem 0;
+        }
+
+        .video-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 1.5rem;
         }
 
         .char-valid {
@@ -705,21 +679,6 @@
 
         .char-invalid {
             color: #FF6B6B !important;
-        }
-
-        @media (max-width: 768px) {
-            .modal-content {
-                width: 95%;
-                padding: 1.5rem;
-            }
-            
-            .preset-buttons {
-                grid-template-columns: 1fr;
-            }
-            
-            .modal-footer {
-                flex-direction: column;
-            }
         }
 
         .download-btn, .new-btn {
