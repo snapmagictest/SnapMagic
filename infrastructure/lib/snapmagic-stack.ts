@@ -1,5 +1,5 @@
 import { Stack, StackProps, CfnOutput, Tags, Duration, CfnResource, CustomResource, RemovalPolicy } from 'aws-cdk-lib';
-import { aws_amplify as amplify, aws_lambda as lambda, aws_apigateway as apigateway, aws_iam as iam, aws_s3 as s3 } from 'aws-cdk-lib';
+import { aws_amplify as amplify, aws_lambda as lambda, aws_apigateway as apigateway, aws_iam as iam, aws_s3 as s3, aws_events as events, aws_events_targets as targets } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { DeploymentInputs } from './deployment-inputs';
 import * as path from 'path';
@@ -187,6 +187,130 @@ frontend:
         { key: 'Environment', value: props.environment }
       ]
     });
+
+    // ========================================
+    // AUTO-DELETE LAMBDA: DESTROY STACK AFTER 7 DAYS
+    // ========================================
+    const autoDeleteLambda = new lambda.Function(this, 'AutoDeleteFunction', {
+      runtime: lambda.Runtime.PYTHON_3_11,
+      handler: 'index.lambda_handler',
+      timeout: Duration.minutes(15),
+      code: lambda.Code.fromInline(`
+import boto3
+import json
+import logging
+from datetime import datetime, timedelta
+
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+
+def lambda_handler(event, context):
+    """
+    Auto-delete CDK stack after 7 days
+    Triggered by EventBridge scheduled rule
+    """
+    try:
+        stack_name = '${this.stackName}'
+        region = '${this.region}'
+        
+        logger.info(f"🗑️ Auto-delete triggered for stack: {stack_name}")
+        
+        # Initialize CloudFormation client
+        cf_client = boto3.client('cloudformation', region_name=region)
+        
+        # Check if stack exists
+        try:
+            response = cf_client.describe_stacks(StackName=stack_name)
+            stack = response['Stacks'][0]
+            stack_status = stack['StackStatus']
+            creation_time = stack['CreationTime']
+            
+            logger.info(f"📊 Stack found - Status: {stack_status}, Created: {creation_time}")
+            
+        except cf_client.exceptions.ClientError as e:
+            if 'does not exist' in str(e):
+                logger.info(f"✅ Stack {stack_name} already deleted - nothing to do")
+                return {'statusCode': 200, 'body': 'Stack already deleted'}
+            else:
+                raise e
+        
+        # Check if stack is older than 7 days
+        now = datetime.now(creation_time.tzinfo)
+        age_days = (now - creation_time).days
+        
+        logger.info(f"📅 Stack age: {age_days} days")
+        
+        if age_days >= 7:
+            logger.info(f"🗑️ Stack is {age_days} days old - proceeding with deletion")
+            
+            # Delete the stack
+            cf_client.delete_stack(StackName=stack_name)
+            
+            logger.info(f"✅ Stack deletion initiated: {stack_name}")
+            
+            return {
+                'statusCode': 200,
+                'body': json.dumps({
+                    'message': f'Stack {stack_name} deletion initiated',
+                    'stack_age_days': age_days,
+                    'action': 'deleted'
+                })
+            }
+        else:
+            days_remaining = 7 - age_days
+            logger.info(f"⏳ Stack is only {age_days} days old - {days_remaining} days remaining")
+            
+            return {
+                'statusCode': 200,
+                'body': json.dumps({
+                    'message': f'Stack {stack_name} not old enough for deletion',
+                    'stack_age_days': age_days,
+                    'days_remaining': days_remaining,
+                    'action': 'skipped'
+                })
+            }
+            
+    except Exception as e:
+        logger.error(f"❌ Auto-delete failed: {str(e)}")
+        return {
+            'statusCode': 500,
+            'body': json.dumps({
+                'error': str(e),
+                'stack_name': stack_name
+            })
+        }
+`),
+      environment: {
+        STACK_NAME: this.stackName,
+        REGION: this.region
+      },
+      description: 'Auto-delete SnapMagic stack after 7 days'
+    });
+
+    // Grant permissions to delete CloudFormation stacks
+    autoDeleteLambda.addToRolePolicy(new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      actions: [
+        'cloudformation:DescribeStacks',
+        'cloudformation:DeleteStack',
+        'cloudformation:DescribeStackEvents',
+        'cloudformation:DescribeStackResources'
+      ],
+      resources: [
+        `arn:aws:cloudformation:${this.region}:${this.account}:stack/${this.stackName}/*`,
+        `arn:aws:cloudformation:${this.region}:${this.account}:stack/${this.stackName}`
+      ]
+    }));
+
+    // EventBridge rule to trigger auto-delete daily
+    const autoDeleteRule = new events.Rule(this, 'AutoDeleteRule', {
+      schedule: events.Schedule.rate(Duration.days(1)), // Check daily
+      description: 'Daily check to auto-delete SnapMagic stack after 7 days',
+      enabled: true
+    });
+
+    // Add Lambda as target
+    autoDeleteRule.addTarget(new targets.LambdaFunction(autoDeleteLambda));
 
     // Lambda function for SnapMagic AI backend
     const snapMagicLambda = new lambda.Function(this, 'SnapMagicAIFunction', {
@@ -390,6 +514,21 @@ frontend:
     new CfnOutput(this, 'VideoCleanupPolicy', {
       value: 'Videos deleted ONLY when CDK stack is destroyed (event ends)',
       description: 'Video Storage Cleanup Policy - No automatic deletion during event'
+    });
+
+    new CfnOutput(this, 'AutoDeletePolicy', {
+      value: `Stack will auto-delete after 7 days (${new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]})`,
+      description: '🗑️ IMPORTANT: Automatic stack deletion after 7 days'
+    });
+
+    new CfnOutput(this, 'AutoDeleteLambda', {
+      value: autoDeleteLambda.functionName,
+      description: 'Lambda function handling auto-deletion'
+    });
+
+    new CfnOutput(this, 'ManualDeleteCommand', {
+      value: `cdk destroy --force`,
+      description: '🛑 Run this command to delete stack manually before 7 days'
     });
 
     new CfnOutput(this, 'StackName', {

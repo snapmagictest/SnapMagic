@@ -214,6 +214,23 @@ curl -X POST https://your-api-url/api/transform-image \
 
 ## 🗑️ Clean Teardown
 
+### **🤖 Automatic Cleanup (NEW!)**
+**SnapMagic automatically deletes itself after 7 days to prevent forgotten costs:**
+
+```bash
+# Check auto-delete status
+./scripts/check-auto-delete.sh
+
+# Example output:
+# 📊 Stack: SnapMagic-dev
+# 📅 Created: 2025-06-26T10:00:00Z
+# ⏰ Age: 2 days
+# ✅ STATUS: Stack is active
+# 🗑️ Auto-delete in: 5 days
+# 📆 Auto-delete date: 2025-07-03
+```
+
+### **🛑 Manual Cleanup (Before 7 Days)**
 **Remove all AWS resources instantly:**
 ```bash
 cd infrastructure
