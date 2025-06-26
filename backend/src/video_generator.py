@@ -58,78 +58,93 @@ class VideoGenerator:
         
         return True, None
     
-    def get_video_status(self, invocation_id: str) -> Dict[str, Any]:
+    def get_video_status(self, invocation_arn: str) -> Dict[str, Any]:
         """
-        Check if video is ready in S3 and return it if available
+        Check video generation status using Bedrock get_async_invoke API
         
         Args:
-            invocation_id: The invocation ID from Nova Reel async call
+            invocation_arn: The full invocation ARN from Nova Reel async call
             
         Returns:
             Dictionary with video status and data if ready
         """
         try:
-            logger.info(f"🔍 Checking S3 for video: {invocation_id}")
+            logger.info(f"🔍 Checking video status via Bedrock API: {invocation_arn}")
             
-            # Check if video exists in S3
-            video_key = f"videos/{invocation_id}/output.mp4"
-            status_key = f"videos/{invocation_id}/video-generation-status.json"
+            # Use Bedrock API to check async job status
+            response = self.bedrock_runtime.get_async_invoke(
+                invocationArn=invocation_arn
+            )
             
-            try:
-                # Check if status file exists
-                status_response = self.s3_client.get_object(Bucket=self.video_bucket, Key=status_key)
-                status_data = json.loads(status_response['Body'].read().decode('utf-8'))
+            status = response.get('status', 'Unknown')
+            logger.info(f"📊 Bedrock async job status: {status}")
+            
+            if status == 'Completed':
+                # Video generation completed - now get the video from S3
+                logger.info("✅ Video generation completed, retrieving from S3...")
                 
-                logger.info(f"📄 Status file found: {status_data}")
+                # Extract invocation ID from ARN for S3 path
+                # ARN format: arn:aws:bedrock:region:account:async-invoke/invocation-id
+                invocation_id = invocation_arn.split('/')[-1]
+                video_key = f"videos/{invocation_id}/output.mp4"
                 
-                # Check if video generation was successful
-                if status_data.get('fullVideo', {}).get('status') == 'SUCCESS':
-                    # Video is ready, get the video file
-                    try:
-                        video_response = self.s3_client.get_object(Bucket=self.video_bucket, Key=video_key)
-                        video_data = video_response['Body'].read()
-                        
-                        # Convert to base64 for frontend
-                        import base64
-                        video_base64 = base64.b64encode(video_data).decode('utf-8')
-                        
-                        logger.info(f"✅ Video ready! Size: {len(video_data)} bytes")
-                        
-                        return {
-                            'success': True,
-                            'status': 'completed',
-                            'video_base64': video_base64,
-                            'video_size': len(video_data),
-                            'message': 'Video generation completed successfully'
-                        }
-                        
-                    except Exception as e:
-                        logger.error(f"❌ Error downloading video: {str(e)}")
-                        return {
-                            'success': False,
-                            'status': 'error',
-                            'message': f'Video file not accessible: {str(e)}'
-                        }
-                else:
-                    # Video generation failed
-                    logger.warning(f"❌ Video generation failed: {status_data}")
+                try:
+                    # Get the video file from S3
+                    video_response = self.s3_client.get_object(Bucket=self.video_bucket, Key=video_key)
+                    video_data = video_response['Body'].read()
+                    
+                    # Convert to base64 for frontend
+                    import base64
+                    video_base64 = base64.b64encode(video_data).decode('utf-8')
+                    
+                    logger.info(f"✅ Video retrieved! Size: {len(video_data)} bytes")
+                    
                     return {
-                        'success': False,
-                        'status': 'failed',
-                        'message': 'Video generation failed'
+                        'success': True,
+                        'status': 'completed',
+                        'video_base64': video_base64,
+                        'video_size': len(video_data),
+                        'message': 'Video generation completed successfully'
                     }
                     
-            except self.s3_client.exceptions.NoSuchKey:
-                # Status file doesn't exist yet - still processing
-                logger.info("⏳ Video still processing - status file not found")
+                except Exception as e:
+                    logger.error(f"❌ Error downloading completed video: {str(e)}")
+                    return {
+                        'success': False,
+                        'status': 'error',
+                        'message': f'Video completed but not accessible: {str(e)}'
+                    }
+                    
+            elif status == 'InProgress':
+                # Video is still being generated
+                logger.info("⏳ Video generation in progress...")
                 return {
                     'success': False,
                     'status': 'processing',
                     'message': 'Video is still being generated'
                 }
                 
+            elif status == 'Failed':
+                # Video generation failed
+                failure_message = response.get('failureMessage', 'Unknown failure')
+                logger.error(f"❌ Video generation failed: {failure_message}")
+                return {
+                    'success': False,
+                    'status': 'failed',
+                    'message': f'Video generation failed: {failure_message}'
+                }
+                
+            else:
+                # Unknown status
+                logger.warning(f"⚠️ Unknown video status: {status}")
+                return {
+                    'success': False,
+                    'status': 'unknown',
+                    'message': f'Unknown video status: {status}'
+                }
+                
         except Exception as e:
-            logger.error(f"❌ Error checking video status: {str(e)}")
+            logger.error(f"❌ Error checking video status via Bedrock API: {str(e)}")
             return {
                 'success': False,
                 'status': 'error',

@@ -167,16 +167,16 @@ def lambda_handler(event, context):
         # CHECK S3 FOR COMPLETED VIDEOS
         # ========================================
         elif action == 'get_video_status':
-            invocation_id = body.get('invocation_id', '')
+            invocation_arn = body.get('invocation_arn', '')
             
-            if not invocation_id:
-                logger.error("❌ Missing invocation_id parameter")
-                return create_error_response("Missing invocation_id parameter", 400)
+            if not invocation_arn:
+                logger.error("❌ Missing invocation_arn parameter")
+                return create_error_response("Missing invocation_arn parameter", 400)
             
             try:
-                # Check video status in S3
-                logger.info(f"🔍 Checking video status for: {invocation_id}")
-                result = video_generator.get_video_status(invocation_id)
+                # Check video status using Bedrock API
+                logger.info(f"🔍 Checking video status for ARN: {invocation_arn}")
+                result = video_generator.get_video_status(invocation_arn)
                 
                 if result['success']:
                     logger.info(f"✅ Video status check successful: {result.get('status')}")
@@ -186,7 +186,7 @@ def lambda_handler(event, context):
                         'video_base64': result.get('video_base64'),
                         'video_url': result.get('video_url'),
                         'message': result.get('message'),
-                        'invocation_id': invocation_id
+                        'invocation_arn': invocation_arn
                     })
                 else:
                     logger.info(f"⏳ Video not ready yet: {result.get('message')}")
@@ -194,7 +194,7 @@ def lambda_handler(event, context):
                         'success': True,
                         'status': 'processing',
                         'message': result.get('message', 'Video is still processing'),
-                        'invocation_id': invocation_id
+                        'invocation_arn': invocation_arn
                     })
                     
             except Exception as e:
