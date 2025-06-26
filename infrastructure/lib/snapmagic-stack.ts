@@ -320,7 +320,7 @@ def lambda_handler(event, context):
       role: lambdaRole,
       timeout: Duration.minutes(10),  // Increased for video generation
       memorySize: 2048,  // Increased for video processing
-      reservedConcurrentExecutions: 1000,  // Reserve full account limit for events
+      reservedConcurrentExecutions: 800,  // Reserve 800, leave 200 unreserved (AWS requires min 100)
       environment: {
         PYTHONPATH: '/var/task:/var/task/src',
         LOG_LEVEL: 'INFO',
