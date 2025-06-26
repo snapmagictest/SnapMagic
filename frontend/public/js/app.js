@@ -827,6 +827,12 @@ class SnapMagicApp {
         
         // Set video source and show container
         this.elements.resultVideo.src = videoSrc;
+        
+        // Add attributes to fix S3 video playback issues
+        this.elements.resultVideo.setAttribute('crossorigin', 'anonymous');
+        this.elements.resultVideo.setAttribute('preload', 'metadata');
+        this.elements.resultVideo.load(); // Force reload with new attributes
+        
         this.elements.videoResultContainer.classList.remove('hidden');
         
         // Hide video input section
