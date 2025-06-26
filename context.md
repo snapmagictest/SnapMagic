@@ -653,3 +653,104 @@ Provisioned Concurrency (Rejected):
 4. **Monitor Performance**: CloudWatch metrics for concurrent usage
 
 **Status**: 📋 Ready for implementation - will guarantee event capacity without additional costs
+## 🚨 IMPORTANT: Lambda Scaling Considerations
+
+### Single Lambda Strategy (Current Plan)
+**Current Approach**: Add all new features (Nova Reel, gesture rating, voice feedback) to existing Lambda
+- **Reserved Concurrency**: 1000 executions for single function
+- **Benefits**: Simplicity, cost-effective, shared resources
+- **Monitoring**: Watch for timeout, memory, or package size limits
+
+### ⚠️ CRITICAL NOTE: Concurrency Redistribution if Lambda Split Required
+
+**If we need to split into multiple Lambda functions, we MUST reconsider concurrency allocation:**
+
+```typescript
+// Current: Single Lambda gets all 1000
+reservedConcurrentExecutions: 1000
+
+// If split required: Distribute across functions
+const cardLambda = new Function(this, 'CardFunction', {
+  reservedConcurrentExecutions: 600,  // Primary card generation
+});
+
+const videoLambda = new Function(this, 'VideoFunction', {
+  reservedConcurrentExecutions: 300,  // Video processing (slower)
+});
+
+const ratingLambda = new Function(this, 'RatingFunction', {
+  reservedConcurrentExecutions: 100,  // Gesture/voice rating
+});
+// Total: 600 + 300 + 100 = 1000 (account limit)
+```
+
+### 📊 Concurrency Distribution Strategy (If Split Needed)
+**Primary Considerations:**
+- **Card Generation**: Highest priority (most event usage)
+- **Video Generation**: Lower concurrency (longer processing time)
+- **Rating Features**: Lowest concurrency (quick processing)
+
+**Distribution Ratios:**
+- **60%** (600) - Card generation (primary feature)
+- **30%** (300) - Video generation (resource intensive)
+- **10%** (100) - Rating features (lightweight)
+
+### 🎯 Decision Triggers for Lambda Split
+**Split into multiple Lambdas if:**
+- **Timeout**: Combined features exceed 15 minutes (Lambda max)
+- **Memory**: Combined features need > 10GB (Lambda max)
+- **Package Size**: Combined dependencies exceed 50MB (Lambda limit)
+- **Different Scaling**: Features have vastly different usage patterns
+
+**Status**: 📋 Single Lambda approach with concurrency redistribution plan documented for future scaling
+
+## 🚨 IMPORTANT: Lambda Scaling Considerations
+
+### Single Lambda Strategy (Current Plan)
+**Current Approach**: Add all new features (Nova Reel, gesture rating, voice feedback) to existing Lambda
+- **Reserved Concurrency**: 1000 executions for single function
+- **Benefits**: Simplicity, cost-effective, shared resources
+- **Monitoring**: Watch for timeout, memory, or package size limits
+
+### ⚠️ CRITICAL NOTE: Concurrency Redistribution if Lambda Split Required
+
+**If we need to split into multiple Lambda functions, we MUST reconsider concurrency allocation:**
+
+```typescript
+// Current: Single Lambda gets all 1000
+reservedConcurrentExecutions: 1000
+
+// If split required: Distribute across functions
+const cardLambda = new Function(this, 'CardFunction', {
+  reservedConcurrentExecutions: 600,  // Primary card generation
+});
+
+const videoLambda = new Function(this, 'VideoFunction', {
+  reservedConcurrentExecutions: 300,  // Video processing (slower)
+});
+
+const ratingLambda = new Function(this, 'RatingFunction', {
+  reservedConcurrentExecutions: 100,  // Gesture/voice rating
+});
+// Total: 600 + 300 + 100 = 1000 (account limit)
+```
+
+### 📊 Concurrency Distribution Strategy (If Split Needed)
+**Primary Considerations:**
+- **Card Generation**: Highest priority (most event usage)
+- **Video Generation**: Lower concurrency (longer processing time)  
+- **Rating Features**: Lowest concurrency (quick processing)
+
+**Distribution Ratios:**
+- **60%** (600) - Card generation (primary feature)
+- **30%** (300) - Video generation (resource intensive)
+- **10%** (100) - Rating features (lightweight)
+
+### 🎯 Decision Triggers for Lambda Split
+**Split into multiple Lambdas if:**
+- **Timeout**: Combined features exceed 15 minutes (Lambda max)
+- **Memory**: Combined features need > 10GB (Lambda max)
+- **Package Size**: Combined dependencies exceed 50MB (Lambda limit)
+- **Different Scaling**: Features have vastly different usage patterns
+
+**Status**: 📋 Single Lambda approach with concurrency redistribution plan documented
