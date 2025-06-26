@@ -659,7 +659,7 @@ class SnapMagicApp {
         try {
             // Get API base URL
             const apiBaseUrl = window.SNAPMAGIC_API_URL || 'https://jlnqp1gs21.execute-api.us-east-1.amazonaws.com/dev/';
-            const endpoint = `${apiBaseUrl}api/generate_video`;
+            const endpoint = `${apiBaseUrl}api/transform-card`;  // Same endpoint, different action
             
             console.log('🎯 Making video API call to:', endpoint);
             
