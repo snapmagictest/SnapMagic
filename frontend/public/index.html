@@ -616,9 +616,27 @@
             <div id="resultContainer" class="result-container hidden">
                 <h3 class="result-title">Your Amazing Trading Card!</h3>
                 <img id="resultImage" class="result-image" alt="Generated trading card" />
+                
+                <!-- Video Display (initially hidden) -->
+                <div id="videoContainer" class="video-container hidden">
+                    <h4 class="video-title">🎬 Animated Trading Card</h4>
+                    <video id="resultVideo" class="result-video" controls autoplay loop muted>
+                        Your browser does not support the video tag.
+                    </video>
+                </div>
+                
                 <div class="result-actions">
                     <button id="downloadBtn" class="download-btn">📥 Download Card</button>
+                    <button id="animateBtn" class="animate-btn">🎬 Animate Card</button>
+                    <button id="downloadVideoBtn" class="download-btn hidden">📹 Download Video</button>
                     <button id="newCardBtn" class="new-btn">🎴 Create New Card</button>
+                </div>
+                
+                <!-- Video Processing Status -->
+                <div id="videoProcessingStatus" class="processing-status hidden">
+                    <div class="spinner"></div>
+                    <div class="processing-text">Creating your animated card...</div>
+                    <div class="processing-subtext">This may take up to 60 seconds</div>
                 </div>
             </div>
         </main>

@@ -160,7 +160,7 @@ def lambda_handler(event, context):
         
         # ========================================
         # NEW: NOVA REEL VIDEO GENERATION
-        # ANIMATE TRADING CARDS
+        # ANIMATE TRADING CARDS WITH S3 STORAGE
         # ========================================
         elif action == 'generate_video':
             card_image = body.get('card_image', '')
@@ -168,6 +168,11 @@ def lambda_handler(event, context):
             
             if not card_image:
                 return create_error_response("Missing card_image parameter", 400)
+            
+            # Validate animation prompt
+            is_valid, error_msg = card_generator.validate_animation_prompt(animation_prompt)
+            if not is_valid:
+                return create_error_response(error_msg, 400)
             
             try:
                 # Generate video from trading card
@@ -177,11 +182,14 @@ def lambda_handler(event, context):
                     return create_success_response({
                         'success': True,
                         'message': 'Video generated successfully',
-                        'result': result['video_base64'],  # Base64 encoded video
+                        'result': result.get('video_base64'),  # Base64 for immediate use
+                        'video_url': result.get('video_url'),  # S3 URL for direct access
                         'metadata': {
+                            'video_id': result.get('video_id'),
                             'animation_prompt': animation_prompt,
-                            'duration': result.get('duration', '5 seconds'),
+                            'duration': result.get('duration', '6 seconds'),
                             'format': result.get('format', 'mp4'),
+                            'storage': result.get('storage', 'S3 with auto-cleanup'),
                             'generation_time': result.get('generation_time')
                         }
                     })

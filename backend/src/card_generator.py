@@ -8,6 +8,8 @@ import logging
 import boto3
 import base64
 import os
+import uuid
+from datetime import datetime
 from typing import Dict, Any, Optional
 
 logger = logging.getLogger()
@@ -18,6 +20,8 @@ class SnapMagicCardGenerator:
     def __init__(self, region: str = "us-east-1"):
         self.region = region
         self.bedrock_runtime = boto3.client('bedrock-runtime', region_name=region)
+        self.s3_client = boto3.client('s3', region_name=region)
+        self.video_bucket = os.environ.get('VIDEO_BUCKET_NAME')
         
         # Load template and mask files
         self.template_path = os.path.join(os.path.dirname(__file__), 'finalpink.png')
@@ -126,16 +130,22 @@ class SnapMagicCardGenerator:
     def generate_video_from_card(self, card_image_base64: str, animation_prompt: str = "Make this trading card come alive with subtle animation") -> Dict[str, Any]:
         """
         Generate video from trading card using Amazon Bedrock Nova Reel
+        Store video in S3 with automatic cleanup after 7 days
         
         Args:
             card_image_base64: Base64 encoded trading card image
             animation_prompt: Description of how to animate the card
             
         Returns:
-            Dictionary with success status and video data or error message
+            Dictionary with success status and video URL or error message
         """
         try:
             logger.info("🎬 Starting Nova Reel video generation...")
+            
+            # Generate unique video ID
+            video_id = str(uuid.uuid4())
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            video_key = f"videos/{timestamp}_{video_id}.mp4"
             
             # Prepare the request for Nova Reel
             request_body = {
@@ -174,15 +184,74 @@ class SnapMagicCardGenerator:
             if 'videoDataB64' in response_body:
                 video_base64 = response_body['videoDataB64']
                 
-                logger.info("🎥 Video generated successfully")
-                return {
-                    'success': True,
-                    'video_base64': video_base64,
-                    'duration': '6 seconds',
-                    'format': 'mp4',
-                    'generation_time': response_body.get('generationTime', 'Unknown'),
-                    'prompt_used': animation_prompt
-                }
+                # Store video in S3 with automatic cleanup
+                if self.video_bucket:
+                    try:
+                        # Decode base64 video for S3 storage
+                        video_bytes = base64.b64decode(video_base64)
+                        
+                        # Upload to S3 with metadata
+                        self.s3_client.put_object(
+                            Bucket=self.video_bucket,
+                            Key=video_key,
+                            Body=video_bytes,
+                            ContentType='video/mp4',
+                            Metadata={
+                                'video-id': video_id,
+                                'animation-prompt': animation_prompt[:100],  # Truncate for metadata
+                                'generated-at': timestamp,
+                                'auto-cleanup': '7-days'
+                            },
+                            # Add tags for better management
+                            Tagging=f'Purpose=EventVideo&AutoCleanup=7days&VideoId={video_id}'
+                        )
+                        
+                        # Generate presigned URL for frontend access (valid for 1 hour)
+                        video_url = self.s3_client.generate_presigned_url(
+                            'get_object',
+                            Params={'Bucket': self.video_bucket, 'Key': video_key},
+                            ExpiresIn=3600  # 1 hour
+                        )
+                        
+                        logger.info(f"🎥 Video stored in S3: {video_key}")
+                        
+                        return {
+                            'success': True,
+                            'video_url': video_url,  # Presigned URL for direct access
+                            'video_base64': video_base64,  # Also return base64 for immediate use
+                            'video_id': video_id,
+                            'duration': '6 seconds',
+                            'format': 'mp4',
+                            'storage': 'S3 with 7-day auto-cleanup',
+                            'generation_time': response_body.get('generationTime', 'Unknown'),
+                            'prompt_used': animation_prompt
+                        }
+                    except Exception as s3_error:
+                        logger.warning(f"S3 storage failed, returning base64 only: {str(s3_error)}")
+                        # Fallback to base64 only if S3 fails
+                        return {
+                            'success': True,
+                            'video_base64': video_base64,
+                            'video_id': video_id,
+                            'duration': '6 seconds',
+                            'format': 'mp4',
+                            'storage': 'Base64 only (S3 unavailable)',
+                            'generation_time': response_body.get('generationTime', 'Unknown'),
+                            'prompt_used': animation_prompt
+                        }
+                else:
+                    # No S3 bucket configured, return base64 only
+                    logger.info("🎥 Video generated (base64 only - no S3 bucket)")
+                    return {
+                        'success': True,
+                        'video_base64': video_base64,
+                        'video_id': video_id,
+                        'duration': '6 seconds',
+                        'format': 'mp4',
+                        'storage': 'Base64 only',
+                        'generation_time': response_body.get('generationTime', 'Unknown'),
+                        'prompt_used': animation_prompt
+                    }
             else:
                 logger.error("No video data in Nova Reel response")
                 return {

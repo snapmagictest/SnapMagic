@@ -1,5 +1,5 @@
-import { Stack, StackProps, CfnOutput, Tags, Duration, CfnResource, CustomResource } from 'aws-cdk-lib';
-import { aws_amplify as amplify, aws_lambda as lambda, aws_apigateway as apigateway, aws_iam as iam } from 'aws-cdk-lib';
+import { Stack, StackProps, CfnOutput, Tags, Duration, CfnResource, CustomResource, RemovalPolicy } from 'aws-cdk-lib';
+import { aws_amplify as amplify, aws_lambda as lambda, aws_apigateway as apigateway, aws_iam as iam, aws_s3 as s3 } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { DeploymentInputs } from './deployment-inputs';
 import * as path from 'path';
@@ -130,6 +130,23 @@ frontend:
             })
           ]
         }),
+        S3VideoAccess: new iam.PolicyDocument({
+          statements: [
+            new iam.PolicyStatement({
+              effect: iam.Effect.ALLOW,
+              actions: [
+                's3:PutObject',
+                's3:GetObject',
+                's3:DeleteObject',
+                's3:ListBucket'
+              ],
+              resources: [
+                videoBucket.bucketArn,
+                `${videoBucket.bucketArn}/*`
+              ]
+            })
+          ]
+        }),
         TranscribeAccess: new iam.PolicyDocument({
           statements: [
             new iam.PolicyStatement({
@@ -144,6 +161,51 @@ frontend:
           ]
         })
       }
+    });
+
+    // ========================================
+    // S3 BUCKET FOR VIDEO STORAGE WITH AUTO-CLEANUP
+    // ========================================
+    const videoBucket = new s3.Bucket(this, 'SnapMagicVideoBucket', {
+      bucketName: `snapmagic-videos-${props.environment}-${this.account}`,
+      
+      // 🗑️ AUTOMATIC CLEANUP: Delete all videos after event
+      lifecycleRules: [
+        {
+          id: 'DeleteVideosAfterEvent',
+          enabled: true,
+          expiration: Duration.days(7),  // Delete videos after 7 days
+          abortIncompleteMultipartUploadsAfter: Duration.days(1)
+        },
+        {
+          id: 'TransitionToIA',
+          enabled: true,
+          transitions: [
+            {
+              storageClass: s3.StorageClass.INFREQUENT_ACCESS,
+              transitionAfter: Duration.days(1)  // Move to cheaper storage after 1 day
+            }
+          ]
+        }
+      ],
+      
+      // 🔒 SECURITY SETTINGS
+      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+      encryption: s3.BucketEncryption.S3_MANAGED,
+      
+      // 🗑️ COMPLETE CLEANUP: Remove bucket when stack is destroyed
+      removalPolicy: RemovalPolicy.DESTROY,
+      autoDeleteObjects: true,
+      
+      // 📊 MONITORING
+      eventBridgeEnabled: true,
+      
+      // 🏷️ TAGGING
+      tags: [
+        { key: 'Purpose', value: 'Event-Video-Storage' },
+        { key: 'AutoCleanup', value: '7-days' },
+        { key: 'Environment', value: props.environment }
+      ]
     });
 
     // Lambda function for SnapMagic AI backend
@@ -161,7 +223,9 @@ frontend:
         PYTHONPATH: '/var/task:/var/task/src',
         LOG_LEVEL: 'INFO',
         EVENT_USERNAME: inputs.basicAuthUsername || 'demo',
-        EVENT_PASSWORD: inputs.basicAuthPassword || 'demo'
+        EVENT_PASSWORD: inputs.basicAuthPassword || 'demo',
+        VIDEO_BUCKET_NAME: videoBucket.bucketName,
+        AWS_REGION: this.region
       },
       description: 'SnapMagic AI backend - Trading Cards & Video Generation'
     });
@@ -335,6 +399,17 @@ frontend:
     new CfnOutput(this, 'LambdaFunctionName', {
       value: snapMagicLambda.functionName,
       description: 'SnapMagic AI Lambda Function Name'
+    });
+
+    new CfnOutput(this, 'VideoBucketName', {
+      value: videoBucket.bucketName,
+      description: 'S3 Bucket for Video Storage (Auto-cleanup after 7 days)',
+      exportName: `SnapMagic-${props.environment}-VideoBucket`
+    });
+
+    new CfnOutput(this, 'VideoCleanupPolicy', {
+      value: '7 days automatic deletion + bucket removal on stack destroy',
+      description: 'Video Storage Cleanup Policy'
     });
 
     new CfnOutput(this, 'StackName', {
