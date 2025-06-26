@@ -128,14 +128,15 @@ frontend:
               actions: [
                 'bedrock:InvokeModel',
                 'bedrock:InvokeModelWithResponseStream',
+                'bedrock:StartAsyncInvoke',  // Required for Nova Reel async API
+                'bedrock:GetAsyncInvoke',    // To check async job status
                 'bedrock:ListFoundationModels',
                 'bedrock:GetFoundationModel'
               ],
               resources: [
                 `arn:aws:bedrock:${this.region}::foundation-model/amazon.nova-canvas-v1:0`,
-                `arn:aws:bedrock:${this.region}::foundation-model/amazon.nova-reel-v1:0`,
-                `arn:aws:bedrock:${this.region}::foundation-model/amazon.titan-image-generator-v2:0`,
-                `arn:aws:bedrock:${this.region}::foundation-model/us.anthropic.claude-3-7-sonnet-20250219-v1:0`
+                `arn:aws:bedrock:${this.region}::foundation-model/amazon.nova-reel-v1:1`,  // Correct model ID
+                `arn:aws:bedrock:${this.region}:${this.account}:async-invoke/*`  // Required for StartAsyncInvoke
               ]
             })
           ]

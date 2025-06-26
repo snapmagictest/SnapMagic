@@ -151,12 +151,9 @@ def lambda_handler(event, context):
                     return create_success_response({
                         'success': True,
                         'message': 'Trading card generated successfully',
-                        'result': result['image_base64'],  # Frontend expects result to be the base64 image
-                        'metadata': {
-                            'prompt_used': result.get('prompt_used'),
-                            'coordinates': result.get('coordinates'),
-                            'method': result.get('method')
-                        }
+                        'result': result['result'],  # Base64 image data
+                        'imageSrc': result.get('imageSrc'),  # Data URL for frontend
+                        'metadata': result.get('metadata', {})
                     })
                 else:
                     return create_error_response(f"Generation failed: {result.get('error', 'Unknown error')}", 500)
