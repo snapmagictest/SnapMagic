@@ -200,10 +200,10 @@ class SnapMagicCardGenerator:
                                 'video-id': video_id,
                                 'animation-prompt': animation_prompt[:100],  # Truncate for metadata
                                 'generated-at': timestamp,
-                                'auto-cleanup': '7-days'
+                                'cleanup': 'cdk-destroy-only'
                             },
                             # Add tags for better management
-                            Tagging=f'Purpose=EventVideo&AutoCleanup=7days&VideoId={video_id}'
+                            Tagging=f'Purpose=EventVideo&Cleanup=CDKDestroy&VideoId={video_id}'
                         )
                         
                         # Generate presigned URL for frontend access (valid for 1 hour)
@@ -222,7 +222,7 @@ class SnapMagicCardGenerator:
                             'video_id': video_id,
                             'duration': '6 seconds',
                             'format': 'mp4',
-                            'storage': 'S3 with 7-day auto-cleanup',
+                            'storage': 'S3 with CDK cleanup (event end only)',
                             'generation_time': response_body.get('generationTime', 'Unknown'),
                             'prompt_used': animation_prompt
                         }

@@ -164,38 +164,18 @@ frontend:
     });
 
     // ========================================
-    // S3 BUCKET FOR VIDEO STORAGE WITH AUTO-CLEANUP
+    // S3 BUCKET FOR VIDEO STORAGE WITH CDK CLEANUP ONLY
     // ========================================
     const videoBucket = new s3.Bucket(this, 'SnapMagicVideoBucket', {
       bucketName: `snapmagic-videos-${props.environment}-${this.account}`,
       
-      // 🗑️ AUTOMATIC CLEANUP: Delete all videos after event
-      lifecycleRules: [
-        {
-          id: 'DeleteVideosAfterEvent',
-          enabled: true,
-          expiration: Duration.days(7),  // Delete videos after 7 days
-          abortIncompleteMultipartUploadsAfter: Duration.days(1)
-        },
-        {
-          id: 'TransitionToIA',
-          enabled: true,
-          transitions: [
-            {
-              storageClass: s3.StorageClass.INFREQUENT_ACCESS,
-              transitionAfter: Duration.days(1)  // Move to cheaper storage after 1 day
-            }
-          ]
-        }
-      ],
+      // 🗑️ CLEANUP ONLY WHEN EVENT ENDS (CDK DESTROY)
+      removalPolicy: RemovalPolicy.DESTROY,
+      autoDeleteObjects: true,  // Removes all videos when stack is destroyed
       
       // 🔒 SECURITY SETTINGS
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
       encryption: s3.BucketEncryption.S3_MANAGED,
-      
-      // 🗑️ COMPLETE CLEANUP: Remove bucket when stack is destroyed
-      removalPolicy: RemovalPolicy.DESTROY,
-      autoDeleteObjects: true,
       
       // 📊 MONITORING
       eventBridgeEnabled: true,
@@ -203,7 +183,7 @@ frontend:
       // 🏷️ TAGGING
       tags: [
         { key: 'Purpose', value: 'Event-Video-Storage' },
-        { key: 'AutoCleanup', value: '7-days' },
+        { key: 'Cleanup', value: 'CDK-Destroy-Only' },
         { key: 'Environment', value: props.environment }
       ]
     });
@@ -408,8 +388,8 @@ frontend:
     });
 
     new CfnOutput(this, 'VideoCleanupPolicy', {
-      value: '7 days automatic deletion + bucket removal on stack destroy',
-      description: 'Video Storage Cleanup Policy'
+      value: 'Videos deleted ONLY when CDK stack is destroyed (event ends)',
+      description: 'Video Storage Cleanup Policy - No automatic deletion during event'
     });
 
     new CfnOutput(this, 'StackName', {

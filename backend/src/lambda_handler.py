@@ -189,7 +189,7 @@ def lambda_handler(event, context):
                             'animation_prompt': animation_prompt,
                             'duration': result.get('duration', '6 seconds'),
                             'format': result.get('format', 'mp4'),
-                            'storage': result.get('storage', 'S3 with auto-cleanup'),
+                            'storage': result.get('storage', 'S3 with CDK cleanup'),
                             'generation_time': result.get('generation_time')
                         }
                     })
