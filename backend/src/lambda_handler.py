@@ -67,10 +67,12 @@ def lambda_handler(event, context):
         if '/api/login' in request_path:
             action = 'login'
         elif '/api/transform-card' in request_path:
-            # Check body for specific action (card generation vs video generation)
+            # Check body for specific action (card generation vs video generation vs video status)
             body_action = body.get('action', '').lower()
             if body_action == 'generate_video':
                 action = 'generate_video'
+            elif body_action == 'get_video_status':
+                action = 'get_video_status'
             else:
                 action = 'transform_card'  # Default to card generation
         elif '/api/transform-image' in request_path:  # Keep old endpoint for compatibility
