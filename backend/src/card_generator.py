@@ -169,19 +169,35 @@ class SnapMagicCardGenerator:
                 }
             }
             
-            # Call Nova Reel
-            logger.info("📡 Calling Amazon Bedrock Nova Reel...")
-            response = self.bedrock_runtime.invoke_model(
-                modelId='amazon.nova-reel-v1:0',
-                body=json.dumps(request_body),
-                contentType='application/json'
+            # Call Nova Reel with ASYNC API (Nova Reel doesn't support sync InvokeModel)
+            logger.info("📡 Calling Amazon Bedrock Nova Reel with StartAsyncInvoke...")
+            response = self.bedrock_runtime.start_async_invoke(
+                modelId='amazon.nova-reel-v1:1',  # Correct model ID
+                modelInput=json.dumps(request_body),
+                outputDataConfig={
+                    's3OutputDataConfig': {
+                        's3Uri': f's3://{video_bucket_name}/videos/'
+                    }
+                }
             )
             
-            # Parse response
-            response_body = json.loads(response['body'].read())
-            logger.info("✅ Nova Reel response received")
+            # Parse async response
+            invocation_arn = response.get('invocationArn', '')
+            logger.info(f"📡 Nova Reel async job started: {invocation_arn}")
             
-            if 'videoDataB64' in response_body:
+            # For now, return a placeholder response since Nova Reel is async
+            # In production, you'd poll for completion or use webhooks
+            return {
+                'success': True,
+                'video_id': video_id,
+                'invocation_arn': invocation_arn,
+                'message': 'Video generation started - this is async processing',
+                'status': 'processing',
+                'estimated_time': '30-60 seconds',
+                'video_base64': None,  # Not available immediately with async
+                'video_url': None,     # Will be available when processing completes
+                'timestamp': datetime.now().isoformat()
+            }
                 video_base64 = response_body['videoDataB64']
                 
                 # Store video in S3 with automatic cleanup
