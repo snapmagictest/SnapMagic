@@ -1,6 +1,7 @@
 """
 Amazon Nova Reel Video Generation Module
 Handles video generation from trading cards using Amazon Bedrock Nova Reel
+Updated: 2025-06-26 - Fixed method definitions and transparency handling
 """
 
 import json
