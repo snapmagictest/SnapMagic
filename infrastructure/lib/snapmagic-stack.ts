@@ -154,8 +154,8 @@ frontend:
         exclude: ['*.md', '__pycache__', '*.pyc', 'test_*', 'run_local.py', 'README.md']
       }),
       role: lambdaRole,
-      timeout: Duration.minutes(5),
-      memorySize: 1024,
+      timeout: Duration.minutes(10),  // Increased for video generation
+      memorySize: 2048,  // Increased for video processing
       reservedConcurrentExecutions: 1000,  // Reserve full account limit for events
       environment: {
         PYTHONPATH: '/var/task:/var/task/src',
@@ -163,7 +163,7 @@ frontend:
         EVENT_USERNAME: inputs.basicAuthUsername || 'demo',
         EVENT_PASSWORD: inputs.basicAuthPassword || 'demo'
       },
-      description: 'SnapMagic AI backend using Strands Agents'
+      description: 'SnapMagic AI backend - Trading Cards & Video Generation'
     });
 
     // API Gateway for REST API

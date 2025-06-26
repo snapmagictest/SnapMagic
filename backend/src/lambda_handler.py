@@ -159,16 +159,50 @@ def lambda_handler(event, context):
                 return create_error_response(f"Card generation failed: {str(e)}", 500)
         
         # ========================================
+        # NEW: NOVA REEL VIDEO GENERATION
+        # ANIMATE TRADING CARDS
+        # ========================================
+        elif action == 'generate_video':
+            card_image = body.get('card_image', '')
+            animation_prompt = body.get('animation_prompt', 'Make this trading card come alive with subtle animation')
+            
+            if not card_image:
+                return create_error_response("Missing card_image parameter", 400)
+            
+            try:
+                # Generate video from trading card
+                result = card_generator.generate_video_from_card(card_image, animation_prompt)
+                
+                if result['success']:
+                    return create_success_response({
+                        'success': True,
+                        'message': 'Video generated successfully',
+                        'result': result['video_base64'],  # Base64 encoded video
+                        'metadata': {
+                            'animation_prompt': animation_prompt,
+                            'duration': result.get('duration', '5 seconds'),
+                            'format': result.get('format', 'mp4'),
+                            'generation_time': result.get('generation_time')
+                        }
+                    })
+                else:
+                    return create_error_response(result.get('error', 'Video generation failed'), 500)
+                    
+            except Exception as e:
+                logger.error(f"Video generation error: {str(e)}")
+                return create_error_response(f"Video generation failed: {str(e)}", 500)
+        
+        # ========================================
         # HEALTH CHECK ENDPOINT
         # UPDATED FOR CARD GENERATION
         # ========================================
         elif action == 'health':
             return create_success_response({
                 'status': 'healthy',
-                'service': 'SnapMagic Trading Card Generator',
-                'version': '3.0',
-                'features': ['trading_cards', 'exact_coordinate_masking'],
-                'timestamp': '2025-06-25T21:00:00Z'
+                'service': 'SnapMagic AI - Trading Cards & Videos',
+                'version': '4.0',
+                'features': ['trading_cards', 'video_generation', 'exact_coordinate_masking', 'nova_reel'],
+                'timestamp': '2025-06-26T09:00:00Z'
             })
         
         else:
