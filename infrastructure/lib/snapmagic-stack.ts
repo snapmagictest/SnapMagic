@@ -156,6 +156,7 @@ frontend:
       role: lambdaRole,
       timeout: Duration.minutes(5),
       memorySize: 1024,
+      reservedConcurrentExecutions: 1000,  // Reserve full account limit for events
       environment: {
         PYTHONPATH: '/var/task:/var/task/src',
         LOG_LEVEL: 'INFO',
