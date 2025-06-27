@@ -347,10 +347,13 @@ class SnapMagicApp {
             const apiBaseUrl = window.SNAPMAGIC_CONFIG.API_URL;
             const endpoint = `${apiBaseUrl}api/transform-card`;
             
+            // Convert card image to letterboxed JPEG format for video generation
+            const letterboxedImage = await this.letterboxCardForVideo(this.generatedCardData.result);
+            
             const requestBody = {
                 action: 'generate_video',
-                animation_prompt: animationPrompt,
-                card_image: this.generatedCardData.result
+                card_image: letterboxedImage,  // Send JPEG letterboxed 1280x720 image (no transparency)
+                animation_prompt: animationPrompt
             };
             
             const response = await fetch(endpoint, {
@@ -381,6 +384,74 @@ class SnapMagicApp {
         } finally {
             this.elements.generateVideoBtn.disabled = false;
         }
+    }
+
+    /**
+     * Letterbox trading card image to 1280x720 for Nova Reel
+     * Places card centered on black background as JPEG (no transparency)
+     */
+    async letterboxCardForVideo(cardImageBase64) {
+        return new Promise((resolve, reject) => {
+            try {
+                console.log('📐 Starting letterboxing for Nova Reel...');
+                
+                // Create canvas for letterboxing
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                
+                // Set Nova Reel required dimensions
+                canvas.width = 1280;
+                canvas.height = 720;
+                
+                // Fill with solid black background
+                ctx.fillStyle = '#000000';
+                ctx.fillRect(0, 0, 1280, 720);
+                
+                // Load the card image
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+                
+                img.onload = function() {
+                    console.log(`📏 Original card: ${img.width}x${img.height}`);
+                    
+                    // Calculate scaling to fit within 1280x720 while maintaining aspect ratio
+                    const scale = Math.min(1280 / img.width, 720 / img.height);
+                    const newWidth = img.width * scale;
+                    const newHeight = img.height * scale;
+                    
+                    // Center the card
+                    const x = (1280 - newWidth) / 2;
+                    const y = (720 - newHeight) / 2;
+                    
+                    console.log(`📐 Scaled card: ${newWidth.toFixed(0)}x${newHeight.toFixed(0)} at (${x.toFixed(0)}, ${y.toFixed(0)})`);
+                    
+                    // Draw the card on black background
+                    ctx.drawImage(img, x, y, newWidth, newHeight);
+                    
+                    // CRITICAL: Use JPEG format to guarantee no transparency
+                    const letterboxedBase64 = canvas.toDataURL('image/jpeg', 1.0).split(',')[1];
+                    
+                    console.log('✅ Letterboxing complete: 1280x720 JPEG on black background (no transparency possible)');
+                    console.log(`📊 Base64 length: ${letterboxedBase64.length} characters`);
+                    resolve(letterboxedBase64);
+                };
+                
+                img.onerror = function() {
+                    console.error('❌ Failed to load card image for letterboxing');
+                    reject(new Error('Failed to load card image'));
+                };
+                
+                // Set image source (add data URL prefix if needed)
+                const imageData = cardImageBase64.startsWith('data:image/') 
+                    ? cardImageBase64 
+                    : `data:image/png;base64,${cardImageBase64}`;
+                img.src = imageData;
+                
+            } catch (error) {
+                console.error('❌ Letterboxing error:', error);
+                reject(error);
+            }
+        });
     }
 
     async pollVideoStatus(videoId) {
