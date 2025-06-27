@@ -505,7 +505,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
   
   <br><br>
   
-  <em>SnapMagic: Where AI meets creativity, and $0.49 creates unforgettable experiences.</em>
+  <em>SnapMagic: AI-powered trading card generation for AWS events and communities.</em>
   
   <br><br>
   
