@@ -524,7 +524,7 @@ class SnapMagicApp {
             const result = await response.json();
             console.log('📊 Video status response:', result);
 
-            if (result.success && result.status === 'SUCCEEDED' && result.video_url) {
+            if (result.success && (result.status === 'SUCCEEDED' || result.status === 'completed') && result.video_url) {
                 console.log('✅ Video generation completed successfully!');
                 this.hideProcessing();
                 this.displayGeneratedVideo(result.video_url);
@@ -581,10 +581,28 @@ class SnapMagicApp {
     }
 
     displayGeneratedVideo(videoUrl) {
-        this.elements.videoSource.src = videoUrl;
+        console.log('🎥 Displaying video result...');
+        
+        // Set video source (prefer URL for better performance)
+        let videoSrc;
+        if (videoUrl) {
+            videoSrc = videoUrl;
+            console.log('🔗 Using S3 video URL');
+        } else {
+            console.error('❌ No video URL available');
+            this.showError('Error: No video data received');
+            return;
+        }
+        
+        // Set video source and show result container
+        this.elements.videoSource.src = videoSrc;
         this.elements.videoPlayer.load();
+        
+        // Hide controls, show result
         this.elements.videoControls.classList.add('hidden');
         this.elements.videoResult.classList.remove('hidden');
+        
+        console.log('✅ Video displayed successfully');
     }
 
     handleDownloadVideo() {
