@@ -1,114 +1,229 @@
 """
-Simple authentication module for SnapMagic without JWT dependencies
-For testing basic authentication flow
+SnapMagic Simple Authentication Module
+Lightweight authentication system for AWS Summit events without external JWT dependencies
 """
 
 import json
 import logging
+import os
 from datetime import datetime, timedelta, timezone
 from typing import Dict, Any, Optional, Tuple
 import secrets
-import hashlib
 import base64
 
+# Configure logging
 logger = logging.getLogger(__name__)
 
-class SnapMagicAuthSimple:
-    """Simple authentication handler for SnapMagic events without JWT"""
+class SnapMagicAuthenticationHandler:
+    """
+    Simple authentication handler for SnapMagic trading card events
+    
+    Provides basic token-based authentication suitable for AWS Summit demonstrations
+    without requiring external JWT libraries or complex authentication infrastructure.
+    """
+    
+    # Class constants
+    EVENT_IDENTIFIER = 'snapmagic-trading-cards'
+    TOKEN_EXPIRY_HOURS = 24
+    SESSION_ID_LENGTH = 16
     
     def __init__(self):
-        # Get credentials from environment variables (set by CDK deployment)
-        import os
-        username = os.environ.get('SNAPMAGIC_USERNAME', 'demo')
-        password = os.environ.get('SNAPMAGIC_PASSWORD', 'demo')
+        """
+        Initialize authentication handler with event credentials
         
-        self.valid_credentials = {
-            username: password
+        Credentials are loaded from environment variables set by CDK deployment
+        """
+        # Load event credentials from environment variables
+        self.event_username = os.environ.get('SNAPMAGIC_USERNAME', 'demo')
+        self.event_password = os.environ.get('SNAPMAGIC_PASSWORD', 'demo')
+        
+        # Store valid credentials for validation
+        self.valid_event_credentials = {
+            self.event_username: self.event_password
         }
-    
-    def validate_login(self, username: str, password: str) -> bool:
-        """Validate login credentials"""
-        return (username in self.valid_credentials and 
-                self.valid_credentials[username] == password)
-    
-    def generate_token(self, username: str, session_id: str = None) -> str:
-        """Generate simple token (base64 encoded data for testing)"""
-        if not session_id:
-            session_id = secrets.token_urlsafe(16)
         
-        # Simple token payload (not secure, just for testing)
-        payload = {
+        logger.info(f"🔐 SnapMagicAuthenticationHandler initialized for user: {self.event_username}")
+    
+    def validate_login_credentials(self, username: str, password: str) -> bool:
+        """
+        Validate user login credentials against event credentials
+        
+        Args:
+            username: Provided username
+            password: Provided password
+            
+        Returns:
+            True if credentials are valid, False otherwise
+        """
+        is_valid = (username in self.valid_event_credentials and 
+                   self.valid_event_credentials[username] == password)
+        
+        if is_valid:
+            logger.info(f"✅ Login credentials validated for user: {username}")
+        else:
+            logger.warning(f"❌ Invalid login credentials for user: {username}")
+            
+        return is_valid
+    
+    def generate_token(self, username: str, session_id: Optional[str] = None) -> str:
+        """
+        Generate authentication token for validated user
+        
+        Args:
+            username: Authenticated username
+            session_id: Optional session identifier (generated if not provided)
+            
+        Returns:
+            Base64 encoded authentication token
+        """
+        if not session_id:
+            session_id = secrets.token_urlsafe(self.SESSION_ID_LENGTH)
+        
+        # Create token payload with user and session information
+        current_time = datetime.now(timezone.utc)
+        expiry_time = current_time + timedelta(hours=self.TOKEN_EXPIRY_HOURS)
+        
+        token_payload = {
             'username': username,
             'session_id': session_id,
-            'event': 'snapmagic-summit',
-            'timestamp': datetime.now(timezone.utc).isoformat(),
-            'expires': (datetime.now(timezone.utc) + timedelta(hours=24)).isoformat()
+            'event': self.EVENT_IDENTIFIER,
+            'issued_at': current_time.isoformat(),
+            'expires_at': expiry_time.isoformat(),
+            'permissions': ['card_generation', 'video_animation']
         }
         
-        # Base64 encode the payload (NOT SECURE - just for testing)
-        token_data = json.dumps(payload)
-        token = base64.b64encode(token_data.encode()).decode()
+        # Encode token payload as base64 (simple encoding for demo purposes)
+        token_json = json.dumps(token_payload)
+        encoded_token = base64.b64encode(token_json.encode()).decode()
         
-        logger.info(f"Generated simple token for user: {username}, session: {session_id}")
-        return token
+        logger.info(f"🎫 Generated authentication token for user: {username}, session: {session_id}")
+        return encoded_token
     
-    def validate_token(self, token: str) -> Tuple[bool, Optional[Dict[str, Any]]]:
-        """Validate simple token"""
+    def validate_token(self, auth_token: str) -> Tuple[bool, Optional[Dict[str, Any]]]:
+        """
+        Validate authentication token and extract payload
+        
+        Args:
+            auth_token: Base64 encoded authentication token
+            
+        Returns:
+            Tuple of (is_valid, token_payload)
+        """
         try:
             # Decode base64 token
-            token_data = base64.b64decode(token.encode()).decode()
-            payload = json.loads(token_data)
+            token_json = base64.b64decode(auth_token.encode()).decode()
+            token_payload = json.loads(token_json)
             
-            # Check expiry
-            expires = datetime.fromisoformat(payload.get('expires', ''))
-            if datetime.now(timezone.utc) > expires:
-                logger.warning("Token has expired")
+            # Validate token expiry
+            expiry_time = datetime.fromisoformat(token_payload.get('expires_at', ''))
+            current_time = datetime.now(timezone.utc)
+            
+            if current_time > expiry_time:
+                logger.warning("❌ Authentication token has expired")
                 return False, None
             
-            # Additional validation
-            if payload.get('event') != 'snapmagic-summit':
-                logger.warning("Invalid event in token")
+            # Validate event identifier
+            if token_payload.get('event') != self.EVENT_IDENTIFIER:
+                logger.warning("❌ Invalid event identifier in token")
                 return False, None
             
-            logger.info(f"Valid token for user: {payload.get('username')}")
-            return True, payload
+            # Validate username exists in valid credentials
+            username = token_payload.get('username', '')
+            if username not in self.valid_event_credentials:
+                logger.warning(f"❌ Invalid username in token: {username}")
+                return False, None
+            
+            logger.info(f"✅ Valid authentication token for user: {username}")
+            return True, token_payload
             
         except Exception as e:
-            logger.warning(f"Token validation error: {str(e)}")
+            logger.warning(f"❌ Token validation error: {str(e)}")
             return False, None
     
-    def extract_token_from_headers(self, headers: Dict[str, str]) -> Optional[str]:
-        """Extract token from request headers"""
-        # Check Authorization header
-        auth_header = headers.get('Authorization') or headers.get('authorization')
+    def extract_token_from_headers(self, request_headers: Dict[str, str]) -> Optional[str]:
+        """
+        Extract authentication token from HTTP request headers
+        
+        Args:
+            request_headers: HTTP request headers dictionary
+            
+        Returns:
+            Authentication token string or None if not found
+        """
+        # Check Authorization header with Bearer format
+        auth_header = request_headers.get('Authorization') or request_headers.get('authorization')
         if auth_header and auth_header.startswith('Bearer '):
             return auth_header[7:]  # Remove 'Bearer ' prefix
         
-        # Check X-Auth-Token header as fallback
-        return headers.get('X-Auth-Token') or headers.get('x-auth-token')
+        # Check X-Auth-Token header as alternative
+        return request_headers.get('X-Auth-Token') or request_headers.get('x-auth-token')
     
-    def create_auth_response(self, success: bool, message: str, token: str = None, 
-                           status_code: int = 200) -> Dict[str, Any]:
-        """Create standardized authentication response"""
-        response_body = {
+    def create_authentication_response(self, success: bool, message: str, 
+                                     auth_token: Optional[str] = None, 
+                                     username: Optional[str] = None,
+                                     status_code: int = 200) -> Dict[str, Any]:
+        """
+        Create standardized authentication response
+        
+        Args:
+            success: Whether authentication was successful
+            message: Response message
+            auth_token: Authentication token (if successful)
+            username: Authenticated username (if successful)
+            status_code: HTTP status code
+            
+        Returns:
+            Standardized authentication response dictionary
+        """
+        response_data = {
             'success': success,
             'message': message
         }
         
-        if token:
-            response_body['token'] = token
-            response_body['expires_in'] = 24 * 3600  # 24 hours in seconds
+        if success and auth_token:
+            response_data.update({
+                'token': auth_token,
+                'expires_in': self.TOKEN_EXPIRY_HOURS * 3600,  # Convert to seconds
+                'user': {'username': username} if username else None
+            })
         
         return {
             'statusCode': status_code,
             'headers': {
-                'Content-Type': 'application/json',
                 'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Methods': 'POST, OPTIONS',
-                'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Auth-Token'
+                'Access-Control-Allow-Headers': 'Content-Type,Authorization,X-Auth-Token',
+                'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
+                'Content-Type': 'application/json'
             },
-            'body': json.dumps(response_body)
+            'body': json.dumps(response_data)
         }
+    
+    def get_token_info(self, auth_token: str) -> Optional[Dict[str, Any]]:
+        """
+        Get information from authentication token without full validation
+        
+        Args:
+            auth_token: Authentication token
+            
+        Returns:
+            Token information dictionary or None if invalid
+        """
+        try:
+            token_json = base64.b64decode(auth_token.encode()).decode()
+            token_payload = json.loads(token_json)
+            
+            return {
+                'username': token_payload.get('username'),
+                'session_id': token_payload.get('session_id'),
+                'issued_at': token_payload.get('issued_at'),
+                'expires_at': token_payload.get('expires_at'),
+                'permissions': token_payload.get('permissions', [])
+            }
+            
+        except Exception as e:
+            logger.warning(f"❌ Error extracting token info: {str(e)}")
+            return None
 
-# Global auth instance
-auth = SnapMagicAuthSimple()
+
+# Maintain backward compatibility with old class name
+SnapMagicAuthSimple = SnapMagicAuthenticationHandler

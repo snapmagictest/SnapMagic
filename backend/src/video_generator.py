@@ -1,7 +1,6 @@
 """
-Amazon Nova Reel Video Generation Module
-Handles video generation from trading cards using Amazon Bedrock Nova Reel
-Updated: 2025-06-26 - Fixed method definitions and transparency handling
+SnapMagic Trading Card Video Animation Generator
+AI-powered video animation generation using Amazon Bedrock Nova Reel with S3 storage
 """
 
 import json
@@ -9,236 +8,419 @@ import logging
 import os
 import uuid
 from datetime import datetime
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, Tuple
 import boto3
+from botocore.exceptions import ClientError
 
 # Configure logging
 logger = logging.getLogger(__name__)
 
-class VideoGenerator:
-    """Handles video generation using Amazon Nova Reel"""
+class TradingCardVideoGenerator:
+    """
+    Professional trading card video animation generator using Amazon Bedrock Nova Reel
+    
+    Handles asynchronous video generation with S3 storage and presigned URL access
+    for streaming and download functionality.
+    """
+    
+    # Class constants for configuration
+    MODEL_ID = 'amazon.nova-reel-v1:1'
+    
+    # Video generation parameters
+    DEFAULT_DURATION_SECONDS = 6
+    DEFAULT_FPS = 24
+    DEFAULT_DIMENSION = "1280x720"
+    DEFAULT_SEED = 42
+    
+    # Validation constants
+    MIN_PROMPT_LENGTH = 5
+    MAX_PROMPT_LENGTH = 512
+    
+    # S3 configuration
+    VIDEO_FOLDER_PREFIX = "videos/"
+    OUTPUT_VIDEO_FILENAME = "output.mp4"
+    PRESIGNED_URL_EXPIRY = 3600  # 1 hour
     
     def __init__(self):
-        """Initialize the video generator with AWS clients"""
-        self.bedrock_runtime = boto3.client('bedrock-runtime')
-        self.s3_client = boto3.client('s3')
-        self.video_bucket = os.environ.get('VIDEO_BUCKET_NAME', 'snapmagic-videos-default')
-        logger.info("🎬 VideoGenerator initialized")
+        """
+        Initialize the trading card video generator with AWS clients
+        
+        Raises:
+            ClientError: If AWS clients cannot be initialized
+        """
+        try:
+            # Initialize AWS clients
+            self.bedrock_runtime_client = boto3.client('bedrock-runtime')
+            self.s3_client = boto3.client('s3')
+            
+            # Get S3 bucket name from environment
+            self.video_storage_bucket = os.environ.get('VIDEO_BUCKET_NAME', 'snapmagic-videos-default')
+            
+            logger.info("🎬 TradingCardVideoGenerator initialized successfully")
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to initialize TradingCardVideoGenerator: {str(e)}")
+            raise
     
-    def validate_image_format(self, image_base64: str) -> tuple[bool, Optional[str]]:
-        """Validate that the image is in JPEG format and has no transparency"""
+    def validate_image_format(self, image_base64_data: str) -> Tuple[bool, Optional[str]]:
+        """
+        Validate that the image is in JPEG format and suitable for video generation
+        
+        Args:
+            image_base64_data: Base64 encoded image data
+            
+        Returns:
+            Tuple of (is_valid, error_message)
+        """
         try:
             import base64
             
             # Decode base64 to check format
-            image_data = base64.b64decode(image_base64)
+            image_binary_data = base64.b64decode(image_base64_data)
             
             # Check JPEG magic bytes (FF D8 FF)
-            if not image_data.startswith(b'\xff\xd8\xff'):
-                return False, "Image is not in JPEG format"
+            if not image_binary_data.startswith(b'\xff\xd8\xff'):
+                return False, "Image must be in JPEG format for video generation"
             
-            # JPEG cannot have transparency by design
-            logger.info("✅ Image validation passed: JPEG format confirmed")
+            # JPEG format is suitable for Nova Reel (no transparency issues)
+            logger.info("✅ Image format validation passed: JPEG confirmed")
             return True, None
             
         except Exception as e:
-            logger.error(f"❌ Image validation failed: {str(e)}")
+            logger.error(f"❌ Image format validation failed: {str(e)}")
             return False, f"Image validation error: {str(e)}"
     
-    def validate_animation_prompt(self, prompt: str) -> tuple[bool, Optional[str]]:
-        """Validate animation prompt for video generation"""
-        if not prompt or not prompt.strip():
+    def validate_animation_prompt(self, animation_prompt: str) -> Tuple[bool, Optional[str]]:
+        """
+        Validate animation prompt for video generation
+        
+        Args:
+            animation_prompt: User-provided animation description
+            
+        Returns:
+            Tuple of (is_valid, error_message)
+        """
+        if not animation_prompt or not animation_prompt.strip():
             return False, "Animation prompt cannot be empty"
         
-        if len(prompt.strip()) < 5:
-            return False, "Animation prompt must be at least 5 characters"
+        prompt_length = len(animation_prompt.strip())
         
-        if len(prompt) > 512:
-            return False, "Animation prompt must be less than 512 characters"
+        if prompt_length < self.MIN_PROMPT_LENGTH:
+            return False, f"Animation prompt must be at least {self.MIN_PROMPT_LENGTH} characters"
+        
+        if prompt_length > self.MAX_PROMPT_LENGTH:
+            return False, f"Animation prompt must be less than {self.MAX_PROMPT_LENGTH} characters"
         
         return True, None
     
     def get_video_status(self, invocation_arn: str) -> Dict[str, Any]:
         """
-        Check video generation status using Bedrock get_async_invoke API
+        Check video generation status using Bedrock async invoke API
         
         Args:
             invocation_arn: The full invocation ARN from Nova Reel async call
             
         Returns:
-            Dictionary with video status and data if ready
+            Dictionary containing:
+            - success: Boolean indicating if status check was successful
+            - status: Current status ('completed', 'processing', 'failed', etc.)
+            - video_url: Presigned URL for video access (if completed)
+            - video_size: Size of video file in bytes (if completed)
+            - message: Status message
         """
         try:
             logger.info(f"🔍 Checking video status via Bedrock API: {invocation_arn}")
             
             # Use Bedrock API to check async job status
-            response = self.bedrock_runtime.get_async_invoke(
+            bedrock_response = self.bedrock_runtime_client.get_async_invoke(
                 invocationArn=invocation_arn
             )
             
-            status = response.get('status', 'Unknown')
-            logger.info(f"📊 Bedrock async job status: {status}")
+            job_status = bedrock_response.get('status', 'Unknown')
+            logger.info(f"📊 Bedrock async job status: {job_status}")
             
-            if status == 'Completed':
-                # Video generation completed - now get the video from S3
-                logger.info("✅ Video generation completed, creating presigned URL...")
-                
-                # Extract invocation ID from ARN for S3 path
-                # ARN format: arn:aws:bedrock:region:account:async-invoke/invocation-id
-                invocation_id = invocation_arn.split('/')[-1]
-                video_key = f"videos/{invocation_id}/output.mp4"
-                
-                try:
-                    # First check if video exists in S3
-                    self.s3_client.head_object(Bucket=self.video_bucket, Key=video_key)
-                    
-                    # Generate presigned URL for video streaming (valid for 1 hour)
-                    presigned_url = self.s3_client.generate_presigned_url(
-                        'get_object',
-                        Params={'Bucket': self.video_bucket, 'Key': video_key},
-                        ExpiresIn=3600  # 1 hour
-                    )
-                    
-                    logger.info(f"✅ Presigned URL created for video streaming")
-                    
-                    # Also get video size for metadata
-                    video_response = self.s3_client.head_object(Bucket=self.video_bucket, Key=video_key)
-                    video_size = video_response['ContentLength']
-                    
-                    return {
-                        'success': True,
-                        'status': 'completed',
-                        'video_url': presigned_url,  # ← Use presigned URL for streaming
-                        'video_base64': None,        # ← No base64 data
-                        'video_size': video_size,
-                        'message': 'Video generation completed successfully'
-                    }
-                    
-                except Exception as e:
-                    logger.error(f"❌ Error creating presigned URL: {str(e)}")
-                    return {
-                        'success': False,
-                        'status': 'error',
-                        'message': f'Video completed but not accessible: {str(e)}'
-                    }
-                    
-            elif status == 'InProgress':
-                # Video is still being generated
-                logger.info("⏳ Video generation in progress...")
-                return {
-                    'success': False,
-                    'status': 'processing',
-                    'message': 'Video is still being generated'
-                }
-                
-            elif status == 'Failed':
-                # Video generation failed
-                failure_message = response.get('failureMessage', 'Unknown failure')
-                logger.error(f"❌ Video generation failed: {failure_message}")
-                return {
-                    'success': False,
-                    'status': 'failed',
-                    'message': f'Video generation failed: {failure_message}'
-                }
-                
+            if job_status == 'Completed':
+                return self._handle_completed_video(invocation_arn)
+            elif job_status == 'InProgress':
+                return self._handle_processing_video()
+            elif job_status == 'Failed':
+                return self._handle_failed_video(bedrock_response)
             else:
-                # Unknown status
-                logger.warning(f"⚠️ Unknown video status: {status}")
-                return {
-                    'success': False,
-                    'status': 'unknown',
-                    'message': f'Unknown video status: {status}'
-                }
+                return self._handle_unknown_status(job_status)
                 
         except Exception as e:
             logger.error(f"❌ Error checking video status via Bedrock API: {str(e)}")
+            return self._create_error_response(f'Error checking video status: {str(e)}')
+    
+    def _handle_completed_video(self, invocation_arn: str) -> Dict[str, Any]:
+        """
+        Handle completed video generation - create presigned URL for access
+        
+        Args:
+            invocation_arn: The invocation ARN
+            
+        Returns:
+            Success response with video access information
+        """
+        try:
+            logger.info("✅ Video generation completed, creating presigned URL...")
+            
+            # Extract invocation ID from ARN for S3 path
+            # ARN format: arn:aws:bedrock:region:account:async-invoke/invocation-id
+            invocation_id = invocation_arn.split('/')[-1]
+            video_s3_key = f"{self.VIDEO_FOLDER_PREFIX}{invocation_id}/{self.OUTPUT_VIDEO_FILENAME}"
+            
+            # Verify video exists in S3
+            self.s3_client.head_object(Bucket=self.video_storage_bucket, Key=video_s3_key)
+            
+            # Generate presigned URL for video streaming and download
+            presigned_video_url = self.s3_client.generate_presigned_url(
+                'get_object',
+                Params={'Bucket': self.video_storage_bucket, 'Key': video_s3_key},
+                ExpiresIn=self.PRESIGNED_URL_EXPIRY
+            )
+            
+            # Get video metadata
+            video_metadata = self.s3_client.head_object(Bucket=self.video_storage_bucket, Key=video_s3_key)
+            video_file_size = video_metadata['ContentLength']
+            
+            logger.info(f"✅ Presigned URL created for video streaming ({video_file_size} bytes)")
+            
             return {
-                'success': False,
-                'status': 'error',
-                'message': f'Error checking video status: {str(e)}'
+                'success': True,
+                'status': 'completed',
+                'video_url': presigned_video_url,
+                'video_base64': None,  # Use presigned URL instead of base64 for efficiency
+                'video_size': video_file_size,
+                'message': 'Video generation completed successfully'
             }
+            
+        except Exception as e:
+            logger.error(f"❌ Error creating presigned URL: {str(e)}")
+            return self._create_error_response(f'Video completed but not accessible: {str(e)}')
+    
+    def _handle_processing_video(self) -> Dict[str, Any]:
+        """Handle video still in progress"""
+        logger.info("⏳ Video generation in progress...")
+        return {
+            'success': False,
+            'status': 'processing',
+            'message': 'Video is still being generated'
+        }
+    
+    def _handle_failed_video(self, bedrock_response: Dict[str, Any]) -> Dict[str, Any]:
+        """Handle failed video generation"""
+        failure_message = bedrock_response.get('failureMessage', 'Unknown failure')
+        logger.error(f"❌ Video generation failed: {failure_message}")
+        return {
+            'success': False,
+            'status': 'failed',
+            'message': f'Video generation failed: {failure_message}'
+        }
+    
+    def _handle_unknown_status(self, job_status: str) -> Dict[str, Any]:
+        """Handle unknown job status"""
+        logger.warning(f"⚠️ Unknown video status: {job_status}")
+        return {
+            'success': False,
+            'status': 'unknown',
+            'message': f'Unknown video status: {job_status}'
+        }
     
     def generate_video_from_card(self, card_image_base64: str, animation_prompt: str) -> Dict[str, Any]:
         """
         Generate animated video from trading card using Amazon Nova Reel
         
         Args:
-            card_image_base64: Base64 encoded trading card image
+            card_image_base64: Base64 encoded trading card image (JPEG format)
             animation_prompt: Text description of desired animation
             
         Returns:
-            Dictionary with success status and video information
+            Dictionary containing:
+            - success: Boolean indicating if generation was initiated
+            - video_id: Unique identifier for the video
+            - invocation_arn: ARN for tracking async job status
+            - message: Status message
+            - estimated_time: Estimated completion time
         """
         try:
             logger.info("🎬 Starting Nova Reel video generation...")
             
-            # Validate image format first
-            is_valid_image, image_error = self.validate_image_format(card_image_base64)
-            if not is_valid_image:
-                logger.error(f"❌ Image validation failed: {image_error}")
-                return {
-                    'success': False,
-                    'error': f"Image format error: {image_error}"
-                }
+            # Validate inputs
+            validation_result = self._validate_generation_inputs(card_image_base64, animation_prompt)
+            if not validation_result['valid']:
+                return self._create_error_response(validation_result['error'])
             
-            # Generate unique video ID
+            # Generate unique identifiers
             video_id = str(uuid.uuid4())
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            generation_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             
-            # Prepare the request for Nova Reel (Image-to-Video)
-            model_input = {
-                "taskType": "TEXT_VIDEO",
-                "textToVideoParams": {
-                    "text": f"{animation_prompt}. Keep the trading card format intact while adding subtle movement and effects.",
-                    "images": [
-                        {
-                            "format": "jpeg",
-                            "source": {
-                                "bytes": card_image_base64
-                            }
+            # Create enhanced animation prompt
+            enhanced_prompt = self._create_enhanced_animation_prompt(animation_prompt)
+            
+            # Build Nova Reel request
+            nova_reel_request = self._build_video_generation_request(card_image_base64, enhanced_prompt)
+            
+            # Start async video generation
+            async_response = self._start_async_video_generation(nova_reel_request)
+            
+            # Return success response with tracking information
+            return self._create_generation_success_response(video_id, async_response, generation_timestamp)
+            
+        except Exception as e:
+            logger.error(f"❌ Nova Reel video generation failed: {str(e)}")
+            return self._create_error_response(f"Video generation failed: {str(e)}")
+    
+    def _validate_generation_inputs(self, card_image_base64: str, animation_prompt: str) -> Dict[str, Any]:
+        """
+        Validate inputs for video generation
+        
+        Args:
+            card_image_base64: Base64 encoded image
+            animation_prompt: Animation description
+            
+        Returns:
+            Dictionary with validation result
+        """
+        # Validate image format
+        is_valid_image, image_error = self.validate_image_format(card_image_base64)
+        if not is_valid_image:
+            logger.error(f"❌ Image validation failed: {image_error}")
+            return {'valid': False, 'error': f"Image format error: {image_error}"}
+        
+        # Validate animation prompt
+        is_valid_prompt, prompt_error = self.validate_animation_prompt(animation_prompt)
+        if not is_valid_prompt:
+            logger.error(f"❌ Prompt validation failed: {prompt_error}")
+            return {'valid': False, 'error': f"Animation prompt error: {prompt_error}"}
+        
+        return {'valid': True, 'error': None}
+    
+    def _create_enhanced_animation_prompt(self, original_prompt: str) -> str:
+        """
+        Create enhanced prompt for professional video animation
+        
+        Args:
+            original_prompt: Original user prompt
+            
+        Returns:
+            Enhanced prompt optimized for Nova Reel
+        """
+        return (
+            f"{original_prompt}. Keep the trading card format intact while adding "
+            f"subtle movement and effects. Maintain professional quality and "
+            f"collectible card aesthetics."
+        )
+    
+    def _build_video_generation_request(self, card_image_base64: str, enhanced_prompt: str) -> Dict[str, Any]:
+        """
+        Build the request payload for Nova Reel API
+        
+        Args:
+            card_image_base64: Base64 encoded image
+            enhanced_prompt: Enhanced animation prompt
+            
+        Returns:
+            Complete request payload for Nova Reel
+        """
+        return {
+            "taskType": "TEXT_VIDEO",
+            "textToVideoParams": {
+                "text": enhanced_prompt,
+                "images": [
+                    {
+                        "format": "jpeg",
+                        "source": {
+                            "bytes": card_image_base64
                         }
-                    ]
-                },
-                "videoGenerationConfig": {
-                    "durationSeconds": 6,
-                    "fps": 24,
-                    "dimension": "1280x720",
-                    "seed": 42
-                }
+                    }
+                ]
+            },
+            "videoGenerationConfig": {
+                "durationSeconds": self.DEFAULT_DURATION_SECONDS,
+                "fps": self.DEFAULT_FPS,
+                "dimension": self.DEFAULT_DIMENSION,
+                "seed": self.DEFAULT_SEED
             }
+        }
+    
+    def _start_async_video_generation(self, nova_reel_request: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Start asynchronous video generation with Nova Reel
+        
+        Args:
+            nova_reel_request: Complete request payload
             
-            # Call Nova Reel with ASYNC API (Nova Reel doesn't support sync InvokeModel)
+        Returns:
+            Async response from Bedrock
+            
+        Raises:
+            ClientError: If API call fails
+        """
+        try:
             logger.info("📡 Calling Amazon Bedrock Nova Reel with StartAsyncInvoke...")
-            response = self.bedrock_runtime.start_async_invoke(
-                modelId='amazon.nova-reel-v1:1',  # Correct model ID
-                modelInput=model_input,  # Pass as dict, not JSON string
+            
+            async_response = self.bedrock_runtime_client.start_async_invoke(
+                modelId=self.MODEL_ID,
+                modelInput=nova_reel_request,
                 outputDataConfig={
                     's3OutputDataConfig': {
-                        's3Uri': f's3://{self.video_bucket}/videos/'
+                        's3Uri': f's3://{self.video_storage_bucket}/{self.VIDEO_FOLDER_PREFIX}'
                     }
                 }
             )
             
-            # Parse async response
-            invocation_arn = response.get('invocationArn', '')
+            invocation_arn = async_response.get('invocationArn', '')
             logger.info(f"📡 Nova Reel async job started: {invocation_arn}")
             
-            # Return async job information
-            return {
-                'success': True,
-                'video_id': video_id,
-                'invocation_arn': invocation_arn,
-                'message': 'Video generation started - this is async processing',
-                'status': 'processing',
-                'estimated_time': '30-60 seconds',
-                'video_base64': None,  # Not available immediately with async
-                'video_url': None,     # Will be available when processing completes
-                'timestamp': datetime.now().isoformat()
-            }
+            return async_response
             
+        except ClientError as e:
+            logger.error(f"❌ AWS API error: {str(e)}")
+            raise
         except Exception as e:
-            logger.error(f"❌ Nova Reel video generation failed: {str(e)}")
-            return {
-                'success': False,
-                'error': f"Video generation failed: {str(e)}"
-            }
+            logger.error(f"❌ Nova Reel call failed: {str(e)}")
+            raise
+    
+    def _create_generation_success_response(self, video_id: str, async_response: Dict[str, Any], timestamp: str) -> Dict[str, Any]:
+        """
+        Create success response for video generation initiation
+        
+        Args:
+            video_id: Unique video identifier
+            async_response: Response from async API call
+            timestamp: Generation timestamp
+            
+        Returns:
+            Success response dictionary
+        """
+        return {
+            'success': True,
+            'video_id': video_id,
+            'invocation_arn': async_response.get('invocationArn', ''),
+            'message': 'Video generation started - this is async processing',
+            'status': 'processing',
+            'estimated_time': '30-60 seconds',
+            'video_base64': None,  # Not available immediately with async
+            'video_url': None,     # Will be available when processing completes
+            'timestamp': datetime.now().isoformat()
+        }
+    
+    def _create_error_response(self, error_message: str) -> Dict[str, Any]:
+        """
+        Create error response dictionary
+        
+        Args:
+            error_message: Error message to include
+            
+        Returns:
+            Error response dictionary
+        """
+        return {
+            'success': False,
+            'error': error_message
+        }
+
+
+# Maintain backward compatibility with old class name
+VideoGenerator = TradingCardVideoGenerator
