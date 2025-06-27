@@ -1,6 +1,6 @@
 """
-SnapMagic Lambda Handler - Trading Card Generation
-PRESERVES existing authentication system, REPLACES FunkoPop with card generation
+SnapMagic Lambda Handler - AI-Powered Trading Card Generation & Animation
+Handles trading card creation using Amazon Bedrock Nova Canvas and video animation using Nova Reel
 """
 
 import json
@@ -16,16 +16,21 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 def load_event_credentials() -> Dict[str, str]:
-    """Load event credentials from environment variables (set by CDK from secrets.json)"""
+    """
+    Load event credentials from environment variables (set by CDK from secrets.json)
+    
+    Returns:
+        Dict containing username and password for event authentication
+    """
     try:
-        # CDK should set these environment variables from secrets.json
-        username = os.environ.get('EVENT_USERNAME', 'demo')  # fallback for local testing
-        password = os.environ.get('EVENT_PASSWORD', 'demo')  # fallback for local testing
+        # CDK sets these environment variables from secrets.json
+        event_username = os.environ.get('EVENT_USERNAME', 'demo')  # fallback for local testing
+        event_password = os.environ.get('EVENT_PASSWORD', 'demo')  # fallback for local testing
         
-        logger.info(f"Event credentials loaded - Username: {username}")
+        logger.info(f"Event credentials loaded - Username: {event_username}")
         return {
-            'username': username,
-            'password': password
+            'username': event_username,
+            'password': event_password
         }
     except Exception as e:
         logger.error(f"Failed to load event credentials: {str(e)}")
@@ -35,14 +40,26 @@ def load_event_credentials() -> Dict[str, str]:
             'password': 'demo'
         }
 
-# Global instances
-card_generator = CardGenerator()
-video_generator = VideoGenerator()
+# Initialize global instances for reuse across Lambda invocations
+trading_card_generator = CardGenerator()
+trading_card_video_generator = VideoGenerator()
 
 def lambda_handler(event, context):
     """
-    SnapMagic Lambda Handler with Trading Card Generation
-    MAINTAINS EXACT SAME AUTHENTICATION SYSTEM - DO NOT CHANGE
+    SnapMagic Lambda Handler - Main entry point for trading card operations
+    
+    Handles:
+    - User authentication
+    - Trading card generation (Nova Canvas)
+    - Video animation generation (Nova Reel)
+    - Video status polling and retrieval
+    
+    Args:
+        event: AWS Lambda event object
+        context: AWS Lambda context object
+        
+    Returns:
+        HTTP response with CORS headers
     """
     try:
         logger.info(f"Received event: {json.dumps(event, default=str)}")
@@ -85,8 +102,7 @@ def lambda_handler(event, context):
         logger.info(f"🎯 Processing action: {action} from path: {request_path}")
         
         # ========================================
-        # LOGIN ENDPOINT (NO AUTHENTICATION REQUIRED)
-        # EXACT SAME AS BEFORE - DO NOT CHANGE
+        # AUTHENTICATION ENDPOINT
         # ========================================
         if action == 'login':
             username = body.get('username', '')
@@ -131,8 +147,7 @@ def lambda_handler(event, context):
         logger.info(f"✅ Authenticated user: {token_payload.get('username')}")
         
         # ========================================
-        # NEW: TRADING CARD GENERATION
-        # REPLACES OLD FUNKOPOP FUNCTIONALITY
+        # TRADING CARD GENERATION
         # ========================================
         if action == 'transform_card':
             prompt = body.get('prompt', '')
@@ -140,13 +155,13 @@ def lambda_handler(event, context):
                 return create_error_response("Missing prompt parameter", 400)
             
             # Validate prompt
-            is_valid, error_msg = card_generator.validate_prompt(prompt)
+            is_valid, error_msg = trading_card_generator.validate_prompt(prompt)
             if not is_valid:
                 return create_error_response(error_msg, 400)
             
             try:
                 # Generate trading card
-                result = card_generator.generate_trading_card(prompt)
+                result = trading_card_generator.generate_trading_card(prompt)
                 
                 if result['success']:
                     # Return in format frontend expects
@@ -165,8 +180,7 @@ def lambda_handler(event, context):
                 return create_error_response(f"Card generation failed: {str(e)}", 500)
         
         # ========================================
-        # NEW: VIDEO STATUS CHECK
-        # CHECK S3 FOR COMPLETED VIDEOS
+        # VIDEO STATUS CHECK
         # ========================================
         elif action == 'get_video_status':
             invocation_arn = body.get('invocation_arn', '')
@@ -178,7 +192,7 @@ def lambda_handler(event, context):
             try:
                 # Check video status using Bedrock API
                 logger.info(f"🔍 Checking video status for ARN: {invocation_arn}")
-                result = video_generator.get_video_status(invocation_arn)
+                result = trading_card_video_generator.get_video_status(invocation_arn)
                 
                 if result['success']:
                     logger.info(f"✅ Video status check successful: {result.get('status')}")
@@ -204,8 +218,7 @@ def lambda_handler(event, context):
                 return create_error_response(f"Video status check failed: {str(e)}", 500)
         
         # ========================================
-        # NEW: NOVA REEL VIDEO GENERATION
-        # ANIMATE TRADING CARDS WITH S3 STORAGE
+        # VIDEO ANIMATION GENERATION
         # ========================================
         elif action == 'generate_video':
             card_image = body.get('card_image', '')
@@ -234,7 +247,7 @@ def lambda_handler(event, context):
             try:
                 # Generate video using video generator
                 logger.info("🎬 Starting video generation with VideoGenerator...")
-                result = video_generator.generate_video_from_card(card_image, animation_prompt)
+                result = trading_card_video_generator.generate_video_from_card(card_image, animation_prompt)
                 logger.info(f"🎬 Video generation result: {result.get('success', False)}")
                 
                 if result['success']:
@@ -283,12 +296,11 @@ def lambda_handler(event, context):
         return create_error_response(f"Internal server error: {str(e)}", 500)
 
 # ========================================
-# RESPONSE HELPERS - EXACT SAME AS BEFORE
-# DO NOT CHANGE - AUTHENTICATION DEPENDS ON THESE
+# RESPONSE HELPER FUNCTIONS
 # ========================================
 
 def create_success_response(data):
-    """Create standardized success response - EXACT SAME AS BEFORE"""
+    """Create standardized success response with CORS headers"""
     return {
         'statusCode': 200,
         'headers': {
@@ -301,7 +313,7 @@ def create_success_response(data):
     }
 
 def create_error_response(message, status_code):
-    """Create standardized error response - EXACT SAME AS BEFORE"""
+    """Create standardized error response with CORS headers"""
     return {
         'statusCode': status_code,
         'headers': {
@@ -318,7 +330,7 @@ def create_error_response(message, status_code):
     }
 
 def create_cors_response():
-    """Handle CORS preflight requests - EXACT SAME AS BEFORE"""
+    """Handle CORS preflight requests"""
     return {
         'statusCode': 200,
         'headers': {
