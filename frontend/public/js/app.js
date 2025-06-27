@@ -1,31 +1,49 @@
 /**
  * SnapMagic Trading Card Creator - Frontend Application
- * PRESERVES authentication system, REPLACES selfie functionality with card creation
+ * AI-powered trading card generation and video animation using Amazon Bedrock
+ * 
+ * Features:
+ * - User authentication for AWS Summit events
+ * - Trading card generation using Nova Canvas
+ * - Video animation using Nova Reel
+ * - Real-time status polling and video retrieval
  */
 
-class SnapMagicApp {
+class SnapMagicTradingCardApp {
     constructor() {
-        // Authentication state - EXACT SAME AS BEFORE
+        // Authentication state management
         this.isAuthenticated = false;
         this.currentUser = null;
+        this.authToken = null;
         
-        // UI elements
+        // UI element cache for performance
         this.elements = {};
         
-        // Initialize app
+        // Application state
+        this.currentCardImage = null;
+        this.videoPollingInterval = null;
+        
+        // Configuration
+        this.config = {
+            apiBaseUrl: window.SNAPMAGIC_API_URL || '/api',
+            videoPollingDelay: 180000, // 3 minutes initial wait
+            videoPollingInterval: 10000 // 10 seconds between polls
+        };
+        
+        // Initialize application
         this.init();
     }
 
     async init() {
         console.log('🎴 SnapMagic Trading Card Creator initializing...');
         
-        // Cache DOM elements
+        // Cache DOM elements for performance
         this.cacheElements();
         
         // Set up event listeners
         this.setupEventListeners();
         
-        // Load template image
+        // Load trading card template
         this.loadTemplate();
         
         // Check authentication status
@@ -38,36 +56,40 @@ class SnapMagicApp {
     }
 
     cacheElements() {
+        /**
+         * Cache DOM elements for performance optimization
+         * Reduces repeated DOM queries throughout the application
+         */
         this.elements = {
-            // Screens
+            // Screen containers
             loadingScreen: document.getElementById('loadingScreen'),
             loginScreen: document.getElementById('loginScreen'),
             mainApp: document.getElementById('mainApp'),
             
-            // Login elements - EXACT SAME AS BEFORE
+            // Authentication elements
             loginForm: document.getElementById('loginForm'),
             usernameInput: document.getElementById('username'),
             passwordInput: document.getElementById('password'),
             loginError: document.getElementById('loginError'),
             
-            // Main app elements
+            // User interface elements
             userInfo: document.getElementById('userInfo'),
             sessionInfo: document.getElementById('sessionInfo'),
             logoutBtn: document.getElementById('logoutBtn'),
             
-            // Card creator elements
+            // Trading card creation elements
             templateImage: document.getElementById('templateImage'),
             promptInput: document.getElementById('promptInput'),
             generateBtn: document.getElementById('generateBtn'),
             
-            // Status and result elements
+            // Status and result display elements
             processingStatus: document.getElementById('processingStatus'),
             resultContainer: document.getElementById('resultContainer'),
             resultImage: document.getElementById('resultImage'),
             downloadBtn: document.getElementById('downloadBtn'),
             newCardBtn: document.getElementById('newCardBtn'),
             
-            // Video elements - SIMPLIFIED
+            // Video animation elements
             videoSection: document.getElementById('videoSection'),
             animationPrompt: document.getElementById('animationPrompt'),
             animationCharCount: document.getElementById('animationCharCount'),
@@ -81,11 +103,15 @@ class SnapMagicApp {
             createAnotherVideoBtn: document.getElementById('createAnotherVideoBtn')
         };
         
-        // Store current card data for video generation
-        this.currentCardData = null;
+        // Log successful element caching
+        console.log('✅ DOM elements cached successfully');
     }
 
     setupEventListeners() {
+        /**
+         * Set up all event listeners for user interactions
+         * Organized by functionality for better maintainability
+         */
         // Login form - EXACT SAME AS BEFORE
         this.elements.loginForm.addEventListener('submit', (e) => this.handleLogin(e));
         
@@ -157,13 +183,16 @@ class SnapMagicApp {
     }
 
     async handleLogin(event) {
+        /**
+         * Handle user login authentication
+         * Supports both demo mode and real API authentication
+         */
         event.preventDefault();
         
-        const username = this.elements.usernameInput.value.trim();
-        const password = this.elements.passwordInput.value.trim();
-        
-        if (!username || !password) {
-            this.showLoginError('Please enter both username and password');
+        // Extract and validate credentials
+        const userCredentials = this.extractLoginCredentials();
+        if (!userCredentials.isValid) {
+            this.showLoginError(userCredentials.errorMessage);
             return;
         }
         
@@ -172,57 +201,95 @@ class SnapMagicApp {
             
             const apiBaseUrl = window.SNAPMAGIC_CONFIG.API_URL;
             
+            // Handle demo mode for offline functionality
             if (apiBaseUrl === 'demo-mode') {
-                // Demo mode - offline functionality
-                if (username && password) {
-                    this.currentUser = { 
-                        username: username,
-                        loginTime: new Date().toISOString(),
-                        token: 'demo-token'
-                    };
-                    this.isAuthenticated = true;
-                    this.saveSession();
-                    this.showMainApp();
-                    return;
-                }
+                this.handleDemoLogin(userCredentials);
+                return;
             }
             
-            // Real API mode - call backend
-            const loginEndpoint = `${apiBaseUrl}/api/login`;
-            console.log('🔐 Attempting login to:', loginEndpoint);
-            
-            const response = await fetch(loginEndpoint, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    action: 'login',
-                    username: username,
-                    password: password
-                })
-            });
-            
-            const result = await response.json();
-            console.log('🔐 Login response:', result);
-            
-            if (result.success && result.token) {
-                this.currentUser = { 
-                    username: username,
-                    loginTime: new Date().toISOString(),
-                    token: result.token,
-                    expiresIn: result.expires_in || 86400
-                };
-                this.isAuthenticated = true;
-                this.saveSession();
-                this.showMainApp();
-            } else {
-                this.showLoginError(result.error || 'Login failed');
-            }
+            // Handle real API authentication
+            await this.handleApiLogin(userCredentials, apiBaseUrl);
             
         } catch (error) {
-            console.error('Login error:', error);
-            this.showLoginError('Connection error. Please try again.');
+            console.error('❌ Login error:', error);
+            this.showLoginError('Login failed. Please check your connection and try again.');
+        }
+    }
+
+    extractLoginCredentials() {
+        /**
+         * Extract and validate login credentials from form inputs
+         */
+        const username = this.elements.usernameInput.value.trim();
+        const password = this.elements.passwordInput.value.trim();
+        
+        if (!username || !password) {
+            return {
+                isValid: false,
+                errorMessage: 'Please enter both username and password'
+            };
+        }
+        
+        return {
+            isValid: true,
+            username: username,
+            password: password
+        };
+    }
+
+    handleDemoLogin(credentials) {
+        /**
+         * Handle demo mode login for offline functionality
+         */
+        this.currentUser = { 
+            username: credentials.username,
+            loginTime: new Date().toISOString(),
+            token: 'demo-token'
+        };
+        this.isAuthenticated = true;
+        this.authToken = 'demo-token';
+        this.saveSession();
+        this.showMainApp();
+        console.log('✅ Demo login successful');
+    }
+
+    async handleApiLogin(credentials, apiBaseUrl) {
+        /**
+         * Handle real API authentication
+         */
+        const loginEndpoint = `${apiBaseUrl}/api/login`;
+        console.log('🔐 Attempting login to:', loginEndpoint);
+        
+        const response = await fetch(loginEndpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                action: 'login',
+                username: credentials.username,
+                password: credentials.password
+            })
+        });
+        
+        const loginResult = await response.json();
+        console.log('🔐 Login response:', loginResult);
+        
+        if (loginResult.success && loginResult.token) {
+            // Store user session data
+            this.currentUser = { 
+                username: credentials.username,
+                loginTime: new Date().toISOString(),
+                token: loginResult.token,
+                expiresIn: loginResult.expires_in || 86400
+            };
+            this.isAuthenticated = true;
+            this.authToken = loginResult.token;
+            this.saveSession();
+            this.showMainApp();
+            console.log('✅ API login successful');
+        } else {
+            this.showLoginError(loginResult.error || 'Login failed');
         }
     }
 
@@ -313,22 +380,26 @@ class SnapMagicApp {
     }
 
     async handleGenerate() {
-        const prompt = this.elements.promptInput.value.trim();
+        /**
+         * Handle trading card generation request
+         * Validates input, calls API, and displays results
+         */
+        const userPrompt = this.elements.promptInput.value.trim();
         
-        console.log('🎴 Generate button clicked with prompt:', prompt);
+        console.log('🎴 Generate button clicked with prompt:', userPrompt);
         console.log('🔧 API Configuration:', window.SNAPMAGIC_CONFIG);
         
-        if (!prompt || prompt.length < 10) {
+        if (!userPrompt || userPrompt.length < 10) {
             alert('Please enter a description of at least 10 characters');
             return;
         }
         
-        if (prompt.length > 1024) {
+        if (userPrompt.length > 1024) {
             alert('Description must be less than 1024 characters');
             return;
         }
 
-        if (!this.isAuthenticated || !this.currentUser.token) {
+        if (!this.isAuthenticated || !this.authToken) {
             alert('Authentication required. Please log in again.');
             this.handleLogout();
             return;
@@ -1078,5 +1149,8 @@ class SnapMagicApp {
 
 // Initialize the app when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    window.snapMagicApp = new SnapMagicApp();
+    window.snapMagicApp = new SnapMagicTradingCardApp();
 });
+
+// Maintain backward compatibility
+const SnapMagicApp = SnapMagicTradingCardApp;
