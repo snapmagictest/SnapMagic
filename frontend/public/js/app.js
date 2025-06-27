@@ -300,7 +300,13 @@ class SnapMagicApp {
             } else {
                 console.error('❌ Card generation failed:', data.error);
                 this.hideProcessing();
-                this.showError(data.error || 'Card generation failed. Please try again.');
+                
+                // Check for content filter message specifically
+                if (data.error && data.error.includes('content filters')) {
+                    this.showError(`🚫 Content Blocked by AI Safety Filters\n\n${data.error}\n\nPlease try a different prompt that doesn't include potentially sensitive content.`);
+                } else {
+                    this.showError(data.error || 'Card generation failed. Please try again.');
+                }
             }
         } catch (error) {
             console.error('❌ Card generation error:', error);
@@ -563,10 +569,18 @@ class SnapMagicApp {
                     this.pollVideoStatus(invocationArn, metadata, retryCount + 1);
                 }, 10 * 1000); // 10 seconds
             } else {
-                // Failed or unknown status
-                console.error('❌ Video generation failed or unknown status:', result);
+                // Failed, blocked, or unknown status
+                console.error('❌ Video generation failed or blocked:', result);
                 this.hideProcessing();
-                this.showError(result.error || `Video generation failed with status: ${result.status}`);
+                
+                // Check for content filter message specifically
+                if (result.message && result.message.includes('content filters')) {
+                    this.showError(`🚫 Content Blocked by AI Safety Filters\n\n${result.message}\n\nPlease try a different prompt that doesn't include potentially sensitive content.`);
+                } else if (result.message) {
+                    this.showError(result.message);
+                } else {
+                    this.showError(result.error || `Video generation failed with status: ${result.status}`);
+                }
                 this.videoGenerationInProgress = false;
             }
 
@@ -684,25 +698,32 @@ class SnapMagicApp {
             right: 20px;
             background: linear-gradient(45deg, #e53e3e, #c53030);
             color: white;
-            padding: 1rem 1.5rem;
-            border-radius: 10px;
+            padding: 1.5rem;
+            border-radius: 12px;
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
             z-index: 3000;
-            max-width: 400px;
+            max-width: 450px;
             font-weight: 500;
             animation: slideIn 0.3s ease;
+            line-height: 1.5;
         `;
         
+        // Handle multi-line messages by converting \n to <br>
+        const formattedMessage = message.replace(/\n/g, '<br>');
+        
         errorDiv.innerHTML = `
-            <div style="display: flex; align-items: center; gap: 0.5rem;">
-                <span>⚠️</span>
-                <span>${message}</span>
+            <div style="display: flex; align-items: flex-start; gap: 0.8rem;">
+                <span style="font-size: 1.2rem; margin-top: 0.1rem;">⚠️</span>
+                <div style="flex: 1;">
+                    ${formattedMessage}
+                </div>
             </div>
         `;
         
         document.body.appendChild(errorDiv);
         
-        // Auto remove after 5 seconds
+        // Auto remove after 8 seconds (longer for content filter messages)
+        const autoRemoveTime = message.includes('Content Blocked') ? 10000 : 6000;
         setTimeout(() => {
             if (errorDiv.parentNode) {
                 errorDiv.style.animation = 'slideOut 0.3s ease';
@@ -712,7 +733,7 @@ class SnapMagicApp {
                     }
                 }, 300);
             }
-        }, 5000);
+        }, autoRemoveTime);
         
         // Add CSS animations if not already present
         if (!document.querySelector('#error-animations')) {
