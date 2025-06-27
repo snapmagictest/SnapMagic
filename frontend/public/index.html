@@ -14,9 +14,28 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: linear-gradient(135deg, #232F3E 0%, #4B9CD3 100%);
+            background: linear-gradient(135deg, #0f1419 0%, #1a2332 50%, #2d3748 100%);
             min-height: 100vh;
-            color: white;
+            color: #ffffff;
+            line-height: 1.6;
+        }
+
+        /* Modern Color Palette */
+        :root {
+            --primary-blue: #3182ce;
+            --primary-blue-hover: #2c5aa0;
+            --secondary-orange: #ff8c00;
+            --secondary-orange-hover: #e67e00;
+            --success-green: #38a169;
+            --danger-red: #e53e3e;
+            --warning-yellow: #d69e2e;
+            --dark-bg: #1a202c;
+            --darker-bg: #0f1419;
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --border-color: rgba(255, 255, 255, 0.1);
+            --text-primary: #ffffff;
+            --text-secondary: #a0aec0;
+            --shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
         }
 
         /* Loading screen styles */
@@ -26,7 +45,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(135deg, #232F3E 0%, #4B9CD3 100%);
+            background: linear-gradient(135deg, var(--darker-bg) 0%, var(--dark-bg) 100%);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -38,20 +57,44 @@
             opacity: 0;
             pointer-events: none;
         }
-        .loading-container { text-align: center; padding: 2rem; }
-        .loading-logo { font-size: 4rem; margin-bottom: 1rem; }
-        .loading-title { font-size: 2.5rem; margin-bottom: 1rem; color: #FF9900; }
-        .loading-subtitle { font-size: 1.2rem; margin-bottom: 2rem; opacity: 0.9; }
-        .loading-text { font-size: 1rem; opacity: 0.7; }
+        .loading-container { 
+            text-align: center; 
+            padding: 2rem; 
+        }
+        .loading-logo { 
+            font-size: 4rem; 
+            margin-bottom: 1rem; 
+            background: linear-gradient(45deg, var(--primary-blue), var(--secondary-orange));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .loading-title { 
+            font-size: 2.5rem; 
+            margin-bottom: 1rem; 
+            color: var(--secondary-orange);
+            font-weight: 700;
+        }
+        .loading-subtitle { 
+            font-size: 1.2rem; 
+            margin-bottom: 2rem; 
+            opacity: 0.9; 
+            color: var(--text-secondary);
+        }
+        .loading-text { 
+            font-size: 1rem; 
+            opacity: 0.7; 
+            color: var(--text-secondary);
+        }
 
-        /* Login Screen Styles - EXACT SAME AS BEFORE */
+        /* Login Screen Styles - Modern Design */
         .login-screen {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(135deg, #232F3E 0%, #4B9CD3 100%);
+            background: linear-gradient(135deg, var(--darker-bg) 0%, var(--dark-bg) 100%);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -59,376 +102,395 @@
         }
 
         .login-container {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border-color);
             border-radius: 20px;
             padding: 3rem;
             width: 100%;
             max-width: 400px;
+            margin: 1rem;
+            box-shadow: var(--shadow);
             text-align: center;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
         }
 
         .login-logo {
-            font-size: 4rem;
+            font-size: 3rem;
             margin-bottom: 1rem;
+            background: linear-gradient(45deg, var(--primary-blue), var(--secondary-orange));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
         .login-title {
             font-size: 2rem;
             margin-bottom: 0.5rem;
-            color: #FF9900;
-        }
-
-        .login-subtitle {
-            font-size: 1rem;
-            margin-bottom: 2rem;
-            opacity: 0.8;
-        }
-
-        .login-form {
-            display: flex;
-            flex-direction: column;
-            gap: 1.5rem;
-        }
-
-        .form-group {
-            text-align: left;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 500;
-            color: #FF9900;
-        }
-
-        .form-group input {
-            width: 100%;
-            padding: 1rem;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 10px;
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-            font-size: 1rem;
-            transition: all 0.3s ease;
-        }
-
-        .form-group input:focus {
-            outline: none;
-            border-color: #FF9900;
-            background: rgba(255, 255, 255, 0.15);
-        }
-
-        .form-group input::placeholder {
-            color: rgba(255, 255, 255, 0.6);
-        }
-
-        .login-btn {
-            background: linear-gradient(135deg, #FF9900 0%, #FF6600 100%);
-            color: white;
-            border: none;
-            padding: 1rem 2rem;
-            border-radius: 10px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .login-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(255, 153, 0, 0.3);
-        }
-
-        .login-btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .error-message {
-            color: #ff6b6b;
-            font-size: 0.9rem;
-            text-align: center;
-            margin-top: 0.5rem;
-        }
-
-        /* Main App Styles */
-        .main-app {
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .app-header {
-            background: linear-gradient(135deg, rgba(0, 0, 0, 0.9), rgba(26, 26, 46, 0.9));
-            backdrop-filter: blur(10px);
-            border-bottom: 2px solid #FF9900;
-            padding: 1rem 0;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-        }
-
-        .header-content {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .logo-section {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .logo {
-            font-size: 2.5rem;
-            filter: drop-shadow(0 0 10px rgba(255, 153, 0, 0.5));
-        }
-
-        .brand-info h1 {
-            margin: 0;
-            font-size: 2rem;
-            background: linear-gradient(135deg, #FF9900, #FFB84D);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            color: var(--text-primary);
             font-weight: 700;
         }
 
-        .powered-by {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            margin-top: 0.25rem;
-            font-size: 0.8rem;
-            color: rgba(255, 255, 255, 0.7);
+        .login-subtitle {
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+            font-size: 1rem;
         }
 
-        .aws-logo {
-            height: 16px;
-            width: auto;
+        .form-group {
+            margin-bottom: 1.5rem;
+            text-align: left;
         }
 
-        .aws-services {
-            color: #FF9900;
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
             font-weight: 500;
         }
 
-        .user-section {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
+        .form-input {
+            width: 100%;
+            padding: 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.1);
+        }
+
+        .btn {
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, var(--primary-blue), var(--primary-blue-hover));
+            color: white;
+            width: 100%;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(49, 130, 206, 0.4);
+        }
+
+        /* Main App Styles - Modern Tab Interface */
+        .main-app {
+            display: none;
+            min-height: 100vh;
+            background: linear-gradient(135deg, var(--darker-bg) 0%, var(--dark-bg) 100%);
+        }
+
+        .app-header {
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1.5rem 2rem;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .app-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(45deg, var(--primary-blue), var(--secondary-orange));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+        }
+
+        .app-subtitle {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            margin-bottom: 1rem;
         }
 
         .user-info {
-            text-align: right;
-            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
         }
 
-        .user-info div {
-            margin: 0.25rem 0;
+        .welcome-text {
+            color: var(--text-primary);
+            font-weight: 500;
         }
 
-        .session-info {
-            font-size: 0.8rem;
-            color: rgba(255, 255, 255, 0.6);
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
         }
 
-        .logout-btn {
-            background: linear-gradient(135deg, #FF6B6B, #FF8E53);
-            color: white;
-            border: none;
-            padding: 0.75rem 1.5rem;
-            border-radius: 25px;
-            font-weight: 600;
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-1px);
+        }
+
+        /* Tab Navigation */
+        .tab-navigation {
+            background: var(--card-bg);
+            border-bottom: 1px solid var(--border-color);
+            padding: 0 2rem;
+            display: flex;
+            justify-content: center;
+            overflow-x: auto;
+        }
+
+        .tab-nav-item {
+            padding: 1rem 2rem;
             cursor: pointer;
+            border-bottom: 3px solid transparent;
+            color: var(--text-secondary);
+            font-weight: 500;
             transition: all 0.3s ease;
             white-space: nowrap;
         }
 
-        .logout-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
-        }
+        .tab-nav-item:hover {
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.05);
         }
 
-        /* Main Content Styles */
-        .app-main {
-            flex: 1;
+        .tab-nav-item.active {
+            color: var(--primary-blue);
+            border-bottom-color: var(--primary-blue);
+            background: rgba(49, 130, 206, 0.1);
+        }
+
+        /* Tab Content */
+        .tab-content {
+            display: none;
+            padding: 2rem;
             max-width: 1200px;
             margin: 0 auto;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Instructions Tab */
+        .instructions-container {
+            background: var(--card-bg);
+            border-radius: 20px;
             padding: 2rem;
-            width: 100%;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow);
         }
 
-        .app-title {
+        .instructions-title {
+            font-size: 2rem;
+            color: var(--text-primary);
+            margin-bottom: 1.5rem;
             text-align: center;
-            margin-bottom: 3rem;
         }
 
-        .app-title h2 {
-            font-size: 2.5rem;
-            color: #FF9900;
-            margin-bottom: 1rem;
+        .instruction-step {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid var(--primary-blue);
         }
 
-        .app-title p {
+        .step-number {
+            background: var(--primary-blue);
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 1rem;
+        }
+
+        .step-title {
             font-size: 1.2rem;
-            opacity: 0.9;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            font-weight: 600;
         }
 
-        /* Card Creator Interface */
-        .card-creator {
+        .step-description {
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .warning-box {
+            background: rgba(214, 158, 46, 0.1);
+            border: 1px solid var(--warning-yellow);
+            border-radius: 10px;
+            padding: 1rem;
+            margin-top: 2rem;
+        }
+
+        .warning-title {
+            color: var(--warning-yellow);
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .warning-text {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        /* Card Generation Tab */
+        .generation-container {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 3rem;
+            gap: 2rem;
             align-items: start;
         }
 
-        .template-section {
-            text-align: center;
-        }
-
-        .template-title {
-            font-size: 1.5rem;
-            color: #FF9900;
-            margin-bottom: 1rem;
-        }
-
-        .template-container {
-            background: rgba(255, 255, 255, 0.1);
+        .input-section, .result-section {
+            background: var(--card-bg);
             border-radius: 20px;
             padding: 2rem;
-            border: 2px solid rgba(255, 255, 255, 0.2);
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow);
         }
 
-        .template-image {
-            max-width: 100%;
-            height: auto;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-        }
-
-        .template-info {
-            margin-top: 1rem;
-            font-size: 0.9rem;
-            opacity: 0.8;
-        }
-
-        .prompt-section {
-            display: flex;
-            flex-direction: column;
-            gap: 2rem;
-        }
-
-        .prompt-title {
+        .section-title {
             font-size: 1.5rem;
-            color: #FF9900;
-        }
-
-        .prompt-container {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            padding: 2rem;
-            border: 2px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .prompt-label {
-            display: block;
-            margin-bottom: 1rem;
-            font-weight: 500;
-            color: #FF9900;
+            color: var(--text-primary);
+            margin-bottom: 1.5rem;
+            font-weight: 600;
         }
 
         .prompt-input {
             width: 100%;
             min-height: 120px;
             padding: 1rem;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 15px;
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-primary);
             font-size: 1rem;
-            font-family: inherit;
             resize: vertical;
-            transition: all 0.3s ease;
+            margin-bottom: 1rem;
         }
 
         .prompt-input:focus {
             outline: none;
-            border-color: #FF9900;
-            background: rgba(255, 255, 255, 0.15);
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.1);
         }
 
-        .prompt-input::placeholder {
-            color: rgba(255, 255, 255, 0.6);
-        }
-
-        .prompt-examples {
-            margin-top: 1rem;
-            font-size: 0.9rem;
-            opacity: 0.8;
-        }
-
-        .prompt-examples strong {
-            color: #FF9900;
-        }
-
-        .generate-section {
-            text-align: center;
-        }
-
-        .generate-btn {
-            background: linear-gradient(135deg, #FF9900 0%, #FF6600 100%);
+        .btn-generate {
+            background: linear-gradient(45deg, var(--secondary-orange), var(--secondary-orange-hover));
             color: white;
-            border: none;
-            padding: 1.5rem 3rem;
-            border-radius: 15px;
-            font-size: 1.2rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-            letter-spacing: 1px;
             width: 100%;
+            padding: 1rem;
+            font-size: 1.1rem;
+            font-weight: 600;
         }
 
-        .generate-btn:hover:not(:disabled) {
-            transform: translateY(-3px);
-            box-shadow: 0 15px 30px rgba(255, 153, 0, 0.4);
+        .btn-generate:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 140, 0, 0.4);
         }
 
-        .generate-btn:disabled {
+        .btn-generate:disabled {
             opacity: 0.6;
             cursor: not-allowed;
             transform: none;
         }
 
-        /* Processing Status */
-        .processing-status {
-            text-align: center;
-            padding: 2rem;
-            background: rgba(255, 255, 255, 0.1);
+        .result-image {
+            width: 100%;
+            max-width: 400px;
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+            margin-bottom: 1rem;
+        }
+
+        .result-actions {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .btn-success {
+            background: var(--success-green);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #2f855a;
+            transform: translateY(-1px);
+        }
+
+        /* Video Tab */
+        .video-container {
+            background: var(--card-bg);
             border-radius: 20px;
-            border: 2px solid rgba(255, 255, 255, 0.2);
+            padding: 2rem;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow);
+            text-align: center;
         }
 
-        .processing-status.hidden {
+        .video-player {
+            width: 100%;
+            max-width: 600px;
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+            margin: 1rem auto;
+        }
+
+        /* Processing States */
+        .processing-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
             display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
         }
 
-        .spinner {
-            width: 50px;
-            height: 50px;
-            border: 4px solid rgba(255, 255, 255, 0.3);
-            border-top: 4px solid #FF9900;
+        .processing-content {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 3rem;
+            text-align: center;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow);
+        }
+
+        .processing-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid var(--border-color);
+            border-top: 4px solid var(--primary-blue);
             border-radius: 50%;
             animation: spin 1s linear infinite;
             margin: 0 auto 1rem;
@@ -440,324 +502,72 @@
         }
 
         .processing-text {
+            color: var(--text-primary);
             font-size: 1.2rem;
-            color: #FF9900;
             margin-bottom: 0.5rem;
         }
 
         .processing-subtext {
+            color: var(--text-secondary);
             font-size: 0.9rem;
-            opacity: 0.8;
-        }
-
-        /* Result Display */
-        .result-container {
-            text-align: center;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            padding: 2rem;
-            border: 2px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .result-container.hidden {
-            display: none;
-        }
-
-        .result-title {
-            font-size: 1.5rem;
-            color: #FF9900;
-            margin-bottom: 1rem;
-        }
-
-        .result-image {
-            max-width: 100%;
-            height: auto;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-            margin-bottom: 2rem;
-        }
-
-        .result-actions {
-            display: flex;
-            gap: 1rem;
-            justify-content: center;
-        }
-
-        /* Video Display Styles */
-        .video-container {
-            margin: 2rem 0;
-            text-align: center;
-        }
-
-        .video-container.hidden {
-            display: none;
-        }
-
-        .video-title {
-            font-size: 1.2rem;
-            color: #FF9900;
-            margin-bottom: 1rem;
-        }
-
-        .result-video {
-            max-width: 100%;
-            height: auto;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-            background: rgba(0, 0, 0, 0.5);
-        }
-
-        .animate-btn {
-            background: linear-gradient(135deg, #FF6B6B, #FF8E53);
-            color: white;
-            border: none;
-            padding: 1rem 2rem;
-            border-radius: 25px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            display: inline-block;
-        }
-
-        .animate-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
-        }
-
-        /* Video Section Styles - SIMPLIFIED */
-        .video-section {
-            margin-top: 2rem;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 20px;
-            padding: 2rem;
-            border: 1px solid rgba(255, 153, 0, 0.2);
-        }
-
-        .video-section.hidden {
-            display: none;
-        }
-
-        .section-header {
-            text-align: center;
-            margin-bottom: 2rem;
-        }
-
-        .section-header h3 {
-            color: #FF9900;
-            font-size: 1.5rem;
-            margin: 0 0 0.5rem 0;
-        }
-
-        .section-header p {
-            color: rgba(255, 255, 255, 0.8);
-            margin: 0;
-            line-height: 1.6;
-        }
-
-        .animation-input-section {
-            max-width: 600px;
-            margin: 0 auto;
-        }
-
-        .animation-input {
-            width: 100%;
-            padding: 1rem;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 10px;
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-            font-size: 1rem;
-            resize: vertical;
-            min-height: 80px;
-            font-family: inherit;
-        }
-
-        .animation-input:focus {
-            outline: none;
-            border-color: #FF9900;
-            box-shadow: 0 0 0 2px rgba(255, 153, 0, 0.2);
-        }
-
-        .animation-presets {
-            margin: 1.5rem 0;
-        }
-
-        .presets-label {
-            color: #FF9900;
-            font-weight: 600;
-            margin-bottom: 1rem;
-            text-align: center;
-        }
-
-        .preset-buttons {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 0.75rem;
-        }
-
-        .preset-btn {
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            padding: 1rem;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-size: 0.9rem;
-            text-align: left;
-        }
-
-        .preset-btn:hover {
-            background: rgba(255, 153, 0, 0.2);
-            border-color: #FF9900;
-            transform: translateY(-2px);
-        }
-
-        .animation-actions {
-            text-align: center;
-            margin-top: 2rem;
-        }
-
-        .generate-video-btn {
-            background: linear-gradient(135deg, #FF6B6B, #FF8E53);
-            color: white;
-            border: none;
-            padding: 1rem 2rem;
-            border-radius: 25px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .generate-video-btn:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
-        }
-
-        .generate-video-btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        /* Video Result Styles */
-        .video-result-container {
-            margin-top: 2rem;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 20px;
-            padding: 2rem;
-            border: 1px solid rgba(255, 153, 0, 0.2);
-            text-align: center;
-        }
-
-        .video-result-container.hidden {
-            display: none;
-        }
-
-        .result-video {
-            max-width: 100%;
-            height: auto;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-            background: rgba(0, 0, 0, 0.5);
-            margin: 1rem 0;
-        }
-
-        .video-actions {
-            display: flex;
-            gap: 1rem;
-            justify-content: center;
-            margin-top: 1.5rem;
-        }
-
-        .char-valid {
-            color: #4CAF50 !important;
-        }
-
-        .char-invalid {
-            color: #FF6B6B !important;
-        }
-
-        .download-btn, .new-btn {
-            padding: 1rem 2rem;
-            border-radius: 10px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            border: none;
-        }
-
-        .download-btn {
-            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-            color: white;
-        }
-
-        .new-btn {
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-        }
-
-        .download-btn:hover, .new-btn:hover {
-            transform: translateY(-2px);
         }
 
         /* Responsive Design */
         @media (max-width: 768px) {
-            .card-creator {
-                grid-template-columns: 1fr;
-                gap: 2rem;
-            }
-            
-            .header-content {
-                padding: 0 1rem;
-                flex-direction: column;
-                gap: 1rem;
-                text-align: center;
-            }
-            
-            .logo-section {
-                justify-content: center;
-            }
-            
-            .user-section {
-                justify-content: center;
-                flex-direction: column;
-                gap: 0.5rem;
-            }
-            
-            .powered-by {
-                justify-content: center;
-            }
-            
-            .app-main {
+            .app-header {
                 padding: 1rem;
             }
             
-            .result-actions {
-                flex-direction: column;
-                gap: 0.75rem;
+            .app-title {
+                font-size: 2rem;
             }
             
-            .video-actions {
-                flex-direction: column;
-                gap: 0.75rem;
+            .tab-content {
+                padding: 1rem;
             }
             
-            .preset-buttons {
+            .generation-container {
                 grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .input-section, .result-section {
+                padding: 1.5rem;
+            }
+            
+            .user-info {
+                flex-direction: column;
                 gap: 0.5rem;
             }
             
-            .video-section,
-            .video-result-container {
-                padding: 1.5rem;
-                margin: 1rem 0;
+            .tab-navigation {
+                padding: 0 1rem;
             }
+            
+            .tab-nav-item {
+                padding: 1rem 1.5rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .login-container {
+                padding: 2rem;
+                margin: 0.5rem;
+            }
+            
+            .app-title {
+                font-size: 1.8rem;
+            }
+            
+            .tab-nav-item {
+                padding: 0.8rem 1rem;
+                font-size: 0.9rem;
+            }
+        }
+
+        /* Hidden class */
+        .hidden {
+            display: none !important;
         }
     </style>
 </head>
@@ -767,211 +577,176 @@
         <div class="loading-container">
             <div class="loading-logo">🎴</div>
             <h1 class="loading-title">SnapMagic</h1>
-            <p class="loading-subtitle">AI Trading Card Creator</p>
-            <p class="loading-text">Loading your creative workspace...</p>
+            <p class="loading-subtitle">AI-Powered Trading Card Creator</p>
+            <p class="loading-text">Loading your magical experience...</p>
         </div>
     </div>
 
-    <!-- Login Screen - EXACT SAME AS BEFORE -->
-    <div id="loginScreen" class="login-screen" style="display: none;">
+    <!-- Login Screen -->
+    <div id="loginScreen" class="login-screen hidden">
         <div class="login-container">
             <div class="login-logo">🎴</div>
             <h1 class="login-title">SnapMagic</h1>
-            <p class="login-subtitle">AI Trading Card Creator</p>
+            <p class="login-subtitle">Create magical trading cards with AI</p>
             
-            <form id="loginForm" class="login-form">
+            <form id="loginForm">
                 <div class="form-group">
-                    <label for="username">Username</label>
-                    <input 
-                        type="text" 
-                        id="username" 
-                        name="username" 
-                        placeholder="Enter username"
-                        required
-                        autocomplete="username"
-                    />
+                    <label for="username" class="form-label">Username</label>
+                    <input type="text" id="username" name="username" class="form-input" required>
                 </div>
                 
                 <div class="form-group">
-                    <label for="password">Password</label>
-                    <input 
-                        type="password" 
-                        id="password" 
-                        name="password" 
-                        placeholder="Enter password"
-                        required
-                        autocomplete="current-password"
-                    />
+                    <label for="password" class="form-label">Password</label>
+                    <input type="password" id="password" name="password" class="form-input" required>
                 </div>
                 
-                <button type="submit" class="login-btn">Sign In</button>
-                
-                <div id="loginError" class="error-message"></div>
+                <button type="submit" class="btn btn-primary">Sign In</button>
             </form>
         </div>
     </div>
 
-    <!-- Main App -->
-    <div id="mainApp" class="main-app" style="display: none;">
+    <!-- Main Application -->
+    <div id="mainApp" class="main-app">
+        <!-- Header -->
         <header class="app-header">
-            <div class="header-content">
-                <div class="logo-section">
-                    <span class="logo">🎴</span>
-                    <div class="brand-info">
-                        <h1>SnapMagic</h1>
-                        <div class="powered-by">
-                            <span>Powered by</span>
-                            <img src="https://a0.awsstatic.com/libra-css/images/logos/aws_logo_smile_1200x630.png" alt="AWS" class="aws-logo">
-                            <span class="aws-services">Bedrock Nova Canvas & Reel</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="user-section">
-                    <div class="user-info">
-                        <div id="userInfo">Welcome!</div>
-                        <div id="sessionInfo" class="session-info"></div>
-                    </div>
-                    <button id="logoutBtn" class="logout-btn">Sign Out</button>
-                </div>
+            <h1 class="app-title">SnapMagic</h1>
+            <p class="app-subtitle">Powered by Amazon Bedrock & AWS AI Services</p>
+            <div class="user-info">
+                <span class="welcome-text">Welcome, <span id="usernameDisplay">User</span></span>
+                <button id="signOutBtn" class="btn btn-secondary">Sign Out</button>
             </div>
         </header>
 
-        <main class="app-main">
-            <div class="app-title">
-                <h2>AI Trading Card Creator</h2>
-                <p>Create amazing trading cards with AI-powered content generation</p>
-            </div>
+        <!-- Tab Navigation -->
+        <nav class="tab-navigation">
+            <div class="tab-nav-item active" data-tab="instructions">📖 Instructions</div>
+            <div class="tab-nav-item" data-tab="card-generation">🎴 Create Card</div>
+            <div class="tab-nav-item" data-tab="video-generation">🎬 Create Video</div>
+        </nav>
 
-            <!-- Card Creator Interface -->
-            <div class="card-creator">
-                <!-- Template Section -->
-                <div class="template-section">
-                    <h3 class="template-title">Your Trading Card Template</h3>
-                    <div class="template-container">
-                        <img id="templateImage" class="template-image" alt="Trading card template" />
-                        <div class="template-info">
-                            <p>The pink area will be replaced with your custom content</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Prompt Section -->
-                <div class="prompt-section">
-                    <h3 class="prompt-title">Describe Your Content</h3>
-                    <div class="prompt-container">
-                        <label for="promptInput" class="prompt-label">What would you like to see on your card?</label>
-                        <textarea 
-                            id="promptInput" 
-                            class="prompt-input"
-                            placeholder="Describe what you want to see on your trading card..."
-                            rows="6"
-                            maxlength="1024"
-                        ></textarea>
-                        
-                        <div class="prompt-examples">
-                            <strong>Examples:</strong><br>
-                            • "A tropical beach with palm trees and crystal clear water"<br>
-                            • "A majestic mountain landscape with snow-capped peaks"<br>
-                            • "A futuristic cityscape with flying cars and neon lights"<br>
-                            • "A magical forest with glowing mushrooms and fairy lights"
+        <!-- Tab Content -->
+        <main class="tab-content-container">
+            <!-- Instructions Tab -->
+            <div id="instructions" class="tab-content active">
+                <div class="instructions-container">
+                    <h2 class="instructions-title">How to Use SnapMagic</h2>
+                    
+                    <div class="instruction-step">
+                        <div style="display: flex; align-items: flex-start;">
+                            <span class="step-number">1</span>
+                            <div>
+                                <h3 class="step-title">Choose Your Template</h3>
+                                <p class="step-description">SnapMagic uses a professional trading card template designed for AWS events and conferences. The template includes space for your custom AI-generated artwork.</p>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="generate-section">
-                        <button id="generateBtn" class="generate-btn" disabled>
-                            ✨ Generate My Trading Card
-                        </button>
+                    <div class="instruction-step">
+                        <div style="display: flex; align-items: flex-start;">
+                            <span class="step-number">2</span>
+                            <div>
+                                <h3 class="step-title">Enter Your Prompt</h3>
+                                <p class="step-description">Describe what you want on your trading card. Be creative! Examples: "A magical wizard casting spells", "A futuristic robot in a cyberpunk city", "A majestic dragon flying over mountains".</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="instruction-step">
+                        <div style="display: flex; align-items: flex-start;">
+                            <span class="step-number">3</span>
+                            <div>
+                                <h3 class="step-title">Generate Your Card</h3>
+                                <p class="step-description">Click the generate button and watch as AI creates your unique trading card. The process takes about 10-15 seconds using Amazon Bedrock's advanced image generation.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="instruction-step">
+                        <div style="display: flex; align-items: flex-start;">
+                            <span class="step-number">4</span>
+                            <div>
+                                <h3 class="step-title">Create Animation (Optional)</h3>
+                                <p class="step-description">Want to bring your card to life? Click the video option to create an animated version. The video generation takes approximately 2 minutes to complete.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="instruction-step">
+                        <div style="display: flex; align-items: flex-start;">
+                            <span class="step-number">5</span>
+                            <div>
+                                <h3 class="step-title">Download Your Creation</h3>
+                                <p class="step-description">Once generated, download your card or video immediately. You can create multiple variations and download them all during your session.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="warning-box">
+                        <h4 class="warning-title">⚠️ Important Notice</h4>
+                        <p class="warning-text">We do not store your generated content on our servers. All cards and videos are only available during your current session. Make sure to download anything you want to keep before signing out or closing the application.</p>
                     </div>
                 </div>
             </div>
 
-            <!-- Processing Status -->
-            <div id="processingStatus" class="processing-status hidden">
-                <div class="spinner"></div>
-                <div class="processing-text">Creating your trading card...</div>
-                <div class="processing-subtext">This may take up to 30 seconds</div>
-            </div>
-
-            <!-- Result Display -->
-            <div id="resultContainer" class="result-container hidden">
-                <h3 class="result-title">Your Amazing Trading Card!</h3>
-                <img id="resultImage" class="result-image" alt="Generated trading card" />
-                
-                <!-- Video Display (initially hidden) -->
-                <div id="videoContainer" class="video-container hidden">
-                    <h4 class="video-title">🎬 Animated Trading Card</h4>
-                    <video id="previewVideo" class="result-video" controls autoplay loop muted>
-                        Your browser does not support the video tag.
-                    </video>
-                </div>
-                
-                <div class="result-actions">
-                    <button id="downloadBtn" class="download-btn">📥 Download Card</button>
-                    <button id="newCardBtn" class="new-btn">🎴 Create New Card</button>
-                </div>
-                
-                <!-- Video Generation Section -->
-                <div id="videoSection" class="video-section hidden">
-                    <div class="section-header">
-                        <h3>🎬 Animate Your Trading Card</h3>
-                        <p>Bring your card to life with AI-powered animation using Amazon Bedrock Nova Reel</p>
+            <!-- Card Generation Tab -->
+            <div id="card-generation" class="tab-content">
+                <div class="generation-container">
+                    <div class="input-section">
+                        <h2 class="section-title">Create Your Trading Card</h2>
+                        <textarea id="promptInput" class="prompt-input" placeholder="Describe your trading card... (e.g., 'A magical wizard casting spells in an enchanted forest')"></textarea>
+                        <button id="generateBtn" class="btn btn-generate">🎨 Generate Trading Card</button>
                     </div>
                     
-                    <div class="animation-input-section">
-                        <div class="form-group">
-                            <label for="animationPrompt">Animation Description:</label>
-                            <textarea 
-                                id="animationPrompt" 
-                                class="animation-input" 
-                                placeholder="Describe how you want your card animated... (e.g., magical glow, floating particles, breathing animation)"
-                                maxlength="512"
-                                rows="3"
-                            ></textarea>
-                            <div class="character-counter">
-                                <span id="animationCharCount">0</span>/512 characters
-                                <span id="animationCharStatus" class="char-status">Enter animation description (min 5 characters)</span>
-                            </div>
+                    <div class="result-section">
+                        <h2 class="section-title">Your Generated Card</h2>
+                        <div id="resultContainer">
+                            <p style="color: var(--text-secondary); text-align: center; padding: 2rem;">Your generated trading card will appear here</p>
                         </div>
-                        
-                        <div class="animation-presets">
-                            <p class="presets-label">Quick Presets:</p>
-                            <div class="preset-buttons">
-                                <button class="preset-btn" data-preset="Make this trading card glow with magical energy and floating particles">✨ Magical Glow</button>
-                                <button class="preset-btn" data-preset="Add subtle breathing animation and gentle wind effects">💨 Breathing Life</button>
-                                <button class="preset-btn" data-preset="Create electric energy crackling around the character">⚡ Electric Power</button>
-                                <button class="preset-btn" data-preset="Add mystical fog and ethereal lighting effects">🌫️ Mystical Aura</button>
-                            </div>
-                        </div>
-                        
-                        <div class="animation-actions">
-                            <button id="generateVideoBtn" class="generate-video-btn" disabled>🎬 Generate Animated Video</button>
+                        <div id="resultActions" class="result-actions hidden">
+                            <button id="downloadBtn" class="btn btn-success">💾 Download Card</button>
+                            <button id="createVideoBtn" class="btn btn-primary">🎬 Create Video</button>
+                            <button id="createAnotherBtn" class="btn btn-secondary">🔄 Create Another</button>
                         </div>
                     </div>
                 </div>
-                
-                <!-- Video Processing Status -->
-                <div id="videoProcessingStatus" class="processing-status hidden">
-                    <div class="spinner"></div>
-                    <div class="processing-text">Creating your animated card...</div>
-                    <div id="video-processing-status" class="processing-subtext">This may take up to 60 seconds</div>
-                </div>
-                
-                <!-- Video Result Display -->
-                <div id="videoResultContainer" class="video-result-container hidden">
-                    <div class="section-header">
-                        <h3>🎥 Your Animated Trading Card</h3>
-                        <p>Your card has been brought to life with AI animation!</p>
+            </div>
+
+            <!-- Video Generation Tab -->
+            <div id="video-generation" class="tab-content">
+                <div class="video-container">
+                    <h2 class="section-title">Animate Your Trading Card</h2>
+                    <div id="videoSection">
+                        <p style="color: var(--text-secondary); margin-bottom: 2rem;">Generate a trading card first, then come back here to create an animated version.</p>
+                        <button id="backToCardBtn" class="btn btn-primary">🎴 Go to Card Creation</button>
                     </div>
-                    <video id="resultVideo" class="result-video" controls autoplay loop muted>
-                        Your browser does not support the video tag.
-                    </video>
-                    <div class="video-actions">
-                        <button id="downloadVideoBtn" class="download-btn">📹 Download Video</button>
-                        <button id="createAnotherVideoBtn" class="new-btn">🎬 Try Different Animation</button>
+                    
+                    <div id="videoControls" class="hidden">
+                        <textarea id="animationPrompt" class="prompt-input" placeholder="Describe how you want your card animated... (e.g., 'Make the wizard's staff glow and sparkle')"></textarea>
+                        <button id="generateVideoBtn" class="btn btn-generate">🎬 Generate Video (2 min wait)</button>
+                    </div>
+                    
+                    <div id="videoResult" class="hidden">
+                        <video id="videoPlayer" class="video-player" controls>
+                            <source id="videoSource" src="" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                        <div class="result-actions">
+                            <button id="downloadVideoBtn" class="btn btn-success">💾 Download Video</button>
+                            <button id="createAnotherVideoBtn" class="btn btn-secondary">🔄 Create Another Video</button>
+                        </div>
                     </div>
                 </div>
             </div>
         </main>
+    </div>
+
+    <!-- Processing Overlay -->
+    <div id="processingOverlay" class="processing-overlay">
+        <div class="processing-content">
+            <div class="processing-spinner"></div>
+            <div class="processing-text">Creating your magic...</div>
+            <div class="processing-subtext">Please wait while AI generates your content</div>
+        </div>
     </div>
 
     <script>
@@ -979,7 +754,7 @@
         window.SNAPMAGIC_CONFIG = {
             API_URL: 'PLACEHOLDER_API_URL',
             VERSION: '3.0',
-            FEATURES: ['trading_cards']
+            FEATURES: ['trading_cards', 'video_animation']
         };
     </script>
     <script src="js/app.js"></script>

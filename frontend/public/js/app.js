@@ -1,427 +1,260 @@
 /**
- * SnapMagic Trading Card Creator - Frontend Application
- * AI-powered trading card generation and video animation using Amazon Bedrock
- * 
- * Features:
- * - User authentication for AWS Summit events
- * - Trading card generation using Nova Canvas
- * - Video animation using Nova Reel
- * - Real-time status polling and video retrieval
+ * SnapMagic - Modern UI Application
+ * AI-Powered Trading Card Creator with Professional Interface
  */
 
-class SnapMagicTradingCardApp {
+class SnapMagicApp {
     constructor() {
-        // Authentication state management
+        // Authentication state
         this.isAuthenticated = false;
-        this.currentUser = null;
         this.authToken = null;
+        this.currentUser = null;
         
-        // UI element cache for performance
-        this.elements = {};
+        // UI state
+        this.currentTab = 'instructions';
+        this.generatedCardData = null;
+        this.videoGenerationInProgress = false;
         
-        // Application state
-        this.currentCardImage = null;
-        this.videoPollingInterval = null;
-        
-        // Configuration
-        this.config = {
-            apiBaseUrl: window.SNAPMAGIC_API_URL || '/api',
-            videoPollingDelay: 180000, // 3 minutes initial wait
-            videoPollingInterval: 10000 // 10 seconds between polls
-        };
-        
-        // Initialize application
+        // Initialize app
         this.init();
     }
 
-    async init() {
-        console.log('🎴 SnapMagic Trading Card Creator initializing...');
+    init() {
+        console.log('🎴 SnapMagic App Initializing...');
+        console.log('🔧 Configuration:', window.SNAPMAGIC_CONFIG);
         
-        // Cache DOM elements for performance
-        this.cacheElements();
+        // Get DOM elements
+        this.getElements();
         
-        // Set up event listeners
+        // Setup event listeners
         this.setupEventListeners();
         
-        // Load trading card template
-        this.loadTemplate();
-        
-        // Check authentication status
-        await this.checkAuthStatus();
-        
-        // Hide loading screen
+        // Show login screen after loading
         setTimeout(() => {
-            this.elements.loadingScreen.classList.add('hidden');
-        }, 1500);
+            this.hideLoading();
+            this.showLogin();
+        }, 2000);
     }
 
-    cacheElements() {
-        /**
-         * Cache DOM elements for performance optimization
-         * Reduces repeated DOM queries throughout the application
-         */
+    getElements() {
+        // Screens
         this.elements = {
-            // Screen containers
             loadingScreen: document.getElementById('loadingScreen'),
             loginScreen: document.getElementById('loginScreen'),
             mainApp: document.getElementById('mainApp'),
             
-            // Authentication elements
+            // Login form
             loginForm: document.getElementById('loginForm'),
             usernameInput: document.getElementById('username'),
             passwordInput: document.getElementById('password'),
-            loginError: document.getElementById('loginError'),
             
-            // User interface elements
-            userInfo: document.getElementById('userInfo'),
-            sessionInfo: document.getElementById('sessionInfo'),
-            logoutBtn: document.getElementById('logoutBtn'),
+            // Header
+            usernameDisplay: document.getElementById('usernameDisplay'),
+            signOutBtn: document.getElementById('signOutBtn'),
             
-            // Trading card creation elements
-            templateImage: document.getElementById('templateImage'),
+            // Tab navigation
+            tabNavItems: document.querySelectorAll('.tab-nav-item'),
+            tabContents: document.querySelectorAll('.tab-content'),
+            
+            // Card generation
             promptInput: document.getElementById('promptInput'),
             generateBtn: document.getElementById('generateBtn'),
-            
-            // Status and result display elements
-            processingStatus: document.getElementById('processingStatus'),
             resultContainer: document.getElementById('resultContainer'),
-            resultImage: document.getElementById('resultImage'),
+            resultActions: document.getElementById('resultActions'),
             downloadBtn: document.getElementById('downloadBtn'),
-            newCardBtn: document.getElementById('newCardBtn'),
+            createVideoBtn: document.getElementById('createVideoBtn'),
+            createAnotherBtn: document.getElementById('createAnotherBtn'),
             
-            // Video animation elements
+            // Video generation
             videoSection: document.getElementById('videoSection'),
+            videoControls: document.getElementById('videoControls'),
+            videoResult: document.getElementById('videoResult'),
             animationPrompt: document.getElementById('animationPrompt'),
-            animationCharCount: document.getElementById('animationCharCount'),
-            animationCharStatus: document.getElementById('animationCharStatus'),
             generateVideoBtn: document.getElementById('generateVideoBtn'),
-            presetButtons: document.querySelectorAll('.preset-btn'),
-            videoProcessingStatus: document.getElementById('videoProcessingStatus'),
-            videoResultContainer: document.getElementById('videoResultContainer'),
-            resultVideo: document.getElementById('resultVideo'),
+            videoPlayer: document.getElementById('videoPlayer'),
+            videoSource: document.getElementById('videoSource'),
             downloadVideoBtn: document.getElementById('downloadVideoBtn'),
-            createAnotherVideoBtn: document.getElementById('createAnotherVideoBtn')
+            createAnotherVideoBtn: document.getElementById('createAnotherVideoBtn'),
+            backToCardBtn: document.getElementById('backToCardBtn'),
+            
+            // Processing overlay
+            processingOverlay: document.getElementById('processingOverlay')
         };
-        
-        // Log successful element caching
-        console.log('✅ DOM elements cached successfully');
     }
 
     setupEventListeners() {
-        /**
-         * Set up all event listeners for user interactions
-         * Organized by functionality for better maintainability
-         */
-        // Login form - EXACT SAME AS BEFORE
+        // Login form
         this.elements.loginForm.addEventListener('submit', (e) => this.handleLogin(e));
         
-        // Logout button - EXACT SAME AS BEFORE
-        this.elements.logoutBtn.addEventListener('click', () => this.handleLogout());
+        // Sign out
+        this.elements.signOutBtn.addEventListener('click', () => this.handleSignOut());
         
-        // Prompt input validation
-        this.elements.promptInput.addEventListener('input', () => this.validatePrompt());
+        // Tab navigation
+        this.elements.tabNavItems.forEach(tab => {
+            tab.addEventListener('click', () => this.switchTab(tab.dataset.tab));
+        });
         
-        // Generate button
-        this.elements.generateBtn.addEventListener('click', () => this.handleGenerate());
+        // Card generation
+        this.elements.generateBtn.addEventListener('click', () => this.handleGenerateCard());
+        this.elements.downloadBtn.addEventListener('click', () => this.handleDownloadCard());
+        this.elements.createVideoBtn.addEventListener('click', () => this.handleCreateVideo());
+        this.elements.createAnotherBtn.addEventListener('click', () => this.handleCreateAnother());
         
-        // Result actions
-        this.elements.downloadBtn.addEventListener('click', () => this.handleDownload());
-        this.elements.newCardBtn.addEventListener('click', () => this.handleNewCard());
-        
-        // Video actions - SIMPLIFIED
+        // Video generation
         this.elements.generateVideoBtn.addEventListener('click', () => this.handleGenerateVideo());
         this.elements.downloadVideoBtn.addEventListener('click', () => this.handleDownloadVideo());
-        this.elements.createAnotherVideoBtn.addEventListener('click', () => this.showVideoSection());
-        this.elements.animationPrompt.addEventListener('input', () => this.validateAnimationPrompt());
-        
-        // Preset buttons
-        this.elements.presetButtons.forEach(btn => {
-            btn.addEventListener('click', () => this.handlePresetClick(btn));
-        });
+        this.elements.createAnotherVideoBtn.addEventListener('click', () => this.handleCreateAnotherVideo());
+        this.elements.backToCardBtn.addEventListener('click', () => this.switchTab('card-generation'));
     }
 
-    loadTemplate() {
-        // Load the actual template image
-        const templateUrl = 'finalpink.png';
-        this.elements.templateImage.src = templateUrl;
-        this.elements.templateImage.alt = 'Trading card template with pink placeholder area';
-        
-        // Handle image load error
-        this.elements.templateImage.onerror = () => {
-            console.error('Failed to load template image');
-            this.elements.templateImage.alt = 'Template image not available';
-        };
+    // Screen Management
+    hideLoading() {
+        this.elements.loadingScreen.classList.add('hidden');
     }
 
-    // ========================================
-    // AUTHENTICATION METHODS - EXACT SAME AS BEFORE
-    // DO NOT CHANGE - THESE WORK PERFECTLY
-    // ========================================
-
-    async checkAuthStatus() {
-        const sessionData = localStorage.getItem('snapmagic_session');
-        
-        if (sessionData) {
-            try {
-                const session = JSON.parse(sessionData);
-                const now = Date.now();
-                const sessionAge = now - session.timestamp;
-                const maxAge = 24 * 60 * 60 * 1000; // 24 hours
-                
-                if (sessionAge < maxAge && session.user) {
-                    this.currentUser = session.user;
-                    this.isAuthenticated = true;
-                    this.showMainApp();
-                    return;
-                }
-            } catch (e) {
-                console.error('Invalid session data:', e);
-            }
-        }
-        
-        this.showLoginScreen();
-    }
-
-    async handleLogin(event) {
-        /**
-         * Handle user login authentication
-         * Supports both demo mode and real API authentication
-         */
-        event.preventDefault();
-        
-        // Extract and validate credentials
-        const userCredentials = this.extractLoginCredentials();
-        if (!userCredentials.isValid) {
-            this.showLoginError(userCredentials.errorMessage);
-            return;
-        }
-        
-        try {
-            this.clearLoginError();
-            
-            const apiBaseUrl = window.SNAPMAGIC_CONFIG.API_URL;
-            
-            // Handle demo mode for offline functionality
-            if (apiBaseUrl === 'demo-mode') {
-                this.handleDemoLogin(userCredentials);
-                return;
-            }
-            
-            // Handle real API authentication
-            await this.handleApiLogin(userCredentials, apiBaseUrl);
-            
-        } catch (error) {
-            console.error('❌ Login error:', error);
-            this.showLoginError('Login failed. Please check your connection and try again.');
-        }
-    }
-
-    extractLoginCredentials() {
-        /**
-         * Extract and validate login credentials from form inputs
-         */
-        const username = this.elements.usernameInput.value.trim();
-        const password = this.elements.passwordInput.value.trim();
-        
-        if (!username || !password) {
-            return {
-                isValid: false,
-                errorMessage: 'Please enter both username and password'
-            };
-        }
-        
-        return {
-            isValid: true,
-            username: username,
-            password: password
-        };
-    }
-
-    handleDemoLogin(credentials) {
-        /**
-         * Handle demo mode login for offline functionality
-         */
-        this.currentUser = { 
-            username: credentials.username,
-            loginTime: new Date().toISOString(),
-            token: 'demo-token'
-        };
-        this.isAuthenticated = true;
-        this.authToken = 'demo-token';
-        this.saveSession();
-        this.showMainApp();
-        console.log('✅ Demo login successful');
-    }
-
-    async handleApiLogin(credentials, apiBaseUrl) {
-        /**
-         * Handle real API authentication
-         */
-        const loginEndpoint = `${apiBaseUrl}/api/login`;
-        console.log('🔐 Attempting login to:', loginEndpoint);
-        
-        const response = await fetch(loginEndpoint, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                action: 'login',
-                username: credentials.username,
-                password: credentials.password
-            })
-        });
-        
-        const loginResult = await response.json();
-        console.log('🔐 Login response:', loginResult);
-        
-        if (loginResult.success && loginResult.token) {
-            // Store user session data
-            this.currentUser = { 
-                username: credentials.username,
-                loginTime: new Date().toISOString(),
-                token: loginResult.token,
-                expiresIn: loginResult.expires_in || 86400
-            };
-            this.isAuthenticated = true;
-            this.authToken = loginResult.token;
-            this.saveSession();
-            this.showMainApp();
-            console.log('✅ API login successful');
-        } else {
-            this.showLoginError(loginResult.error || 'Login failed');
-        }
-    }
-
-    handleLogout() {
-        this.isAuthenticated = false;
-        this.currentUser = null;
-        localStorage.removeItem('snapmagic_session');
-        this.showLoginScreen();
-    }
-
-    saveSession() {
-        const sessionData = {
-            user: this.currentUser,
-            timestamp: Date.now()
-        };
-        localStorage.setItem('snapmagic_session', JSON.stringify(sessionData));
-    }
-
-    showLoginScreen() {
-        this.elements.loginScreen.style.display = 'flex';
+    showLogin() {
+        this.elements.loginScreen.classList.remove('hidden');
         this.elements.mainApp.style.display = 'none';
-        this.clearLoginError();
     }
 
     showMainApp() {
-        this.elements.loginScreen.style.display = 'none';
-        this.elements.mainApp.style.display = 'flex';
+        this.elements.loginScreen.classList.add('hidden');
+        this.elements.mainApp.style.display = 'block';
+    }
+
+    // Tab Management
+    switchTab(tabName) {
+        console.log(`🔄 Switching to tab: ${tabName}`);
         
-        if (this.currentUser) {
-            this.elements.userInfo.textContent = `Welcome, ${this.currentUser.username}!`;
-            this.elements.sessionInfo.textContent = `Logged in at ${new Date(this.currentUser.loginTime).toLocaleTimeString()}`;
+        // Update navigation
+        this.elements.tabNavItems.forEach(tab => {
+            tab.classList.toggle('active', tab.dataset.tab === tabName);
+        });
+        
+        // Update content
+        this.elements.tabContents.forEach(content => {
+            content.classList.toggle('active', content.id === tabName);
+        });
+        
+        this.currentTab = tabName;
+        
+        // Handle tab-specific logic
+        if (tabName === 'video-generation') {
+            this.updateVideoTab();
         }
     }
 
-    showLoginError(message) {
-        this.elements.loginError.textContent = message;
+    updateVideoTab() {
+        if (this.generatedCardData) {
+            this.elements.videoSection.classList.add('hidden');
+            this.elements.videoControls.classList.remove('hidden');
+        } else {
+            this.elements.videoSection.classList.remove('hidden');
+            this.elements.videoControls.classList.add('hidden');
+            this.elements.videoResult.classList.add('hidden');
+        }
     }
 
-    clearLoginError() {
-        this.elements.loginError.textContent = '';
-    }
-
-    // ========================================
-    // NEW: TRADING CARD FUNCTIONALITY
-    // ========================================
-
-    validatePrompt() {
-        const prompt = this.elements.promptInput.value.trim();
-        const length = prompt.length;
+    // Authentication
+    async handleLogin(e) {
+        e.preventDefault();
         
-        // Check character limits
-        const minLength = 10; // More reasonable minimum for meaningful content
-        const maxLength = 1024; // Nova Canvas maximum (corrected)
+        const username = this.elements.usernameInput.value.trim();
+        const password = this.elements.passwordInput.value.trim();
         
-        // Enforce maximum length
-        if (length > maxLength) {
-            this.elements.promptInput.value = prompt.substring(0, maxLength);
+        console.log('🔐 Login attempt for username:', username);
+        
+        if (!username || !password) {
+            this.showError('Please enter both username and password');
             return;
         }
-        
-        const isValid = length >= minLength && length <= maxLength;
-        this.elements.generateBtn.disabled = !isValid;
-        
-        if (isValid) {
-            this.elements.generateBtn.textContent = '✨ Generate My Trading Card';
-        } else if (length < minLength) {
-            this.elements.generateBtn.textContent = `Enter description (min ${minLength} characters)`;
-        } else {
-            this.elements.generateBtn.textContent = 'Description too long';
+
+        try {
+            this.showProcessing('Signing you in...');
+            
+            const apiBaseUrl = window.SNAPMAGIC_CONFIG.API_URL;
+            const response = await fetch(`${apiBaseUrl}api/login`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ username, password })
+            });
+
+            const data = await response.json();
+            
+            if (data.success) {
+                console.log('✅ Login successful');
+                this.isAuthenticated = true;
+                this.authToken = data.token;
+                this.currentUser = { username, token: data.token };
+                
+                this.elements.usernameDisplay.textContent = username;
+                this.hideProcessing();
+                this.showMainApp();
+                
+                // Reset form
+                this.elements.loginForm.reset();
+            } else {
+                console.error('❌ Login failed:', data.error);
+                this.hideProcessing();
+                this.showError(data.error || 'Login failed. Please check your credentials.');
+            }
+        } catch (error) {
+            console.error('❌ Login error:', error);
+            this.hideProcessing();
+            this.showError('Login failed. Please check your connection and try again.');
         }
-        
-        // Update character counter
-        this.updateCharacterCounter(length, maxLength);
-    }
-    
-    updateCharacterCounter(current, max) {
-        // Find or create character counter
-        let counter = document.getElementById('characterCounter');
-        if (!counter) {
-            counter = document.createElement('div');
-            counter.id = 'characterCounter';
-            counter.style.cssText = 'font-size: 0.9rem; opacity: 0.8; margin-top: 0.5rem; text-align: right;';
-            this.elements.promptInput.parentNode.appendChild(counter);
-        }
-        
-        counter.textContent = `${current}/${max} characters`;
-        counter.style.color = current > max * 0.9 ? '#ff6b6b' : 'rgba(255, 255, 255, 0.8)';
     }
 
-    async handleGenerate() {
-        /**
-         * Handle trading card generation request
-         * Validates input, calls API, and displays results
-         */
+    handleSignOut() {
+        console.log('👋 User signing out');
+        this.isAuthenticated = false;
+        this.authToken = null;
+        this.currentUser = null;
+        this.generatedCardData = null;
+        
+        // Reset UI
+        this.switchTab('instructions');
+        this.clearResults();
+        this.showLogin();
+    }
+
+    // Card Generation
+    async handleGenerateCard() {
         const userPrompt = this.elements.promptInput.value.trim();
         
-        console.log('🎴 Generate button clicked with prompt:', userPrompt);
-        console.log('🔧 API Configuration:', window.SNAPMAGIC_CONFIG);
+        console.log('🎴 Generate card request:', userPrompt);
         
         if (!userPrompt || userPrompt.length < 10) {
-            alert('Please enter a description of at least 10 characters');
+            this.showError('Please enter a description of at least 10 characters');
             return;
         }
         
         if (userPrompt.length > 1024) {
-            alert('Description must be less than 1024 characters');
+            this.showError('Description must be less than 1024 characters');
             return;
         }
 
         if (!this.isAuthenticated || !this.authToken) {
-            alert('Authentication required. Please log in again.');
-            this.handleLogout();
+            this.showError('Authentication required. Please log in again.');
+            this.handleSignOut();
             return;
         }
 
         try {
-            // Show processing status
-            this.showProcessing();
+            this.showProcessing('Creating your magical trading card...');
+            this.elements.generateBtn.disabled = true;
             
             const apiBaseUrl = window.SNAPMAGIC_CONFIG.API_URL;
-            console.log('🌐 API Base URL:', apiBaseUrl);
-            
-            // Real API call - no demo mode
             const endpoint = `${apiBaseUrl}api/transform-card`;
-            console.log('🎯 Making API call to:', endpoint);
-            console.log('🔑 Using token:', this.currentUser.token ? 'Present' : 'Missing');
+            
+            console.log('🎯 API call to:', endpoint);
             
             const requestBody = {
                 action: 'transform_card',
                 prompt: userPrompt
             };
-            console.log('📤 Request body:', requestBody);
             
             const response = await fetch(endpoint, {
                 method: 'POST',
@@ -431,634 +264,94 @@ class SnapMagicTradingCardApp {
                 },
                 body: JSON.stringify(requestBody)
             });
+
+            const data = await response.json();
             
-            console.log('📥 Response status:', response.status);
-            console.log('📥 Response headers:', Object.fromEntries(response.headers.entries()));
-            
-            if (!response.ok) {
-                const errorText = await response.text();
-                console.error('❌ API Error Response:', errorText);
-                throw new Error(`API request failed with status ${response.status}: ${response.statusText}. ${errorText}`);
-            }
-            
-            const result = await response.json();
-            console.log('🎴 Card generation response:', {
-                success: result.success,
-                hasResult: !!result.result,
-                resultLength: result.result ? result.result.length : 0,
-                resultPreview: result.result ? result.result.substring(0, 100) + '...' : 'null',
-                metadata: result.metadata,
-                error: result.error
-            });
-            
-            if (result.success && result.result) {
-                console.log('✅ Card generation successful, displaying result');
-                this.showResult(result.result, result.metadata);
-            } else {
-                const errorMsg = result.error || 'Card generation failed - no error message provided';
-                console.error('❌ API returned error:', errorMsg);
+            if (data.success) {
+                console.log('✅ Card generation successful');
+                this.generatedCardData = data;
+                this.displayGeneratedCard(data);
                 this.hideProcessing();
-                alert(`Card generation failed: ${errorMsg}\n\nPlease try again with a different description.`);
+            } else {
+                console.error('❌ Card generation failed:', data.error);
+                this.hideProcessing();
+                this.showError(data.error || 'Card generation failed. Please try again.');
             }
-            
         } catch (error) {
             console.error('❌ Card generation error:', error);
             this.hideProcessing();
-            
-            // Show actual error instead of generic message
-            let userMessage = `Card generation failed: ${error.message}`;
-            
-            if (error.message.includes('Failed to fetch')) {
-                userMessage += '\n\nPossible causes:\n• Network connectivity issues\n• API Gateway problems\n• Server timeout';
-            } else if (error.message.includes('401')) {
-                userMessage += '\n\nYour session has expired. Please log in again.';
-                this.handleLogout();
-                return;
-            } else if (error.message.includes('500')) {
-                userMessage += '\n\nServer error - this might be a Nova Canvas service issue.';
-            } else if (error.message.includes('timeout')) {
-                userMessage += '\n\nThe request took too long. Nova Canvas might be busy.';
-            }
-            
-            alert(userMessage);
+            this.showError('Card generation failed. Please check your connection and try again.');
+        } finally {
+            this.elements.generateBtn.disabled = false;
         }
     }
 
-    async simulateCardGeneration(prompt) {
-        // Simulate processing time
-        await new Promise(resolve => setTimeout(resolve, 3000));
+    displayGeneratedCard(data) {
+        const imageSrc = data.imageSrc || `data:image/png;base64,${data.result}`;
         
-        // Show demo result
-        const demoImageData = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
-        this.showResult(demoImageData, { prompt_used: prompt, method: 'demo_mode' });
+        this.elements.resultContainer.innerHTML = `
+            <img src="${imageSrc}" alt="Generated Trading Card" class="result-image">
+            <p style="color: var(--text-secondary); font-size: 0.9rem; text-align: center;">
+                Generated with AI • ${new Date().toLocaleString()}
+            </p>
+        `;
+        
+        this.elements.resultActions.classList.remove('hidden');
     }
 
-    showProcessing() {
-        this.elements.processingStatus.classList.remove('hidden');
-        this.elements.resultContainer.classList.add('hidden');
-        this.elements.generateBtn.disabled = true;
+    handleDownloadCard() {
+        if (!this.generatedCardData) return;
+        
+        const imageSrc = this.generatedCardData.imageSrc || `data:image/png;base64,${this.generatedCardData.result}`;
+        const link = document.createElement('a');
+        link.href = imageSrc;
+        link.download = `snapmagic-card-${Date.now()}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        console.log('💾 Card downloaded');
     }
 
-    hideProcessing() {
-        this.elements.processingStatus.classList.add('hidden');
-        this.elements.generateBtn.disabled = false;
+    handleCreateVideo() {
+        console.log('🎬 Switching to video creation');
+        this.switchTab('video-generation');
     }
 
-    showResult(imageBase64, metadata) {
-        console.log('🎴 showResult called with:', {
-            imageBase64Length: imageBase64 ? imageBase64.length : 0,
-            imageBase64Preview: imageBase64 ? imageBase64.substring(0, 100) + '...' : 'null',
-            metadata: metadata
-        });
-        
-        this.hideProcessing();
-        
-        // Check if we have valid image data
-        if (!imageBase64 || imageBase64.length < 100) {
-            console.error('❌ Invalid image data received');
-            alert('Error: No image data received from server');
-            return;
-        }
-        
-        // Ensure we have the base64 prefix
-        let imageSrc;
-        if (imageBase64.startsWith('data:image/')) {
-            imageSrc = imageBase64;
-        } else {
-            imageSrc = `data:image/png;base64,${imageBase64}`;
-        }
-        
-        console.log('🖼️ Setting image src:', imageSrc.substring(0, 100) + '...');
-        
-        // Display the result image
-        this.elements.resultImage.src = imageSrc;
-        this.elements.resultImage.alt = `Trading card: ${metadata?.prompt_used || 'Generated content'}`;
-        
-        // Store card data for video generation
-        this.currentCardData = {
-            imageBase64: imageBase64,
-            imageSrc: imageSrc,
-            metadata: metadata
-        };
-        
-        // Add error handler for image loading
-        this.elements.resultImage.onerror = () => {
-            console.error('❌ Failed to load generated image');
-            alert('Error: Failed to display generated card');
-        };
-        
-        this.elements.resultImage.onload = () => {
-            console.log('✅ Image loaded successfully');
-        };
-        
-        // Reset video display
-        this.hideVideoResult();
-        
-        // Show video section for animation
-        this.showVideoSection();
-        
-        // Show result container
-        this.elements.resultContainer.classList.remove('hidden');
-        
-        // Scroll to result
-        this.elements.resultContainer.scrollIntoView({ behavior: 'smooth' });
-        
-        console.log('✅ Card display setup complete');
-    }
-
-    handleDownload() {
-        const imageData = this.elements.resultImage.src;
-        
-        console.log('📥 Download attempt - Image data:', {
-            hasImageData: !!imageData,
-            imageDataLength: imageData ? imageData.length : 0,
-            imageDataPreview: imageData ? imageData.substring(0, 50) + '...' : 'null'
-        });
-        
-        if (!imageData || imageData === '' || imageData.includes('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAAB')) {
-            console.error('❌ No valid image data for download');
-            alert('No card available to download. Please generate a card first.');
-            return;
-        }
-        
-        try {
-            // Create download link
-            const link = document.createElement('a');
-            link.href = imageData;
-            link.download = `snapmagic-trading-card-${Date.now()}.png`;
-            
-            // Ensure the link works on all browsers
-            link.style.display = 'none';
-            document.body.appendChild(link);
-            
-            // Trigger download
-            link.click();
-            
-            // Clean up
-            setTimeout(() => {
-                document.body.removeChild(link);
-            }, 100);
-            
-            console.log('📥 Trading card download initiated successfully');
-            
-            // Show success message
-            const originalText = this.elements.downloadBtn.textContent;
-            this.elements.downloadBtn.textContent = '✅ Downloaded!';
-            setTimeout(() => {
-                this.elements.downloadBtn.textContent = originalText;
-            }, 2000);
-            
-        } catch (error) {
-            console.error('❌ Download failed:', error);
-            alert('Download failed. Please try again.');
-        }
-    }
-
-    handleNewCard() {
-        // Reset the interface for new card creation
-        this.elements.promptInput.value = '';
-        this.elements.generateBtn.disabled = true;
-        this.elements.generateBtn.textContent = 'Enter description (min 10 characters)';
-        this.elements.resultContainer.classList.add('hidden');
-        this.elements.processingStatus.classList.add('hidden');
-        
-        // Reset character counter
-        this.updateCharacterCounter(0, 1024);
-        
-        // Focus on prompt input
+    handleCreateAnother() {
+        console.log('🔄 Creating another card');
+        this.clearResults();
         this.elements.promptInput.focus();
-        
-        console.log('🎴 Ready for new card creation');
     }
 
-    // ========================================
-    // VIDEO GENERATION METHODS - SIMPLIFIED
-    // ========================================
-
-    showVideoSection() {
-        if (!this.currentCardData) {
-            console.log('No card data available for video generation');
-            return;
-        }
-
-        console.log('🎬 Showing video generation section...');
-        
-        // Reset video section state
-        this.elements.animationPrompt.value = '';
-        this.elements.animationCharCount.textContent = '0';
-        this.elements.animationCharStatus.textContent = 'Enter animation description (min 5 characters)';
-        this.elements.generateVideoBtn.disabled = true;
-        
-        // Show video section
-        this.elements.videoSection.classList.remove('hidden');
-        this.elements.animationPrompt.focus();
-    }
-
-    hideVideoSection() {
-        this.elements.videoSection.classList.add('hidden');
-    }
-
-    handlePresetClick(button) {
-        const preset = button.getAttribute('data-preset');
-        this.elements.animationPrompt.value = preset;
-        this.validateAnimationPrompt();
-    }
-
-    validateAnimationPrompt() {
-        const prompt = this.elements.animationPrompt.value;
-        const length = prompt.length;
-        
-        // Update character count
-        this.elements.animationCharCount.textContent = length;
-        
-        // Validate length
-        if (length < 5) {
-            this.elements.animationCharStatus.textContent = `Enter animation description (min 5 characters)`;
-            this.elements.animationCharStatus.className = 'char-status char-invalid';
-            this.elements.generateVideoBtn.disabled = true;
-        } else if (length > 512) {
-            this.elements.animationCharStatus.textContent = `Too long! Maximum 512 characters`;
-            this.elements.animationCharStatus.className = 'char-status char-invalid';
-            this.elements.generateVideoBtn.disabled = true;
-        } else {
-            this.elements.animationCharStatus.textContent = `Ready to animate!`;
-            this.elements.animationCharStatus.className = 'char-status char-valid';
-            this.elements.generateVideoBtn.disabled = false;
-        }
-    }
-
+    // Video Generation
     async handleGenerateVideo() {
         const animationPrompt = this.elements.animationPrompt.value.trim();
         
-        if (!animationPrompt || animationPrompt.length < 5) {
-            alert('Please enter a valid animation description (minimum 5 characters).');
+        if (!animationPrompt) {
+            this.showError('Please describe how you want your card animated');
             return;
         }
 
-        if (!this.currentCardData) {
-            alert('No card available to animate. Please generate a card first.');
+        if (!this.generatedCardData) {
+            this.showError('Please generate a trading card first');
+            this.switchTab('card-generation');
             return;
         }
 
-        console.log('🎬 Starting video generation with prompt:', animationPrompt);
-        
         try {
-            // Show processing
-            this.showVideoProcessing();
-            
-            // Generate video
-            await this.generateVideo(this.currentCardData.imageBase64, animationPrompt);
-            
-        } catch (error) {
-            console.error('❌ Video generation error:', error);
-            this.hideVideoProcessing();
-            alert(`Video generation failed: ${error.message}`);
-        }
-    }
-
-    /**
-     * Letterbox trading card image to 1280x720 for Nova Reel
-     * Places 768x1024 card centered on black background
-     */
-    async letterboxCardForVideo(cardImageBase64) {
-        return new Promise((resolve, reject) => {
-            try {
-                console.log('📐 Starting letterboxing for Nova Reel...');
-                
-                // Create canvas for letterboxing
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
-                
-                // Set Nova Reel required dimensions
-                canvas.width = 1280;
-                canvas.height = 720;
-                
-                // Fill with solid black background
-                ctx.fillStyle = '#000000';
-                ctx.fillRect(0, 0, 1280, 720);
-                
-                // Load the card image
-                const img = new Image();
-                img.crossOrigin = 'anonymous';
-                
-                img.onload = function() {
-                    console.log(`📏 Original card: ${img.width}x${img.height}`);
-                    
-                    // Calculate scaling to fit within 1280x720 while maintaining aspect ratio
-                    const scale = Math.min(1280 / img.width, 720 / img.height);
-                    const newWidth = img.width * scale;
-                    const newHeight = img.height * scale;
-                    
-                    // Center the card
-                    const x = (1280 - newWidth) / 2;
-                    const y = (720 - newHeight) / 2;
-                    
-                    console.log(`📐 Scaled card: ${newWidth.toFixed(0)}x${newHeight.toFixed(0)} at (${x.toFixed(0)}, ${y.toFixed(0)})`);
-                    
-                    // Draw the card on black background
-                    ctx.drawImage(img, x, y, newWidth, newHeight);
-                    
-                    // CRITICAL: Use JPEG format to guarantee no transparency
-                    const letterboxedBase64 = canvas.toDataURL('image/jpeg', 1.0).split(',')[1];
-                    
-                    console.log('✅ Letterboxing complete: 1280x720 JPEG on white background (no transparency possible)');
-                    console.log(`📊 Base64 length: ${letterboxedBase64.length} characters`);
-                    console.log(`🔍 Base64 starts with: ${letterboxedBase64.substring(0, 50)}...`);
-                    resolve(letterboxedBase64);
-                };
-                
-                img.onerror = function() {
-                    console.error('❌ Failed to load card image for letterboxing');
-                    reject(new Error('Failed to load card image'));
-                };
-                
-                // Set image source (add data URL prefix if needed)
-                const imageData = cardImageBase64.startsWith('data:image/') 
-                    ? cardImageBase64 
-                    : `data:image/png;base64,${cardImageBase64}`;
-                img.src = imageData;
-                
-            } catch (error) {
-                console.error('❌ Letterboxing error:', error);
-                reject(error);
-            }
-        });
-    }
-
-    async generateVideo(cardImageBase64, animationPrompt) {
-        console.log('🎬 Generating video with Nova Reel...');
-        
-        try {
-            // STEP 1: Letterbox the card image in frontend (now outputs JPEG - no transparency possible)
-            console.log('📐 Step 1: Letterboxing card for Nova Reel...');
-            const letterboxedImage = await this.letterboxCardForVideo(cardImageBase64);
-            
-            // STEP 2: Send letterboxed JPEG image to Nova Reel (transparency already impossible)
-            console.log('🎬 Step 2: Sending JPEG to Nova Reel...');
-            
-            // Get API base URL
-            const apiBaseUrl = window.SNAPMAGIC_CONFIG.API_URL;
-            const endpoint = `${apiBaseUrl}api/transform-card`;  // Same endpoint, different action
-            
-            console.log('🎯 Making video API call to:', endpoint);
-            
-            const requestBody = {
-                action: 'generate_video',
-                card_image: letterboxedImage,  // Send JPEG letterboxed 1280x720 image (no transparency)
-                animation_prompt: animationPrompt
-            };
-            
-            console.log('📤 Request body:', {
-                action: requestBody.action,
-                card_image_length: letterboxedImage.length,
-                animation_prompt: animationPrompt,
-                letterboxed: '1280x720'
-            });
-            
-            const response = await fetch(endpoint, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${this.currentUser.token}`
-                },
-                body: JSON.stringify(requestBody)
-            });
-
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-            }
-
-            const result = await response.json();
-            console.log('🎬 Video API response:', {
-                success: result.success,
-                invocation_arn: result.metadata?.invocation_arn,
-                video_id: result.metadata?.video_id,
-                status: result.metadata?.status
-            });
-
-            if (result.success && result.metadata?.invocation_arn) {
-                console.log('✅ Video generation started - beginning polling');
-                
-                // Use the full invocation ARN for status checking
-                const invocationArn = result.metadata.invocation_arn;
-                
-                console.log('🔍 Using full invocation ARN:', invocationArn);
-                
-                // Start polling for video completion with full ARN
-                this.startVideoPolling(invocationArn, result.metadata);
-                
-            } else {
-                const errorMsg = result.error || 'Video generation failed to start';
-                console.error('❌ Video API error:', errorMsg);
-                throw new Error(errorMsg);
-            }
-
-        } catch (error) {
-            console.error('❌ Video generation failed:', error);
-            this.hideVideoProcessing();
-            
-            // Show actual error message instead of generic ones
-            let userMessage = `Video generation failed: ${error.message}`;
-            
-            // Add specific guidance based on error type
-            if (error.message.includes('Failed to fetch')) {
-                userMessage += '\n\nThis could be due to:\n• Network connectivity issues\n• API Gateway timeout\n• CORS configuration problems';
-            } else if (error.message.includes('401')) {
-                userMessage += '\n\nYour session has expired. Please log in again.';
-                this.handleLogout();
-                return;
-            } else if (error.message.includes('400')) {
-                userMessage += '\n\nPlease check your animation prompt and try again.';
-            } else if (error.message.includes('500')) {
-                userMessage += '\n\nServer error - this might be a Nova Reel service issue.';
-            }
-            
-            alert(userMessage);
-        }
-    }
-
-    showVideoResult(videoBase64, videoUrl, metadata) {
-        console.log('🎥 Displaying video result...');
-        
-        this.hideVideoProcessing();
-        
-        // Set video source (prefer URL over base64 for better performance)
-        let videoSrc;
-        if (videoUrl) {
-            videoSrc = videoUrl;
-            console.log('🔗 Using S3 video URL');
-        } else if (videoBase64) {
-            videoSrc = `data:video/mp4;base64,${videoBase64}`;
-            console.log('📦 Using base64 video data');
-        } else {
-            console.error('❌ No video data available');
-            alert('Error: No video data received');
-            return;
-        }
-        
-        // Set video source and show container
-        this.elements.resultVideo.src = videoSrc;
-        
-        // Add attributes to fix S3 video playback issues
-        this.elements.resultVideo.setAttribute('crossorigin', 'anonymous');
-        this.elements.resultVideo.setAttribute('preload', 'metadata');
-        this.elements.resultVideo.load(); // Force reload with new attributes
-        
-        this.elements.videoResultContainer.classList.remove('hidden');
-        
-        // Hide video input section
-        this.hideVideoSection();
-        
-        // Store video data for download
-        this.currentVideoData = {
-            videoBase64: videoBase64,
-            videoUrl: videoUrl,
-            metadata: metadata
-        };
-        
-        // Add video event handlers
-        this.elements.resultVideo.onloadeddata = () => {
-            console.log('✅ Video loaded successfully');
-        };
-        
-        this.elements.resultVideo.onerror = () => {
-            console.error('❌ Failed to load video');
-            alert('Error: Failed to display video');
-        };
-        
-        // Scroll to video
-        this.elements.videoResultContainer.scrollIntoView({ behavior: 'smooth' });
-        
-        console.log('✅ Video display setup complete');
-    }
-
-    async handleDownloadVideo() {
-        if (!this.currentVideoData) {
-            alert('No video available to download.');
-            return;
-        }
-
-        console.log('📹 Starting video download...');
-        
-        try {
-            let videoData;
-            
-            // Try to use S3 URL first, fallback to base64
-            if (this.currentVideoData.videoUrl) {
-                console.log('🔗 Downloading from S3 URL...');
-                const response = await fetch(this.currentVideoData.videoUrl);
-                const blob = await response.blob();
-                videoData = URL.createObjectURL(blob);
-            } else if (this.currentVideoData.videoBase64) {
-                console.log('📦 Using base64 video data...');
-                videoData = `data:video/mp4;base64,${this.currentVideoData.videoBase64}`;
-            } else {
-                throw new Error('No video data available');
-            }
-            
-            // Create download link
-            const link = document.createElement('a');
-            link.href = videoData;
-            link.download = `snapmagic-animated-card-${Date.now()}.mp4`;
-            
-            // Trigger download
-            link.style.display = 'none';
-            document.body.appendChild(link);
-            link.click();
-            
-            // Clean up
-            setTimeout(() => {
-                document.body.removeChild(link);
-                if (this.currentVideoData.videoUrl) {
-                    URL.revokeObjectURL(videoData);
-                }
-            }, 100);
-            
-            console.log('📹 Video download initiated successfully');
-            
-            // Show success message
-            const originalText = this.elements.downloadVideoBtn.textContent;
-            this.elements.downloadVideoBtn.textContent = '✅ Downloaded!';
-            setTimeout(() => {
-                this.elements.downloadVideoBtn.textContent = originalText;
-            }, 2000);
-            
-        } catch (error) {
-            console.error('❌ Video download failed:', error);
-            alert('Video download failed. Please try again.');
-        }
-    }
-
-    showVideoProcessing() {
-        this.elements.videoProcessingStatus.classList.remove('hidden');
-        this.elements.generateVideoBtn.disabled = true;
-        this.elements.generateVideoBtn.textContent = '📐 Preparing Image...';
-        
-        // Update to show Nova Reel processing after letterboxing
-        setTimeout(() => {
-            if (this.elements.generateVideoBtn.textContent === '📐 Preparing Image...') {
-                this.elements.generateVideoBtn.textContent = '🎬 Creating Video...';
-            }
-        }, 1000);
-    }
-
-    hideVideoProcessing() {
-        this.elements.videoProcessingStatus.classList.add('hidden');
-        this.elements.generateVideoBtn.disabled = false;
-        this.elements.generateVideoBtn.textContent = '🎬 Generate Animated Video';
-    }
-
-    hideVideoResult() {
-        this.elements.videoResultContainer.classList.add('hidden');
-        this.currentVideoData = null;
-    }
-
-    /**
-     * Start polling for video completion with specified timing
-     * Wait 2 minutes initially, then poll every 10 seconds (max 10 times)
-     */
-    startVideoPolling(invocationArn, metadata) {
-        console.log('⏰ Starting video polling - waiting 2 minutes before first check...');
-        
-        // Update UI to show waiting status
-        this.updateVideoProcessingStatus('Video is being generated... Please wait 2 minutes for initial processing.');
-        
-        // Wait 2 minutes (120 seconds) before first check
-        setTimeout(() => {
-            console.log('⏰ 2 minutes elapsed - starting polling every 10 seconds (max 10 attempts)');
-            this.updateVideoProcessingStatus('Checking video status...');
-            
-            // Start polling every 10 seconds with retry counter
-            this.pollVideoStatus(invocationArn, metadata, 0);
-        }, 2 * 60 * 1000); // 2 minutes in milliseconds
-    }
-
-    /**
-     * Poll video status every 10 seconds until ready (max 10 retries)
-     */
-    async pollVideoStatus(invocationArn, metadata, retryCount = 0) {
-        const MAX_RETRIES = 10;
-        
-        // Check if we've exceeded max retries
-        if (retryCount >= MAX_RETRIES) {
-            console.error(`❌ Max retries (${MAX_RETRIES}) exceeded for video polling`);
-            this.hideVideoProcessing();
-            alert(`Video generation timed out after ${MAX_RETRIES} attempts. Please try again.`);
-            return;
-        }
-        
-        try {
-            console.log(`🔍 Polling video status for: ${invocationArn} (attempt ${retryCount + 1}/${MAX_RETRIES})`);
+            this.showProcessing('Creating your animated video... This takes about 2 minutes.');
+            this.elements.generateVideoBtn.disabled = true;
+            this.videoGenerationInProgress = true;
             
             const apiBaseUrl = window.SNAPMAGIC_CONFIG.API_URL;
             const endpoint = `${apiBaseUrl}api/transform-card`;
             
             const requestBody = {
-                action: 'get_video_status',
-                invocation_arn: invocationArn  // This is actually the full ARN, not just ID
+                action: 'generate_video',
+                prompt: animationPrompt,
+                image_data: this.generatedCardData.result
             };
-
-            console.log('📤 Sending video status request:', requestBody);
             
             const response = await fetch(endpoint, {
                 method: 'POST',
@@ -1069,88 +362,220 @@ class SnapMagicTradingCardApp {
                 body: JSON.stringify(requestBody)
             });
 
-            console.log('📥 Response status:', response.status, response.statusText);
-
-            if (!response.ok) {
-                const errorText = await response.text();
-                console.error('❌ HTTP Error Response:', errorText);
-                throw new Error(`HTTP ${response.status}: ${response.statusText} - ${errorText}`);
-            }
-
-            const result = await response.json();
-            console.log('📊 Video status response:', {
-                success: result.success,
-                status: result.status,
-                hasVideo: !!result.video_base64,
-                message: result.message
-            });
-
-            if (result.success && result.status === 'completed' && (result.video_url || result.video_base64)) {
-                // Video is ready!
-                console.log('✅ Video generation completed!');
-                this.hideVideoProcessing();
-                this.showVideoResult(result.video_base64, result.video_url, {
-                    ...metadata,
-                    video_size: result.video_size,
-                    completion_time: new Date().toISOString()
-                });
-                
-            } else if (result.status === 'failed') {
-                // Video generation failed
-                console.error('❌ Video generation failed:', result.message);
-                this.hideVideoProcessing();
-                alert(`Video generation failed: ${result.message}`);
-                
+            const data = await response.json();
+            
+            if (data.success) {
+                console.log('✅ Video generation initiated');
+                this.pollVideoStatus(data.video_id);
             } else {
-                // Still processing - continue polling
-                console.log(`⏳ Video still processing, will check again in 10 seconds (attempt ${retryCount + 1}/${MAX_RETRIES})`);
-                this.updateVideoProcessingStatus(`Video processing... Attempt ${retryCount + 1}/${MAX_RETRIES}. ${result.message || 'Checking again in 10 seconds'}`);
-                
-                // Poll again in 10 seconds with incremented retry count
-                setTimeout(() => {
-                    this.pollVideoStatus(invocationArn, metadata, retryCount + 1);
-                }, 10 * 1000); // 10 seconds
+                console.error('❌ Video generation failed:', data.error);
+                this.hideProcessing();
+                this.showError(data.error || 'Video generation failed. Please try again.');
+                this.videoGenerationInProgress = false;
             }
-
         } catch (error) {
-            console.error('❌ Error polling video status:', error);
-            
-            // Increment retry count for errors too
-            const nextRetryCount = retryCount + 1;
-            
-            if (nextRetryCount >= MAX_RETRIES) {
-                console.error(`❌ Max retries (${MAX_RETRIES}) exceeded due to errors`);
-                this.hideVideoProcessing();
-                alert(`Video status check failed after ${MAX_RETRIES} attempts. Error: ${error.message}`);
-                return;
-            }
-            
-            // Continue polling on error (might be temporary)
-            console.log(`⚠️ Polling error, retrying in 10 seconds... (attempt ${nextRetryCount}/${MAX_RETRIES})`);
-            this.updateVideoProcessingStatus(`Error checking status (attempt ${nextRetryCount}/${MAX_RETRIES}), retrying...`);
-            
-            setTimeout(() => {
-                this.pollVideoStatus(invocationArn, metadata, nextRetryCount);
-            }, 10 * 1000); // 10 seconds
+            console.error('❌ Video generation error:', error);
+            this.hideProcessing();
+            this.showError('Video generation failed. Please check your connection and try again.');
+            this.videoGenerationInProgress = false;
+        } finally {
+            this.elements.generateVideoBtn.disabled = false;
         }
     }
 
-    /**
-     * Update video processing status message
-     */
-    updateVideoProcessingStatus(message) {
-        const statusElement = document.querySelector('#video-processing-status');
-        if (statusElement) {
-            statusElement.textContent = message;
+    async pollVideoStatus(videoId) {
+        const maxAttempts = 60; // 2 minutes with 2-second intervals
+        let attempts = 0;
+        
+        const poll = async () => {
+            try {
+                const apiBaseUrl = window.SNAPMAGIC_CONFIG.API_URL;
+                const endpoint = `${apiBaseUrl}api/transform-card`;
+                
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${this.currentUser.token}`
+                    },
+                    body: JSON.stringify({
+                        action: 'get_video_status',
+                        video_id: videoId
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.success && data.status === 'completed') {
+                    console.log('✅ Video generation completed');
+                    this.displayGeneratedVideo(data.video_url);
+                    this.hideProcessing();
+                    this.videoGenerationInProgress = false;
+                } else if (data.success && data.status === 'processing') {
+                    attempts++;
+                    if (attempts < maxAttempts) {
+                        setTimeout(poll, 2000);
+                    } else {
+                        this.hideProcessing();
+                        this.showError('Video generation is taking longer than expected. Please try again.');
+                        this.videoGenerationInProgress = false;
+                    }
+                } else {
+                    console.error('❌ Video status check failed:', data.error);
+                    this.hideProcessing();
+                    this.showError(data.error || 'Video generation failed.');
+                    this.videoGenerationInProgress = false;
+                }
+            } catch (error) {
+                console.error('❌ Video status polling error:', error);
+                attempts++;
+                if (attempts < maxAttempts) {
+                    setTimeout(poll, 2000);
+                } else {
+                    this.hideProcessing();
+                    this.showError('Failed to check video status. Please try again.');
+                    this.videoGenerationInProgress = false;
+                }
+            }
+        };
+        
+        poll();
+    }
+
+    displayGeneratedVideo(videoUrl) {
+        this.elements.videoSource.src = videoUrl;
+        this.elements.videoPlayer.load();
+        this.elements.videoControls.classList.add('hidden');
+        this.elements.videoResult.classList.remove('hidden');
+    }
+
+    handleDownloadVideo() {
+        const videoUrl = this.elements.videoSource.src;
+        if (!videoUrl) return;
+        
+        const link = document.createElement('a');
+        link.href = videoUrl;
+        link.download = `snapmagic-video-${Date.now()}.mp4`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        console.log('💾 Video downloaded');
+    }
+
+    handleCreateAnotherVideo() {
+        console.log('🔄 Creating another video');
+        this.elements.videoResult.classList.add('hidden');
+        this.elements.videoControls.classList.remove('hidden');
+        this.elements.animationPrompt.value = '';
+        this.elements.animationPrompt.focus();
+    }
+
+    // Utility Methods
+    clearResults() {
+        this.elements.resultContainer.innerHTML = `
+            <p style="color: var(--text-secondary); text-align: center; padding: 2rem;">
+                Your generated trading card will appear here
+            </p>
+        `;
+        this.elements.resultActions.classList.add('hidden');
+        this.elements.promptInput.value = '';
+    }
+
+    showProcessing(message = 'Processing...') {
+        const processingText = this.elements.processingOverlay.querySelector('.processing-text');
+        if (processingText) {
+            processingText.textContent = message;
         }
-        console.log('📢 Status update:', message);
+        this.elements.processingOverlay.style.display = 'flex';
+    }
+
+    hideProcessing() {
+        this.elements.processingOverlay.style.display = 'none';
+    }
+
+    showError(message) {
+        // Create modern error notification
+        const errorDiv = document.createElement('div');
+        errorDiv.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(45deg, #e53e3e, #c53030);
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            z-index: 3000;
+            max-width: 400px;
+            font-weight: 500;
+            animation: slideIn 0.3s ease;
+        `;
+        
+        errorDiv.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <span>⚠️</span>
+                <span>${message}</span>
+            </div>
+        `;
+        
+        document.body.appendChild(errorDiv);
+        
+        // Auto remove after 5 seconds
+        setTimeout(() => {
+            if (errorDiv.parentNode) {
+                errorDiv.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => {
+                    if (errorDiv.parentNode) {
+                        document.body.removeChild(errorDiv);
+                    }
+                }, 300);
+            }
+        }, 5000);
+        
+        // Add CSS animations if not already present
+        if (!document.querySelector('#error-animations')) {
+            const style = document.createElement('style');
+            style.id = 'error-animations';
+            style.textContent = `
+                @keyframes slideIn {
+                    from { transform: translateX(100%); opacity: 0; }
+                    to { transform: translateX(0); opacity: 1; }
+                }
+                @keyframes slideOut {
+                    from { transform: translateX(0); opacity: 1; }
+                    to { transform: translateX(100%); opacity: 0; }
+                }
+            `;
+            document.head.appendChild(style);
+        }
     }
 }
 
-// Initialize the app when DOM is loaded
+// Initialize the application when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    window.snapMagicApp = new SnapMagicTradingCardApp();
+    console.log('🚀 DOM loaded, initializing SnapMagic...');
+    window.snapMagicApp = new SnapMagicApp();
 });
 
-// Maintain backward compatibility
-const SnapMagicApp = SnapMagicTradingCardApp;
+// Handle page visibility changes
+document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+        console.log('📱 App hidden');
+    } else {
+        console.log('📱 App visible');
+    }
+});
+
+// Service Worker registration for PWA functionality
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+            .then(registration => {
+                console.log('✅ SW registered: ', registration);
+            })
+            .catch(registrationError => {
+                console.log('❌ SW registration failed: ', registrationError);
+            });
+    });
+}
