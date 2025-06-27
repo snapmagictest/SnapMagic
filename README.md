@@ -228,6 +228,92 @@ Try these AI prompts to generate trading cards:
 3. **Check API Gateway**: Test endpoints in AWS Console
 4. **Frontend Console**: Open browser dev tools for JavaScript errors
 
+---
+
+## 📖 User Guide
+
+### Getting Started
+1. **Access the Application**: Open your Amplify URL in any web browser
+2. **Login**: Use demo credentials (demo/snapmagic2024) or your event credentials
+3. **Generate Your First Card**: Enter a creative prompt and click "Generate Card"
+4. **Create a Video**: Once your card is ready, click "Generate Video" to bring it to life
+5. **Download & Share**: Save your PNG card and MP4 video to share on social media
+
+### 🎨 Writing Great Prompts
+
+#### Best Practices
+- **Be Specific**: "AWS Solutions Architect designing cloud infrastructure" vs "developer"
+- **Include Context**: "Lambda function powering my re:Invent demo" vs "Lambda function"
+- **Add Personality**: "DevOps engineer who automates everything with CDK and loves coffee"
+- **Use Action Words**: "building", "designing", "powering", "creating", "innovating"
+
+#### Example Prompts That Work Great
+```
+✅ "AWS Lambda function powering my re:Invent presentation on serverless architecture"
+✅ "Cloud architect designing the future of multi-cloud infrastructure"
+✅ "DevOps engineer automating everything with CDK and Infrastructure as Code"
+✅ "Solutions architect building the next unicorn startup on AWS"
+✅ "Data engineer processing millions of events with Kinesis and Lambda"
+✅ "Security engineer implementing Zero Trust architecture on AWS"
+✅ "Machine learning engineer training models with SageMaker and Bedrock"
+```
+
+#### Prompts to Avoid
+```
+❌ "Person" (too generic)
+❌ "Developer coding" (lacks context)
+❌ "AWS guy" (not professional)
+❌ "Someone working" (too vague)
+```
+
+### 🎬 Video Generation Tips
+- **Wait for Card First**: Ensure your trading card is fully generated before creating video
+- **Be Patient**: Video generation takes 30-60 seconds for high quality
+- **Mobile Friendly**: Videos work great on all devices and social platforms
+- **Share Ready**: MP4 format is perfect for LinkedIn, Twitter, and Instagram
+
+### 📱 Mobile Experience
+- **Responsive Design**: Works perfectly on phones and tablets
+- **Touch Friendly**: Large buttons and easy navigation
+- **Fast Loading**: Optimized for mobile networks
+- **Offline Viewing**: Downloaded cards work without internet
+
+### 🎯 Event Integration Ideas
+
+#### For Event Organizers
+- **Registration Bonus**: Generate cards during event signup
+- **Booth Attraction**: Live card generation at your booth
+- **Social Media**: Encourage sharing with event hashtags
+- **Networking**: Cards as digital business cards
+- **Prizes**: Best card contests and giveaways
+
+#### For Attendees
+- **Professional Branding**: Create cards showcasing your expertise
+- **Session Summaries**: Generate cards for key takeaways
+- **Networking Tool**: Share cards instead of traditional business cards
+- **Social Proof**: Post cards showing your AWS journey
+- **Memory Keeper**: Create cards for memorable event moments
+
+### 🔧 Advanced Features
+
+#### Authentication Options
+- **Demo Mode**: Quick access with demo/snapmagic2024
+- **Event Codes**: Custom credentials for specific events
+- **JWT Security**: Secure token-based authentication
+- **Session Management**: Automatic logout for security
+
+#### Customization
+- **Prompt Engineering**: Experiment with different prompt styles
+- **Multiple Generations**: Create several cards with variations
+- **Quality Settings**: High-resolution outputs for printing
+- **Format Options**: PNG for images, MP4 for videos
+
+### 📊 Usage Analytics
+- **Generation Time**: Track your card and video creation speed
+- **Popular Prompts**: See what works best for your audience
+- **Download Stats**: Monitor engagement with your content
+- **Cost Tracking**: Understand usage patterns and costs
+
 ## 🔧 Two-Step Deployment Process
 
 SnapMagic uses a **two-step deployment process**:
@@ -414,4 +500,14 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Built with ❤️ for the AWS Community**
 
-*SnapMagic: Where AI meets creativity, and $0.49 creates unforgettable experiences.*
+<div align="center">
+  <img src="trading-card-template.png" alt="SnapMagic Trading Card Template" width="400" style="border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+  
+  <br><br>
+  
+  <em>SnapMagic: Where AI meets creativity, and $0.49 creates unforgettable experiences.</em>
+  
+  <br><br>
+  
+  <strong>🎴 Transform Your AWS Journey Into Collectible Art ✨</strong>
+</div>
