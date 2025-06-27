@@ -79,80 +79,154 @@ SnapMagic/
 └── README.md                       # This file
 ```
 
-## 🚀 Quick Start
+## 🚀 Quick Start Guide
 
-### Prerequisites
-- AWS CLI configured with appropriate permissions
-- Node.js 18+ and Python 3.9+
-- AWS CDK v2 installed globally
-- **Amazon Bedrock Model Access**: Request access to Nova Canvas and Nova Reel models in AWS Console
-- **Region Requirement**: Deploy in **us-east-1** (Virginia) - Nova models are only available in this region
-- **IAM Permissions**: Ensure your AWS account has permissions for Bedrock, Lambda, API Gateway, S3, and CloudWatch
+### 📋 Prerequisites (Complete BEFORE Deployment)
 
-### 🔑 Bedrock Model Access Setup
-
-**IMPORTANT**: Before deploying, you must request access to Amazon Bedrock models:
-
-1. **Navigate to AWS Console** → Amazon Bedrock → Model access
-2. **Select Region**: Ensure you're in **us-east-1** (N. Virginia)
-3. **Request Access** to the following models:
-   - **Amazon Nova Canvas** (for image generation)
-   - **Amazon Nova Reel** (for video generation)
-4. **Wait for Approval**: Model access requests may take a few minutes to hours
-5. **Verify Access**: Ensure both models show "Access granted" status
-
-**Note**: Nova models are currently only available in us-east-1 region. All SnapMagic resources must be deployed in this region.
-
-### 1. Clone and Setup
+#### 1. **System Requirements**
 ```bash
-git clone https://github.com/yourusername/SnapMagic.git
+# Required software versions
+- AWS CLI v2+ (configured with admin permissions)
+- Node.js 18+ and npm
+- Python 3.9+
+- AWS CDK v2 (install globally: npm install -g aws-cdk)
+```
+
+#### 2. **AWS Account Setup**
+- ✅ **AWS Account** with administrative permissions
+- ✅ **AWS CLI configured** with your credentials (`aws configure`)
+- ✅ **Region**: Must use **us-east-1** (N. Virginia) - Nova models only available here
+
+#### 3. **🔑 CRITICAL: Amazon Bedrock Model Access**
+
+**⚠️ MUST COMPLETE FIRST - Deployment will fail without this!**
+
+1. **Open AWS Console** → Navigate to **Amazon Bedrock**
+2. **Select Region**: Switch to **us-east-1** (N. Virginia)
+3. **Go to Model Access** (left sidebar)
+4. **Request Access** to these models:
+   - ✅ **Amazon Nova Canvas** (image generation)
+   - ✅ **Amazon Nova Reel** (video generation)
+5. **Wait for Approval** (5-30 minutes typically)
+6. **Verify Status**: Both models show "✅ Access granted"
+
+**🚨 Without model access, the application will not work!**
+
+---
+
+## 🛠️ Deployment Instructions
+
+### Step 1: Clone and Install Dependencies
+
+```bash
+# Clone the repository
+git clone https://github.com/snapmagictest/SnapMagic.git
 cd SnapMagic
 
 # Install CDK dependencies
 cd infrastructure
 npm install
 
-# Install Lambda dependencies
+# Install Python dependencies
 cd ../backend
 pip install -r requirements.txt
 ```
 
-### 2. Deploy Backend Infrastructure (API Gateway + Lambda)
+### Step 2: Configure Secrets (Optional but Recommended)
+
+```bash
+# Copy the example secrets file
+cp secrets.json.example secrets.json
+
+# Edit secrets.json with your preferred JWT secret
+{
+  "JWT_SECRET": "your-super-secret-jwt-key-change-this-in-production"
+}
+```
+
+### Step 3: Deploy Backend Infrastructure
+
 ```bash
 cd infrastructure
 
 # Bootstrap CDK (first time only)
-cdk bootstrap
+cdk bootstrap --region us-east-1
 
 # Deploy the backend stack
-cdk deploy SnapMagicStack
+cdk deploy SnapMagicStack --region us-east-1
 ```
 
-**Important**: After deployment, note the API Gateway URL from the CDK output - you'll need this for the frontend.
+**📝 IMPORTANT**: After deployment completes, you'll see output like this:
+```
+✅  SnapMagicStack
 
-### 3. Deploy Frontend (AWS Amplify)
-```bash
-# Update frontend configuration with your API Gateway URL
-# Edit frontend/public/js/app.js and replace the API_BASE_URL
-
-# Deploy frontend to Amplify (follow the Amplify console setup)
-# Or use the Amplify CLI:
-amplify init
-amplify add hosting
-amplify publish
+Outputs:
+SnapMagicStack.ApiGatewayUrl = https://abc123def.execute-api.us-east-1.amazonaws.com/prod
+SnapMagicStack.AmplifyAppUrl = https://main.d1234567890.amplifyapp.com
 ```
 
-### 4. Test the Application
+**🔗 Copy the ApiGatewayUrl** - you'll need it for the next step!
+
+### Step 4: Configure Frontend with API Gateway URL
+
 ```bash
-# Demo credentials for testing
+# Navigate to frontend JavaScript file
+cd ../frontend/public/js
+
+# Edit app.js and replace the API_BASE_URL
+# Find this line:
+const API_BASE_URL = 'YOUR_API_GATEWAY_URL_HERE';
+
+# Replace with your actual API Gateway URL:
+const API_BASE_URL = 'https://abc123def.execute-api.us-east-1.amazonaws.com/prod';
+```
+
+### Step 5: Deploy Frontend to Amplify
+
+The frontend is automatically deployed via AWS Amplify when you push to the repository. The CDK stack creates the Amplify app and connects it to your GitHub repository.
+
+**🌐 Your application will be available at the AmplifyAppUrl from Step 3!**
+
+---
+
+## 🧪 Test Your Deployment
+
+### Demo Credentials
+```
 Username: demo
 Password: snapmagic2024
-
-# Try these example prompts:
-# "AWS Lambda function powering my re:Invent presentation"
-# "Cloud architect designing the future of serverless"
-# "DevOps engineer automating everything with CDK"
 ```
+
+### Test Prompts
+Try these AI prompts to generate trading cards:
+- `"AWS Lambda function powering my re:Invent presentation"`
+- `"Cloud architect designing the future of serverless"`
+- `"DevOps engineer automating everything with CDK"`
+- `"Solutions architect building the next unicorn startup"`
+
+---
+
+## ✅ Deployment Validation
+
+### Quick Health Check
+1. **Backend Health**: Visit your API Gateway URL directly - should return API documentation
+2. **Frontend Access**: Open the Amplify URL - should show SnapMagic login page
+3. **Authentication**: Login with demo credentials (demo/snapmagic2024)
+4. **Card Generation**: Try generating a card with a simple prompt
+5. **Video Generation**: Generate a video from your card
+
+### Success Indicators
+- ✅ Login successful with demo credentials
+- ✅ Card generates within 30 seconds
+- ✅ Video generates within 60 seconds
+- ✅ Download buttons work for PNG and MP4
+- ✅ No console errors in browser developer tools
+
+### If Something's Wrong
+1. **Check CloudWatch Logs**: AWS Console → CloudWatch → Log Groups → `/aws/lambda/SnapMagic-*`
+2. **Verify Bedrock Access**: AWS Console → Bedrock → Model Access
+3. **Check API Gateway**: Test endpoints in AWS Console
+4. **Frontend Console**: Open browser dev tools for JavaScript errors
 
 ## 🔧 Two-Step Deployment Process
 
@@ -318,12 +392,12 @@ We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.
 - 📧 **Contact**: [your-email@domain.com](mailto:your-email@domain.com)
 
 ### Common Issues
-- **Bedrock Access**: Ensure your AWS account has Bedrock model access enabled in us-east-1 region
-- **Nova Models**: Request access to both Nova Canvas and Nova Reel models through AWS Console
-- **Region Errors**: Nova models are only available in us-east-1 - deploy all resources there
-- **CORS Errors**: Verify API Gateway CORS configuration
-- **High Costs**: Monitor Bedrock usage and implement rate limiting
-- **Slow Generation**: Check Lambda memory allocation and timeout settings
+- **❌ "Access Denied" for Bedrock**: Go to AWS Console → Bedrock → Model Access → Request access to Nova Canvas and Nova Reel in us-east-1
+- **❌ "Region not supported"**: Ensure all resources are deployed in us-east-1 region only
+- **❌ Frontend shows "API Error"**: Update `frontend/public/js/app.js` with correct API Gateway URL from CDK output
+- **❌ Cards not generating**: Check CloudWatch logs for Lambda function errors, verify Bedrock model access
+- **❌ High AWS costs**: Monitor Bedrock usage in CloudWatch, implement rate limiting if needed
+- **❌ Slow generation**: Increase Lambda memory allocation in CDK stack (default: 1024MB)
 
 ## 📄 License
 
