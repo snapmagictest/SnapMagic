@@ -105,6 +105,31 @@ class SnapMagicApp {
         this.elements.downloadVideoBtn.addEventListener('click', () => this.handleDownloadVideo());
         this.elements.createAnotherVideoBtn.addEventListener('click', () => this.handleCreateAnotherVideo());
         this.elements.backToCardBtn.addEventListener('click', () => this.switchTab('card-generation'));
+        
+        // Example prompt buttons
+        this.setupExamplePrompts();
+    }
+
+    setupExamplePrompts() {
+        // Card generation example prompts
+        const cardExampleBtns = document.querySelectorAll('.example-btn:not(.video-example)');
+        cardExampleBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const prompt = btn.getAttribute('data-prompt');
+                this.elements.promptInput.value = prompt;
+                this.elements.promptInput.focus();
+            });
+        });
+
+        // Video generation example prompts
+        const videoExampleBtns = document.querySelectorAll('.example-btn.video-example');
+        videoExampleBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const prompt = btn.getAttribute('data-prompt');
+                this.elements.animationPrompt.value = prompt;
+                this.elements.animationPrompt.focus();
+            });
+        });
     }
 
     // Screen Management

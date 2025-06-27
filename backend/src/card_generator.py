@@ -171,11 +171,7 @@ class TradingCardGenerator:
         Returns:
             Enhanced prompt optimized for Nova Canvas
         """
-        return (
-            f"Professional trading card featuring: {user_prompt}. "
-            f"Photorealistic, high-resolution, premium quality, detailed photography style "
-            f"suitable for collectible trading cards."
-        )
+        return user_prompt
     
     def _build_generation_request(self, enhanced_prompt: str) -> Dict[str, Any]:
         """
