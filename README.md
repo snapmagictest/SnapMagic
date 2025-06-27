@@ -505,7 +505,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
   
   <br><br>
   
-  <em>SnapMagic: AI-powered trading card generation for AWS events and communities.</em>
+  <em>SnapMagic: Where AI meets creativity for AWS events and communities.</em>
   
   <br><br>
   
