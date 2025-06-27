@@ -306,11 +306,7 @@ class TradingCardVideoGenerator:
         Returns:
             Enhanced prompt optimized for Nova Reel
         """
-        return (
-            f"{original_prompt}. Keep the trading card format intact while adding "
-            f"subtle movement and effects. Maintain professional quality and "
-            f"collectible card aesthetics."
-        )
+        return original_prompt
     
     def _build_video_generation_request(self, card_image_base64: str, enhanced_prompt: str) -> Dict[str, Any]:
         """
