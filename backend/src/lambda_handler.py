@@ -209,7 +209,7 @@ def lambda_handler(event, context):
         # ========================================
         elif action == 'generate_video':
             card_image = body.get('card_image', '')
-            animation_prompt = body.get('animation_prompt', 'Add subtle animation and movement effects')
+            animation_prompt = body.get('animation_prompt', '')
             
             logger.info(f"🎬 Video generation request - card_image length: {len(card_image)}, prompt: {animation_prompt[:50]}...")
             
