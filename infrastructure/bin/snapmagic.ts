@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import 'source-map-support/register';
 import * as cdk from 'aws-cdk-lib';
-import { SnapMagicStack } from '../lib/snapmagic-stack';
+import { SnapMagicTradingCardStack } from '../lib/snapmagic-stack';
 import { DeploymentInputs } from '../lib/deployment-inputs';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -166,7 +166,7 @@ if (isDestroy) {
 }
 
 // Create the complete SnapMagic stack (frontend + backend)
-new SnapMagicStack(app, `SnapMagic-${environment}`, {
+new SnapMagicTradingCardStack(app, `SnapMagic-${environment}`, {
   env: {
     account: process.env.CDK_DEFAULT_ACCOUNT,
     region: process.env.CDK_DEFAULT_REGION || 'us-east-1',

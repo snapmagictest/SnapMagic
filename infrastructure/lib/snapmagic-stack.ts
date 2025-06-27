@@ -1,3 +1,17 @@
+/**
+ * SnapMagic Infrastructure Stack
+ * 
+ * AWS CDK stack for deploying SnapMagic Trading Card Generation system
+ * 
+ * Components:
+ * - AWS Amplify for frontend hosting with GitHub integration
+ * - AWS Lambda for backend API processing
+ * - Amazon API Gateway for REST API endpoints
+ * - Amazon S3 for video storage and static assets
+ * - IAM roles and policies for secure service integration
+ * - Amazon Bedrock access for Nova Canvas and Nova Reel
+ */
+
 import { Stack, StackProps, CfnOutput, Tags, Duration, CfnResource, CustomResource, RemovalPolicy } from 'aws-cdk-lib';
 import { aws_amplify as amplify, aws_lambda as lambda, aws_apigateway as apigateway, aws_iam as iam, aws_s3 as s3, aws_events as events, aws_events_targets as targets } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
@@ -9,16 +23,18 @@ export interface SnapMagicStackProps extends StackProps {
   inputs: DeploymentInputs;
 }
 
-export class SnapMagicStack extends Stack {
+export class SnapMagicTradingCardStack extends Stack {
   constructor(scope: Construct, id: string, props: SnapMagicStackProps) {
     super(scope, id, props);
 
     const { inputs } = props;
 
-    // SnapMagic Amplify App with GitHub connection
-    const snapMagicApp = new amplify.CfnApp(this, 'SnapMagicApp', {
+    // ========================================
+    // AWS AMPLIFY - FRONTEND HOSTING
+    // ========================================
+    const snapMagicAmplifyApp = new amplify.CfnApp(this, 'SnapMagicApp', {
       name: inputs.appName,
-      description: 'SnapMagic - AI-powered transformation for AWS events',
+      description: 'SnapMagic - AI-powered trading card generation for AWS events',
       
       // GitHub repository connection
       repository: inputs.githubRepo,
@@ -91,20 +107,21 @@ frontend:
     // ========================================
 
     // ========================================
-    // S3 BUCKET FOR VIDEO STORAGE WITH CDK CLEANUP ONLY
     // ========================================
-    const videoBucket = new s3.Bucket(this, 'SnapMagicVideoBucket', {
+    // S3 BUCKET - VIDEO STORAGE
+    // ========================================
+    const videoStorageBucket = new s3.Bucket(this, 'SnapMagicVideoBucket', {
       bucketName: `snapmagic-videos-${props.environment}-${this.account}-${Date.now()}`,
       
-      // 🗑️ CLEANUP ONLY WHEN EVENT ENDS (CDK DESTROY)
+      // Cleanup configuration for event-based deployment
       removalPolicy: RemovalPolicy.DESTROY,
       autoDeleteObjects: true,  // Removes all videos when stack is destroyed
       
-      // 🔒 SECURITY SETTINGS
+      // Security settings
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
       encryption: s3.BucketEncryption.S3_MANAGED,
       
-      // 🌐 CORS CONFIGURATION FOR PRESIGNED URLS
+      // CORS configuration for presigned URLs
       cors: [{
         allowedMethods: [s3.HttpMethods.GET, s3.HttpMethods.HEAD],
         allowedOrigins: ['*'], // Allow all origins for presigned URLs
@@ -112,19 +129,21 @@ frontend:
         maxAge: 3600
       }],
       
-      // 📊 MONITORING
+      // Enable EventBridge for monitoring
       eventBridgeEnabled: true
     });
 
-    // Add tags to the video bucket
-    Tags.of(videoBucket).add('Purpose', 'Event-Video-Storage');
-    Tags.of(videoBucket).add('Cleanup', 'CDK-Destroy-Only');
-    Tags.of(videoBucket).add('Environment', props.environment);
+    // Apply resource tags
+    Tags.of(videoStorageBucket).add('Purpose', 'Event-Video-Storage');
+    Tags.of(videoStorageBucket).add('Cleanup', 'CDK-Destroy-Only');
+    Tags.of(videoStorageBucket).add('Environment', props.environment);
 
-    // IAM Role for Lambda with Bedrock and other AI service permissions
-    const lambdaRole = new iam.Role(this, 'SnapMagicLambdaRole', {
+    // ========================================
+    // IAM ROLE - LAMBDA EXECUTION
+    // ========================================
+    const lambdaExecutionRole = new iam.Role(this, 'SnapMagicLambdaRole', {
       assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
-      description: 'IAM role for SnapMagic AI Lambda function',
+      description: 'IAM role for SnapMagic AI Lambda function with Bedrock and S3 access',
       managedPolicies: [
         iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaBasicExecutionRole'),
       ],
@@ -173,8 +192,8 @@ frontend:
                 's3:ListBucket'
               ],
               resources: [
-                videoBucket.bucketArn,
-                `${videoBucket.bucketArn}/*`
+                videoStorageBucket.bucketArn,
+                `${videoStorageBucket.bucketArn}/*`
               ]
             })
           ]
@@ -319,29 +338,33 @@ def lambda_handler(event, context):
     // Add Lambda as target
     autoDeleteRule.addTarget(new targets.LambdaFunction(autoDeleteLambda));
 
-    // Lambda function for SnapMagic AI backend
-    const snapMagicLambda = new lambda.Function(this, 'SnapMagicAIFunction', {
+    // ========================================
+    // LAMBDA FUNCTION - BACKEND API
+    // ========================================
+    const snapMagicBackendLambda = new lambda.Function(this, 'SnapMagicAIFunction', {
       runtime: lambda.Runtime.PYTHON_3_11,
       handler: 'src/lambda_handler.lambda_handler',
       code: lambda.Code.fromAsset(path.join(__dirname, '../../backend'), {
         exclude: ['*.md', '__pycache__', '*.pyc', 'test_*', 'run_local.py', 'README.md']
       }),
-      role: lambdaRole,
-      timeout: Duration.minutes(10),  // Increased for video generation
-      memorySize: 2048,  // Increased for video processing
-      reservedConcurrentExecutions: 800,  // Reserve 800, leave 200 unreserved (AWS requires min 100)
+      role: lambdaExecutionRole,
+      timeout: Duration.minutes(10),  // Extended timeout for video generation
+      memorySize: 2048,  // Increased memory for AI processing
+      reservedConcurrentExecutions: 800,  // Reserve capacity for event usage
       environment: {
         PYTHONPATH: '/var/task:/var/task/src',
         LOG_LEVEL: 'INFO',
         EVENT_USERNAME: inputs.basicAuthUsername || 'demo',
         EVENT_PASSWORD: inputs.basicAuthPassword || 'demo',
-        VIDEO_BUCKET_NAME: videoBucket.bucketName
+        VIDEO_BUCKET_NAME: videoStorageBucket.bucketName
       },
       description: 'SnapMagic AI backend - Trading Cards & Video Generation'
     });
 
-    // API Gateway for REST API
-    const api = new apigateway.RestApi(this, 'SnapMagicAPI', {
+    // ========================================
+    // API GATEWAY - REST API
+    // ========================================
+    const snapMagicApiGateway = new apigateway.RestApi(this, 'SnapMagicAPI', {
       restApiName: `SnapMagic AI API (${props.environment})`,
       description: 'REST API for SnapMagic AI backend services',
       defaultCorsPreflightOptions: {
@@ -357,13 +380,13 @@ def lambda_handler(event, context):
     });
 
     // Lambda integration
-    const lambdaIntegration = new apigateway.LambdaIntegration(snapMagicLambda, {
+    const lambdaIntegration = new apigateway.LambdaIntegration(snapMagicBackendLambda, {
       requestTemplates: { 'application/json': '{ "statusCode": "200" }' },
       proxy: true
     });
 
     // API endpoints
-    const apiResource = api.root.addResource('api');
+    const apiResource = snapMagicApiGateway.root.addResource('api');
     
     // Login endpoint (no authentication required)
     const loginResource = apiResource.addResource('login');
@@ -408,14 +431,14 @@ def lambda_handler(event, context):
     });
 
     // Health check endpoint
-    const healthResource = api.root.addResource('health');
+    const healthResource = snapMagicApiGateway.root.addResource('health');
     healthResource.addMethod('GET', lambdaIntegration, {
       authorizationType: apigateway.AuthorizationType.NONE
     });
 
     // Create main branch connected to GitHub (now that we have the API URL)
     const mainBranch = new amplify.CfnBranch(this, 'MainBranch', {
-      appId: snapMagicApp.attrAppId,
+      appId: snapMagicAmplifyApp.attrAppId,
       branchName: inputs.githubBranch,
       description: `${inputs.githubBranch} branch for SnapMagic deployment`,
       enableAutoBuild: true,
@@ -435,7 +458,7 @@ def lambda_handler(event, context):
         },
         {
           name: 'SNAPMAGIC_API_URL',
-          value: api.url
+          value: snapMagicApiGateway.url
         },
         {
           name: 'AMPLIFY_DIFF_DEPLOY',
@@ -445,7 +468,7 @@ def lambda_handler(event, context):
     });
 
     // CRITICAL: Ensure branch creation depends on API Gateway being fully deployed
-    mainBranch.addDependency(api.node.defaultChild as CfnResource);
+    mainBranch.addDependency(snapMagicApiGateway.node.defaultChild as CfnResource);
 
     // Apply tags using CDK v2 best practices
     Tags.of(this).add('Project', 'SnapMagic');
@@ -457,19 +480,19 @@ def lambda_handler(event, context):
 
     // Outputs
     new CfnOutput(this, 'AmplifyAppId', {
-      value: snapMagicApp.attrAppId,
+      value: snapMagicAmplifyApp.attrAppId,
       description: 'Amplify App ID',
       exportName: `SnapMagic-${props.environment}-AppId`
     });
 
     new CfnOutput(this, 'AmplifyAppUrl', {
-      value: `https://${inputs.githubBranch}.${snapMagicApp.attrDefaultDomain}`,
+      value: `https://${inputs.githubBranch}.${snapMagicAmplifyApp.attrDefaultDomain}`,
       description: 'SnapMagic Application URL',
       exportName: `SnapMagic-${props.environment}-AppUrl`
     });
 
     new CfnOutput(this, 'AmplifyConsoleUrl', {
-      value: `https://console.aws.amazon.com/amplify/home?region=${this.region}#/${snapMagicApp.attrAppId}`,
+      value: `https://console.aws.amazon.com/amplify/home?region=${this.region}#/${snapMagicAmplifyApp.attrAppId}`,
       description: 'Amplify Console URL',
       exportName: `SnapMagic-${props.environment}-ConsoleUrl`
     });
@@ -490,29 +513,29 @@ def lambda_handler(event, context):
     });
 
     new CfnOutput(this, 'ConfigureAmplifyStep1', {
-      value: `aws amplify update-branch --app-id ${snapMagicApp.attrAppId} --branch-name ${inputs.githubBranch} --environment-variables SNAPMAGIC_API_URL=${api.url},NODE_ENV=development,AMPLIFY_BUILD_TIMEOUT=15 --region ${this.region}`,
+      value: `aws amplify update-branch --app-id ${snapMagicAmplifyApp.attrAppId} --branch-name ${inputs.githubBranch} --environment-variables SNAPMAGIC_API_URL=${snapMagicApiGateway.url},NODE_ENV=development,AMPLIFY_BUILD_TIMEOUT=15 --region ${this.region}`,
       description: '🔧 STEP 1: Update Amplify branch with API Gateway URL'
     });
 
     new CfnOutput(this, 'ConfigureAmplifyStep2', {
-      value: `aws amplify start-job --app-id ${snapMagicApp.attrAppId} --branch-name ${inputs.githubBranch} --job-type RELEASE --region ${this.region}`,
+      value: `aws amplify start-job --app-id ${snapMagicAmplifyApp.attrAppId} --branch-name ${inputs.githubBranch} --job-type RELEASE --region ${this.region}`,
       description: '🚀 STEP 2: Trigger build to apply the API Gateway URL'
     });
 
     // AI Backend Outputs
     new CfnOutput(this, 'APIGatewayURL', {
-      value: api.url,
+      value: snapMagicApiGateway.url,
       description: 'SnapMagic AI API Gateway URL',
       exportName: `SnapMagic-${props.environment}-API-URL`
     });
 
     new CfnOutput(this, 'LambdaFunctionName', {
-      value: snapMagicLambda.functionName,
+      value: snapMagicBackendLambda.functionName,
       description: 'SnapMagic AI Lambda Function Name'
     });
 
     new CfnOutput(this, 'VideoBucketName', {
-      value: videoBucket.bucketName,
+      value: videoStorageBucket.bucketName,
       description: 'S3 Bucket for Video Storage (Auto-cleanup after 7 days)',
       exportName: `SnapMagic-${props.environment}-VideoBucket`
     });
@@ -550,3 +573,6 @@ def lambda_handler(event, context):
     });
   }
 }
+
+// Maintain backward compatibility
+export const SnapMagicStack = SnapMagicTradingCardStack;
