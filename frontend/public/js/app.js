@@ -419,7 +419,7 @@ class SnapMagicTradingCardApp {
             
             const requestBody = {
                 action: 'transform_card',
-                prompt: prompt
+                prompt: userPrompt
             };
             console.log('📤 Request body:', requestBody);
             
