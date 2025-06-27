@@ -143,13 +143,10 @@ class TradingCardGenerator:
             - error: Error message (if failed)
         """
         try:
-            logger.info(f"🎨 Generating trading card for prompt: {user_prompt[:50]}...")
+            logger.info(f"🎨 Generating card for prompt: {user_prompt[:50]}...")
             
-            # Create enhanced prompt for professional trading card artwork
-            enhanced_prompt = self._create_enhanced_prompt(user_prompt)
-            
-            # Prepare Nova Canvas request
-            request_payload = self._build_generation_request(enhanced_prompt)
+            # Prepare Nova Canvas request with raw user prompt
+            request_payload = self._build_generation_request(user_prompt)
             
             # Call Amazon Bedrock Nova Canvas
             generated_image_data = self._call_nova_canvas(request_payload)
@@ -161,24 +158,12 @@ class TradingCardGenerator:
             logger.error(f"❌ Trading card generation failed: {str(e)}")
             return self._create_error_response(f"Card generation failed: {str(e)}")
     
-    def _create_enhanced_prompt(self, user_prompt: str) -> str:
-        """
-        Create enhanced prompt for professional trading card generation
-        
-        Args:
-            user_prompt: Original user prompt
-            
-        Returns:
-            Enhanced prompt optimized for Nova Canvas
-        """
-        return user_prompt
-    
-    def _build_generation_request(self, enhanced_prompt: str) -> Dict[str, Any]:
+    def _build_generation_request(self, user_prompt: str) -> Dict[str, Any]:
         """
         Build the request payload for Nova Canvas API
         
         Args:
-            enhanced_prompt: Enhanced prompt for generation
+            user_prompt: Raw user prompt for generation
             
         Returns:
             Complete request payload for Nova Canvas
@@ -186,7 +171,7 @@ class TradingCardGenerator:
         return {
             "taskType": "INPAINTING",
             "inPaintingParams": {
-                "text": enhanced_prompt,
+                "text": user_prompt,
                 "image": self.template_base64_data,
                 "maskImage": self.mask_base64_data
             },

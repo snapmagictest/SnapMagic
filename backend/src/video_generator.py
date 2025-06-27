@@ -255,11 +255,8 @@ class TradingCardVideoGenerator:
             video_id = str(uuid.uuid4())
             generation_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             
-            # Create enhanced animation prompt
-            enhanced_prompt = self._create_enhanced_animation_prompt(animation_prompt)
-            
-            # Build Nova Reel request
-            nova_reel_request = self._build_video_generation_request(card_image_base64, enhanced_prompt)
+            # Build Nova Reel request with raw user prompt
+            nova_reel_request = self._build_video_generation_request(card_image_base64, animation_prompt)
             
             # Start async video generation
             async_response = self._start_async_video_generation(nova_reel_request)
@@ -296,25 +293,13 @@ class TradingCardVideoGenerator:
         
         return {'valid': True, 'error': None}
     
-    def _create_enhanced_animation_prompt(self, original_prompt: str) -> str:
-        """
-        Create enhanced prompt for professional video animation
-        
-        Args:
-            original_prompt: Original user prompt
-            
-        Returns:
-            Enhanced prompt optimized for Nova Reel
-        """
-        return original_prompt
-    
-    def _build_video_generation_request(self, card_image_base64: str, enhanced_prompt: str) -> Dict[str, Any]:
+    def _build_video_generation_request(self, card_image_base64: str, animation_prompt: str) -> Dict[str, Any]:
         """
         Build the request payload for Nova Reel API
         
         Args:
             card_image_base64: Base64 encoded image
-            enhanced_prompt: Enhanced animation prompt
+            animation_prompt: Raw user animation prompt
             
         Returns:
             Complete request payload for Nova Reel
@@ -322,7 +307,7 @@ class TradingCardVideoGenerator:
         return {
             "taskType": "TEXT_VIDEO",
             "textToVideoParams": {
-                "text": enhanced_prompt,
+                "text": animation_prompt,
                 "images": [
                     {
                         "format": "jpeg",
