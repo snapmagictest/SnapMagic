@@ -85,6 +85,23 @@ SnapMagic/
 - AWS CLI configured with appropriate permissions
 - Node.js 18+ and Python 3.9+
 - AWS CDK v2 installed globally
+- **Amazon Bedrock Model Access**: Request access to Nova Canvas and Nova Reel models in AWS Console
+- **Region Requirement**: Deploy in **us-east-1** (Virginia) - Nova models are only available in this region
+- **IAM Permissions**: Ensure your AWS account has permissions for Bedrock, Lambda, API Gateway, S3, and CloudWatch
+
+### 🔑 Bedrock Model Access Setup
+
+**IMPORTANT**: Before deploying, you must request access to Amazon Bedrock models:
+
+1. **Navigate to AWS Console** → Amazon Bedrock → Model access
+2. **Select Region**: Ensure you're in **us-east-1** (N. Virginia)
+3. **Request Access** to the following models:
+   - **Amazon Nova Canvas** (for image generation)
+   - **Amazon Nova Reel** (for video generation)
+4. **Wait for Approval**: Model access requests may take a few minutes to hours
+5. **Verify Access**: Ensure both models show "Access granted" status
+
+**Note**: Nova models are currently only available in us-east-1 region. All SnapMagic resources must be deployed in this region.
 
 ### 1. Clone and Setup
 ```bash
@@ -301,7 +318,9 @@ We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.
 - 📧 **Contact**: [your-email@domain.com](mailto:your-email@domain.com)
 
 ### Common Issues
-- **Bedrock Access**: Ensure your AWS account has Bedrock model access enabled
+- **Bedrock Access**: Ensure your AWS account has Bedrock model access enabled in us-east-1 region
+- **Nova Models**: Request access to both Nova Canvas and Nova Reel models through AWS Console
+- **Region Errors**: Nova models are only available in us-east-1 - deploy all resources there
 - **CORS Errors**: Verify API Gateway CORS configuration
 - **High Costs**: Monitor Bedrock usage and implement rate limiting
 - **Slow Generation**: Check Lambda memory allocation and timeout settings
