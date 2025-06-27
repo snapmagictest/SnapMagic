@@ -12,10 +12,6 @@
 
 SnapMagic revolutionizes event engagement by generating professional trading cards and videos using Amazon Bedrock's Nova Canvas and Nova Reel models. Built for AWS events like re:Invent, customer summits, and partner gatherings.
 
-**💰 Cost**: Just $0.49 per participant (vs $50-100 traditional engagement)  
-**⚡ Speed**: Cards generated in under 30 seconds  
-**📈 ROI**: 10,000%+ improvement over traditional event activities
-
 ## 🎯 Key Features
 
 - **🎨 AI-Powered Generation**: Amazon Bedrock Nova Canvas creates stunning trading cards
@@ -314,18 +310,6 @@ Try these AI prompts to generate trading cards:
 - **Download Stats**: Monitor engagement with your content
 - **Cost Tracking**: Understand usage patterns and costs
 
-## 🔧 Two-Step Deployment Process
-
-SnapMagic uses a **two-step deployment process**:
-
-1. **Step 1**: Deploy backend infrastructure (API Gateway + Lambda) using CDK
-2. **Step 2**: Deploy frontend to AWS Amplify with the API Gateway URL
-
-This separation allows for:
-- Independent scaling of frontend and backend
-- Easy frontend updates without backend redeployment
-- Better cost optimization and performance
-
 ## 💰 Cost Analysis
 
 ### Per-User Costs (Monthly, 100 active users)
@@ -395,34 +379,6 @@ API_GATEWAY_URL=https://your-api-id.execute-api.region.amazonaws.com/prod
 - Bedrock model invocation success rates
 - S3 storage growth and access patterns
 - API Gateway 4xx/5xx error rates
-
-## 🚀 Deployment Options
-
-### Development
-```bash
-# Local testing with SAM
-sam local start-api
-
-# Frontend development server
-cd frontend && python -m http.server 8080
-```
-
-### Production
-```bash
-# Deploy with CDK
-cdk deploy --profile production
-
-# Enable CloudWatch monitoring
-aws logs create-log-group --log-group-name /aws/lambda/snapmagic-prod
-```
-
-### Destroy Resources
-```bash
-# Remove all AWS resources
-cdk destroy SnapMagicStack
-
-# Confirm deletion of S3 buckets and data
-```
 
 ## 🤝 Contributing
 
