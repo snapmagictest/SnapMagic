@@ -148,11 +148,14 @@ class TradingCardGenerator:
             # Prepare Nova Canvas request with raw user prompt
             request_payload = self._build_generation_request(user_prompt)
             
-            # Call Amazon Bedrock Nova Canvas
+            # Call Amazon Bedrock Nova Canvas for free-form generation
             generated_image_data = self._call_nova_canvas(request_payload)
             
+            # Composite the generated image onto the card template
+            final_card_image = self._composite_onto_card_template(generated_image_data)
+            
             # Process and return successful result
-            return self._create_success_response(generated_image_data, user_prompt)
+            return self._create_success_response(final_card_image, user_prompt)
             
         except Exception as e:
             logger.error(f"❌ Trading card generation failed: {str(e)}")
@@ -160,7 +163,7 @@ class TradingCardGenerator:
     
     def _build_generation_request(self, user_prompt: str) -> Dict[str, Any]:
         """
-        Build the request payload for Nova Canvas API
+        Build the request payload for Nova Canvas API - Free-form generation
         
         Args:
             user_prompt: Raw user prompt for generation
@@ -169,17 +172,15 @@ class TradingCardGenerator:
             Complete request payload for Nova Canvas
         """
         return {
-            "taskType": "INPAINTING",
-            "inPaintingParams": {
-                "text": user_prompt,
-                "image": self.template_base64_data,
-                "maskImage": self.mask_base64_data
+            "taskType": "TEXT_IMAGE",
+            "textToImageParams": {
+                "text": user_prompt
             },
             "imageGenerationConfig": {
                 "numberOfImages": 1,
                 "quality": self.QUALITY_SETTING,
-                "width": self.DEFAULT_WIDTH,
-                "height": self.DEFAULT_HEIGHT,
+                "width": 512,  # Square generation for better compositing
+                "height": 512,
                 "cfgScale": self.DEFAULT_CFG_SCALE,
                 "seed": self.DEFAULT_SEED
             }
@@ -224,6 +225,94 @@ class TradingCardGenerator:
         except Exception as e:
             logger.error(f"❌ Nova Canvas call failed: {str(e)}")
             raise
+    
+    def _composite_onto_card_template(self, generated_image_base64: str) -> str:
+        """
+        Composite the free-form generated image onto the card template
+        
+        Args:
+            generated_image_base64: Base64 encoded generated image
+            
+        Returns:
+            Base64 encoded final card image
+        """
+        try:
+            from PIL import Image, ImageDraw
+            import io
+            
+            # Decode the generated image
+            generated_image_data = base64.b64decode(generated_image_base64)
+            generated_image = Image.open(io.BytesIO(generated_image_data))
+            
+            # Decode the card template
+            template_image_data = base64.b64decode(self.template_base64_data)
+            template_image = Image.open(io.BytesIO(template_image_data))
+            
+            # Decode the mask to know where to place the generated content
+            mask_image_data = base64.b64decode(self.mask_base64_data)
+            mask_image = Image.open(io.BytesIO(mask_image_data))
+            
+            # Convert to RGBA for proper compositing
+            template_image = template_image.convert('RGBA')
+            generated_image = generated_image.convert('RGBA')
+            mask_image = mask_image.convert('L')  # Grayscale for mask
+            
+            # Find the mask area bounds
+            bbox = mask_image.getbbox()
+            if bbox:
+                mask_width = bbox[2] - bbox[0]
+                mask_height = bbox[3] - bbox[1]
+                
+                # Resize generated image to fit the mask area
+                generated_image = generated_image.resize((mask_width, mask_height), Image.Resampling.LANCZOS)
+                
+                # Create a new image for compositing
+                result_image = template_image.copy()
+                
+                # Paste the generated image onto the template using the mask
+                result_image.paste(generated_image, (bbox[0], bbox[1]), mask_image.crop(bbox))
+                
+                # Convert back to RGB and encode
+                result_image = result_image.convert('RGB')
+                
+                # Save to base64
+                buffer = io.BytesIO()
+                result_image.save(buffer, format='JPEG', quality=95)
+                buffer.seek(0)
+                
+                return base64.b64encode(buffer.getvalue()).decode('utf-8')
+            else:
+                # If no mask area found, return the template with generated image centered
+                logger.warning("⚠️ No mask area found, centering generated image")
+                result_image = template_image.copy()
+                
+                # Calculate center position
+                template_width, template_height = template_image.size
+                gen_width, gen_height = generated_image.size
+                
+                # Resize if too large
+                if gen_width > template_width * 0.8 or gen_height > template_height * 0.8:
+                    max_size = int(min(template_width, template_height) * 0.8)
+                    generated_image.thumbnail((max_size, max_size), Image.Resampling.LANCZOS)
+                    gen_width, gen_height = generated_image.size
+                
+                # Center the image
+                x = (template_width - gen_width) // 2
+                y = (template_height - gen_height) // 2
+                
+                result_image.paste(generated_image, (x, y), generated_image)
+                result_image = result_image.convert('RGB')
+                
+                buffer = io.BytesIO()
+                result_image.save(buffer, format='JPEG', quality=95)
+                buffer.seek(0)
+                
+                return base64.b64encode(buffer.getvalue()).decode('utf-8')
+                
+        except Exception as e:
+            logger.error(f"❌ Compositing failed: {str(e)}")
+            # Fallback: return the original generated image
+            return generated_image_base64
     
     def _create_success_response(self, image_base64_data: str, original_prompt: str) -> Dict[str, Any]:
         """
