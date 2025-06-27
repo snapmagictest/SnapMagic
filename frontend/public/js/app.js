@@ -349,8 +349,8 @@ class SnapMagicApp {
             
             const requestBody = {
                 action: 'generate_video',
-                prompt: animationPrompt,
-                image_data: this.generatedCardData.result
+                animation_prompt: animationPrompt,
+                card_image: this.generatedCardData.result
             };
             
             const response = await fetch(endpoint, {
