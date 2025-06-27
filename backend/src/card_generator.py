@@ -237,20 +237,25 @@ class TradingCardGenerator:
             Base64 encoded final card image
         """
         try:
-            from PIL import Image, ImageDraw
+            from PIL import Image
             import io
+            
+            logger.info("🎨 Starting image compositing...")
             
             # Decode the generated image
             generated_image_data = base64.b64decode(generated_image_base64)
             generated_image = Image.open(io.BytesIO(generated_image_data))
+            logger.info(f"📷 Generated image size: {generated_image.size}")
             
             # Decode the card template
             template_image_data = base64.b64decode(self.template_base64_data)
             template_image = Image.open(io.BytesIO(template_image_data))
+            logger.info(f"🃏 Template image size: {template_image.size}")
             
             # Decode the mask to know where to place the generated content
             mask_image_data = base64.b64decode(self.mask_base64_data)
             mask_image = Image.open(io.BytesIO(mask_image_data))
+            logger.info(f"🎭 Mask image size: {mask_image.size}")
             
             # Convert to RGBA for proper compositing
             template_image = template_image.convert('RGBA')
@@ -259,18 +264,26 @@ class TradingCardGenerator:
             
             # Find the mask area bounds
             bbox = mask_image.getbbox()
+            logger.info(f"📐 Mask bounding box: {bbox}")
+            
             if bbox:
                 mask_width = bbox[2] - bbox[0]
                 mask_height = bbox[3] - bbox[1]
+                logger.info(f"📏 Mask area size: {mask_width}x{mask_height}")
                 
                 # Resize generated image to fit the mask area
                 generated_image = generated_image.resize((mask_width, mask_height), Image.Resampling.LANCZOS)
+                logger.info(f"🔄 Resized generated image to: {generated_image.size}")
                 
                 # Create a new image for compositing
                 result_image = template_image.copy()
                 
-                # Paste the generated image onto the template using the mask
-                result_image.paste(generated_image, (bbox[0], bbox[1]), mask_image.crop(bbox))
+                # Extract the mask area for proper alpha compositing
+                mask_area = mask_image.crop(bbox)
+                
+                # Paste the generated image onto the template at the mask position
+                result_image.paste(generated_image, (bbox[0], bbox[1]), mask_area)
+                logger.info("✅ Image pasted onto template")
                 
                 # Convert back to RGB and encode
                 result_image = result_image.convert('RGB')
@@ -280,9 +293,12 @@ class TradingCardGenerator:
                 result_image.save(buffer, format='JPEG', quality=95)
                 buffer.seek(0)
                 
-                return base64.b64encode(buffer.getvalue()).decode('utf-8')
+                final_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
+                logger.info("✅ Compositing completed successfully")
+                return final_base64
+                
             else:
-                # If no mask area found, return the template with generated image centered
+                # If no mask area found, center the generated image on template
                 logger.warning("⚠️ No mask area found, centering generated image")
                 result_image = template_image.copy()
                 
@@ -290,16 +306,21 @@ class TradingCardGenerator:
                 template_width, template_height = template_image.size
                 gen_width, gen_height = generated_image.size
                 
-                # Resize if too large
-                if gen_width > template_width * 0.8 or gen_height > template_height * 0.8:
-                    max_size = int(min(template_width, template_height) * 0.8)
-                    generated_image.thumbnail((max_size, max_size), Image.Resampling.LANCZOS)
+                # Resize if too large (80% of template size max)
+                max_width = int(template_width * 0.8)
+                max_height = int(template_height * 0.8)
+                
+                if gen_width > max_width or gen_height > max_height:
+                    generated_image.thumbnail((max_width, max_height), Image.Resampling.LANCZOS)
                     gen_width, gen_height = generated_image.size
+                    logger.info(f"🔄 Resized to fit: {gen_width}x{gen_height}")
                 
                 # Center the image
                 x = (template_width - gen_width) // 2
                 y = (template_height - gen_height) // 2
+                logger.info(f"📍 Centering at position: ({x}, {y})")
                 
+                # Paste with alpha channel
                 result_image.paste(generated_image, (x, y), generated_image)
                 result_image = result_image.convert('RGB')
                 
@@ -311,7 +332,9 @@ class TradingCardGenerator:
                 
         except Exception as e:
             logger.error(f"❌ Compositing failed: {str(e)}")
+            logger.error(f"❌ Error details: {type(e).__name__}")
             # Fallback: return the original generated image
+            logger.info("🔄 Returning original generated image as fallback")
             return generated_image_base64
     
     def _create_success_response(self, image_base64_data: str, original_prompt: str) -> Dict[str, Any]:
