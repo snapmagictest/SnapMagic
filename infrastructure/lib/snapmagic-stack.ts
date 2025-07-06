@@ -40,7 +40,7 @@ export class SnapMagicTradingCardStack extends Stack {
       repository: inputs.githubRepo,
       accessToken: inputs.githubToken,
       
-      // Build configuration
+      // Build configuration with auto-build trigger
       buildSpec: `version: 1
 frontend:
   phases:
@@ -125,8 +125,7 @@ frontend:
         maxAge: 3600
       }],
       
-      // Enable EventBridge for monitoring
-      eventBridgeEnabled: true
+
     });
 
     // Apply resource tags
@@ -164,19 +163,7 @@ frontend:
             })
           ]
         }),
-        RekognitionAccess: new iam.PolicyDocument({
-          statements: [
-            new iam.PolicyStatement({
-              effect: iam.Effect.ALLOW,
-              actions: [
-                'rekognition:DetectLabels',
-                'rekognition:DetectFaces',
-                'rekognition:DetectCustomLabels'
-              ],
-              resources: ['*']
-            })
-          ]
-        }),
+
         S3VideoAccess: new iam.PolicyDocument({
           statements: [
             new iam.PolicyStatement({
@@ -194,145 +181,11 @@ frontend:
             })
           ]
         }),
-        TranscribeAccess: new iam.PolicyDocument({
-          statements: [
-            new iam.PolicyStatement({
-              effect: iam.Effect.ALLOW,
-              actions: [
-                'transcribe:StartTranscriptionJob',
-                'transcribe:GetTranscriptionJob',
-                'transcribe:ListTranscriptionJobs'
-              ],
-              resources: ['*']
-            })
-          ]
-        })
+
       }
     });
 
-    // ========================================
-    // AUTO-DELETE LAMBDA: DESTROY STACK AFTER 7 DAYS
-    // ========================================
-    const autoDeleteLambda = new lambda.Function(this, 'AutoDeleteFunction', {
-      runtime: lambda.Runtime.PYTHON_3_11,
-      handler: 'index.lambda_handler',
-      timeout: Duration.minutes(15),
-      code: lambda.Code.fromInline(`
-import boto3
-import json
-import logging
-from datetime import datetime, timedelta
 
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
-
-def lambda_handler(event, context):
-    """
-    Auto-delete CDK stack after 7 days
-    Triggered by EventBridge scheduled rule
-    """
-    try:
-        stack_name = '${this.stackName}'
-        region = '${this.region}'
-        
-        logger.info(f"🗑️ Auto-delete triggered for stack: {stack_name}")
-        
-        # Initialize CloudFormation client
-        cf_client = boto3.client('cloudformation', region_name=region)
-        
-        # Check if stack exists
-        try:
-            response = cf_client.describe_stacks(StackName=stack_name)
-            stack = response['Stacks'][0]
-            stack_status = stack['StackStatus']
-            creation_time = stack['CreationTime']
-            
-            logger.info(f"📊 Stack found - Status: {stack_status}, Created: {creation_time}")
-            
-        except cf_client.exceptions.ClientError as e:
-            if 'does not exist' in str(e):
-                logger.info(f"✅ Stack {stack_name} already deleted - nothing to do")
-                return {'statusCode': 200, 'body': 'Stack already deleted'}
-            else:
-                raise e
-        
-        # Check if stack is older than 7 days
-        now = datetime.now(creation_time.tzinfo)
-        age_days = (now - creation_time).days
-        
-        logger.info(f"📅 Stack age: {age_days} days")
-        
-        if age_days >= 7:
-            logger.info(f"🗑️ Stack is {age_days} days old - proceeding with deletion")
-            
-            # Delete the stack
-            cf_client.delete_stack(StackName=stack_name)
-            
-            logger.info(f"✅ Stack deletion initiated: {stack_name}")
-            
-            return {
-                'statusCode': 200,
-                'body': json.dumps({
-                    'message': f'Stack {stack_name} deletion initiated',
-                    'stack_age_days': age_days,
-                    'action': 'deleted'
-                })
-            }
-        else:
-            days_remaining = 7 - age_days
-            logger.info(f"⏳ Stack is only {age_days} days old - {days_remaining} days remaining")
-            
-            return {
-                'statusCode': 200,
-                'body': json.dumps({
-                    'message': f'Stack {stack_name} not old enough for deletion',
-                    'stack_age_days': age_days,
-                    'days_remaining': days_remaining,
-                    'action': 'skipped'
-                })
-            }
-            
-    except Exception as e:
-        logger.error(f"❌ Auto-delete failed: {str(e)}")
-        return {
-            'statusCode': 500,
-            'body': json.dumps({
-                'error': str(e),
-                'stack_name': stack_name
-            })
-        }
-`),
-      environment: {
-        STACK_NAME: this.stackName,
-        REGION: this.region
-      },
-      description: 'Auto-delete SnapMagic stack after 7 days'
-    });
-
-    // Grant permissions to delete CloudFormation stacks
-    autoDeleteLambda.addToRolePolicy(new iam.PolicyStatement({
-      effect: iam.Effect.ALLOW,
-      actions: [
-        'cloudformation:DescribeStacks',
-        'cloudformation:DeleteStack',
-        'cloudformation:DescribeStackEvents',
-        'cloudformation:DescribeStackResources'
-      ],
-      resources: [
-        `arn:aws:cloudformation:${this.region}:${this.account}:stack/${this.stackName}/*`,
-        `arn:aws:cloudformation:${this.region}:${this.account}:stack/${this.stackName}`
-      ]
-    }));
-
-    // EventBridge rule to trigger auto-delete daily
-    const autoDeleteRule = new events.Rule(this, 'AutoDeleteRule', {
-      schedule: events.Schedule.rate(Duration.days(1)), // Check daily
-      description: 'Daily check to auto-delete SnapMagic stack after 7 days',
-      enabled: true
-    });
-
-    // Add Lambda as target
-    autoDeleteRule.addTarget(new targets.LambdaFunction(autoDeleteLambda));
 
     // ========================================
     // LAMBDA FUNCTION - BACKEND API
@@ -408,17 +261,7 @@ def lambda_handler(event, context):
       authorizationType: apigateway.AuthorizationType.NONE
     });
 
-    // Detect gesture endpoint
-    const detectGestureResource = apiResource.addResource('detect-gesture');
-    detectGestureResource.addMethod('POST', lambdaIntegration, {
-      authorizationType: apigateway.AuthorizationType.NONE
-    });
 
-    // Transcribe audio endpoint
-    const transcribeAudioResource = apiResource.addResource('transcribe-audio');
-    transcribeAudioResource.addMethod('POST', lambdaIntegration, {
-      authorizationType: apigateway.AuthorizationType.NONE
-    });
 
     // Generic SnapMagic endpoint
     const snapMagicResource = apiResource.addResource('snapmagic');
@@ -536,15 +379,7 @@ def lambda_handler(event, context):
       description: 'Video Storage Cleanup Policy - No automatic deletion during event'
     });
 
-    new CfnOutput(this, 'AutoDeletePolicy', {
-      value: `Stack will auto-delete after 7 days (${new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]})`,
-      description: '🗑️ IMPORTANT: Automatic stack deletion after 7 days'
-    });
 
-    new CfnOutput(this, 'AutoDeleteLambda', {
-      value: autoDeleteLambda.functionName,
-      description: 'Lambda function handling auto-deletion'
-    });
 
     new CfnOutput(this, 'ManualDeleteCommand', {
       value: `cdk destroy --force`,
