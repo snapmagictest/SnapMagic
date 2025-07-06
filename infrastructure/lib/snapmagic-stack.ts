@@ -12,7 +12,7 @@
  * - Amazon Bedrock access for Nova Canvas and Nova Reel
  */
 
-import { Stack, StackProps, CfnOutput, Tags, Duration, CfnResource, CustomResource, RemovalPolicy } from 'aws-cdk-lib';
+import { Stack, StackProps, CfnOutput, Tags, Duration, CfnResource, CustomResource, RemovalPolicy, custom_resources as cr } from 'aws-cdk-lib';
 import { aws_amplify as amplify, aws_lambda as lambda, aws_apigateway as apigateway, aws_iam as iam, aws_s3 as s3, aws_events as events, aws_events_targets as targets } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { DeploymentInputs } from './deployment-inputs';
@@ -308,6 +308,27 @@ frontend:
 
     // CRITICAL: Ensure branch creation depends on API Gateway being fully deployed
     mainBranch.addDependency(snapMagicApiGateway.node.defaultChild as CfnResource);
+
+    // Auto-trigger Amplify build after branch creation
+    const triggerBuild = new cr.AwsCustomResource(this, 'TriggerAmplifyBuild', {
+      onCreate: {
+        service: 'Amplify',
+        action: 'startJob',
+        parameters: {
+          appId: snapMagicAmplifyApp.attrAppId,
+          branchName: inputs.githubBranch,
+          jobType: 'RELEASE'
+        },
+        region: this.region,
+        physicalResourceId: cr.PhysicalResourceId.of('amplify-build-trigger')
+      },
+      policy: cr.AwsCustomResourcePolicy.fromSdkCalls({
+        resources: cr.AwsCustomResourcePolicy.ANY_RESOURCE
+      })
+    });
+
+    // Ensure build trigger runs after branch is created
+    triggerBuild.node.addDependency(mainBranch);
 
     // Apply tags using CDK v2 best practices
     Tags.of(this).add('Project', 'SnapMagic');
