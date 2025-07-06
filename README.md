@@ -112,11 +112,17 @@ SnapMagic/
 
 ## 🛠️ Deployment Instructions
 
-### Step 1: Clone and Install Dependencies
+### Step 1: Fork and Clone Repository
 
+**🍴 Fork the Repository First:**
+1. Go to https://github.com/snapmagictest/SnapMagic
+2. Click the **"Fork"** button (top right corner)
+3. GitHub will create a copy under your account: `https://github.com/YOUR-USERNAME/SnapMagic`
+
+**📥 Clone YOUR Forked Repository:**
 ```bash
-# Clone the repository
-git clone https://github.com/snapmagictest/SnapMagic.git
+# Clone YOUR forked repository (not the original)
+git clone https://github.com/YOUR-USERNAME/SnapMagic.git
 cd SnapMagic
 
 # Install CDK dependencies
@@ -165,6 +171,11 @@ cp secrets.json.example secrets.json
 2. Click "Generate new token (classic)"
 3. Select scope: **repo** (Full control of private repositories)
 4. Copy the token and paste it in `secrets.json`
+
+**📁 Repository URL:**
+- **MUST use YOUR forked repository URL** (not the original)
+- Format: `https://github.com/YOUR-USERNAME/SnapMagic`
+- This is the repository you forked in Step 1
 
 **🌍 Region Setting:**
 - **MUST be `us-east-1`** for Bedrock Nova Canvas and Nova Reel

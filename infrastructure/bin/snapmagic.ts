@@ -179,6 +179,7 @@ if (isDestroy) {
   console.log(`\n✅ CDK stack configured for environment: ${environment}`);
   console.log(`🌍 Region: ${inputs.region} ${inputs.region !== 'us-east-1' ? '⚠️  (WARNING: Bedrock Nova models require us-east-1)' : '✅'}`);
   console.log(`🚀 Deploying to AWS...\n`);
+}
 
 // Create the complete SnapMagic stack (frontend + backend)
 new SnapMagicTradingCardStack(app, `SnapMagic-${environment}`, {
