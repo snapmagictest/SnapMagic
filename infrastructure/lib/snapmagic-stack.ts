@@ -42,10 +42,6 @@ export class SnapMagicTradingCardStack extends Stack {
       
       // Build configuration
       buildSpec: `version: 1
-env:
-  variables:
-    # Environment variables are automatically available from CDK
-    SNAPMAGIC_API_URL: $SNAPMAGIC_API_URL
 frontend:
   phases:
     preBuild:
@@ -508,18 +504,13 @@ def lambda_handler(event, context):
     });
 
     new CfnOutput(this, 'DeploymentStatus', {
-      value: 'CDK deployment complete - run the commands below to configure API Gateway URL',
+      value: '✅ CDK deployment complete - API Gateway URL automatically configured in frontend',
       description: 'Deployment Status'
     });
 
-    new CfnOutput(this, 'ConfigureAmplifyStep1', {
-      value: `aws amplify update-branch --app-id ${snapMagicAmplifyApp.attrAppId} --branch-name ${inputs.githubBranch} --environment-variables SNAPMAGIC_API_URL=${snapMagicApiGateway.url},NODE_ENV=development,AMPLIFY_BUILD_TIMEOUT=15 --region ${this.region}`,
-      description: '🔧 STEP 1: Update Amplify branch with API Gateway URL'
-    });
-
-    new CfnOutput(this, 'ConfigureAmplifyStep2', {
-      value: `aws amplify start-job --app-id ${snapMagicAmplifyApp.attrAppId} --branch-name ${inputs.githubBranch} --job-type RELEASE --region ${this.region}`,
-      description: '🚀 STEP 2: Trigger build to apply the API Gateway URL'
+    new CfnOutput(this, 'DeploymentVerification', {
+      value: 'Wait 2-3 minutes for Amplify build to complete, then test the AmplifyAppUrl',
+      description: '⏱️ Next Steps'
     });
 
     // AI Backend Outputs

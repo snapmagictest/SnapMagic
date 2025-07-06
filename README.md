@@ -128,17 +128,60 @@ cd ../backend
 pip install -r requirements.txt
 ```
 
-### Step 2: Configure Secrets (Optional but Recommended)
+### Step 2: Configure Secrets (REQUIRED)
+
+**⚠️ CRITICAL: This step is mandatory for deployment**
 
 ```bash
 # Copy the example secrets file
 cp secrets.json.example secrets.json
 
-# Edit secrets.json with your preferred JWT secret
+# Edit secrets.json with your information
+```
+
+**Edit the `secrets.json` file with your details:**
+
+```json
 {
-  "JWT_SECRET": "your-super-secret-jwt-key-change-this-in-production"
+  "github": {
+    "repositoryUrl": "https://github.com/YOUR-USERNAME/SnapMagic",
+    "token": "ghp_YOUR_GITHUB_TOKEN_HERE",
+    "branch": "main"
+  },
+  "app": {
+    "name": "my-snapmagic-app",
+    "region": "us-east-1",
+    "passwordProtection": {
+      "enabled": true,
+      "username": "demo",
+      "password": "snapmagic2024"
+    }
+  }
 }
 ```
+
+**🔑 GitHub Token Setup:**
+1. Go to https://github.com/settings/tokens
+2. Click "Generate new token (classic)"
+3. Select scope: **repo** (Full control of private repositories)
+4. Copy the token and paste it in `secrets.json`
+
+**🌍 Region Setting:**
+- **MUST be `us-east-1`** for Bedrock Nova Canvas and Nova Reel
+- Other regions will cause deployment failures
+
+**🔐 Security Note:**
+- `secrets.json` is in `.gitignore` - your tokens stay private
+- Never commit `secrets.json` to git
+
+**✅ Validation Checklist:**
+Before deploying, verify your `secrets.json`:
+- [ ] File is named exactly `secrets.json` (not `secrets.json.example`)
+- [ ] GitHub repository URL matches your forked repository
+- [ ] GitHub token has `repo` permissions
+- [ ] Region is set to `us-east-1`
+- [ ] App name is unique (no spaces or special characters)
+- [ ] Username and password are set for demo access
 
 ### Step 3: Deploy Backend Infrastructure
 
@@ -159,27 +202,15 @@ cdk deploy SnapMagicStack --region us-east-1
 Outputs:
 SnapMagicStack.ApiGatewayUrl = https://abc123def.execute-api.us-east-1.amazonaws.com/prod
 SnapMagicStack.AmplifyAppUrl = https://main.d1234567890.amplifyapp.com
+SnapMagicStack.DeploymentStatus = ✅ CDK deployment complete - API Gateway URL automatically configured in frontend
+SnapMagicStack.DeploymentVerification = Wait 2-3 minutes for Amplify build to complete, then test the AmplifyAppUrl
 ```
 
-**🔗 Copy the ApiGatewayUrl** - you'll need it for the next step!
+### Step 4: Wait for Automatic Frontend Deployment
 
-### Step 4: Configure Frontend with API Gateway URL
+The frontend is automatically deployed via AWS Amplify when the CDK stack completes. **No manual configuration needed!**
 
-```bash
-# Navigate to frontend JavaScript file
-cd ../frontend/public/js
-
-# Edit app.js and replace the API_BASE_URL
-# Find this line:
-const API_BASE_URL = 'YOUR_API_GATEWAY_URL_HERE';
-
-# Replace with your actual API Gateway URL:
-const API_BASE_URL = 'https://abc123def.execute-api.us-east-1.amazonaws.com/prod';
-```
-
-### Step 5: Deploy Frontend to Amplify
-
-The frontend is automatically deployed via AWS Amplify when you push to the repository. The CDK stack creates the Amplify app and connects it to your GitHub repository.
+**⏱️ Wait 2-3 minutes** for the Amplify build to complete, then your application will be ready at the AmplifyAppUrl.
 
 **🌐 Your application will be available at the AmplifyAppUrl from Step 3!**
 
@@ -188,9 +219,10 @@ The frontend is automatically deployed via AWS Amplify when you push to the repo
 ## 🧪 Test Your Deployment
 
 ### Demo Credentials
+Use the credentials you set in `secrets.json`:
 ```
-Username: demo
-Password: snapmagic2024
+Username: demo  (or your configured username)
+Password: snapmagic2024  (or your configured password)
 ```
 
 ### Test Prompts

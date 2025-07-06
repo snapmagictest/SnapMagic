@@ -26,6 +26,7 @@ function loadSecretsConfig(): DeploymentInputs | null {
         githubToken: secrets.github.token,
         githubBranch: secrets.github.branch,
         appName: secrets.app.name,
+        region: secrets.app.region || 'us-east-1',  // Default to us-east-1 for Bedrock Nova
         enableBasicAuth: secrets.app.passwordProtection.enabled,
         basicAuthUsername: secrets.app.passwordProtection.username,
         basicAuthPassword: secrets.app.passwordProtection.password
@@ -79,6 +80,17 @@ function collectInputsSync(): DeploymentInputs {
     const defaultAppName = `snapmagic-${Math.random().toString(36).substring(7)}`;
     const appName = readlineSync.question(`\n📱 Amplify App Name (default: ${defaultAppName}): `, { defaultInput: defaultAppName });
 
+    // AWS Region
+    console.log('\n🌍 AWS Region:');
+    console.log('   ⚠️  IMPORTANT: SnapMagic requires us-east-1 for Bedrock Nova Canvas and Nova Reel models');
+    console.log('   Other regions will cause deployment failures');
+    const region = readlineSync.question('   AWS Region (default: us-east-1): ', { defaultInput: 'us-east-1' });
+    
+    if (region !== 'us-east-1') {
+      console.log(`\n   ⚠️  WARNING: You selected '${region}' but Bedrock Nova models are only available in us-east-1`);
+      console.log('   This may cause deployment or runtime failures');
+    }
+
     // Basic Auth (optional)
     console.log('\n🔒 Password Protection:');
     console.log('   This will protect your SnapMagic app with username/password.');
@@ -107,6 +119,7 @@ function collectInputsSync(): DeploymentInputs {
       githubToken,
       githubBranch,
       appName,
+      region,
       enableBasicAuth: enableAuth,
       basicAuthUsername,
       basicAuthPassword
@@ -135,6 +148,7 @@ if (isDestroy) {
     githubToken: 'dummy-token',
     githubBranch: 'main',
     appName: 'dummy-app',
+    region: 'us-east-1',
     enableBasicAuth: false
   };
 } else {
@@ -150,6 +164,7 @@ if (isDestroy) {
       githubToken: process.env.SNAPMAGIC_GITHUB_TOKEN,
       githubBranch: process.env.SNAPMAGIC_GITHUB_BRANCH || 'main',
       appName: process.env.SNAPMAGIC_APP_NAME || `snapmagic-${Math.random().toString(36).substring(7)}`,
+      region: process.env.SNAPMAGIC_REGION || 'us-east-1',
       enableBasicAuth: process.env.SNAPMAGIC_ENABLE_AUTH === 'true',
       basicAuthUsername: process.env.SNAPMAGIC_AUTH_USERNAME || 'admin',
       basicAuthPassword: process.env.SNAPMAGIC_AUTH_PASSWORD
@@ -162,16 +177,16 @@ if (isDestroy) {
   }
 
   console.log(`\n✅ CDK stack configured for environment: ${environment}`);
+  console.log(`🌍 Region: ${inputs.region} ${inputs.region !== 'us-east-1' ? '⚠️  (WARNING: Bedrock Nova models require us-east-1)' : '✅'}`);
   console.log(`🚀 Deploying to AWS...\n`);
-}
 
 // Create the complete SnapMagic stack (frontend + backend)
 new SnapMagicTradingCardStack(app, `SnapMagic-${environment}`, {
   env: {
     account: process.env.CDK_DEFAULT_ACCOUNT,
-    region: process.env.CDK_DEFAULT_REGION || 'us-east-1',
+    region: inputs.region,  // Use region from secrets.json or user input
   },
   environment,
   inputs,
-  description: 'SnapMagic - AI-powered photo and video transformation for AWS events'
+  description: `SnapMagic - AI-powered photo and video transformation for AWS events (${inputs.region})`
 });
