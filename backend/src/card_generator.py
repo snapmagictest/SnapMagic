@@ -24,7 +24,7 @@ class TradingCardGenerator:
     """
     
     # Class constants for configuration
-    MODEL_ID = 'amazon.nova-canvas-v1:0'
+    MODEL_ID = os.environ.get('NOVA_CANVAS_MODEL', 'amazon.nova-canvas-v1:0')
     TEMPLATE_FILENAME = 'finalpink.png'
     MASK_FILENAME = 'exact_mask.png'
     

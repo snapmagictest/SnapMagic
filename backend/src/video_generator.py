@@ -24,7 +24,7 @@ class TradingCardVideoGenerator:
     """
     
     # Class constants for configuration
-    MODEL_ID = 'amazon.nova-reel-v1:1'
+    MODEL_ID = os.environ.get('NOVA_REEL_MODEL', 'amazon.nova-reel-v1:1')
     
     # Video generation parameters
     DEFAULT_DURATION_SECONDS = 6
