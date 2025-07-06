@@ -156,8 +156,8 @@ frontend:
                 'bedrock:GetFoundationModel'
               ],
               resources: [
-                `arn:aws:bedrock:${this.region}::foundation-model/${secrets.models.novaCanvas}`,
-                `arn:aws:bedrock:${this.region}::foundation-model/${secrets.models.novaReel}`,
+                `arn:aws:bedrock:${this.region}::foundation-model/${inputs.novaCanvasModel}`,
+                `arn:aws:bedrock:${this.region}::foundation-model/${inputs.novaReelModel}`,
                 `arn:aws:bedrock:${this.region}:${this.account}:async-invoke/*`  // Required for StartAsyncInvoke
               ]
             })
@@ -206,8 +206,8 @@ frontend:
         EVENT_USERNAME: inputs.basicAuthUsername || 'demo',
         EVENT_PASSWORD: inputs.basicAuthPassword || 'demo',
         VIDEO_BUCKET_NAME: videoStorageBucket.bucketName,
-        NOVA_CANVAS_MODEL: secrets.models.novaCanvas,
-        NOVA_REEL_MODEL: secrets.models.novaReel
+        NOVA_CANVAS_MODEL: inputs.novaCanvasModel,
+        NOVA_REEL_MODEL: inputs.novaReelModel
       },
       description: 'SnapMagic AI backend - Trading Cards & Video Generation'
     });

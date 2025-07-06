@@ -29,7 +29,9 @@ function loadSecretsConfig(): DeploymentInputs | null {
         region: secrets.app.region || 'us-east-1',  // Default to us-east-1 for Bedrock Nova
         enableBasicAuth: secrets.app.passwordProtection.enabled,
         basicAuthUsername: secrets.app.passwordProtection.username,
-        basicAuthPassword: secrets.app.passwordProtection.password
+        basicAuthPassword: secrets.app.passwordProtection.password,
+        novaCanvasModel: secrets.models.novaCanvas,
+        novaReelModel: secrets.models.novaReel
       };
     }
     return null;
@@ -122,7 +124,9 @@ function collectInputsSync(): DeploymentInputs {
       region,
       enableBasicAuth: enableAuth,
       basicAuthUsername,
-      basicAuthPassword
+      basicAuthPassword,
+      novaCanvasModel: 'amazon.nova-canvas-v1:0',  // Default values for interactive mode
+      novaReelModel: 'amazon.nova-reel-v1:1'
     };
   } catch (error) {
     console.log('\n❌ Input collection failed:', (error as Error).message);
@@ -149,7 +153,9 @@ if (isDestroy) {
     githubBranch: 'main',
     appName: 'dummy-app',
     region: 'us-east-1',
-    enableBasicAuth: false
+    enableBasicAuth: false,
+    novaCanvasModel: 'amazon.nova-canvas-v1:0',
+    novaReelModel: 'amazon.nova-reel-v1:1'
   };
 } else {
   // For deploy operations, try secrets.json first, then fallback to interactive
@@ -167,7 +173,9 @@ if (isDestroy) {
       region: process.env.SNAPMAGIC_REGION || 'us-east-1',
       enableBasicAuth: process.env.SNAPMAGIC_ENABLE_AUTH === 'true',
       basicAuthUsername: process.env.SNAPMAGIC_AUTH_USERNAME || 'admin',
-      basicAuthPassword: process.env.SNAPMAGIC_AUTH_PASSWORD
+      basicAuthPassword: process.env.SNAPMAGIC_AUTH_PASSWORD,
+      novaCanvasModel: process.env.NOVA_CANVAS_MODEL || 'amazon.nova-canvas-v1:0',
+      novaReelModel: process.env.NOVA_REEL_MODEL || 'amazon.nova-reel-v1:1'
     };
   } else if (process.env.CI || process.env.GITHUB_ACTIONS || process.env.CDK_SKIP_INPUTS) {
     throw new Error('❌ Interactive input collection not supported in CI/CD. Please use secrets.json or environment variables.');
