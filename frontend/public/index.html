@@ -743,6 +743,13 @@
             display: flex;
             gap: 1rem;
             flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .result-actions .btn {
+            flex: 1;
+            min-width: 160px;
+            text-align: center;
         }
 
         .btn-success {
@@ -952,6 +959,18 @@
 
             .powered-by-aws {
                 height: 28px;
+            }
+
+            .result-actions {
+                flex-direction: row;
+                justify-content: center;
+                align-items: stretch;
+            }
+
+            .result-actions .btn {
+                flex: 1;
+                min-width: 160px;
+                max-width: 200px;
             }
         }
             }

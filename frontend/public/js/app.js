@@ -323,9 +323,6 @@ class SnapMagicApp {
         
         this.elements.resultContainer.innerHTML = `
             <img src="${imageSrc}" alt="Generated Trading Card" class="result-image">
-            <p style="color: var(--text-secondary); font-size: 0.9rem; text-align: center;">
-                Generated with AI • ${new Date().toLocaleString()}
-            </p>
         `;
         
         this.elements.resultActions.classList.remove('hidden');
