@@ -182,7 +182,7 @@ class TradingCardGenerator:
                 "width": 512,  # Square generation for better compositing
                 "height": 512,
                 "cfgScale": self.DEFAULT_CFG_SCALE,
-                "seed": random.randint(0, 4294967295)  # Random seed for unique cards each time
+                "seed": random.randint(0, 2147483646)  # Nova Canvas max seed value
             }
         }
     
