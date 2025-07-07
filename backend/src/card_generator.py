@@ -7,6 +7,7 @@ import json
 import logging
 import os
 import base64
+import random
 from datetime import datetime
 from typing import Dict, Any, Optional, Tuple
 import boto3
@@ -32,7 +33,6 @@ class TradingCardGenerator:
     DEFAULT_WIDTH = 768
     DEFAULT_HEIGHT = 1024
     DEFAULT_CFG_SCALE = 7.0
-    DEFAULT_SEED = 42
     QUALITY_SETTING = 'premium'
     
     # Validation constants
@@ -182,7 +182,7 @@ class TradingCardGenerator:
                 "width": 512,  # Square generation for better compositing
                 "height": 512,
                 "cfgScale": self.DEFAULT_CFG_SCALE,
-                "seed": self.DEFAULT_SEED
+                "seed": random.randint(0, 4294967295)  # Random seed for unique cards each time
             }
         }
     
