@@ -271,21 +271,27 @@
             background: var(--glass-bg);
             backdrop-filter: blur(24px);
             border-bottom: 1px solid var(--glass-border);
-            padding: 1rem;
+            padding: 1rem 2rem;
             display: flex;
-            justify-content: center;
+            justify-content: space-between;
             align-items: center;
-            position: relative;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
             z-index: 1000;
             box-shadow: 0 2px 16px rgba(0, 0, 0, 0.1);
-            min-height: 60px;
+            height: 70px;
         }
 
-        .header-center {
+        .header-left {
             display: flex;
-            flex-direction: column;
             align-items: center;
-            text-align: center;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
         }
 
         .app-title {
@@ -299,27 +305,23 @@
             letter-spacing: -0.02em;
         }
 
-        .app-subtitle {
-            font-size: 0.8rem;
-            color: var(--text-muted);
-            margin: 0.25rem 0 0 0;
-            font-weight: 400;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
+        .powered-by-aws {
+            height: 24px;
+            opacity: 0.9;
+            transition: opacity 0.3s ease;
         }
 
-        .aws-logo {
-            width: 20px;
-            height: 15px;
-            background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMTUiIHZpZXdCb3g9IjAgMCAyMCAxNSIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEuNSA5LjVDMS41IDkuNSAzIDEwLjUgNiAxMC41QzkgMTAuNSAxMC41IDkuNSAxMC41IDkuNUMxMC41IDkuNSA5IDguNSA2IDguNUMzIDguNSAxLjUgOS41IDEuNSA5LjVaIiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBkPSJNMTMuNSA5LjVDMTMuNSA5LjUgMTUgMTAuNSAxOCAxMC41QzE4IDEwLjUgMTguNSA5LjUgMTguNSA5LjVDMTguNSA5LjUgMTggOC41IDE4IDguNUMxNSA4LjUgMTMuNSA5LjUgMTMuNSA5LjVaIiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBkPSJNMiAxMkMyIDEyIDEwIDEzIDEwIDEzQzEwIDEzIDE4IDEyIDE4IDEyQzE4IDEyIDE4IDEyLjUgMTcuNSAxM0MxNyAxMy41IDEwIDE0IDEwIDE0QzEwIDE0IDMgMTMuNSAyLjUgMTNDMiAxMi41IDIgMTIgMiAxMloiIGZpbGw9IiNGRjk5MDAiLz4KPC9zdmc+');
-            background-size: contain;
-            background-repeat: no-repeat;
-            background-position: center;
+        .powered-by-aws:hover {
+            opacity: 1;
+        }
+
+        /* Add top margin to main content to account for fixed header */
+        .main-app {
+            padding-top: 70px;
         }
 
         /* Remove unused styles */
-        .header-left, .header-right, .user-info, .user-avatar {
+        .header-center, .app-subtitle, .aws-logo {
             display: none;
         }
             filter: drop-shadow(0 4px 8px rgba(102, 126, 234, 0.3));
@@ -372,11 +374,12 @@
             background: var(--dark-surface);
             backdrop-filter: blur(16px);
             border-bottom: 1px solid var(--glass-border);
-            padding: 0 1rem;
+            padding: 0 2rem;
             display: flex;
             justify-content: center;
             overflow-x: auto;
-            position: relative;
+            position: sticky;
+            top: 70px;
             z-index: 100;
         }
 
@@ -873,25 +876,25 @@
         /* Mobile First Responsive Design */
         @media (max-width: 768px) {
             .app-header {
-                padding: 0.75rem;
-                min-height: 50px;
+                padding: 0.75rem 1rem;
+                height: 60px;
+            }
+
+            .main-app {
+                padding-top: 60px;
             }
 
             .app-title {
-                font-size: 1.5rem;
+                font-size: 1.4rem;
             }
 
-            .app-subtitle {
-                font-size: 0.7rem;
-            }
-
-            .aws-logo {
-                width: 16px;
-                height: 12px;
+            .powered-by-aws {
+                height: 20px;
             }
 
             .tab-navigation {
                 padding: 0 0.5rem;
+                top: 60px;
             }
 
             .tab-nav-item {
@@ -947,13 +950,8 @@
                 font-size: 2rem;
             }
 
-            .app-subtitle {
-                font-size: 0.85rem;
-            }
-
-            .aws-logo {
-                width: 22px;
-                height: 16px;
+            .powered-by-aws {
+                height: 28px;
             }
         }
             }
@@ -1065,12 +1063,13 @@
     <div id="mainApp" class="main-app">
         <!-- Header -->
         <header class="app-header">
-            <div class="header-center">
+            <div class="header-left">
                 <h1 class="app-title">SnapMagic</h1>
-                <p class="app-subtitle">
-                    <span class="aws-logo"></span>
-                    Powered by Amazon Bedrock Nova Models
-                </p>
+            </div>
+            <div class="header-right">
+                <a href="https://aws.amazon.com/what-is-cloud-computing" target="_blank" rel="noopener noreferrer">
+                    <img src="https://d0.awsstatic.com/logos/powered-by-aws-white.png" alt="Powered by AWS Cloud Computing" class="powered-by-aws">
+                </a>
             </div>
         </header>
 
