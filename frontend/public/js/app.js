@@ -48,9 +48,9 @@ class SnapMagicApp {
             usernameInput: document.getElementById('username'),
             passwordInput: document.getElementById('password'),
             
-            // Header
-            usernameDisplay: document.getElementById('usernameDisplay'),
-            signOutBtn: document.getElementById('signOutBtn'),
+            // Header (removed user elements for events)
+            // usernameDisplay: document.getElementById('usernameDisplay'),
+            // signOutBtn: document.getElementById('signOutBtn'),
             
             // Tab navigation
             tabNavItems: document.querySelectorAll('.tab-nav-item'),
@@ -86,8 +86,8 @@ class SnapMagicApp {
         // Login form
         this.elements.loginForm.addEventListener('submit', (e) => this.handleLogin(e));
         
-        // Sign out
-        this.elements.signOutBtn.addEventListener('click', () => this.handleSignOut());
+        // Sign out (removed for events)
+        // this.elements.signOutBtn.addEventListener('click', () => this.handleSignOut());
         
         // Tab navigation
         this.elements.tabNavItems.forEach(tab => {
@@ -214,7 +214,8 @@ class SnapMagicApp {
                 this.authToken = data.token;
                 this.currentUser = { username, token: data.token };
                 
-                this.elements.usernameDisplay.textContent = username;
+                // Username display removed for events
+                // this.elements.usernameDisplay.textContent = username;
                 this.hideProcessing();
                 this.showMainApp();
                 
