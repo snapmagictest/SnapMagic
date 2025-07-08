@@ -1,12 +1,11 @@
 """
 SnapMagic Trading Card Generator
-AI-powered trading card generation using Amazon Bedrock Nova Canvas with inpainting technique
+AI-powered trading card generation using Amazon Bedrock Nova Canvas with pure text-to-image generation
 """
 
 import json
 import logging
 import os
-import base64
 import random
 from datetime import datetime
 from typing import Dict, Any, Optional, Tuple
@@ -20,16 +19,14 @@ class TradingCardGenerator:
     """
     Professional trading card generator using Amazon Bedrock Nova Canvas
     
-    Uses inpainting technique with pre-defined template and mask for consistent
-    trading card layout and professional quality output.
+    Uses pure TEXT_IMAGE generation for maximum Nova Canvas creativity and 
+    full prompt adherence. Frontend handles card template compositing.
     """
     
     # Class constants for configuration
     MODEL_ID = os.environ.get('NOVA_CANVAS_MODEL', 'amazon.nova-canvas-v1:0')
-    TEMPLATE_FILENAME = 'finalpink.png'
-    MASK_FILENAME = 'exact_mask.png'
     
-    # Generation parameters
+    # Generation parameters - optimized for trading card content
     DEFAULT_WIDTH = 768
     DEFAULT_HEIGHT = 1024
     DEFAULT_CFG_SCALE = 7.0
@@ -41,68 +38,20 @@ class TradingCardGenerator:
     
     def __init__(self):
         """
-        Initialize the trading card generator with AWS clients and template assets
+        Initialize the trading card generator with AWS clients
         
         Raises:
-            FileNotFoundError: If template or mask files are not found
             ClientError: If AWS Bedrock client cannot be initialized
         """
         try:
             # Initialize AWS Bedrock Runtime client
             self.bedrock_runtime_client = boto3.client('bedrock-runtime')
             
-            # Load template and mask assets
-            self._load_template_assets()
-            
             logger.info("🎴 TradingCardGenerator initialized successfully")
             
         except Exception as e:
             logger.error(f"❌ Failed to initialize TradingCardGenerator: {str(e)}")
             raise
-    
-    def _load_template_assets(self) -> None:
-        """
-        Load trading card template and mask images from local files
-        
-        Raises:
-            FileNotFoundError: If template or mask files cannot be found
-        """
-        current_directory = os.path.dirname(os.path.abspath(__file__))
-        
-        # Load trading card template
-        template_file_path = os.path.join(current_directory, self.TEMPLATE_FILENAME)
-        self.template_base64_data = self._load_image_as_base64(template_file_path, "template")
-        
-        # Load coordinate-based mask for inpainting
-        mask_file_path = os.path.join(current_directory, self.MASK_FILENAME)
-        self.mask_base64_data = self._load_image_as_base64(mask_file_path, "mask")
-        
-        logger.info("✅ Template assets loaded successfully")
-    
-    def _load_image_as_base64(self, file_path: str, image_type: str) -> str:
-        """
-        Load image file and convert to base64 string
-        
-        Args:
-            file_path: Path to the image file
-            image_type: Type of image for logging purposes
-            
-        Returns:
-            Base64 encoded string of the image
-            
-        Raises:
-            FileNotFoundError: If the image file cannot be found
-        """
-        try:
-            with open(file_path, 'rb') as image_file:
-                image_data = image_file.read()
-                base64_string = base64.b64encode(image_data).decode('utf-8')
-                logger.info(f"📁 Loaded {image_type} image: {len(image_data)} bytes")
-                return base64_string
-                
-        except FileNotFoundError:
-            logger.error(f"❌ {image_type.capitalize()} file not found: {file_path}")
-            raise FileNotFoundError(f"Required {image_type} file not found: {file_path}")
     
     def validate_prompt(self, user_prompt: str) -> Tuple[bool, Optional[str]]:
         """
@@ -145,28 +94,44 @@ class TradingCardGenerator:
         try:
             logger.info(f"🎨 Generating card for prompt: {user_prompt[:50]}...")
             
-            # Prepare Nova Canvas request with raw user prompt
-            request_payload = self._build_generation_request(user_prompt)
+            # Enhance prompt for trading card context
+            enhanced_prompt = self._enhance_prompt_for_trading_card(user_prompt)
             
-            # Call Amazon Bedrock Nova Canvas for free-form generation
+            # Prepare Nova Canvas request for pure text-to-image generation
+            request_payload = self._build_generation_request(enhanced_prompt)
+            
+            # Call Amazon Bedrock Nova Canvas for pure creative generation
             generated_image_data = self._call_nova_canvas(request_payload)
             
-            # Composite the generated image onto the card template
-            final_card_image = self._composite_onto_card_template(generated_image_data)
-            
-            # Process and return successful result
-            return self._create_success_response(final_card_image, user_prompt)
+            # Return raw Nova Canvas image for frontend compositing
+            return self._create_success_response(generated_image_data, user_prompt)
             
         except Exception as e:
             logger.error(f"❌ Trading card generation failed: {str(e)}")
             return self._create_error_response(f"Card generation failed: {str(e)}")
     
-    def _build_generation_request(self, user_prompt: str) -> Dict[str, Any]:
+    def _enhance_prompt_for_trading_card(self, user_prompt: str) -> str:
         """
-        Build the request payload for Nova Canvas API - Free-form generation
+        Enhance user prompt with trading card context for better Nova Canvas results
         
         Args:
-            user_prompt: Raw user prompt for generation
+            user_prompt: Original user prompt
+            
+        Returns:
+            Enhanced prompt optimized for trading card generation
+        """
+        # Add trading card context while preserving user's creative intent
+        enhanced_prompt = f"Professional trading card artwork featuring {user_prompt}. High quality digital art, detailed illustration, vibrant colors, professional composition, trading card style."
+        
+        logger.info(f"🎯 Enhanced prompt: {enhanced_prompt[:100]}...")
+        return enhanced_prompt
+    
+    def _build_generation_request(self, enhanced_prompt: str) -> Dict[str, Any]:
+        """
+        Build the request payload for Nova Canvas API - Pure text-to-image generation
+        
+        Args:
+            enhanced_prompt: Enhanced prompt for generation
             
         Returns:
             Complete request payload for Nova Canvas
@@ -174,13 +139,13 @@ class TradingCardGenerator:
         return {
             "taskType": "TEXT_IMAGE",
             "textToImageParams": {
-                "text": user_prompt
+                "text": enhanced_prompt
             },
             "imageGenerationConfig": {
                 "numberOfImages": 1,
                 "quality": self.QUALITY_SETTING,
-                "width": 512,  # Square generation for better compositing
-                "height": 512,
+                "width": self.DEFAULT_WIDTH,
+                "height": self.DEFAULT_HEIGHT,
                 "cfgScale": self.DEFAULT_CFG_SCALE,
                 "seed": random.randint(0, 2147483646)  # Nova Canvas max seed value
             }
@@ -226,123 +191,12 @@ class TradingCardGenerator:
             logger.error(f"❌ Nova Canvas call failed: {str(e)}")
             raise
     
-    def _composite_onto_card_template(self, generated_image_base64: str) -> str:
-        """
-        Composite the free-form generated image onto the card template
-        
-        Args:
-            generated_image_base64: Base64 encoded generated image
-            
-        Returns:
-            Base64 encoded final card image
-        """
-        try:
-            from PIL import Image
-            import io
-            
-            logger.info("🎨 Starting image compositing...")
-            
-            # Decode the generated image
-            generated_image_data = base64.b64decode(generated_image_base64)
-            generated_image = Image.open(io.BytesIO(generated_image_data))
-            logger.info(f"📷 Generated image size: {generated_image.size}")
-            
-            # Decode the card template
-            template_image_data = base64.b64decode(self.template_base64_data)
-            template_image = Image.open(io.BytesIO(template_image_data))
-            logger.info(f"🃏 Template image size: {template_image.size}")
-            
-            # Decode the mask to know where to place the generated content
-            mask_image_data = base64.b64decode(self.mask_base64_data)
-            mask_image = Image.open(io.BytesIO(mask_image_data))
-            logger.info(f"🎭 Mask image size: {mask_image.size}")
-            
-            # Convert to RGBA for proper compositing
-            template_image = template_image.convert('RGBA')
-            generated_image = generated_image.convert('RGBA')
-            mask_image = mask_image.convert('L')  # Grayscale for mask
-            
-            # Find the mask area bounds
-            bbox = mask_image.getbbox()
-            logger.info(f"📐 Mask bounding box: {bbox}")
-            
-            if bbox:
-                mask_width = bbox[2] - bbox[0]
-                mask_height = bbox[3] - bbox[1]
-                logger.info(f"📏 Mask area size: {mask_width}x{mask_height}")
-                
-                # Resize generated image to fit the mask area
-                generated_image = generated_image.resize((mask_width, mask_height), Image.Resampling.LANCZOS)
-                logger.info(f"🔄 Resized generated image to: {generated_image.size}")
-                
-                # Create a new image for compositing
-                result_image = template_image.copy()
-                
-                # Extract the mask area for proper alpha compositing
-                mask_area = mask_image.crop(bbox)
-                
-                # Paste the generated image onto the template at the mask position
-                result_image.paste(generated_image, (bbox[0], bbox[1]), mask_area)
-                logger.info("✅ Image pasted onto template")
-                
-                # Convert back to RGB and encode
-                result_image = result_image.convert('RGB')
-                
-                # Save to base64
-                buffer = io.BytesIO()
-                result_image.save(buffer, format='JPEG', quality=95)
-                buffer.seek(0)
-                
-                final_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
-                logger.info("✅ Compositing completed successfully")
-                return final_base64
-                
-            else:
-                # If no mask area found, center the generated image on template
-                logger.warning("⚠️ No mask area found, centering generated image")
-                result_image = template_image.copy()
-                
-                # Calculate center position
-                template_width, template_height = template_image.size
-                gen_width, gen_height = generated_image.size
-                
-                # Resize if too large (80% of template size max)
-                max_width = int(template_width * 0.8)
-                max_height = int(template_height * 0.8)
-                
-                if gen_width > max_width or gen_height > max_height:
-                    generated_image.thumbnail((max_width, max_height), Image.Resampling.LANCZOS)
-                    gen_width, gen_height = generated_image.size
-                    logger.info(f"🔄 Resized to fit: {gen_width}x{gen_height}")
-                
-                # Center the image
-                x = (template_width - gen_width) // 2
-                y = (template_height - gen_height) // 2
-                logger.info(f"📍 Centering at position: ({x}, {y})")
-                
-                # Paste with alpha channel
-                result_image.paste(generated_image, (x, y), generated_image)
-                result_image = result_image.convert('RGB')
-                
-                buffer = io.BytesIO()
-                result_image.save(buffer, format='JPEG', quality=95)
-                buffer.seek(0)
-                
-                return base64.b64encode(buffer.getvalue()).decode('utf-8')
-                
-        except Exception as e:
-            logger.error(f"❌ Compositing failed: {str(e)}")
-            logger.error(f"❌ Error details: {type(e).__name__}")
-            # Fallback: return the original generated image
-            logger.info("🔄 Returning original generated image as fallback")
-            return generated_image_base64
-    
     def _create_success_response(self, image_base64_data: str, original_prompt: str) -> Dict[str, Any]:
         """
-        Create successful response with image data and metadata
+        Create successful response with raw Nova Canvas image data and metadata
         
         Args:
-            image_base64_data: Base64 encoded image data
+            image_base64_data: Base64 encoded image data from Nova Canvas
             original_prompt: Original user prompt
             
         Returns:
@@ -361,8 +215,8 @@ class TradingCardGenerator:
                 'quality': self.QUALITY_SETTING,
                 'dimensions': f'{self.DEFAULT_WIDTH}x{self.DEFAULT_HEIGHT}',
                 'generated_at': datetime.now().isoformat(),
-                'generation_type': 'inpainting',
-                'template_used': self.TEMPLATE_FILENAME
+                'generation_type': 'text_to_image',
+                'compositing': 'frontend'
             }
         }
     
