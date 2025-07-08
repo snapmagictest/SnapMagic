@@ -17,12 +17,14 @@ class SnapMagicTemplateSystem {
         this.NOVA_WIDTH = 416;       // Nova Canvas width
         this.NOVA_HEIGHT = 624;      // Nova Canvas height
         this.NOVA_X = (this.TEMPLATE_WIDTH - this.NOVA_WIDTH) / 2;  // Center horizontally
-        this.NOVA_Y = 80;            // Leave space for header
+        this.NOVA_Y = 100;           // More space for redesigned header
         
-        // Template areas
-        this.HEADER_HEIGHT = 70;
+        // Redesigned template areas
+        this.HEADER_HEIGHT = 90;     // Larger header for event + logos
         this.FOOTER_HEIGHT = 50;
-        this.LOGO_SIZE = 40;
+        this.EVENT_TEXT_HEIGHT = 35; // Space for event name
+        this.LOGOS_HEIGHT = 45;      // Space for logos below event
+        this.LOGO_SIZE = 35;         // Logo size
         
         // Set template configuration directly (no API calls)
         this.setTemplateConfiguration();
@@ -171,16 +173,16 @@ class SnapMagicTemplateSystem {
     }
     
     /**
-     * Draw header with event name
+     * Draw redesigned header with event name at top and logos centered below
      */
-    async drawHeader() {
+     async drawHeader() {
         if (!this.templateConfig?.eventName) return;
         
         // Header background
         this.ctx.fillStyle = '#F8F9FA';
         this.ctx.fillRect(10, 10, this.TEMPLATE_WIDTH - 20, this.HEADER_HEIGHT);
         
-        // Event name text
+        // Event name at the top of header
         this.ctx.fillStyle = '#2C3E50';
         this.ctx.font = 'bold 16px Arial, sans-serif';
         this.ctx.textAlign = 'center';
@@ -188,32 +190,56 @@ class SnapMagicTemplateSystem {
         
         const eventName = this.templateConfig.eventName;
         const headerCenterX = this.TEMPLATE_WIDTH / 2;
-        const headerCenterY = 10 + (this.HEADER_HEIGHT / 2);
+        const eventTextY = 10 + (this.EVENT_TEXT_HEIGHT / 2);
         
-        this.ctx.fillText(eventName, headerCenterX, headerCenterY);
+        this.ctx.fillText(eventName, headerCenterX, eventTextY);
+        
+        // Draw logos centered below event name
+        await this.drawHeaderLogos();
+    }
+    
+    /**
+     * Draw logos centered horizontally below the event name
+     */
+    async drawHeaderLogos() {
+        if (!this.templateConfig?.logos) return;
+        
+        // Filter enabled logos
+        const enabledLogos = this.templateConfig.logos.filter(logo => logo.enabled);
+        
+        if (enabledLogos.length === 0) {
+            console.log('No enabled logos to draw');
+            return;
+        }
+        
+        console.log(`Drawing ${enabledLogos.length} enabled logos out of ${this.templateConfig.logos.length} total`);
+        
+        // Calculate spacing for centered logos
+        const logoSpacing = 60; // Space between logos
+        const totalLogosWidth = (enabledLogos.length * this.LOGO_SIZE) + ((enabledLogos.length - 1) * (logoSpacing - this.LOGO_SIZE));
+        const startX = (this.TEMPLATE_WIDTH - totalLogosWidth) / 2;
+        const logoY = 10 + this.EVENT_TEXT_HEIGHT + ((this.LOGOS_HEIGHT - this.LOGO_SIZE) / 2);
+        
+        // Draw each enabled logo
+        for (let i = 0; i < enabledLogos.length; i++) {
+            const logo = enabledLogos[i];
+            const logoX = startX + (i * logoSpacing);
+            
+            console.log(`Drawing logo: ${logo.alt} at centered position (${logoX}, ${logoY})`);
+            await this.drawLogo(logo.url, logoX, logoY, this.LOGO_SIZE, logo.alt);
+        }
     }
     
     /**
      * Draw all enabled logos in their specified positions
      */
+    /**
+     * Draw logos (header logos are now handled in drawHeaderLogos, this handles any other positioned logos)
+     */
     async drawLogos() {
-        if (!this.templateConfig?.logos || !Array.isArray(this.templateConfig.logos)) {
-            console.log('No logos configured or invalid logos array');
-            return;
-        }
-        
-        const logoSize = this.LOGO_SIZE;
-        const enabledLogos = this.templateConfig.logos.filter(logo => logo.enabled);
-        
-        console.log(`Drawing ${enabledLogos.length} enabled logos out of ${this.templateConfig.logos.length} total`);
-        
-        for (const logo of enabledLogos) {
-            const position = this.getLogoPosition(logo.position, logoSize);
-            if (position) {
-                console.log(`Drawing logo: ${logo.alt} at position ${logo.position}`);
-                await this.drawLogo(logo.url, position.x, position.y, logoSize, logo.alt);
-            }
-        }
+        // Header logos are now handled in drawHeaderLogos() - all logos go in the centered header
+        console.log('Logos are now drawn in the header via drawHeaderLogos()');
+        return;
     }
     
     /**
