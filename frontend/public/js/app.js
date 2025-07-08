@@ -355,11 +355,6 @@ class SnapMagicApp {
             // Display the final composed card
             this.elements.resultContainer.innerHTML = `
                 <img src="${finalImageSrc}" alt="Generated Trading Card" class="result-image">
-                <div class="card-info">
-                    <p><strong>Event:</strong> ${this.templateSystem.templateConfig.eventName}</p>
-                    <p><strong>Dimensions:</strong> 500×750px (4.2×6.2cm at 300 DPI)</p>
-                    <p><strong>Perfect for:</strong> Sticker printing</p>
-                </div>
             `;
             
             this.elements.resultActions.classList.remove('hidden');
