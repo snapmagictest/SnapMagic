@@ -24,45 +24,38 @@ class SnapMagicTemplateSystem {
         this.FOOTER_HEIGHT = 50;
         this.LOGO_SIZE = 40;
         
-        this.loadTemplateConfiguration();
+        // Set template configuration directly (no API calls)
+        this.setTemplateConfiguration();
     }
     
     /**
-     * Load template configuration from backend
+     * Set template configuration from injected config (secrets.json via CDK)
      */
-    async loadTemplateConfiguration() {
+    setTemplateConfiguration() {
         try {
-            console.log('Loading template configuration from backend...');
-            const response = await fetch(`${window.API_BASE_URL}/api/template-config`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            });
-            
-            if (response.ok) {
-                const result = await response.json();
-                if (result.success) {
-                    this.templateConfig = result;
-                    console.log('Template configuration loaded successfully:', this.templateConfig);
+            // Try to get template config from injected configuration
+            if (window.SNAPMAGIC_CONFIG && window.SNAPMAGIC_CONFIG.TEMPLATE_CONFIG) {
+                // Parse the injected template configuration
+                if (typeof window.SNAPMAGIC_CONFIG.TEMPLATE_CONFIG === 'string') {
+                    this.templateConfig = JSON.parse(window.SNAPMAGIC_CONFIG.TEMPLATE_CONFIG);
                 } else {
-                    console.error('Template configuration API returned error:', result.error);
-                    this.setDefaultConfiguration();
+                    this.templateConfig = window.SNAPMAGIC_CONFIG.TEMPLATE_CONFIG;
                 }
+                console.log('✅ Template configuration loaded from secrets.json:', this.templateConfig);
             } else {
-                console.error('Failed to load template configuration - HTTP error:', response.status);
-                this.setDefaultConfiguration();
+                // Fallback to hardcoded configuration
+                this.setFallbackConfiguration();
             }
         } catch (error) {
-            console.error('Error loading template configuration:', error);
-            this.setDefaultConfiguration();
+            console.error('❌ Error parsing template configuration:', error);
+            this.setFallbackConfiguration();
         }
     }
     
     /**
-     * Set default template configuration as fallback
+     * Fallback template configuration if secrets.json config fails
      */
-    setDefaultConfiguration() {
+    setFallbackConfiguration() {
         this.templateConfig = {
             eventName: 'AWS Event',
             logos: [
@@ -81,7 +74,7 @@ class SnapMagicTemplateSystem {
             ],
             awsLogo: { enabled: true, text: 'Powered by AWS' }
         };
-        console.log('Using default template configuration:', this.templateConfig);
+        console.log('⚠️ Using fallback template configuration:', this.templateConfig);
     }
     
     /**

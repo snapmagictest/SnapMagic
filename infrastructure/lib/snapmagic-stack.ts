@@ -57,6 +57,15 @@ frontend:
         - echo "Verifying replacement worked:"
         - if grep -q "PLACEHOLDER_API_URL" public/index.html; then echo "ERROR: Placeholder still exists!"; exit 1; fi
         - echo "✅ API URL replacement successful"
+        - echo "Configuring Template Config..."
+        - echo "SNAPMAGIC_TEMPLATE_CONFIG length: \${#SNAPMAGIC_TEMPLATE_CONFIG}"
+        - echo "Before template replacement:"
+        - grep -n "PLACEHOLDER_TEMPLATE_CONFIG" public/index.html || echo "Could not find template placeholder"
+        - sed -i "s|'PLACEHOLDER_TEMPLATE_CONFIG'|$SNAPMAGIC_TEMPLATE_CONFIG|g" public/index.html
+        - echo "After template replacement:"
+        - echo "Verifying template replacement worked:"
+        - if grep -q "PLACEHOLDER_TEMPLATE_CONFIG" public/index.html; then echo "ERROR: Template placeholder still exists!"; exit 1; fi
+        - echo "✅ Template config replacement successful"
     build:
       commands:
         - echo "Frontend is already built - copying static files"
@@ -309,6 +318,27 @@ frontend:
         {
           name: 'SNAPMAGIC_API_URL',
           value: snapMagicApiGateway.url
+        },
+        {
+          name: 'SNAPMAGIC_TEMPLATE_CONFIG',
+          value: JSON.stringify(inputs.cardTemplate || {
+            eventName: 'AWS Event',
+            logos: [
+              {
+                enabled: true,
+                url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/Amazon_Web_Services_Logo.svg/320px-Amazon_Web_Services_Logo.svg.png',
+                alt: 'AWS',
+                position: 'top-left'
+              },
+              {
+                enabled: true,
+                url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/Amazon_logo.svg/320px-Amazon_logo.svg.png',
+                alt: 'Amazon',
+                position: 'top-right'
+              }
+            ],
+            awsLogo: { enabled: true, text: 'Powered by AWS' }
+          })
         },
         {
           name: 'AMPLIFY_DIFF_DEPLOY',
