@@ -296,21 +296,16 @@ def get_template_configuration():
     Returns template settings for frontend card composition
     """
     try:
+        # Parse logos JSON from environment
+        logos_json = os.environ.get('TEMPLATE_LOGOS_JSON', '[]')
+        logos = json.loads(logos_json) if logos_json else []
+        
         template_config = {
             'eventName': os.environ.get('TEMPLATE_EVENT_NAME', 'AWS Event'),
-            'customerLogo': {
-                'enabled': os.environ.get('TEMPLATE_CUSTOMER_LOGO_ENABLED', 'false').lower() == 'true',
-                'url': os.environ.get('TEMPLATE_CUSTOMER_LOGO_URL', ''),
-                'alt': os.environ.get('TEMPLATE_CUSTOMER_LOGO_ALT', 'Customer')
-            },
-            'partnerLogo': {
-                'enabled': os.environ.get('TEMPLATE_PARTNER_LOGO_ENABLED', 'false').lower() == 'true',
-                'url': os.environ.get('TEMPLATE_PARTNER_LOGO_URL', ''),
-                'alt': os.environ.get('TEMPLATE_PARTNER_LOGO_ALT', 'Partner')
-            },
+            'logos': logos,
             'awsLogo': {
-                'enabled': os.environ.get('TEMPLATE_AWS_LOGO_ENABLED', 'true').lower() == 'true',
-                'text': os.environ.get('TEMPLATE_AWS_LOGO_TEXT', 'Powered by AWS')
+                'text': 'Powered by AWS',  # Always present, mandatory
+                'enabled': True  # Always enabled
             }
         }
         

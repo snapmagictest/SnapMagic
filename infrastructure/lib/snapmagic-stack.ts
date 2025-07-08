@@ -210,14 +210,7 @@ frontend:
         NOVA_REEL_MODEL: inputs.novaReelModel,
         // Template configuration from secrets.json
         TEMPLATE_EVENT_NAME: inputs.cardTemplate?.eventName || 'AWS Event',
-        TEMPLATE_CUSTOMER_LOGO_ENABLED: inputs.cardTemplate?.customerLogo?.enabled?.toString() || 'false',
-        TEMPLATE_CUSTOMER_LOGO_URL: inputs.cardTemplate?.customerLogo?.url || '',
-        TEMPLATE_CUSTOMER_LOGO_ALT: inputs.cardTemplate?.customerLogo?.alt || 'Customer',
-        TEMPLATE_PARTNER_LOGO_ENABLED: inputs.cardTemplate?.partnerLogo?.enabled?.toString() || 'false',
-        TEMPLATE_PARTNER_LOGO_URL: inputs.cardTemplate?.partnerLogo?.url || '',
-        TEMPLATE_PARTNER_LOGO_ALT: inputs.cardTemplate?.partnerLogo?.alt || 'Partner',
-        TEMPLATE_AWS_LOGO_ENABLED: inputs.cardTemplate?.awsLogo?.enabled?.toString() || 'true',
-        TEMPLATE_AWS_LOGO_TEXT: inputs.cardTemplate?.awsLogo?.text || 'Powered by AWS'
+        TEMPLATE_LOGOS_JSON: JSON.stringify(inputs.cardTemplate?.logos || [])
       },
       description: 'SnapMagic AI backend - Trading Cards & Video Generation'
     });
