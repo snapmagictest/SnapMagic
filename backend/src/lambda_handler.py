@@ -66,6 +66,8 @@ def lambda_handler(event, context):
         # Extract action from path or body
         if '/api/login' in request_path:
             action = 'login'
+        elif '/api/template-config' in request_path:
+            action = 'get_template_config'
         elif '/api/transform-card' in request_path:
             # Check body for specific action (card generation vs video generation vs video status)
             body_action = body.get('action', '').lower()
@@ -275,12 +277,49 @@ def lambda_handler(event, context):
                 'timestamp': '2025-06-26T09:00:00Z'
             })
         
+        # ========================================
+        # TEMPLATE CONFIGURATION ENDPOINT
+        # ========================================
+        elif action == 'get_template_config':
+            return get_template_configuration()
+        
         else:
             return create_error_response(f"Unknown action: {action}", 400)
             
     except Exception as e:
         logger.error(f"Lambda handler error: {str(e)}")
         return create_error_response(f"Internal server error: {str(e)}", 500)
+
+def get_template_configuration():
+    """
+    Load template configuration from environment variables (set by CDK from secrets.json)
+    Returns template settings for frontend card composition
+    """
+    try:
+        template_config = {
+            'eventName': os.environ.get('TEMPLATE_EVENT_NAME', 'AWS Event'),
+            'customerLogo': {
+                'enabled': os.environ.get('TEMPLATE_CUSTOMER_LOGO_ENABLED', 'false').lower() == 'true',
+                'url': os.environ.get('TEMPLATE_CUSTOMER_LOGO_URL', ''),
+                'alt': os.environ.get('TEMPLATE_CUSTOMER_LOGO_ALT', 'Customer')
+            },
+            'partnerLogo': {
+                'enabled': os.environ.get('TEMPLATE_PARTNER_LOGO_ENABLED', 'false').lower() == 'true',
+                'url': os.environ.get('TEMPLATE_PARTNER_LOGO_URL', ''),
+                'alt': os.environ.get('TEMPLATE_PARTNER_LOGO_ALT', 'Partner')
+            },
+            'awsLogo': {
+                'enabled': os.environ.get('TEMPLATE_AWS_LOGO_ENABLED', 'true').lower() == 'true',
+                'text': os.environ.get('TEMPLATE_AWS_LOGO_TEXT', 'Powered by AWS')
+            }
+        }
+        
+        logger.info(f"Template configuration loaded: {json.dumps(template_config)}")
+        return create_success_response(template_config)
+        
+    except Exception as e:
+        logger.error(f"Failed to load template configuration: {str(e)}")
+        return create_error_response(f"Template configuration error: {str(e)}", 500)
 
 # ========================================
 # RESPONSE HELPERS - EXACT SAME AS BEFORE

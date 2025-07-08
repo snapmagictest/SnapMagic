@@ -26,9 +26,9 @@ class TradingCardGenerator:
     # Class constants for configuration
     MODEL_ID = os.environ.get('NOVA_CANVAS_MODEL', 'amazon.nova-canvas-v1:0')
     
-    # Generation parameters - optimized for trading card content
-    DEFAULT_WIDTH = 768
-    DEFAULT_HEIGHT = 1024
+    # Generation parameters - optimized for template integration with AWS logo at 300 DPI
+    DEFAULT_WIDTH = 416
+    DEFAULT_HEIGHT = 624
     DEFAULT_CFG_SCALE = 7.0
     QUALITY_SETTING = 'premium'
     

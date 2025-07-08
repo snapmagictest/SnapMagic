@@ -318,28 +318,85 @@ class SnapMagicApp {
         }
     }
 
-    displayGeneratedCard(data) {
-        const imageSrc = data.imageSrc || `data:image/png;base64,${data.result}`;
+    async displayGeneratedCard(data) {
+        const novaImageBase64 = data.result; // Raw Nova Canvas image
+        const userPrompt = this.elements.promptInput.value.trim();
         
-        this.elements.resultContainer.innerHTML = `
-            <img src="${imageSrc}" alt="Generated Trading Card" class="result-image">
-        `;
-        
-        this.elements.resultActions.classList.remove('hidden');
+        try {
+            // Initialize template system if not already done
+            if (!this.templateSystem) {
+                this.templateSystem = new window.SnapMagicTemplateSystem();
+                // Wait for template configuration to load
+                await new Promise(resolve => {
+                    const checkConfig = () => {
+                        if (this.templateSystem.templateConfig) {
+                            resolve();
+                        } else {
+                            setTimeout(checkConfig, 100);
+                        }
+                    };
+                    checkConfig();
+                });
+            }
+            
+            // Create final trading card with template
+            console.log('🎴 Compositing trading card with template...');
+            const finalCardBase64 = await this.templateSystem.createTradingCard(novaImageBase64, userPrompt);
+            const finalImageSrc = `data:image/png;base64,${finalCardBase64}`;
+            
+            // Store both Nova image and final card
+            this.generatedCardData = {
+                ...data,
+                novaImageBase64: novaImageBase64,
+                finalCardBase64: finalCardBase64,
+                finalImageSrc: finalImageSrc
+            };
+            
+            // Display the final composed card
+            this.elements.resultContainer.innerHTML = `
+                <img src="${finalImageSrc}" alt="Generated Trading Card" class="result-image">
+                <div class="card-info">
+                    <p><strong>Event:</strong> ${this.templateSystem.templateConfig.eventName}</p>
+                    <p><strong>Dimensions:</strong> 500×750px (4.2×6.2cm at 300 DPI)</p>
+                    <p><strong>Perfect for:</strong> Sticker printing</p>
+                </div>
+            `;
+            
+            this.elements.resultActions.classList.remove('hidden');
+            
+        } catch (error) {
+            console.error('❌ Template composition failed:', error);
+            // Fallback to raw Nova Canvas image
+            const imageSrc = data.imageSrc || `data:image/png;base64,${data.result}`;
+            this.elements.resultContainer.innerHTML = `
+                <img src="${imageSrc}" alt="Generated Trading Card" class="result-image">
+                <p class="error-text">Template composition failed. Showing raw AI-generated image.</p>
+            `;
+            this.elements.resultActions.classList.remove('hidden');
+        }
     }
 
     handleDownloadCard() {
         if (!this.generatedCardData) return;
         
-        const imageSrc = this.generatedCardData.imageSrc || `data:image/png;base64,${this.generatedCardData.result}`;
+        // Download the final composed card (with template) if available, otherwise raw Nova image
+        const imageSrc = this.generatedCardData.finalImageSrc || 
+                         this.generatedCardData.imageSrc || 
+                         `data:image/png;base64,${this.generatedCardData.result}`;
+        
         const link = document.createElement('a');
         link.href = imageSrc;
-        link.download = `snapmagic-card-${Date.now()}.png`;
+        
+        // Generate filename with event name if available
+        const eventName = this.templateSystem?.templateConfig?.eventName || 'Event';
+        const sanitizedEventName = eventName.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
+        link.download = `snapmagic-${sanitizedEventName}-card-${Date.now()}.png`;
+        
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
         
-        console.log('💾 Card downloaded');
+        console.log('💾 Trading card downloaded');
     }
 
     handleCreateVideo() {

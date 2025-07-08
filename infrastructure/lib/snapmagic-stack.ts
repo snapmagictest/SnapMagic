@@ -207,7 +207,17 @@ frontend:
         EVENT_PASSWORD: inputs.basicAuthPassword || 'demo',
         VIDEO_BUCKET_NAME: videoStorageBucket.bucketName,
         NOVA_CANVAS_MODEL: inputs.novaCanvasModel,
-        NOVA_REEL_MODEL: inputs.novaReelModel
+        NOVA_REEL_MODEL: inputs.novaReelModel,
+        // Template configuration from secrets.json
+        TEMPLATE_EVENT_NAME: inputs.cardTemplate?.eventName || 'AWS Event',
+        TEMPLATE_CUSTOMER_LOGO_ENABLED: inputs.cardTemplate?.customerLogo?.enabled?.toString() || 'false',
+        TEMPLATE_CUSTOMER_LOGO_URL: inputs.cardTemplate?.customerLogo?.url || '',
+        TEMPLATE_CUSTOMER_LOGO_ALT: inputs.cardTemplate?.customerLogo?.alt || 'Customer',
+        TEMPLATE_PARTNER_LOGO_ENABLED: inputs.cardTemplate?.partnerLogo?.enabled?.toString() || 'false',
+        TEMPLATE_PARTNER_LOGO_URL: inputs.cardTemplate?.partnerLogo?.url || '',
+        TEMPLATE_PARTNER_LOGO_ALT: inputs.cardTemplate?.partnerLogo?.alt || 'Partner',
+        TEMPLATE_AWS_LOGO_ENABLED: inputs.cardTemplate?.awsLogo?.enabled?.toString() || 'true',
+        TEMPLATE_AWS_LOGO_TEXT: inputs.cardTemplate?.awsLogo?.text || 'Powered by AWS'
       },
       description: 'SnapMagic AI backend - Trading Cards & Video Generation'
     });
@@ -242,6 +252,12 @@ frontend:
     // Login endpoint (no authentication required)
     const loginResource = apiResource.addResource('login');
     loginResource.addMethod('POST', lambdaIntegration, {
+      authorizationType: apigateway.AuthorizationType.NONE
+    });
+    
+    // Template configuration endpoint (no authentication required)
+    const templateConfigResource = apiResource.addResource('template-config');
+    templateConfigResource.addMethod('GET', lambdaIntegration, {
       authorizationType: apigateway.AuthorizationType.NONE
     });
     
