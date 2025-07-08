@@ -94,11 +94,8 @@ class TradingCardGenerator:
         try:
             logger.info(f"🎨 Generating card for prompt: {user_prompt[:50]}...")
             
-            # Enhance prompt for trading card context
-            enhanced_prompt = self._enhance_prompt_for_trading_card(user_prompt)
-            
             # Prepare Nova Canvas request for pure text-to-image generation
-            request_payload = self._build_generation_request(enhanced_prompt)
+            request_payload = self._build_generation_request(user_prompt)
             
             # Call Amazon Bedrock Nova Canvas for pure creative generation
             generated_image_data = self._call_nova_canvas(request_payload)
@@ -110,28 +107,12 @@ class TradingCardGenerator:
             logger.error(f"❌ Trading card generation failed: {str(e)}")
             return self._create_error_response(f"Card generation failed: {str(e)}")
     
-    def _enhance_prompt_for_trading_card(self, user_prompt: str) -> str:
-        """
-        Enhance user prompt with trading card context for better Nova Canvas results
-        
-        Args:
-            user_prompt: Original user prompt
-            
-        Returns:
-            Enhanced prompt optimized for trading card generation
-        """
-        # Add trading card context while preserving user's creative intent
-        enhanced_prompt = f"Professional trading card artwork featuring {user_prompt}. High quality digital art, detailed illustration, vibrant colors, professional composition, trading card style."
-        
-        logger.info(f"🎯 Enhanced prompt: {enhanced_prompt[:100]}...")
-        return enhanced_prompt
-    
-    def _build_generation_request(self, enhanced_prompt: str) -> Dict[str, Any]:
+    def _build_generation_request(self, user_prompt: str) -> Dict[str, Any]:
         """
         Build the request payload for Nova Canvas API - Pure text-to-image generation
         
         Args:
-            enhanced_prompt: Enhanced prompt for generation
+            user_prompt: User's original prompt passed directly to Nova Canvas
             
         Returns:
             Complete request payload for Nova Canvas
@@ -139,7 +120,7 @@ class TradingCardGenerator:
         return {
             "taskType": "TEXT_IMAGE",
             "textToImageParams": {
-                "text": enhanced_prompt
+                "text": user_prompt
             },
             "imageGenerationConfig": {
                 "numberOfImages": 1,
