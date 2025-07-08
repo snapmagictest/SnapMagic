@@ -296,17 +296,17 @@ def get_template_configuration():
     Returns template settings for frontend card composition
     """
     try:
-        # Parse logos JSON from environment - handle None and empty cases
-        logos_json = os.environ.get('TEMPLATE_LOGOS_JSON', '[]')
+        # Get logos JSON from environment with proper None handling
+        logos_json = os.environ.get('TEMPLATE_LOGOS_JSON')
         
-        # Handle None case
-        if logos_json is None:
+        # Handle None and empty cases properly
+        if logos_json is None or logos_json == '':
             logos = []
         else:
             try:
-                logos = json.loads(logos_json) if logos_json else []
-            except (json.JSONDecodeError, TypeError):
-                logger.warning(f"Failed to parse TEMPLATE_LOGOS_JSON: {logos_json}")
+                logos = json.loads(logos_json)
+            except (json.JSONDecodeError, TypeError) as e:
+                logger.warning(f"Failed to parse TEMPLATE_LOGOS_JSON: {logos_json}, error: {e}")
                 logos = []
         
         template_config = {
