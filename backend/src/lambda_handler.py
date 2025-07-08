@@ -296,9 +296,18 @@ def get_template_configuration():
     Returns template settings for frontend card composition
     """
     try:
-        # Parse logos JSON from environment
+        # Parse logos JSON from environment - handle None and empty cases
         logos_json = os.environ.get('TEMPLATE_LOGOS_JSON', '[]')
-        logos = json.loads(logos_json) if logos_json else []
+        
+        # Handle None case
+        if logos_json is None:
+            logos = []
+        else:
+            try:
+                logos = json.loads(logos_json) if logos_json else []
+            except (json.JSONDecodeError, TypeError):
+                logger.warning(f"Failed to parse TEMPLATE_LOGOS_JSON: {logos_json}")
+                logos = []
         
         template_config = {
             'eventName': os.environ.get('TEMPLATE_EVENT_NAME', 'AWS Event'),
