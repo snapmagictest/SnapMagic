@@ -1,0 +1,40 @@
+📁 PLACE YOUR LOGO FILES HERE
+
+This directory is for your custom logos that will appear on trading cards.
+
+✅ RECOMMENDED FILE FORMATS:
+- company-logo.png
+- event-sponsor.png  
+- partner-logo.svg
+- custom-brand.png
+
+✅ RECOMMENDED SPECIFICATIONS:
+- Size: 100x100 to 400x400 pixels
+- Format: PNG with transparency
+- File size: Under 100KB
+- Aspect ratio: Square (1:1) or landscape (2:1)
+
+✅ EXAMPLE CONFIGURATION in secrets.json:
+{
+  "cardTemplate": {
+    "logos": [
+      {
+        "enabled": true,
+        "url": "logos/company-logo.png",
+        "alt": "My Company",
+        "position": "top-left"
+      }
+    ]
+  }
+}
+
+⚠️ IMPORTANT NOTES:
+- The AWS "Powered by AWS" logo is mandatory in the footer
+- Local logos (in this directory) are CORS-free and always work
+- External URLs may fail due to CORS restrictions
+- Test your configuration before deploying to production
+
+📖 For detailed documentation, see:
+- README.md (main documentation)
+- logos/README.md (detailed logo guide)
+- logos/example-logos.md (configuration examples)
