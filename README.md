@@ -227,95 +227,38 @@ The frontend is automatically deployed via AWS Amplify when the CDK stack comple
 
 ---
 
-## 🎨 Logo Configuration System
+## 🎨 Simple Logo System
 
-SnapMagic supports customizable logos in your trading card templates through the `secrets.json` configuration file.
+SnapMagic automatically discovers and uses logos from the `frontend/public/logos/` directory.
 
 ### 🚨 **Important: Mandatory AWS Footer Logo**
 
 **The AWS "Powered by AWS" logo is mandatory and always appears in the footer.** This cannot be disabled or configured - it's built into the template system for compliance and branding requirements.
 
-### 📁 **Logo Storage Options**
+### 📁 **How It Works**
 
-#### **Option 1: Local Logos (Recommended) ✅**
-
-Place your logo files in the `frontend/public/logos/` directory for the best reliability:
+Simply place your logo files in the `frontend/public/logos/` directory and SnapMagic will automatically find and use them:
 
 ```
 frontend/public/logos/
-├── company-logo.png
-├── event-sponsor.png
-├── partner-logo.svg
-└── custom-brand.png
+├── logo.png                 ← Automatically detected
+├── company-logo.png         ← Automatically detected  
+├── event-logo.png           ← Automatically detected
+├── sponsor-logo.png         ← Automatically detected
+├── partner-logo.png         ← Automatically detected
+└── brand-logo.png           ← Automatically detected
 ```
 
-**Benefits:**
-- ✅ **No CORS issues** - Always works
-- ✅ **Fast loading** - No network requests  
-- ✅ **Reliable** - Files won't disappear
-- ✅ **Secure** - No external requests
+### 🎯 **Supported Filenames**
 
-#### **Option 2: External URLs (Use with Caution) ⚠️**
+SnapMagic looks for these common logo filenames (in order):
 
-You can use external URLs, but they **MUST** have proper CORS headers or they will fail to load.
-
-### 🔧 **Configuration in secrets.json**
-
-#### **Local Logo Configuration (Recommended):**
-```json
-{
-  "cardTemplate": {
-    "eventName": "AWS re:Invent 2024",
-    "logos": [
-      {
-        "enabled": true,
-        "url": "logos/company-logo.png",
-        "alt": "My Company",
-        "position": "top-left"
-      },
-      {
-        "enabled": true,
-        "url": "logos/event-sponsor.png",
-        "alt": "Event Sponsor", 
-        "position": "top-right"
-      },
-      {
-        "enabled": false,
-        "url": "logos/optional-partner.png",
-        "alt": "Partner Logo",
-        "position": "header-center"
-      }
-    ]
-  }
-}
-```
-
-#### **External URL Configuration (Advanced Users Only):**
-```json
-{
-  "cardTemplate": {
-    "logos": [
-      {
-        "enabled": true,
-        "url": "https://raw.githubusercontent.com/username/repo/main/logo.png",
-        "alt": "GitHub Logo",
-        "position": "top-left"
-      }
-    ]
-  }
-}
-```
-
-### 🎯 **Logo Positions**
-
-Available positions in the trading card template:
-
-- `top-left` - Upper left corner
-- `top-right` - Upper right corner
-- `top-center` - Top center  
-- `header-left` - Header area left
-- `header-right` - Header area right
-- `header-center` - Header area center (below event name)
+- `logo.png`, `logo.jpg`, `logo.svg`
+- `company-logo.png`, `company-logo.jpg`, `company-logo.svg`
+- `event-logo.png`, `event-logo.jpg`, `event-logo.svg`
+- `sponsor-logo.png`, `sponsor-logo.jpg`, `sponsor-logo.svg`
+- `partner-logo.png`, `partner-logo.jpg`, `partner-logo.svg`
+- `brand-logo.png`, `brand-logo.jpg`, `brand-logo.svg`
 
 ### 🖼️ **Logo Requirements**
 
@@ -323,7 +266,6 @@ Available positions in the trading card template:
 - PNG (recommended for transparency)
 - JPG/JPEG
 - SVG
-- WebP
 
 #### **Recommended Specifications:**
 - **Size**: 100x100 to 400x400 pixels
@@ -331,60 +273,46 @@ Available positions in the trading card template:
 - **Aspect ratio**: Square (1:1) or landscape (2:1) work best
 - **Background**: Transparent PNG for best results
 
-### ⚠️ **CORS Warning for External URLs**
+### 📍 **Automatic Positioning**
 
-If you choose to use external URLs, they **MUST** have proper CORS headers. Most websites block CORS access.
+Logos are automatically positioned in these locations (up to 6 logos):
 
-#### **✅ CORS-Friendly Services:**
-- **GitHub Raw**: `https://raw.githubusercontent.com/user/repo/main/logo.png`
-- **Your own S3 bucket** with CORS enabled
-- **CDNs with CORS** (Cloudflare, etc.)
-- **Your own domain** with proper headers
+1. **Top-left corner**
+2. **Top-right corner**  
+3. **Header-left**
+4. **Header-right**
+5. **Header-center-left**
+6. **Header-center-right**
 
-#### **❌ CORS-Blocked Services (Will Show Error):**
-- Most corporate websites (no CORS headers)
-- Social media images (Facebook, LinkedIn, etc.)
-- Google Images or random web images
-- AWS static sites like `d0.awsstatic.com` (no CORS)
+### ✅ **Benefits of This Approach**
 
-### 🔧 **Error Handling**
+- **🚀 Zero Configuration** - No `secrets.json` setup needed
+- **🔒 Always Reliable** - No CORS issues, no broken URLs
+- **⚡ Fast Loading** - Local files, no network requests
+- **🎯 Automatic Sizing** - All logos properly scaled and positioned
+- **🛡️ Secure** - No external dependencies or tracking
 
-If a logo fails to load, SnapMagic will:
+### 🧪 **Testing Your Logos**
 
-1. **Log detailed error messages** to browser console
-2. **Display error placeholder** with helpful information
-3. **Continue generating** the trading card with other logos
-4. **Provide troubleshooting guidance** in console logs
-
-#### **Common Error Messages:**
-- `CORS ERROR` - External URL blocked by CORS policy
-- `FILE NOT FOUND` - Local file doesn't exist
-- **Solution**: Move logos to `frontend/public/logos/` directory
-
-### 🧪 **Testing Your Logo Configuration**
-
-1. **Add logos** to `frontend/public/logos/` directory
-2. **Update** your `secrets.json` configuration
-3. **Deploy changes**: `cdk deploy SnapMagicStack`
-4. **Generate test card** to verify all logos appear
-5. **Check browser console** for any error messages
+1. **Add logo files** to `frontend/public/logos/` directory
+2. **Deploy changes**: `cdk deploy SnapMagicStack`
+3. **Generate test card** to verify logos appear correctly
+4. **Check browser console** for logo discovery messages
 
 ### 💡 **Best Practices**
 
-1. **Use local logos** in `frontend/public/logos/` directory
-2. **Test your configuration** before production deployment
-3. **Keep file sizes small** (under 100KB) for performance
-4. **Use PNG format** with transparency for best results
-5. **Optimize images** before adding to your project
-6. **Use descriptive alt text** for accessibility
-7. **Disable unused logos** with `"enabled": false`
+1. **Use descriptive filenames** (e.g., `company-logo.png` instead of `image1.png`)
+2. **Optimize file sizes** (under 100KB each)
+3. **Use PNG format** with transparency for best results
+4. **Test with different logo combinations** before production
+5. **Keep logos professional** and event-appropriate
 
-### 🚨 **Security Considerations**
+### 🔧 **Troubleshooting**
 
-- **Local logos are safer** than external URLs
-- **External URLs can be security risks** (tracking, malicious content)
-- **CORS errors are browser security features** - don't try to bypass them
-- **Always validate logo sources** before using external URLs
+- **Logo not appearing?** Check the filename matches supported patterns
+- **Logo too small/large?** All logos are automatically resized to fit
+- **Wrong position?** Logos are positioned automatically in discovery order
+- **Need more logos?** Maximum 6 logos are supported
 
 ---
 

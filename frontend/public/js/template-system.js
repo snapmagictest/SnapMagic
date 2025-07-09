@@ -1,6 +1,6 @@
 /**
- * SnapMagic Template System
- * Handles dynamic trading card template composition with configurable logos and branding
+ * SnapMagic Template System - Simplified Version
+ * Automatically discovers and uses logos from the logos/ directory
  */
 
 class SnapMagicTemplateSystem {
@@ -17,16 +17,14 @@ class SnapMagicTemplateSystem {
         this.NOVA_WIDTH = 416;       // Nova Canvas width
         this.NOVA_HEIGHT = 624;      // Nova Canvas height
         this.NOVA_X = (this.TEMPLATE_WIDTH - this.NOVA_WIDTH) / 2;  // Center horizontally
-        this.NOVA_Y = 100;           // More space for redesigned header
+        this.NOVA_Y = 100;           // Space for header
         
-        // Redesigned template areas
-        this.HEADER_HEIGHT = 90;     // Larger header for event + logos
-        this.FOOTER_HEIGHT = 50;
-        this.EVENT_TEXT_HEIGHT = 35; // Space for event name
-        this.LOGOS_HEIGHT = 45;      // Space for logos below event
+        // Template areas
+        this.HEADER_HEIGHT = 90;     // Header for event name
+        this.FOOTER_HEIGHT = 50;     // Footer for AWS logo
         this.LOGO_SIZE = 35;         // Logo size
         
-        // Set template configuration directly (no API calls)
+        // Set template configuration
         this.setTemplateConfiguration();
     }
     
@@ -59,21 +57,7 @@ class SnapMagicTemplateSystem {
      */
     setFallbackConfiguration() {
         this.templateConfig = {
-            eventName: 'AWS Event',
-            logos: [
-                {
-                    enabled: true,
-                    url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/Amazon_Web_Services_Logo.svg/320px-Amazon_Web_Services_Logo.svg.png',
-                    alt: 'AWS',
-                    position: 'top-left'
-                },
-                {
-                    enabled: true,
-                    url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/Amazon_logo.svg/320px-Amazon_logo.svg.png',
-                    alt: 'Amazon',
-                    position: 'top-right'
-                }
-            ]
+            eventName: 'AWS Event'
         };
         console.log('⚠️ Using fallback template configuration:', this.templateConfig);
     }
@@ -172,7 +156,7 @@ class SnapMagicTemplateSystem {
     }
     
     /**
-     * Draw redesigned header with event name at top and logos centered below
+     * Draw simple header with just event name
      */
      async drawHeader() {
         if (!this.templateConfig?.eventName) return;
@@ -181,99 +165,91 @@ class SnapMagicTemplateSystem {
         this.ctx.fillStyle = '#F8F9FA';
         this.ctx.fillRect(10, 10, this.TEMPLATE_WIDTH - 20, this.HEADER_HEIGHT);
         
-        // Event name at the top of header
+        // Event name centered in header
         this.ctx.fillStyle = '#2C3E50';
-        this.ctx.font = 'bold 16px Arial, sans-serif';
+        this.ctx.font = 'bold 18px Arial, sans-serif';
         this.ctx.textAlign = 'center';
         this.ctx.textBaseline = 'middle';
         
         const eventName = this.templateConfig.eventName;
         const headerCenterX = this.TEMPLATE_WIDTH / 2;
-        const eventTextY = 10 + (this.EVENT_TEXT_HEIGHT / 2);
+        const headerCenterY = 10 + (this.HEADER_HEIGHT / 2);
         
-        this.ctx.fillText(eventName, headerCenterX, eventTextY);
-        
-        // Draw logos centered below event name
-        await this.drawHeaderLogos();
+        this.ctx.fillText(eventName, headerCenterX, headerCenterY);
     }
     
     /**
-     * Draw logos centered horizontally below the event name
-     */
-    async drawHeaderLogos() {
-        if (!this.templateConfig?.logos) return;
-        
-        // Filter enabled logos
-        const enabledLogos = this.templateConfig.logos.filter(logo => logo.enabled);
-        
-        if (enabledLogos.length === 0) {
-            console.log('No enabled logos to draw');
-            return;
-        }
-        
-        console.log(`Drawing ${enabledLogos.length} enabled logos out of ${this.templateConfig.logos.length} total`);
-        
-        // Calculate spacing for centered logos
-        const logoSpacing = 60; // Space between logos
-        const totalLogosWidth = (enabledLogos.length * this.LOGO_SIZE) + ((enabledLogos.length - 1) * (logoSpacing - this.LOGO_SIZE));
-        const startX = (this.TEMPLATE_WIDTH - totalLogosWidth) / 2;
-        const logoY = 10 + this.EVENT_TEXT_HEIGHT + ((this.LOGOS_HEIGHT - this.LOGO_SIZE) / 2);
-        
-        // Draw each enabled logo
-        for (let i = 0; i < enabledLogos.length; i++) {
-            const logo = enabledLogos[i];
-            const logoX = startX + (i * logoSpacing);
-            
-            console.log(`Drawing logo: ${logo.alt} at centered position (${logoX}, ${logoY})`);
-            await this.drawLogo(logo.url, logoX, logoY, this.LOGO_SIZE, logo.alt);
-        }
-    }
-    
-    /**
-     * Draw all enabled logos in their specified positions
-     */
-    /**
-     * Draw logos (header logos are now handled in drawHeaderLogos, this handles any other positioned logos)
+     * Draw all logos found in the logos directory automatically
      */
     async drawLogos() {
-        // Header logos are now handled in drawHeaderLogos() - all logos go in the centered header
-        console.log('Logos are now drawn in the header via drawHeaderLogos()');
-        return;
-    }
-    
-    /**
-     * Calculate logo position based on position string
-     * @param {string} positionStr - Position identifier (e.g., 'top-left', 'header-center')
-     * @param {number} logoSize - Size of the logo
-     * @returns {Object} - {x, y} coordinates or null if invalid position
-     */
-    getLogoPosition(positionStr, logoSize) {
-        const margin = 15;
-        const headerY = 15;
-        const topY = 5;
+        console.log('🎨 Auto-discovering logos in logos/ directory...');
         
-        switch (positionStr) {
-            case 'top-left':
-                return { x: margin, y: topY };
-            case 'top-right':
-                return { x: this.TEMPLATE_WIDTH - margin - logoSize, y: topY };
-            case 'top-center':
-                return { x: (this.TEMPLATE_WIDTH - logoSize) / 2, y: topY };
-            case 'header-left':
-                return { x: margin, y: headerY };
-            case 'header-right':
-                return { x: this.TEMPLATE_WIDTH - margin - logoSize, y: headerY };
-            case 'header-center':
-                return { x: (this.TEMPLATE_WIDTH - logoSize) / 2, y: headerY };
-            default:
-                console.warn(`Unknown logo position: ${positionStr}`);
-                return null;
+        // Define common logo filenames to try
+        const commonLogoFiles = [
+            'logo.png', 'logo.jpg', 'logo.svg',
+            'company-logo.png', 'company-logo.jpg', 'company-logo.svg',
+            'event-logo.png', 'event-logo.jpg', 'event-logo.svg',
+            'sponsor-logo.png', 'sponsor-logo.jpg', 'sponsor-logo.svg',
+            'partner-logo.png', 'partner-logo.jpg', 'partner-logo.svg',
+            'brand-logo.png', 'brand-logo.jpg', 'brand-logo.svg'
+        ];
+        
+        // Define positions for up to 6 logos
+        const positions = [
+            { name: 'top-left', x: 15, y: 15 },
+            { name: 'top-right', x: this.TEMPLATE_WIDTH - 15 - this.LOGO_SIZE, y: 15 },
+            { name: 'header-left', x: 15, y: 50 },
+            { name: 'header-right', x: this.TEMPLATE_WIDTH - 15 - this.LOGO_SIZE, y: 50 },
+            { name: 'header-center-left', x: (this.TEMPLATE_WIDTH / 2) - this.LOGO_SIZE - 10, y: 65 },
+            { name: 'header-center-right', x: (this.TEMPLATE_WIDTH / 2) + 10, y: 65 }
+        ];
+        
+        let logoCount = 0;
+        
+        // Try to load each common logo file
+        for (const filename of commonLogoFiles) {
+            if (logoCount >= positions.length) break; // Max 6 logos
+            
+            const logoUrl = `logos/${filename}`;
+            const position = positions[logoCount];
+            
+            try {
+                const logoExists = await this.checkIfLogoExists(logoUrl);
+                if (logoExists) {
+                    console.log(`📁 Found logo: ${filename} - placing at ${position.name}`);
+                    await this.drawLogo(logoUrl, position.x, position.y, this.LOGO_SIZE, filename);
+                    logoCount++;
+                }
+            } catch (error) {
+                // Logo doesn't exist, continue to next
+                continue;
+            }
+        }
+        
+        if (logoCount === 0) {
+            console.log('ℹ️ No logos found in logos/ directory');
+        } else {
+            console.log(`✅ Successfully loaded ${logoCount} logo(s)`);
         }
     }
     
     /**
-     * Draw a single logo with CORS handling and local file support
-     * @param {string} logoUrl - URL of the logo image (can be local path or external URL)
+     * Check if a logo file exists by trying to load it
+     * @param {string} logoUrl - URL to check
+     * @returns {Promise<boolean>} - True if logo exists and loads
+     */
+    async checkIfLogoExists(logoUrl) {
+        return new Promise((resolve) => {
+            const img = new Image();
+            img.onload = () => resolve(true);
+            img.onerror = () => resolve(false);
+            img.src = logoUrl;
+        });
+    }
+    
+    /**
+     * Draw a single logo with simple error handling
+     * @param {string} logoUrl - URL of the logo image (local path)
      * @param {number} x - X position
      * @param {number} y - Y position
      * @param {number} size - Logo size
@@ -283,16 +259,7 @@ class SnapMagicTemplateSystem {
         return new Promise((resolve) => {
             const logoImg = new Image();
             
-            // Determine if this is a local logo or external URL
-            const isLocalLogo = !logoUrl.startsWith('http://') && !logoUrl.startsWith('https://');
-            
-            if (isLocalLogo) {
-                console.log(`📁 Loading local logo: ${logoUrl}`);
-            } else {
-                console.warn(`🌐 Loading external logo: ${logoUrl} - CORS issues may occur!`);
-                // Set CORS for external URLs
-                logoImg.crossOrigin = 'anonymous';
-            }
+            console.log(`📁 Loading logo: ${logoUrl}`);
             
             logoImg.onload = () => {
                 // Calculate aspect ratio to maintain proportions
@@ -313,84 +280,16 @@ class SnapMagicTemplateSystem {
                 const drawY = y + (size - drawHeight) / 2;
                 
                 this.ctx.drawImage(logoImg, drawX, drawY, drawWidth, drawHeight);
-                
-                if (isLocalLogo) {
-                    console.log(`✅ Local logo loaded successfully: ${alt}`);
-                } else {
-                    console.log(`✅ External logo loaded successfully: ${alt}`);
-                }
+                console.log(`✅ Logo loaded successfully: ${alt}`);
                 resolve();
             };
             
             logoImg.onerror = (error) => {
-                if (isLocalLogo) {
-                    console.error(`❌ Failed to load local logo: ${logoUrl}`);
-                    console.error(`💡 Make sure the file exists in frontend/public/${logoUrl}`);
-                } else {
-                    console.error(`❌ Failed to load external logo: ${logoUrl}`);
-                    console.error(`💡 CORS Error: External URL doesn't allow cross-origin access`);
-                    console.error(`💡 Solution: Move logo to frontend/public/logos/ directory`);
-                    console.error(`💡 Or use a CORS-friendly URL (GitHub Raw, your own S3, etc.)`);
-                }
-                
-                // Draw placeholder with helpful error message
-                this.drawLogoPlaceholder(x, y, size, alt, isLocalLogo ? 'FILE_NOT_FOUND' : 'CORS_ERROR');
-                resolve();
+                console.log(`ℹ️ Logo not found: ${logoUrl}`);
+                resolve(); // Don't draw anything, just continue
             };
             
             logoImg.src = logoUrl;
-        });
-    }
-    
-    /**
-     * Draw logo placeholder when image fails to load
-     * @param {number} x - X position
-     * @param {number} y - Y position  
-     * @param {number} size - Logo size
-     * @param {string} alt - Alt text
-     * @param {string} errorType - Type of error (FILE_NOT_FOUND, CORS_ERROR)
-     */
-    drawLogoPlaceholder(x, y, size, alt, errorType = 'UNKNOWN') {
-        // Draw placeholder rectangle
-        this.ctx.strokeStyle = '#FF6B6B';
-        this.ctx.lineWidth = 2;
-        this.ctx.strokeRect(x, y, size, size);
-        
-        // Fill with light red background
-        this.ctx.fillStyle = '#FFE5E5';
-        this.ctx.fillRect(x + 1, y + 1, size - 2, size - 2);
-        
-        // Draw error icon (X)
-        this.ctx.strokeStyle = '#FF6B6B';
-        this.ctx.lineWidth = 3;
-        const margin = size * 0.2;
-        this.ctx.beginPath();
-        this.ctx.moveTo(x + margin, y + margin);
-        this.ctx.lineTo(x + size - margin, y + size - margin);
-        this.ctx.moveTo(x + size - margin, y + margin);
-        this.ctx.lineTo(x + margin, y + size - margin);
-        this.ctx.stroke();
-        
-        // Draw error text
-        this.ctx.fillStyle = '#CC0000';
-        this.ctx.font = 'bold 8px Arial, sans-serif';
-        this.ctx.textAlign = 'center';
-        this.ctx.textBaseline = 'middle';
-        
-        let errorText = alt;
-        if (errorType === 'CORS_ERROR') {
-            errorText = 'CORS\nERROR';
-        } else if (errorType === 'FILE_NOT_FOUND') {
-            errorText = 'FILE\nNOT FOUND';
-        }
-        
-        // Draw multi-line text
-        const lines = errorText.split('\n');
-        const lineHeight = 10;
-        const startY = y + size/2 - (lines.length - 1) * lineHeight/2;
-        
-        lines.forEach((line, index) => {
-            this.ctx.fillText(line, x + size/2, startY + index * lineHeight);
         });
     }
     
