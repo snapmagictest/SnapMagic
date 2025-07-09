@@ -267,7 +267,8 @@ class SnapMagicTemplateSystem {
         }
         
         if (foundLogos.length === 0) {
-            console.log('ℹ️ No numbered logos found - using clean event-only design with side panels');
+            console.log('ℹ️ No numbered logos found - using clean event-only design with decorative elements');
+            await this.drawNoLogosDesign();
             return;
         }
         
@@ -336,8 +337,8 @@ class SnapMagicTemplateSystem {
         this.ctx.translate(textX, textY);
         this.ctx.rotate(-Math.PI / 2);
         
-        // AWS-style text
-        this.ctx.fillStyle = '#FF9900'; // AWS Orange
+        // White text as requested
+        this.ctx.fillStyle = '#FFFFFF'; // Changed to white
         this.ctx.font = 'bold 16px "Amazon Ember", "Helvetica Neue", Arial, sans-serif';
         this.ctx.textAlign = 'center';
         this.ctx.textBaseline = 'middle';
@@ -360,7 +361,7 @@ class SnapMagicTemplateSystem {
     }
     
     /**
-     * Draw old AWS logo vertically on right panel
+     * Draw old AWS logo vertically on right panel (rotated to read left to right)
      */
     async drawRightPanelLogo() {
         return new Promise((resolve) => {
@@ -384,8 +385,16 @@ class SnapMagicTemplateSystem {
                 
                 // Position in right panel center
                 const rightPanelX = this.TEMPLATE_WIDTH - 10 - this.SIDE_PANEL_WIDTH;
-                const logoX = rightPanelX + (this.SIDE_PANEL_WIDTH - logoWidth) / 2;
-                const logoY = this.NOVA_Y + (this.NOVA_HEIGHT - logoHeight) / 2;
+                const centerX = rightPanelX + (this.SIDE_PANEL_WIDTH / 2);
+                const centerY = this.NOVA_Y + (this.NOVA_HEIGHT / 2);
+                
+                // Rotate for vertical placement (reading left to right)
+                this.ctx.translate(centerX, centerY);
+                this.ctx.rotate(-Math.PI / 2); // Rotate 90 degrees counter-clockwise
+                
+                // Draw logo centered at origin (after rotation)
+                const logoX = -logoWidth / 2;
+                const logoY = -logoHeight / 2;
                 
                 // Add subtle glow effect
                 this.ctx.shadowColor = 'rgba(255, 255, 255, 0.3)';
@@ -403,7 +412,7 @@ class SnapMagicTemplateSystem {
                 this.ctx.shadowBlur = 0;
                 
                 this.ctx.restore();
-                console.log('✅ Right panel AWS logo drawn');
+                console.log('✅ Right panel AWS logo drawn vertically (rotated left to right)');
                 resolve();
             };
             
@@ -415,6 +424,64 @@ class SnapMagicTemplateSystem {
             // Load the current AWS logo (will be moved to right panel)
             oldAwsLogo.src = 'powered-by-aws-white.png';
         });
+    }
+    
+    /**
+     * Draw enhanced design when no logos are present
+     */
+    async drawNoLogosDesign() {
+        // Add decorative elements to make the header more interesting without logos
+        const centerX = this.TEMPLATE_WIDTH / 2;
+        const decorativeY = 10 + this.EVENT_TEXT_HEIGHT + 20;
+        
+        // Draw subtle decorative line
+        this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+        this.ctx.lineWidth = 2;
+        this.ctx.beginPath();
+        this.ctx.moveTo(centerX - 60, decorativeY);
+        this.ctx.lineTo(centerX + 60, decorativeY);
+        this.ctx.stroke();
+        
+        // Add small decorative dots
+        this.ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+        this.ctx.beginPath();
+        this.ctx.arc(centerX - 70, decorativeY, 3, 0, 2 * Math.PI);
+        this.ctx.fill();
+        
+        this.ctx.beginPath();
+        this.ctx.arc(centerX + 70, decorativeY, 3, 0, 2 * Math.PI);
+        this.ctx.fill();
+        
+        console.log('✨ Clean event-only design applied with decorative watermark!');
+    }
+            
+    /**
+     * Draw enhanced design when no logos are present
+     */
+    async drawNoLogosDesign() {
+        // Add decorative elements to make the header more interesting without logos
+        const centerX = this.TEMPLATE_WIDTH / 2;
+        const decorativeY = 10 + this.EVENT_TEXT_HEIGHT + 20;
+        
+        // Draw subtle decorative line
+        this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+        this.ctx.lineWidth = 2;
+        this.ctx.beginPath();
+        this.ctx.moveTo(centerX - 60, decorativeY);
+        this.ctx.lineTo(centerX + 60, decorativeY);
+        this.ctx.stroke();
+        
+        // Add small decorative dots
+        this.ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+        this.ctx.beginPath();
+        this.ctx.arc(centerX - 70, decorativeY, 3, 0, 2 * Math.PI);
+        this.ctx.fill();
+        
+        this.ctx.beginPath();
+        this.ctx.arc(centerX + 70, decorativeY, 3, 0, 2 * Math.PI);
+        this.ctx.fill();
+        
+        console.log('✨ Clean event-only design applied with decorative watermark!');
     }
     
     /**
