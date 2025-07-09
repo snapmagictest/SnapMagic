@@ -227,6 +227,74 @@ The frontend is automatically deployed via AWS Amplify when the CDK stack comple
 
 ---
 
+## 🔄 Manual Deployment Commands
+
+Sometimes you may need to manually trigger deployments (e.g., after logo changes, troubleshooting, or when auto-build doesn't trigger):
+
+### Backend Deployment
+```bash
+cd infrastructure
+cdk deploy SnapMagic-dev --region us-east-1
+```
+
+### Frontend Deployment (Manual Trigger)
+```bash
+# Using AWS CLI to trigger Amplify build
+aws amplify start-job \
+  --app-id YOUR_AMPLIFY_APP_ID \
+  --branch-name main \
+  --job-type RELEASE \
+  --region us-east-1
+```
+
+### Get Your Amplify App ID
+```bash
+# Find your Amplify App ID from CDK output
+cd infrastructure
+cdk deploy SnapMagic-dev --region us-east-1 | grep AmplifyAppId
+```
+
+### When to Use Manual Deployment
+- ✅ **Logo changes**: After updating logo files in `frontend/public/logos/`
+- ✅ **Auto-build issues**: When GitHub webhook doesn't trigger build
+- ✅ **Cache problems**: When frontend shows old content
+- ✅ **Troubleshooting**: To force a fresh deployment
+- ✅ **After configuration changes**: When `secrets.json` is updated
+
+### Quick Manual Deploy Script
+```bash
+#!/bin/bash
+# Save as deploy.sh and make executable: chmod +x deploy.sh
+
+echo "🚀 Manual SnapMagic Deployment"
+echo "=============================="
+
+# Deploy backend
+echo "📦 Deploying backend..."
+cd infrastructure
+cdk deploy SnapMagic-dev --region us-east-1
+
+# Get Amplify App ID from output
+AMPLIFY_APP_ID=$(aws cloudformation describe-stacks \
+  --stack-name SnapMagic-dev \
+  --region us-east-1 \
+  --query 'Stacks[0].Outputs[?OutputKey==`AmplifyAppId`].OutputValue' \
+  --output text)
+
+# Trigger frontend build
+echo "🌐 Triggering frontend build..."
+aws amplify start-job \
+  --app-id $AMPLIFY_APP_ID \
+  --branch-name main \
+  --job-type RELEASE \
+  --region us-east-1
+
+echo "✅ Manual deployment triggered!"
+echo "⏱️  Frontend build will complete in 2-3 minutes"
+```
+
+---
+
 ## 🎨 Simple Logo System
 
 SnapMagic uses a numbered logo system for maximum simplicity and control.
