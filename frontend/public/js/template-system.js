@@ -272,8 +272,8 @@ class SnapMagicTemplateSystem {
     }
     
     /**
-     * Draw a single logo
-     * @param {string} logoUrl - URL of the logo image
+     * Draw a single logo with CORS handling and local file support
+     * @param {string} logoUrl - URL of the logo image (can be local path or external URL)
      * @param {number} x - X position
      * @param {number} y - Y position
      * @param {number} size - Logo size
@@ -282,7 +282,17 @@ class SnapMagicTemplateSystem {
     async drawLogo(logoUrl, x, y, size, alt) {
         return new Promise((resolve) => {
             const logoImg = new Image();
-            logoImg.crossOrigin = 'anonymous'; // Handle CORS
+            
+            // Determine if this is a local logo or external URL
+            const isLocalLogo = !logoUrl.startsWith('http://') && !logoUrl.startsWith('https://');
+            
+            if (isLocalLogo) {
+                console.log(`📁 Loading local logo: ${logoUrl}`);
+            } else {
+                console.warn(`🌐 Loading external logo: ${logoUrl} - CORS issues may occur!`);
+                // Set CORS for external URLs
+                logoImg.crossOrigin = 'anonymous';
+            }
             
             logoImg.onload = () => {
                 // Calculate aspect ratio to maintain proportions
@@ -303,13 +313,28 @@ class SnapMagicTemplateSystem {
                 const drawY = y + (size - drawHeight) / 2;
                 
                 this.ctx.drawImage(logoImg, drawX, drawY, drawWidth, drawHeight);
+                
+                if (isLocalLogo) {
+                    console.log(`✅ Local logo loaded successfully: ${alt}`);
+                } else {
+                    console.log(`✅ External logo loaded successfully: ${alt}`);
+                }
                 resolve();
             };
             
-            logoImg.onerror = () => {
-                console.warn(`Failed to load logo: ${logoUrl}`);
-                // Draw placeholder
-                this.drawLogoPlaceholder(x, y, size, alt);
+            logoImg.onerror = (error) => {
+                if (isLocalLogo) {
+                    console.error(`❌ Failed to load local logo: ${logoUrl}`);
+                    console.error(`💡 Make sure the file exists in frontend/public/${logoUrl}`);
+                } else {
+                    console.error(`❌ Failed to load external logo: ${logoUrl}`);
+                    console.error(`💡 CORS Error: External URL doesn't allow cross-origin access`);
+                    console.error(`💡 Solution: Move logo to frontend/public/logos/ directory`);
+                    console.error(`💡 Or use a CORS-friendly URL (GitHub Raw, your own S3, etc.)`);
+                }
+                
+                // Draw placeholder with helpful error message
+                this.drawLogoPlaceholder(x, y, size, alt, isLocalLogo ? 'FILE_NOT_FOUND' : 'CORS_ERROR');
                 resolve();
             };
             
@@ -319,19 +344,54 @@ class SnapMagicTemplateSystem {
     
     /**
      * Draw logo placeholder when image fails to load
+     * @param {number} x - X position
+     * @param {number} y - Y position  
+     * @param {number} size - Logo size
+     * @param {string} alt - Alt text
+     * @param {string} errorType - Type of error (FILE_NOT_FOUND, CORS_ERROR)
      */
-    drawLogoPlaceholder(x, y, size, alt) {
+    drawLogoPlaceholder(x, y, size, alt, errorType = 'UNKNOWN') {
         // Draw placeholder rectangle
-        this.ctx.strokeStyle = '#DDD';
-        this.ctx.lineWidth = 1;
+        this.ctx.strokeStyle = '#FF6B6B';
+        this.ctx.lineWidth = 2;
         this.ctx.strokeRect(x, y, size, size);
         
-        // Draw placeholder text
-        this.ctx.fillStyle = '#999';
-        this.ctx.font = '10px Arial, sans-serif';
+        // Fill with light red background
+        this.ctx.fillStyle = '#FFE5E5';
+        this.ctx.fillRect(x + 1, y + 1, size - 2, size - 2);
+        
+        // Draw error icon (X)
+        this.ctx.strokeStyle = '#FF6B6B';
+        this.ctx.lineWidth = 3;
+        const margin = size * 0.2;
+        this.ctx.beginPath();
+        this.ctx.moveTo(x + margin, y + margin);
+        this.ctx.lineTo(x + size - margin, y + size - margin);
+        this.ctx.moveTo(x + size - margin, y + margin);
+        this.ctx.lineTo(x + margin, y + size - margin);
+        this.ctx.stroke();
+        
+        // Draw error text
+        this.ctx.fillStyle = '#CC0000';
+        this.ctx.font = 'bold 8px Arial, sans-serif';
         this.ctx.textAlign = 'center';
         this.ctx.textBaseline = 'middle';
-        this.ctx.fillText(alt, x + size/2, y + size/2);
+        
+        let errorText = alt;
+        if (errorType === 'CORS_ERROR') {
+            errorText = 'CORS\nERROR';
+        } else if (errorType === 'FILE_NOT_FOUND') {
+            errorText = 'FILE\nNOT FOUND';
+        }
+        
+        // Draw multi-line text
+        const lines = errorText.split('\n');
+        const lineHeight = 10;
+        const startY = y + size/2 - (lines.length - 1) * lineHeight/2;
+        
+        lines.forEach((line, index) => {
+            this.ctx.fillText(line, x + size/2, startY + index * lineHeight);
+        });
     }
     
     /**
