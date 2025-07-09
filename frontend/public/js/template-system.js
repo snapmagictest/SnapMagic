@@ -266,7 +266,8 @@ class SnapMagicTemplateSystem {
         }
         
         if (foundLogos.length === 0) {
-            console.log('ℹ️ No customer logos found - header shows event name only');
+            console.log('ℹ️ No customer logos found - using clean event-only design with decorative elements');
+            await this.drawNoLogosDesign();
             return;
         }
         
