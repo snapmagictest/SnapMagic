@@ -363,20 +363,20 @@ class SnapMagicTemplateSystem {
     }
     
     /**
-     * Draw old AWS logo vertically on right panel (bigger and nicely sized)
+     * Draw new AWS logo vertically on right panel (bigger and nicely sized)
      */
     async drawRightPanelLogo(panelStartY, panelHeight) {
         return new Promise((resolve) => {
-            const oldAwsLogo = new Image();
+            const newAwsLogo = new Image();
             
-            oldAwsLogo.onload = () => {
+            newAwsLogo.onload = () => {
                 this.ctx.save();
                 
                 // Make logo much bigger - use most of the panel space
                 const maxLogoWidth = this.SIDE_PANEL_WIDTH - 8; // Small margin
                 const maxLogoHeight = panelHeight * 0.7; // Use 70% of panel height for bigger logo
                 
-                const logoAspectRatio = oldAwsLogo.width / oldAwsLogo.height;
+                const logoAspectRatio = newAwsLogo.width / newAwsLogo.height;
                 
                 // Calculate size - prioritize making it bigger
                 let logoHeight = maxLogoHeight;
@@ -407,27 +407,27 @@ class SnapMagicTemplateSystem {
                 this.ctx.shadowOffsetY = 0;
                 this.ctx.shadowBlur = 10;
                 
-                // Draw the bigger AWS logo
+                // Draw the new horizontal AWS logo
                 this.ctx.imageSmoothingEnabled = true;
                 this.ctx.imageSmoothingQuality = 'high';
-                this.ctx.drawImage(oldAwsLogo, logoX, logoY, logoWidth, logoHeight);
+                this.ctx.drawImage(newAwsLogo, logoX, logoY, logoWidth, logoHeight);
                 
                 // Reset shadow
                 this.ctx.shadowColor = 'transparent';
                 this.ctx.shadowBlur = 0;
                 
                 this.ctx.restore();
-                console.log(`✅ Right panel AWS logo drawn bigger and nicely sized (${logoWidth}x${logoHeight})`);
+                console.log(`✅ Right panel new AWS logo drawn bigger and nicely sized (${logoWidth}x${logoHeight})`);
                 resolve();
             };
             
-            oldAwsLogo.onerror = () => {
-                console.error('❌ Failed to load old AWS logo for right panel');
+            newAwsLogo.onerror = () => {
+                console.error('❌ Failed to load new AWS logo for right panel');
                 resolve();
             };
             
-            // Load the current AWS logo (will be moved to right panel)
-            oldAwsLogo.src = 'powered-by-aws-white.png';
+            // Load the new horizontal AWS logo
+            newAwsLogo.src = 'powered-by-aws-white-horizontal.png';
         });
     }
     
