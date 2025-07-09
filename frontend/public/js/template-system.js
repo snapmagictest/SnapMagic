@@ -272,32 +272,67 @@ class SnapMagicTemplateSystem {
         
         console.log(`✅ Integrating ${foundLogos.length} customer logo(s) directly in header`);
         
-        // Position logos in header below event name
-        const logoY = 10 + this.EVENT_TEXT_HEIGHT + 15; // Below event name
-        const logoSize = 35; // Appropriate size for header
-        const availableWidth = this.TEMPLATE_WIDTH - 60; // Leave margins
+        // Position logos in header below event name - ensure they stay within bounds
+        const logoY = 10 + this.EVENT_TEXT_HEIGHT + 12; // Below event name
+        const logoSize = 30; // Slightly smaller to ensure fit
         
-        // Calculate spacing based on number of logos
-        let logoSpacing;
-        if (foundLogos.length === 1) {
-            logoSpacing = 0; // Single logo centered
-        } else {
-            logoSpacing = Math.max(15, (availableWidth - (foundLogos.length * logoSize)) / (foundLogos.length - 1));
+        // Calculate available width within header bounds (with proper margins)
+        const headerLeft = 20; // Left margin within header
+        const headerRight = this.TEMPLATE_WIDTH - 20; // Right margin within header
+        const availableWidth = headerRight - headerLeft; // Actual usable width
+        
+        // Calculate total width needed for all logos
+        const totalLogosWidth = foundLogos.length * logoSize;
+        
+        // Calculate spacing between logos
+        let logoSpacing = 0;
+        if (foundLogos.length > 1) {
+            const remainingWidth = availableWidth - totalLogosWidth;
+            logoSpacing = remainingWidth / (foundLogos.length - 1);
+            
+            // Ensure minimum spacing and maximum spacing
+            logoSpacing = Math.max(10, Math.min(logoSpacing, 40));
         }
         
-        // Calculate starting position to center all logos
-        const totalWidth = (foundLogos.length * logoSize) + ((foundLogos.length - 1) * logoSpacing);
-        const startX = (this.TEMPLATE_WIDTH - totalWidth) / 2;
+        // Recalculate total width with actual spacing
+        const actualTotalWidth = totalLogosWidth + ((foundLogos.length - 1) * logoSpacing);
+        
+        // Center the entire logo group within header
+        const startX = headerLeft + (availableWidth - actualTotalWidth) / 2;
         
         console.log(`📐 Header logo layout: ${foundLogos.length} logos, size=${logoSize}px, spacing=${logoSpacing.toFixed(1)}px`);
+        console.log(`📐 Available width: ${availableWidth}px, Total width: ${actualTotalWidth.toFixed(1)}px, Start X: ${startX.toFixed(1)}px`);
         
-        // Draw each logo directly in header
-        for (let i = 0; i < foundLogos.length; i++) {
-            const logo = foundLogos[i];
-            const logoX = startX + (i * (logoSize + logoSpacing));
+        // Ensure logos don't go outside header bounds
+        if (startX < headerLeft || (startX + actualTotalWidth) > headerRight) {
+            console.log('⚠️ Logos would exceed header bounds, adjusting...');
             
-            console.log(`🎯 Drawing customer logo ${logo.number} in header at (${logoX.toFixed(1)}, ${logoY})`);
-            await this.drawLogo(logo.url, logoX, logoY, logoSize, logo.filename);
+            // Reduce logo size if needed
+            const maxLogoSize = Math.floor((availableWidth - ((foundLogos.length - 1) * 10)) / foundLogos.length);
+            const adjustedLogoSize = Math.min(logoSize, maxLogoSize);
+            const adjustedSpacing = foundLogos.length > 1 ? 10 : 0;
+            const adjustedTotalWidth = (foundLogos.length * adjustedLogoSize) + ((foundLogos.length - 1) * adjustedSpacing);
+            const adjustedStartX = headerLeft + (availableWidth - adjustedTotalWidth) / 2;
+            
+            console.log(`📐 Adjusted: size=${adjustedLogoSize}px, spacing=${adjustedSpacing}px, startX=${adjustedStartX.toFixed(1)}px`);
+            
+            // Draw with adjusted values
+            for (let i = 0; i < foundLogos.length; i++) {
+                const logo = foundLogos[i];
+                const logoX = adjustedStartX + (i * (adjustedLogoSize + adjustedSpacing));
+                
+                console.log(`🎯 Drawing adjusted logo ${logo.number} at (${logoX.toFixed(1)}, ${logoY})`);
+                await this.drawLogo(logo.url, logoX, logoY, adjustedLogoSize, logo.filename);
+            }
+        } else {
+            // Draw with original calculated values
+            for (let i = 0; i < foundLogos.length; i++) {
+                const logo = foundLogos[i];
+                const logoX = startX + (i * (logoSize + logoSpacing));
+                
+                console.log(`🎯 Drawing logo ${logo.number} at (${logoX.toFixed(1)}, ${logoY})`);
+                await this.drawLogo(logo.url, logoX, logoY, logoSize, logo.filename);
+            }
         }
     }
     
