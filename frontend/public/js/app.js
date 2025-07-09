@@ -78,7 +78,17 @@ class SnapMagicApp {
             backToCardBtn: document.getElementById('backToCardBtn'),
             
             // Processing overlay
-            processingOverlay: document.getElementById('processingOverlay')
+            processingOverlay: document.getElementById('processingOverlay'),
+            
+            // Name input modals
+            nameInputModal: document.getElementById('nameInputModal'),
+            nameInput: document.getElementById('nameInput'),
+            nameConfirmBtn: document.getElementById('nameConfirmBtn'),
+            nameCancelBtn: document.getElementById('nameCancelBtn'),
+            nameConfirmModal: document.getElementById('nameConfirmModal'),
+            namePreview: document.getElementById('namePreview'),
+            nameYesBtn: document.getElementById('nameYesBtn'),
+            nameEditBtn: document.getElementById('nameEditBtn')
         };
     }
 
@@ -105,6 +115,19 @@ class SnapMagicApp {
         this.elements.downloadVideoBtn.addEventListener('click', () => this.handleDownloadVideo());
         this.elements.createAnotherVideoBtn.addEventListener('click', () => this.handleCreateAnotherVideo());
         this.elements.backToCardBtn.addEventListener('click', () => this.switchTab('card-generation'));
+        
+        // Name input modal event listeners
+        this.elements.nameConfirmBtn.addEventListener('click', () => this.handleNameConfirm());
+        this.elements.nameCancelBtn.addEventListener('click', () => this.handleNameCancel());
+        this.elements.nameYesBtn.addEventListener('click', () => this.handleNameYes());
+        this.elements.nameEditBtn.addEventListener('click', () => this.handleNameEdit());
+        
+        // Enter key support for name input
+        this.elements.nameInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                this.handleNameConfirm();
+            }
+        });
         
         // Example prompt buttons
         this.setupExamplePrompts();
@@ -268,54 +291,9 @@ class SnapMagicApp {
             return;
         }
 
-        try {
-            this.showProcessing('Creating your magical trading card...');
-            this.elements.generateBtn.disabled = true;
-            
-            const apiBaseUrl = window.SNAPMAGIC_CONFIG.API_URL;
-            const endpoint = `${apiBaseUrl}api/transform-card`;
-            
-            console.log('🎯 API call to:', endpoint);
-            
-            const requestBody = {
-                action: 'transform_card',
-                prompt: userPrompt
-            };
-            
-            const response = await fetch(endpoint, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${this.currentUser.token}`
-                },
-                body: JSON.stringify(requestBody)
-            });
-
-            const data = await response.json();
-            
-            if (data.success) {
-                console.log('✅ Card generation successful');
-                this.generatedCardData = data;
-                this.displayGeneratedCard(data);
-                this.hideProcessing();
-            } else {
-                console.error('❌ Card generation failed:', data.error);
-                this.hideProcessing();
-                
-                // Check for content filter message specifically
-                if (data.error && data.error.includes('content filters')) {
-                    this.showError(`🚫 Content Blocked by AI Safety Filters\n\n${data.error}\n\nPlease try a different prompt that doesn't include potentially sensitive content.`);
-                } else {
-                    this.showError(data.error || 'Card generation failed. Please try again.');
-                }
-            }
-        } catch (error) {
-            console.error('❌ Card generation error:', error);
-            this.hideProcessing();
-            this.showError('Card generation failed. Please check your connection and try again.');
-        } finally {
-            this.elements.generateBtn.disabled = false;
-        }
+        // Store the prompt and show name input modal
+        this.pendingPrompt = userPrompt;
+        this.showNameInputModal();
     }
 
     async displayGeneratedCard(data) {
@@ -804,6 +782,104 @@ class SnapMagicApp {
                 }
             `;
             document.head.appendChild(style);
+        }
+    }
+    
+    // Name Input Modal Functions
+    showNameInputModal() {
+        this.elements.nameInput.value = '';
+        this.elements.nameInputModal.classList.remove('hidden');
+        this.elements.nameInput.focus();
+    }
+    
+    hideNameInputModal() {
+        this.elements.nameInputModal.classList.add('hidden');
+    }
+    
+    showNameConfirmModal(name) {
+        this.elements.namePreview.textContent = name || 'AWS Logo (no name entered)';
+        this.elements.nameConfirmModal.classList.remove('hidden');
+    }
+    
+    hideNameConfirmModal() {
+        this.elements.nameConfirmModal.classList.add('hidden');
+    }
+    
+    handleNameConfirm() {
+        const enteredName = this.elements.nameInput.value.trim();
+        this.pendingName = enteredName;
+        this.hideNameInputModal();
+        this.showNameConfirmModal(enteredName);
+    }
+    
+    handleNameCancel() {
+        this.hideNameInputModal();
+        this.pendingPrompt = null;
+    }
+    
+    handleNameYes() {
+        this.hideNameConfirmModal();
+        // Proceed with card generation using stored prompt and name
+        this.generateCardWithName(this.pendingPrompt, this.pendingName);
+    }
+    
+    handleNameEdit() {
+        this.hideNameConfirmModal();
+        this.elements.nameInput.value = this.pendingName;
+        this.elements.nameInputModal.classList.remove('hidden');
+        this.elements.nameInput.focus();
+    }
+    
+    async generateCardWithName(userPrompt, userName) {
+        try {
+            this.showProcessing('Creating your magical trading card...');
+            this.elements.generateBtn.disabled = true;
+            
+            const apiBaseUrl = window.SNAPMAGIC_CONFIG.API_URL;
+            const endpoint = `${apiBaseUrl}api/transform-card`;
+            
+            console.log('🎯 API call to:', endpoint);
+            console.log('👤 User name:', userName || 'No name (AWS logo)');
+            
+            const requestBody = {
+                action: 'transform_card',
+                prompt: userPrompt,
+                user_name: userName || '' // Send empty string if no name
+            };
+            
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.currentUser.token}`
+                },
+                body: JSON.stringify(requestBody)
+            });
+
+            const data = await response.json();
+            
+            if (data.success) {
+                console.log('✅ Card generation successful');
+                this.generatedCardData = data;
+                this.displayGeneratedCard(data);
+                this.hideProcessing();
+            } else {
+                console.error('❌ Card generation failed:', data.error);
+                this.hideProcessing();
+                
+                // Check for content filter message specifically
+                if (data.error && data.error.includes('content filters')) {
+                    this.showError(`🚫 Content Blocked by AI Safety Filters\n\n${data.error}\n\nPlease try a different prompt that doesn't include potentially sensitive content.`);
+                } else {
+                    this.showError(data.error || 'Card generation failed. Please try again.');
+                }
+            }
+        } catch (error) {
+            console.error('❌ Card generation error:', error);
+            this.hideProcessing();
+            this.showError('Card generation failed. Please check your connection and try again.');
+        } finally {
+            this.elements.generateBtn.disabled = false;
         }
     }
 }

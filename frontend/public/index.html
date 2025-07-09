@@ -586,6 +586,94 @@
             line-height: 1.6;
         }
 
+        /* Name Input Modals */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            padding: 2rem;
+            border-radius: 20px;
+            border: 2px solid rgba(0, 212, 255, 0.3);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+        }
+
+        .modal-content h3 {
+            color: #00d4ff;
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+
+        .modal-content p {
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 1.5rem;
+            line-height: 1.5;
+        }
+
+        .name-input {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid rgba(0, 212, 255, 0.3);
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 1.1rem;
+            text-align: center;
+            margin-bottom: 1.5rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .name-input:focus {
+            outline: none;
+            border-color: #00d4ff;
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+        }
+
+        .name-input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .name-preview {
+            background: rgba(0, 212, 255, 0.1);
+            border: 2px solid rgba(0, 212, 255, 0.3);
+            border-radius: 12px;
+            padding: 1rem;
+            margin: 1rem 0;
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #00d4ff;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 1.5rem;
+        }
+
+        .modal-buttons .btn {
+            flex: 1;
+            max-width: 150px;
+        }
+
         /* Video Prompt with Prefix */
         .video-prompt-container {
             position: relative;
@@ -1282,6 +1370,33 @@
             <div class="processing-spinner"></div>
             <div class="processing-text">Creating your magic...</div>
             <div class="processing-subtext">Please wait while AI generates your content</div>
+        </div>
+    </div>
+
+    <!-- Name Input Modal -->
+    <div id="nameInputModal" class="modal hidden">
+        <div class="modal-content">
+            <h3>Enter Your Name</h3>
+            <p>Your name will be displayed on the left panel of your trading card.</p>
+            <input type="text" id="nameInput" class="name-input" placeholder="Enter your name (or leave blank for AWS logo)" maxlength="50">
+            <div class="modal-buttons">
+                <button id="nameConfirmBtn" class="btn btn-primary">Continue</button>
+                <button id="nameCancelBtn" class="btn btn-secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Name Confirmation Modal -->
+    <div id="nameConfirmModal" class="modal hidden">
+        <div class="modal-content">
+            <h3>Confirm Your Name</h3>
+            <p>Your name will appear on the card as:</p>
+            <div id="namePreview" class="name-preview"></div>
+            <p>Please check the spelling. Is this correct?</p>
+            <div class="modal-buttons">
+                <button id="nameYesBtn" class="btn btn-primary">Yes, Generate Card</button>
+                <button id="nameEditBtn" class="btn btn-secondary">No, Edit Name</button>
+            </div>
         </div>
     </div>
 
