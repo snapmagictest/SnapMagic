@@ -627,7 +627,7 @@ class SnapMagicTemplateSystem {
         
         // Position logos in the header panel below event name
         const headerLogoY = 10 + this.EVENT_TEXT_HEIGHT + 10; // Below event name with spacing
-        const logoSize = 35; // Fixed logo size
+        const logoSize = 45; // Increased logo size (was 35px) - 2 sizes bigger
         
         console.log(`🎯 Drawing ${maxLogos} logo(s) with scenario-based positioning`);
         
@@ -638,8 +638,8 @@ class SnapMagicTemplateSystem {
             await this.drawLogo(displayLogos[0].url, logoX, headerLogoY, logoSize, displayLogos[0].filename);
             
         } else if (maxLogos === 2) {
-            // SCENARIO 2: Two logos - centered with reasonable spacing
-            const spacing = 60; // 60px between the two logos
+            // SCENARIO 2: Two logos - centered with reasonable spacing (adjusted for larger logos)
+            const spacing = 50; // Reduced spacing for larger logos (was 60px)
             const totalWidth = (2 * logoSize) + spacing;
             const startX = (this.TEMPLATE_WIDTH - totalWidth) / 2;
             
@@ -651,8 +651,8 @@ class SnapMagicTemplateSystem {
             await this.drawLogo(displayLogos[1].url, startX + logoSize + spacing, headerLogoY, logoSize, displayLogos[1].filename);
             
         } else if (maxLogos === 3) {
-            // SCENARIO 3: Three logos - centered with balanced spacing
-            const spacing = 45; // 45px between each logo
+            // SCENARIO 3: Three logos - centered with balanced spacing (adjusted for larger logos)
+            const spacing = 40; // Reduced spacing for larger logos (was 45px)
             const totalWidth = (3 * logoSize) + (2 * spacing);
             const startX = (this.TEMPLATE_WIDTH - totalWidth) / 2;
             
