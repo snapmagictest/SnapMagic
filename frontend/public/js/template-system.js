@@ -14,18 +14,18 @@ class SnapMagicTemplateSystem {
         this.TEMPLATE_HEIGHT = 750;  // ~6.2cm at 300 DPI
         
         // Keep Nova Canvas as is (perfect between header and footer)
-        this.NOVA_WIDTH = 370;       // Image width - keep as is
+        this.NOVA_WIDTH = 360;       // Adjusted width for wider panels (was 370)
         this.NOVA_HEIGHT = 560;      // Image height - keep as is
-        this.NOVA_X = 65;            // Image position - keep as is
+        this.NOVA_X = 70;            // Adjusted for wider panels (was 65)
         this.NOVA_Y = 110;           // Image position - keep as is
         
         // Professional template areas with better panel sizing
         this.HEADER_HEIGHT = 100;    // Header for event name + logos
         this.FOOTER_HEIGHT = 80;     // Footer for new AWS logo
-        this.SIDE_PANEL_WIDTH = 50;  // Smaller panels (was 60) to avoid overlap
+        this.SIDE_PANEL_WIDTH = 70;  // Wider panels for better logo visibility (was 50)
         this.LOGO_AREA_HEIGHT = 45;  // Dedicated space for logos
         this.EVENT_TEXT_HEIGHT = 35; // Space for event name
-        this.LOGO_SIZE = 40;         // Larger logos for better visibility
+        this.LOGO_SIZE = 50;         // Larger logos for better visibility (was 40)
         this.BORDER_RADIUS = 8;      // Smaller radius for cleaner adjacent look
         
         // Set template configuration
@@ -363,30 +363,21 @@ class SnapMagicTemplateSystem {
     }
     
     /**
-     * Draw new AWS logo vertically on right panel (AS BIG AS POSSIBLE)
+     * Draw AWS logo vertically on right panel using universal resizing
      */
     async drawRightPanelLogo(panelStartY, panelHeight) {
         return new Promise((resolve) => {
-            const newAwsLogo = new Image();
+            const awsLogo = new Image();
             
-            newAwsLogo.onload = () => {
+            awsLogo.onload = () => {
                 this.ctx.save();
                 
-                // Make logo AS BIG AS POSSIBLE - use maximum panel space
-                const maxLogoWidth = this.SIDE_PANEL_WIDTH - 4; // Minimal margin (was 8)
-                const maxLogoHeight = panelHeight * 0.9; // Use 90% of panel height (was 70%)
+                // Available space in right panel
+                const maxLogoWidth = this.SIDE_PANEL_WIDTH - 8; // Leave margins
+                const maxLogoHeight = panelHeight * 0.8; // Use 80% of panel height
                 
-                const logoAspectRatio = newAwsLogo.width / newAwsLogo.height;
-                
-                // Calculate size - maximize the logo size
-                let logoHeight = maxLogoHeight;
-                let logoWidth = logoHeight * logoAspectRatio;
-                
-                // If width is too big, scale by width instead
-                if (logoWidth > maxLogoWidth) {
-                    logoWidth = maxLogoWidth;
-                    logoHeight = logoWidth / logoAspectRatio;
-                }
+                // Use universal logo sizing function
+                const logoSize = this.calculateLogoSize(awsLogo, maxLogoWidth, maxLogoHeight, 25);
                 
                 // Position in right panel center
                 const rightPanelX = this.TEMPLATE_WIDTH - 10 - this.SIDE_PANEL_WIDTH;
@@ -398,37 +389,82 @@ class SnapMagicTemplateSystem {
                 this.ctx.rotate(-Math.PI / 2); // Rotate 90 degrees counter-clockwise
                 
                 // Draw logo centered at origin (after rotation)
-                const logoX = -logoWidth / 2;
-                const logoY = -logoHeight / 2;
+                const logoX = -logoSize.width / 2;
+                const logoY = -logoSize.height / 2;
                 
-                // Enhanced glow effect for maximum visibility
+                // Enhanced glow effect
                 this.ctx.shadowColor = 'rgba(255, 255, 255, 0.6)';
                 this.ctx.shadowOffsetX = 0;
                 this.ctx.shadowOffsetY = 0;
-                this.ctx.shadowBlur = 12; // Increased glow for bigger logo
+                this.ctx.shadowBlur = 12;
                 
-                // Draw the MAXIMUM SIZE AWS logo
+                // Draw the properly sized AWS logo
                 this.ctx.imageSmoothingEnabled = true;
                 this.ctx.imageSmoothingQuality = 'high';
-                this.ctx.drawImage(newAwsLogo, logoX, logoY, logoWidth, logoHeight);
+                this.ctx.drawImage(awsLogo, logoX, logoY, logoSize.width, logoSize.height);
                 
                 // Reset shadow
                 this.ctx.shadowColor = 'transparent';
                 this.ctx.shadowBlur = 0;
                 
                 this.ctx.restore();
-                console.log(`✅ Right panel AWS logo drawn MAXIMUM SIZE (${logoWidth}x${logoHeight})`);
+                console.log(`✅ Right panel AWS logo drawn with universal sizing`);
                 resolve();
             };
             
-            newAwsLogo.onerror = () => {
-                console.error('❌ Failed to load new AWS logo for right panel');
+            awsLogo.onerror = () => {
+                console.error('❌ Failed to load AWS logo for right panel');
                 resolve();
             };
             
-            // Load the new horizontal AWS logo
-            newAwsLogo.src = 'powered-by-aws-white-horizontal.png';
+            // Load the horizontal AWS logo
+            awsLogo.src = 'powered-by-aws-white-horizontal.png';
         });
+    }
+    
+    /**
+     * Universal logo resizing function - works for ANY aspect ratio
+     * @param {Image} logoImg - The loaded image object
+     * @param {number} maxWidth - Maximum width available
+     * @param {number} maxHeight - Maximum height available
+     * @param {number} minSize - Minimum size to maintain readability (default: 20px)
+     * @returns {Object} - {width, height, scale} for drawing
+     */
+    calculateLogoSize(logoImg, maxWidth, maxHeight, minSize = 20) {
+        const originalWidth = logoImg.width;
+        const originalHeight = logoImg.height;
+        const aspectRatio = originalWidth / originalHeight;
+        
+        console.log(`🔍 LOGO CALC: Original=${originalWidth}x${originalHeight}, Ratio=${aspectRatio.toFixed(2)}, Available=${maxWidth}x${maxHeight}`);
+        
+        // Calculate size fitting both width and height constraints
+        let finalWidth = maxWidth;
+        let finalHeight = finalWidth / aspectRatio;
+        
+        // If height exceeds limit, scale by height instead
+        if (finalHeight > maxHeight) {
+            finalHeight = maxHeight;
+            finalWidth = finalHeight * aspectRatio;
+        }
+        
+        // Ensure minimum readable size
+        const scale = Math.min(finalWidth / originalWidth, finalHeight / originalHeight);
+        if (Math.min(finalWidth, finalHeight) < minSize) {
+            const minScale = minSize / Math.min(originalWidth, originalHeight);
+            if (minScale > scale) {
+                finalWidth = originalWidth * minScale;
+                finalHeight = originalHeight * minScale;
+                console.log(`⚠️ LOGO CALC: Applied minimum size constraint`);
+            }
+        }
+        
+        console.log(`✅ LOGO CALC: Final=${finalWidth.toFixed(1)}x${finalHeight.toFixed(1)}, Scale=${scale.toFixed(3)}`);
+        
+        return {
+            width: finalWidth,
+            height: finalHeight,
+            scale: scale
+        };
     }
     
     /**
@@ -540,36 +576,26 @@ class SnapMagicTemplateSystem {
     }
     
     /**
-     * Draw a single logo with enhanced quality and effects
+     * Draw a single logo with universal sizing and enhanced quality
      * @param {string} logoUrl - URL of the logo image (local path)
      * @param {number} x - X position
      * @param {number} y - Y position
-     * @param {number} size - Logo size
+     * @param {number} maxSize - Maximum size available
      * @param {string} alt - Alt text for accessibility
      */
-    async drawLogo(logoUrl, x, y, size, alt) {
+    async drawLogo(logoUrl, x, y, maxSize, alt) {
         return new Promise((resolve) => {
             const logoImg = new Image();
             
             console.log(`📁 Loading logo: ${logoUrl}`);
             
             logoImg.onload = () => {
-                // Calculate aspect ratio to maintain proportions
-                const aspectRatio = logoImg.width / logoImg.height;
-                let drawWidth = size;
-                let drawHeight = size;
-                
-                if (aspectRatio > 1) {
-                    // Wider than tall - fit to width
-                    drawHeight = size / aspectRatio;
-                } else {
-                    // Taller than wide - fit to height
-                    drawWidth = size * aspectRatio;
-                }
+                // Use universal logo sizing function
+                const logoSize = this.calculateLogoSize(logoImg, maxSize, maxSize, 20);
                 
                 // Center the logo in the allocated space
-                const drawX = x + (size - drawWidth) / 2;
-                const drawY = y + (size - drawHeight) / 2;
+                const drawX = x + (maxSize - logoSize.width) / 2;
+                const drawY = y + (maxSize - logoSize.height) / 2;
                 
                 // Add subtle drop shadow for logos
                 this.ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
@@ -578,6 +604,28 @@ class SnapMagicTemplateSystem {
                 this.ctx.shadowBlur = 4;
                 
                 // Draw the logo with high quality
+                this.ctx.imageSmoothingEnabled = true;
+                this.ctx.imageSmoothingQuality = 'high';
+                this.ctx.drawImage(logoImg, drawX, drawY, logoSize.width, logoSize.height);
+                
+                // Reset shadow
+                this.ctx.shadowColor = 'transparent';
+                this.ctx.shadowOffsetX = 0;
+                this.ctx.shadowOffsetY = 0;
+                this.ctx.shadowBlur = 0;
+                
+                console.log(`✅ Logo ${alt} drawn with universal sizing at (${drawX.toFixed(1)}, ${drawY.toFixed(1)})`);
+                resolve();
+            };
+            
+            logoImg.onerror = () => {
+                console.error(`❌ Failed to load logo: ${logoUrl}`);
+                resolve();
+            };
+            
+            logoImg.src = logoUrl;
+        });
+    }
                 this.ctx.imageSmoothingEnabled = true;
                 this.ctx.imageSmoothingQuality = 'high';
                 this.ctx.drawImage(logoImg, drawX, drawY, drawWidth, drawHeight);
