@@ -13,10 +13,10 @@ class SnapMagicTemplateSystem {
         this.TEMPLATE_WIDTH = 500;   // ~4.2cm at 300 DPI
         this.TEMPLATE_HEIGHT = 750;  // ~6.2cm at 300 DPI
         
-        // Keep Nova Canvas as is (perfect between header and footer)
-        this.NOVA_WIDTH = 360;       // Adjusted width for wider panels (was 370)
+        // Nova Canvas positioned to fit between panels without overlap
+        this.NOVA_WIDTH = 340;       // Reduced width to prevent panel overlap (was 360)
         this.NOVA_HEIGHT = 560;      // Image height - keep as is
-        this.NOVA_X = 70;            // Adjusted for wider panels (was 65)
+        this.NOVA_X = 80;            // Positioned between panels (70px panels + 10px margin)
         this.NOVA_Y = 110;           // Image position - keep as is
         
         // Professional template areas with better panel sizing
