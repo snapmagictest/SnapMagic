@@ -634,16 +634,8 @@ class SnapMagicTemplateSystem {
         const availableWidth = this.TEMPLATE_WIDTH - 40; // Leave margins on sides
         const logoSize = 35; // Smaller size to fit nicely in header
         
-        // Calculate spacing based on number of logos
-        let logoSpacing;
-        if (logoCount === 1) {
-            logoSpacing = 0; // Single logo centered
-        } else {
-            // Distribute logos evenly across available width
-            logoSpacing = (availableWidth - (logoCount * logoSize)) / (logoCount - 1);
-            // Ensure minimum spacing
-            logoSpacing = Math.max(logoSpacing, 15);
-        }
+        // Use reasonable fixed spacing instead of spreading across full width
+        const logoSpacing = logoCount === 1 ? 0 : 45; // Fixed 45px spacing between logos
         
         // Calculate starting position to center all logos
         const totalWidth = (logoCount * logoSize) + ((logoCount - 1) * logoSpacing);
