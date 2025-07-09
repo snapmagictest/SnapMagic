@@ -627,29 +627,53 @@ class SnapMagicTemplateSystem {
      * @param {Array} logos - Array of logo objects to draw
      */
     async drawLogosFlexiblyCentered(logos) {
-        const logoCount = logos.length;
+        // MAXIMUM 3 LOGOS ONLY - ignore any beyond that
+        const maxLogos = Math.min(logos.length, 3);
+        const displayLogos = logos.slice(0, maxLogos);
+        
+        if (maxLogos < logos.length) {
+            console.log(`⚠️ Only displaying first ${maxLogos} logos (found ${logos.length} total)`);
+        }
         
         // Position logos in the header panel below event name
         const headerLogoY = 10 + this.EVENT_TEXT_HEIGHT + 10; // Below event name with spacing
-        const availableWidth = this.TEMPLATE_WIDTH - 40; // Leave margins on sides
-        const logoSize = 35; // Smaller size to fit nicely in header
+        const logoSize = 35; // Fixed logo size
         
-        // Use reasonable fixed spacing instead of spreading across full width
-        const logoSpacing = logoCount === 1 ? 0 : 45; // Fixed 45px spacing between logos
+        console.log(`🎯 Drawing ${maxLogos} logo(s) with scenario-based positioning`);
         
-        // Calculate starting position to center all logos
-        const totalWidth = (logoCount * logoSize) + ((logoCount - 1) * logoSpacing);
-        const startX = (this.TEMPLATE_WIDTH - totalWidth) / 2;
-        
-        console.log(`📐 Header logos: ${logoCount} logos, size=${logoSize}px, spacing=${logoSpacing.toFixed(1)}px, total width=${totalWidth.toFixed(1)}px`);
-        
-        // Draw each logo in the header
-        for (let i = 0; i < logos.length; i++) {
-            const logo = logos[i];
-            const logoX = startX + (i * (logoSize + logoSpacing));
+        if (maxLogos === 1) {
+            // SCENARIO 1: Single logo - perfectly centered
+            const logoX = (this.TEMPLATE_WIDTH - logoSize) / 2;
+            console.log(`📐 Single logo centered at X=${logoX.toFixed(1)}`);
+            await this.drawLogo(displayLogos[0].url, logoX, headerLogoY, logoSize, displayLogos[0].filename);
             
-            console.log(`🎯 Drawing header logo ${logo.number} at (${logoX.toFixed(1)}, ${headerLogoY})`);
-            await this.drawLogo(logo.url, logoX, headerLogoY, logoSize, logo.filename);
+        } else if (maxLogos === 2) {
+            // SCENARIO 2: Two logos - centered with reasonable spacing
+            const spacing = 60; // 60px between the two logos
+            const totalWidth = (2 * logoSize) + spacing;
+            const startX = (this.TEMPLATE_WIDTH - totalWidth) / 2;
+            
+            console.log(`📐 Two logos: spacing=${spacing}px, total width=${totalWidth}px, start X=${startX.toFixed(1)}`);
+            
+            // Draw first logo
+            await this.drawLogo(displayLogos[0].url, startX, headerLogoY, logoSize, displayLogos[0].filename);
+            // Draw second logo
+            await this.drawLogo(displayLogos[1].url, startX + logoSize + spacing, headerLogoY, logoSize, displayLogos[1].filename);
+            
+        } else if (maxLogos === 3) {
+            // SCENARIO 3: Three logos - centered with balanced spacing
+            const spacing = 45; // 45px between each logo
+            const totalWidth = (3 * logoSize) + (2 * spacing);
+            const startX = (this.TEMPLATE_WIDTH - totalWidth) / 2;
+            
+            console.log(`📐 Three logos: spacing=${spacing}px, total width=${totalWidth}px, start X=${startX.toFixed(1)}`);
+            
+            // Draw all three logos
+            for (let i = 0; i < 3; i++) {
+                const logoX = startX + (i * (logoSize + spacing));
+                console.log(`🎯 Logo ${i + 1} at X=${logoX.toFixed(1)}`);
+                await this.drawLogo(displayLogos[i].url, logoX, headerLogoY, logoSize, displayLogos[i].filename);
+            }
         }
     }
     
