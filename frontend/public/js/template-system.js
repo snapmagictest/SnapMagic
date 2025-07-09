@@ -626,28 +626,6 @@ class SnapMagicTemplateSystem {
             logoImg.src = logoUrl;
         });
     }
-                this.ctx.imageSmoothingEnabled = true;
-                this.ctx.imageSmoothingQuality = 'high';
-                this.ctx.drawImage(logoImg, drawX, drawY, drawWidth, drawHeight);
-                
-                // Reset shadow
-                this.ctx.shadowColor = 'transparent';
-                this.ctx.shadowOffsetX = 0;
-                this.ctx.shadowOffsetY = 0;
-                this.ctx.shadowBlur = 0;
-                
-                console.log(`✅ Logo loaded successfully: ${alt} (${drawWidth}x${drawHeight})`);
-                resolve();
-            };
-            
-            logoImg.onerror = (error) => {
-                console.log(`ℹ️ Logo not found: ${logoUrl}`);
-                resolve(); // Don't draw anything, just continue
-            };
-            
-            logoImg.src = logoUrl;
-        });
-    }
     
     /**
      * Draw professional footer with AWS branding logo
