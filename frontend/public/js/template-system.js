@@ -73,8 +73,7 @@ class SnapMagicTemplateSystem {
                     alt: 'Amazon',
                     position: 'top-right'
                 }
-            ],
-            awsLogo: { enabled: true, text: 'Powered by AWS' }
+            ]
         };
         console.log('⚠️ Using fallback template configuration:', this.templateConfig);
     }
@@ -336,28 +335,70 @@ class SnapMagicTemplateSystem {
     }
     
     /**
-     * Draw footer with AWS branding
+     * Draw footer with AWS branding logo (mandatory)
      */
     async drawFooter() {
-        if (!this.templateConfig?.awsLogo?.enabled) return;
-        
         const footerY = this.TEMPLATE_HEIGHT - this.FOOTER_HEIGHT;
         
         // Footer background
         this.ctx.fillStyle = '#F8F9FA';
         this.ctx.fillRect(10, footerY, this.TEMPLATE_WIDTH - 20, this.FOOTER_HEIGHT - 10);
         
-        // AWS branding text
-        this.ctx.fillStyle = '#FF9900'; // AWS Orange
-        this.ctx.font = 'bold 14px Arial, sans-serif';
-        this.ctx.textAlign = 'center';
-        this.ctx.textBaseline = 'middle';
-        
-        const awsText = this.templateConfig.awsLogo.text || 'Powered by AWS';
-        const footerCenterX = this.TEMPLATE_WIDTH / 2;
-        const footerCenterY = footerY + (this.FOOTER_HEIGHT / 2) - 5;
-        
-        this.ctx.fillText(awsText, footerCenterX, footerCenterY);
+        // Draw the mandatory AWS "Powered by AWS" logo
+        await this.drawAwsPoweredByLogo(footerY);
+    }
+    
+    /**
+     * Draw the mandatory AWS "Powered by AWS" logo in footer
+     * @param {number} footerY - Y position of footer
+     */
+    async drawAwsPoweredByLogo(footerY) {
+        return new Promise((resolve) => {
+            const awsLogo = new Image();
+            
+            awsLogo.onload = () => {
+                // Calculate logo dimensions to fit nicely in footer
+                const maxLogoHeight = this.FOOTER_HEIGHT - 20; // Leave 10px margin top/bottom
+                const logoAspectRatio = awsLogo.width / awsLogo.height; // 200/72 = ~2.78
+                
+                let logoHeight = maxLogoHeight;
+                let logoWidth = logoHeight * logoAspectRatio;
+                
+                // If logo is too wide, scale it down
+                const maxLogoWidth = this.TEMPLATE_WIDTH - 40; // Leave margins
+                if (logoWidth > maxLogoWidth) {
+                    logoWidth = maxLogoWidth;
+                    logoHeight = logoWidth / logoAspectRatio;
+                }
+                
+                // Center the logo in the footer
+                const logoX = (this.TEMPLATE_WIDTH - logoWidth) / 2;
+                const logoY = footerY + (this.FOOTER_HEIGHT - logoHeight) / 2;
+                
+                // Draw the AWS logo
+                this.ctx.drawImage(awsLogo, logoX, logoY, logoWidth, logoHeight);
+                console.log('✅ AWS Powered by logo drawn in footer');
+                resolve();
+            };
+            
+            awsLogo.onerror = () => {
+                console.error('❌ Failed to load AWS Powered by logo, drawing fallback text');
+                // Fallback to text if logo fails to load
+                this.ctx.fillStyle = '#FF9900'; // AWS Orange
+                this.ctx.font = 'bold 12px Arial, sans-serif';
+                this.ctx.textAlign = 'center';
+                this.ctx.textBaseline = 'middle';
+                
+                const footerCenterX = this.TEMPLATE_WIDTH / 2;
+                const footerCenterY = footerY + (this.FOOTER_HEIGHT / 2);
+                
+                this.ctx.fillText('Powered by AWS', footerCenterX, footerCenterY);
+                resolve();
+            };
+            
+            // Load the local AWS logo (no CORS issues since it's same-origin)
+            awsLogo.src = 'powered-by-aws-white.png';
+        });
     }
     
     /**

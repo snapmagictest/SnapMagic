@@ -234,6 +234,8 @@ dist
 # Gatsby files
 .cache/
 public
+# But allow our mandatory AWS logo
+!frontend/public/powered-by-aws-white.png
 
 # Storybook build outputs
 .out
