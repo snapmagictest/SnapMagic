@@ -263,7 +263,8 @@ class SnapMagicTemplateSystem {
         }
         
         if (foundLogos.length === 0) {
-            console.log('ℹ️ No numbered logos found (1.png, 2.png, etc.)');
+            console.log('ℹ️ No numbered logos found - creating clean event-only design');
+            await this.drawNoLogosDesign();
             return;
         }
         
@@ -271,6 +272,35 @@ class SnapMagicTemplateSystem {
         
         // Calculate flexible centering based on number of logos
         await this.drawLogosFlexiblyCentered(foundLogos);
+    }
+    
+    /**
+     * Draw enhanced design when no logos are present
+     */
+    async drawNoLogosDesign() {
+        // Add decorative elements to make the header more interesting without logos
+        const centerX = this.TEMPLATE_WIDTH / 2;
+        const decorativeY = 10 + this.EVENT_TEXT_HEIGHT + 20;
+        
+        // Draw subtle decorative line
+        this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+        this.ctx.lineWidth = 2;
+        this.ctx.beginPath();
+        this.ctx.moveTo(centerX - 60, decorativeY);
+        this.ctx.lineTo(centerX + 60, decorativeY);
+        this.ctx.stroke();
+        
+        // Add small decorative dots
+        this.ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+        this.ctx.beginPath();
+        this.ctx.arc(centerX - 70, decorativeY, 3, 0, 2 * Math.PI);
+        this.ctx.fill();
+        
+        this.ctx.beginPath();
+        this.ctx.arc(centerX + 70, decorativeY, 3, 0, 2 * Math.PI);
+        this.ctx.fill();
+        
+        console.log('✨ Clean event-only design applied - no logos needed!');
     }
     
     /**

@@ -275,11 +275,12 @@ The header background is **dark**, so you need **white or light colored logos**:
 
 **Note:** All logos are automatically resized to fit the template perfectly, so any reasonable size will work.
 
-### 📍 **Flexible Centering**
+### 🎯 **Flexible Design**
 
-Logos are automatically centered as a group, regardless of how many you have:
+The template automatically adapts based on how many logos you have:
 
-- **1 logo**: Centered alone
+- **No logos**: Clean, elegant design with just the event name and decorative elements
+- **1 logo**: Centered alone below event name
 - **2 logos**: Both centered together
 - **3 logos**: All three centered together
 - **6 logos**: All six spread across header, centered as group

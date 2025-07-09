@@ -28,6 +28,7 @@ The header background is DARK, so you need WHITE or LIGHT colored logos:
 - All logos are automatically centered as a group
 - If you only have 2 logos (1.png, 2.png), they center together
 - If you have all 6 logos, they spread across the header
+- If you have NO logos, you get a clean design with decorative elements
 - Missing numbers are skipped (e.g., 1.png, 3.png, 5.png works fine)
 
 ⚠️ IMPORTANT NOTES:
@@ -35,10 +36,11 @@ The header background is DARK, so you need WHITE or LIGHT colored logos:
 - All logos are automatically resized to fit the template
 - Only use numbers 1-6 for filenames
 - Header has DARK background - use WHITE/LIGHT logos only!
+- No logos? No problem! Clean design automatically applied
 - No secrets.json configuration needed!
 
 🚀 HOW TO USE:
-1. Get WHITE/LIGHT versions of your logos
+1. Get WHITE/LIGHT versions of your logos (or use none for clean design)
 2. Name them: 1.png, 2.png, 3.png, etc.
 3. Add them to this directory
 4. Deploy: cdk deploy SnapMagicStack
