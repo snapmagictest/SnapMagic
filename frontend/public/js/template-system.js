@@ -194,7 +194,7 @@ class SnapMagicTemplateSystem {
     }
     
     /**
-     * Draw professional header with classy AWS-style typography
+     * Draw professional header with classy AWS-style typography and integrated customer logos
      */
      async drawHeader() {
         if (!this.templateConfig?.eventName) return;
@@ -237,6 +237,8 @@ class SnapMagicTemplateSystem {
         this.ctx.shadowOffsetX = 0;
         this.ctx.shadowOffsetY = 0;
         this.ctx.shadowBlur = 0;
+        
+        // Customer logos (1.png, 2.png, etc.) will be drawn below event name by drawLogos()
     }
     
     /**
@@ -526,38 +528,41 @@ class SnapMagicTemplateSystem {
     }
     
     /**
-     * Draw logos flexibly centered with proper spacing below event name
+     * Draw logos directly in header panel with flexible spacing
      * @param {Array} logos - Array of logo objects to draw
      */
     async drawLogosFlexiblyCentered(logos) {
         const logoCount = logos.length;
-        const logoSpacing = 65; // More space between logos
         
-        // Calculate total width needed for all logos
-        const totalLogosWidth = (logoCount * this.LOGO_SIZE) + ((logoCount - 1) * (logoSpacing - this.LOGO_SIZE));
+        // Position logos in the header panel below event name
+        const headerLogoY = 10 + this.EVENT_TEXT_HEIGHT + 10; // Below event name with spacing
+        const availableWidth = this.TEMPLATE_WIDTH - 40; // Leave margins on sides
+        const logoSize = 35; // Smaller size to fit nicely in header
         
-        // Calculate starting X position to center all logos
-        const startX = (this.TEMPLATE_WIDTH - totalLogosWidth) / 2;
-        
-        // Y position BELOW the event name with proper spacing
-        const logoY = 10 + this.EVENT_TEXT_HEIGHT + 15; // Header top + event text height + spacing
-        
-        console.log(`📐 Centering ${logoCount} logos: total width ${totalLogosWidth}px, starting at X=${startX}, Y=${logoY}`);
-        
-        // Add subtle background for logo area
-        if (logoCount > 0) {
-            this.drawRoundedRect(startX - 10, logoY - 5, totalLogosWidth + 20, this.LOGO_SIZE + 10, 8);
-            this.ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
-            this.ctx.fill();
+        // Calculate spacing based on number of logos
+        let logoSpacing;
+        if (logoCount === 1) {
+            logoSpacing = 0; // Single logo centered
+        } else {
+            // Distribute logos evenly across available width
+            logoSpacing = (availableWidth - (logoCount * logoSize)) / (logoCount - 1);
+            // Ensure minimum spacing
+            logoSpacing = Math.max(logoSpacing, 15);
         }
         
-        // Draw each logo from left to right with proper spacing
+        // Calculate starting position to center all logos
+        const totalWidth = (logoCount * logoSize) + ((logoCount - 1) * logoSpacing);
+        const startX = (this.TEMPLATE_WIDTH - totalWidth) / 2;
+        
+        console.log(`📐 Header logos: ${logoCount} logos, size=${logoSize}px, spacing=${logoSpacing.toFixed(1)}px, total width=${totalWidth.toFixed(1)}px`);
+        
+        // Draw each logo in the header
         for (let i = 0; i < logos.length; i++) {
             const logo = logos[i];
-            const logoX = startX + (i * logoSpacing);
+            const logoX = startX + (i * (logoSize + logoSpacing));
             
-            console.log(`🎯 Drawing logo ${logo.number} at position (${logoX}, ${logoY})`);
-            await this.drawLogo(logo.url, logoX, logoY, this.LOGO_SIZE, logo.filename);
+            console.log(`🎯 Drawing header logo ${logo.number} at (${logoX.toFixed(1)}, ${headerLogoY})`);
+            await this.drawLogo(logo.url, logoX, headerLogoY, logoSize, logo.filename);
         }
     }
     
