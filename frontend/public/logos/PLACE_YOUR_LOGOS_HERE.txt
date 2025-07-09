@@ -16,6 +16,13 @@ The filename determines the display order from left to right!
 - JPG/JPEG
 - SVG
 
+🌙 IMPORTANT: USE WHITE/LIGHT LOGOS ONLY!
+The header background is DARK, so you need WHITE or LIGHT colored logos:
+- ✅ White logos on dark background = Perfect visibility
+- ❌ Dark logos on dark background = Invisible!
+- ✅ Use white/light versions of your brand logos
+- ✅ PNG with transparency works best for white logos
+
 🎯 HOW IT WORKS:
 - Logos are displayed in numerical order (1, 2, 3, 4, 5, 6)
 - All logos are automatically centered as a group
@@ -27,13 +34,15 @@ The filename determines the display order from left to right!
 - The AWS "Powered by AWS" logo is mandatory in the footer
 - All logos are automatically resized to fit the template
 - Only use numbers 1-6 for filenames
+- Header has DARK background - use WHITE/LIGHT logos only!
 - No secrets.json configuration needed!
 
 🚀 HOW TO USE:
-1. Name your logos: 1.png, 2.png, 3.png, etc.
-2. Add them to this directory
-3. Deploy: cdk deploy SnapMagicStack
-4. Generate a test trading card
-5. Logos appear centered, left to right in numerical order
+1. Get WHITE/LIGHT versions of your logos
+2. Name them: 1.png, 2.png, 3.png, etc.
+3. Add them to this directory
+4. Deploy: cdk deploy SnapMagicStack
+5. Generate a test trading card
+6. Logos appear centered, left to right in numerical order
 
 📖 For detailed documentation, see README.md

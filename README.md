@@ -266,6 +266,13 @@ frontend/public/logos/
 - JPG/JPEG
 - SVG
 
+#### **🌙 Important: Use White/Light Logos Only!**
+The header background is **dark**, so you need **white or light colored logos**:
+- ✅ **White logos** on dark background = Perfect visibility
+- ❌ **Dark logos** on dark background = Invisible!
+- ✅ Use white/light versions of your brand logos
+- ✅ PNG with transparency works best for white logos
+
 **Note:** All logos are automatically resized to fit the template perfectly, so any reasonable size will work.
 
 ### 📍 **Flexible Centering**
@@ -298,10 +305,11 @@ Logos are automatically centered as a group, regardless of how many you have:
 ### 💡 **Best Practices**
 
 1. **Use numbered filenames** (`1.png`, `2.png`, etc.)
-2. **Use PNG format** with transparency for best results
-3. **Test with different logo counts** before production
-4. **Keep logos professional** and event-appropriate
-5. **Start with `1.png`** for your most important logo
+2. **Use white/light colored logos** for dark header background
+3. **Use PNG format** with transparency for best results
+4. **Test with different logo counts** before production
+5. **Keep logos professional** and event-appropriate
+6. **Start with `1.png`** for your most important logo
 
 ### 🔧 **Troubleshooting**
 

@@ -156,17 +156,17 @@ class SnapMagicTemplateSystem {
     }
     
     /**
-     * Draw simple header with just event name
+     * Draw simple header with dark background for white logos
      */
      async drawHeader() {
         if (!this.templateConfig?.eventName) return;
         
-        // Header background
-        this.ctx.fillStyle = '#F8F9FA';
+        // Header background - dark for white logos
+        this.ctx.fillStyle = '#2C3E50';
         this.ctx.fillRect(10, 10, this.TEMPLATE_WIDTH - 20, this.HEADER_HEIGHT);
         
-        // Event name centered in header
-        this.ctx.fillStyle = '#2C3E50';
+        // Event name centered in header - white text on dark background
+        this.ctx.fillStyle = '#FFFFFF';
         this.ctx.font = 'bold 18px Arial, sans-serif';
         this.ctx.textAlign = 'center';
         this.ctx.textBaseline = 'middle';
