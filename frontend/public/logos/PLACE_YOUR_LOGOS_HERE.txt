@@ -11,11 +11,10 @@ No configuration needed - just drop your files here!
 - partner-logo.png, partner-logo.jpg, partner-logo.svg
 - brand-logo.png, brand-logo.jpg, brand-logo.svg
 
-✅ RECOMMENDED SPECIFICATIONS:
-- Size: 100x100 to 400x400 pixels
-- Format: PNG with transparency (recommended)
-- File size: Under 100KB
-- Aspect ratio: Square (1:1) or landscape (2:1)
+✅ SUPPORTED FORMATS:
+- PNG (recommended for transparency)
+- JPG/JPEG
+- SVG
 
 🎯 AUTOMATIC POSITIONING:
 Up to 6 logos will be positioned automatically:

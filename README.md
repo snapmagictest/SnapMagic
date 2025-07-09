@@ -267,11 +267,7 @@ SnapMagic looks for these common logo filenames (in order):
 - JPG/JPEG
 - SVG
 
-#### **Recommended Specifications:**
-- **Size**: 100x100 to 400x400 pixels
-- **File size**: Under 100KB for fast loading
-- **Aspect ratio**: Square (1:1) or landscape (2:1) work best
-- **Background**: Transparent PNG for best results
+**Note:** All logos are automatically resized to fit the template perfectly, so any reasonable size will work.
 
 ### 📍 **Automatic Positioning**
 
@@ -302,15 +298,14 @@ Logos are automatically positioned in these locations (up to 6 logos):
 ### 💡 **Best Practices**
 
 1. **Use descriptive filenames** (e.g., `company-logo.png` instead of `image1.png`)
-2. **Optimize file sizes** (under 100KB each)
-3. **Use PNG format** with transparency for best results
-4. **Test with different logo combinations** before production
-5. **Keep logos professional** and event-appropriate
+2. **Use PNG format** with transparency for best results
+3. **Test with different logo combinations** before production
+4. **Keep logos professional** and event-appropriate
 
 ### 🔧 **Troubleshooting**
 
 - **Logo not appearing?** Check the filename matches supported patterns
-- **Logo too small/large?** All logos are automatically resized to fit
+- **Logo quality issues?** Use PNG format with transparency
 - **Wrong position?** Logos are positioned automatically in discovery order
 - **Need more logos?** Maximum 6 logos are supported
 
