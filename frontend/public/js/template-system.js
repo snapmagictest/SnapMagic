@@ -106,10 +106,7 @@ class SnapMagicTemplateSystem {
                         
                         // Add template elements
                         await this.drawHeader();
-                        console.log('✅ Header drawn');
-                        
-                        await this.drawLogos();
-                        console.log('✅ Logos drawn');
+                        console.log('✅ Header drawn with integrated customer logos');
                         
                         await this.drawSidePanels();
                         console.log('✅ Side panels drawn');
@@ -194,7 +191,7 @@ class SnapMagicTemplateSystem {
     }
     
     /**
-     * Draw professional header with classy AWS-style typography and integrated customer logos
+     * Draw professional header with event name and integrated customer logos (no separate panel)
      */
      async drawHeader() {
         if (!this.templateConfig?.eventName) return;
@@ -238,7 +235,70 @@ class SnapMagicTemplateSystem {
         this.ctx.shadowOffsetY = 0;
         this.ctx.shadowBlur = 0;
         
-        // Customer logos (1.png, 2.png, etc.) will be drawn below event name by drawLogos()
+        // Draw customer logos directly in header (no separate panel)
+        await this.drawCustomerLogosInHeader();
+    }
+    
+    /**
+     * Draw customer logos directly in header background (integrated, no separate panel)
+     */
+    async drawCustomerLogosInHeader() {
+        console.log('🎨 Looking for customer logos to integrate in header...');
+        
+        // Check for numbered logos 1-6
+        const foundLogos = [];
+        
+        for (let i = 1; i <= 6; i++) {
+            const logoUrl = `logos/${i}.png`;
+            try {
+                const logoExists = await this.checkIfLogoExists(logoUrl);
+                if (logoExists) {
+                    foundLogos.push({
+                        number: i,
+                        url: logoUrl,
+                        filename: `${i}.png`
+                    });
+                    console.log(`✅ Found customer logo: ${i}.png`);
+                }
+            } catch (error) {
+                continue;
+            }
+        }
+        
+        if (foundLogos.length === 0) {
+            console.log('ℹ️ No customer logos found - header shows event name only');
+            return;
+        }
+        
+        console.log(`✅ Integrating ${foundLogos.length} customer logo(s) directly in header`);
+        
+        // Position logos in header below event name
+        const logoY = 10 + this.EVENT_TEXT_HEIGHT + 15; // Below event name
+        const logoSize = 35; // Appropriate size for header
+        const availableWidth = this.TEMPLATE_WIDTH - 60; // Leave margins
+        
+        // Calculate spacing based on number of logos
+        let logoSpacing;
+        if (foundLogos.length === 1) {
+            logoSpacing = 0; // Single logo centered
+        } else {
+            logoSpacing = Math.max(15, (availableWidth - (foundLogos.length * logoSize)) / (foundLogos.length - 1));
+        }
+        
+        // Calculate starting position to center all logos
+        const totalWidth = (foundLogos.length * logoSize) + ((foundLogos.length - 1) * logoSpacing);
+        const startX = (this.TEMPLATE_WIDTH - totalWidth) / 2;
+        
+        console.log(`📐 Header logo layout: ${foundLogos.length} logos, size=${logoSize}px, spacing=${logoSpacing.toFixed(1)}px`);
+        
+        // Draw each logo directly in header
+        for (let i = 0; i < foundLogos.length; i++) {
+            const logo = foundLogos[i];
+            const logoX = startX + (i * (logoSize + logoSpacing));
+            
+            console.log(`🎯 Drawing customer logo ${logo.number} in header at (${logoX.toFixed(1)}, ${logoY})`);
+            await this.drawLogo(logo.url, logoX, logoY, logoSize, logo.filename);
+        }
     }
     
     /**
