@@ -282,12 +282,12 @@ class SnapMagicTemplateSystem {
      * Draw side panels with seamless connection to header and footer
      */
     async drawSidePanels() {
-        // Side panels connect properly to footer, positioned to not overlap image
+        // Side panels connect directly to footer with NO gap
         const panelStartY = 10 + this.HEADER_HEIGHT; // Start after header ends
-        const panelEndY = this.TEMPLATE_HEIGHT - 10 - this.FOOTER_HEIGHT; // End where footer starts
-        const panelHeight = panelEndY - panelStartY; // Full height from header to footer
+        const panelEndY = this.TEMPLATE_HEIGHT - 10; // End at same level as footer (no gap)
+        const panelHeight = panelEndY - panelStartY; // Full height touching footer
         
-        // Left panel background - properly connected to footer
+        // Left panel background - directly adjacent to footer
         const leftPanelGradient = this.ctx.createLinearGradient(0, panelStartY, 0, panelStartY + panelHeight);
         leftPanelGradient.addColorStop(0, 'rgba(255, 255, 255, 0.12)');
         leftPanelGradient.addColorStop(1, 'rgba(255, 255, 255, 0.08)');
@@ -302,7 +302,7 @@ class SnapMagicTemplateSystem {
         this.ctx.lineWidth = 1;
         this.ctx.stroke();
         
-        // Right panel background - properly connected to footer
+        // Right panel background - directly adjacent to footer
         const rightPanelGradient = this.ctx.createLinearGradient(0, panelStartY, 0, panelStartY + panelHeight);
         rightPanelGradient.addColorStop(0, 'rgba(255, 255, 255, 0.12)');
         rightPanelGradient.addColorStop(1, 'rgba(255, 255, 255, 0.08)');
@@ -321,7 +321,7 @@ class SnapMagicTemplateSystem {
         // Left panel text - "PLACEHOLDER" in white
         await this.drawLeftPanelText(panelStartY, panelHeight);
         
-        // Right panel - AWS logo vertically (bigger and nicely sized)
+        // Right panel - AWS logo as big as possible
         await this.drawRightPanelLogo(panelStartY, panelHeight);
     }
     
@@ -363,7 +363,7 @@ class SnapMagicTemplateSystem {
     }
     
     /**
-     * Draw new AWS logo vertically on right panel (bigger and nicely sized)
+     * Draw new AWS logo vertically on right panel (AS BIG AS POSSIBLE)
      */
     async drawRightPanelLogo(panelStartY, panelHeight) {
         return new Promise((resolve) => {
@@ -372,13 +372,13 @@ class SnapMagicTemplateSystem {
             newAwsLogo.onload = () => {
                 this.ctx.save();
                 
-                // Make logo much bigger - use most of the panel space
-                const maxLogoWidth = this.SIDE_PANEL_WIDTH - 8; // Small margin
-                const maxLogoHeight = panelHeight * 0.7; // Use 70% of panel height for bigger logo
+                // Make logo AS BIG AS POSSIBLE - use maximum panel space
+                const maxLogoWidth = this.SIDE_PANEL_WIDTH - 4; // Minimal margin (was 8)
+                const maxLogoHeight = panelHeight * 0.9; // Use 90% of panel height (was 70%)
                 
                 const logoAspectRatio = newAwsLogo.width / newAwsLogo.height;
                 
-                // Calculate size - prioritize making it bigger
+                // Calculate size - maximize the logo size
                 let logoHeight = maxLogoHeight;
                 let logoWidth = logoHeight * logoAspectRatio;
                 
@@ -401,13 +401,13 @@ class SnapMagicTemplateSystem {
                 const logoX = -logoWidth / 2;
                 const logoY = -logoHeight / 2;
                 
-                // Enhanced glow effect for bigger logo
-                this.ctx.shadowColor = 'rgba(255, 255, 255, 0.5)';
+                // Enhanced glow effect for maximum visibility
+                this.ctx.shadowColor = 'rgba(255, 255, 255, 0.6)';
                 this.ctx.shadowOffsetX = 0;
                 this.ctx.shadowOffsetY = 0;
-                this.ctx.shadowBlur = 10;
+                this.ctx.shadowBlur = 12; // Increased glow for bigger logo
                 
-                // Draw the new horizontal AWS logo
+                // Draw the MAXIMUM SIZE AWS logo
                 this.ctx.imageSmoothingEnabled = true;
                 this.ctx.imageSmoothingQuality = 'high';
                 this.ctx.drawImage(newAwsLogo, logoX, logoY, logoWidth, logoHeight);
@@ -417,7 +417,7 @@ class SnapMagicTemplateSystem {
                 this.ctx.shadowBlur = 0;
                 
                 this.ctx.restore();
-                console.log(`✅ Right panel new AWS logo drawn bigger and nicely sized (${logoWidth}x${logoHeight})`);
+                console.log(`✅ Right panel AWS logo drawn MAXIMUM SIZE (${logoWidth}x${logoHeight})`);
                 resolve();
             };
             
