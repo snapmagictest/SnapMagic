@@ -407,12 +407,16 @@ class SnapMagicApp {
 
     // Video Generation
     async handleGenerateVideo() {
-        const animationPrompt = this.elements.animationPrompt.value.trim();
+        const userPrompt = this.elements.animationPrompt.value.trim();
         
-        if (!animationPrompt) {
-            this.showError('Please describe how you want your card animated');
+        if (!userPrompt) {
+            this.showError('Please describe your action for the video');
             return;
         }
+
+        // Automatically prepend the frame 1 prefix to ensure immediate action
+        const animationPrompt = `From frame 1 and immediately visible: ${userPrompt}`;
+        console.log('🎬 Video prompt with prefix:', animationPrompt);
 
         if (!this.generatedCardData) {
             this.showError('Please generate a trading card first');

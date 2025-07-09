@@ -586,6 +586,31 @@
             line-height: 1.6;
         }
 
+        /* Video Prompt with Prefix */
+        .video-prompt-container {
+            position: relative;
+            margin-bottom: 1rem;
+        }
+
+        .prompt-prefix {
+            background: rgba(255, 255, 255, 0.1);
+            color: #00d4ff;
+            padding: 0.8rem 1rem;
+            border: 2px solid rgba(0, 212, 255, 0.3);
+            border-bottom: none;
+            border-radius: 12px 12px 0 0;
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-align: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .video-prompt-input {
+            border-radius: 0 0 12px 12px !important;
+            border-top: none !important;
+            margin-bottom: 0 !important;
+        }
+
         /* Card Generation Tab - Sleek Layout */
         .generation-container {
             display: grid;
@@ -1218,7 +1243,10 @@
                     </div>
                     
                     <div id="videoControls" class="hidden">
-                        <textarea id="animationPrompt" class="prompt-input" placeholder="Describe how you want your card animated... (e.g., 'Make the wizard's staff glow and sparkle')"></textarea>
+                        <div class="video-prompt-container">
+                            <div class="prompt-prefix">From frame 1 and immediately visible:</div>
+                            <textarea id="animationPrompt" class="prompt-input video-prompt-input" placeholder="Describe your action... (e.g., 'AWS architect actively designing cloud infrastructure with floating diagrams')"></textarea>
+                        </div>
                         
                         <!-- Example Prompts for Videos - After user input -->
                         <div class="example-prompts">
