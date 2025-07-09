@@ -1,40 +1,39 @@
-📁 PLACE YOUR LOGO FILES HERE
+📁 PLACE YOUR NUMBERED LOGO FILES HERE
 
-SnapMagic automatically discovers and uses logos from this directory.
-No configuration needed - just drop your files here!
+SnapMagic uses a simple numbered system for logos.
+The filename determines the display order from left to right!
 
-✅ SUPPORTED FILENAMES (checked in order):
-- logo.png, logo.jpg, logo.svg
-- company-logo.png, company-logo.jpg, company-logo.svg
-- event-logo.png, event-logo.jpg, event-logo.svg
-- sponsor-logo.png, sponsor-logo.jpg, sponsor-logo.svg
-- partner-logo.png, partner-logo.jpg, partner-logo.svg
-- brand-logo.png, brand-logo.jpg, brand-logo.svg
+✅ SUPPORTED FILENAMES:
+- 1.png (displays first, leftmost)
+- 2.png (displays second)
+- 3.png (displays third)
+- 4.png (displays fourth)
+- 5.png (displays fifth)
+- 6.png (displays sixth, rightmost)
 
 ✅ SUPPORTED FORMATS:
 - PNG (recommended for transparency)
 - JPG/JPEG
 - SVG
 
-🎯 AUTOMATIC POSITIONING:
-Up to 6 logos will be positioned automatically:
-1. Top-left corner
-2. Top-right corner
-3. Header-left
-4. Header-right
-5. Header-center-left
-6. Header-center-right
+🎯 HOW IT WORKS:
+- Logos are displayed in numerical order (1, 2, 3, 4, 5, 6)
+- All logos are automatically centered as a group
+- If you only have 2 logos (1.png, 2.png), they center together
+- If you have all 6 logos, they spread across the header
+- Missing numbers are skipped (e.g., 1.png, 3.png, 5.png works fine)
 
 ⚠️ IMPORTANT NOTES:
 - The AWS "Powered by AWS" logo is mandatory in the footer
 - All logos are automatically resized to fit the template
-- Logos are discovered in filename order (first found = first positioned)
+- Only use numbers 1-6 for filenames
 - No secrets.json configuration needed!
 
 🚀 HOW TO USE:
-1. Add your logo files to this directory
-2. Deploy: cdk deploy SnapMagicStack
-3. Generate a test trading card
-4. Check browser console for discovery messages
+1. Name your logos: 1.png, 2.png, 3.png, etc.
+2. Add them to this directory
+3. Deploy: cdk deploy SnapMagicStack
+4. Generate a test trading card
+5. Logos appear centered, left to right in numerical order
 
 📖 For detailed documentation, see README.md

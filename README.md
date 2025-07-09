@@ -229,7 +229,7 @@ The frontend is automatically deployed via AWS Amplify when the CDK stack comple
 
 ## 🎨 Simple Logo System
 
-SnapMagic automatically discovers and uses logos from the `frontend/public/logos/` directory.
+SnapMagic uses a numbered logo system for maximum simplicity and control.
 
 ### 🚨 **Important: Mandatory AWS Footer Logo**
 
@@ -237,28 +237,27 @@ SnapMagic automatically discovers and uses logos from the `frontend/public/logos
 
 ### 📁 **How It Works**
 
-Simply place your logo files in the `frontend/public/logos/` directory and SnapMagic will automatically find and use them:
+Simply place numbered logo files in the `frontend/public/logos/` directory:
 
 ```
 frontend/public/logos/
-├── logo.png                 ← Automatically detected
-├── company-logo.png         ← Automatically detected  
-├── event-logo.png           ← Automatically detected
-├── sponsor-logo.png         ← Automatically detected
-├── partner-logo.png         ← Automatically detected
-└── brand-logo.png           ← Automatically detected
+├── 1.png                    ← Displays first (leftmost)
+├── 2.png                    ← Displays second  
+├── 3.png                    ← Displays third
+├── 4.png                    ← Displays fourth
+├── 5.png                    ← Displays fifth
+└── 6.png                    ← Displays sixth (rightmost)
 ```
 
-### 🎯 **Supported Filenames**
+### 🎯 **Numbered System**
 
-SnapMagic looks for these common logo filenames (in order):
-
-- `logo.png`, `logo.jpg`, `logo.svg`
-- `company-logo.png`, `company-logo.jpg`, `company-logo.svg`
-- `event-logo.png`, `event-logo.jpg`, `event-logo.svg`
-- `sponsor-logo.png`, `sponsor-logo.jpg`, `sponsor-logo.svg`
-- `partner-logo.png`, `partner-logo.jpg`, `partner-logo.svg`
-- `brand-logo.png`, `brand-logo.jpg`, `brand-logo.svg`
+**Filename = Display Order:**
+- `1.png` - First logo (leftmost position)
+- `2.png` - Second logo
+- `3.png` - Third logo
+- `4.png` - Fourth logo
+- `5.png` - Fifth logo
+- `6.png` - Sixth logo (rightmost position)
 
 ### 🖼️ **Logo Requirements**
 
@@ -269,45 +268,47 @@ SnapMagic looks for these common logo filenames (in order):
 
 **Note:** All logos are automatically resized to fit the template perfectly, so any reasonable size will work.
 
-### 📍 **Automatic Positioning**
+### 📍 **Flexible Centering**
 
-Logos are automatically positioned in these locations (up to 6 logos):
+Logos are automatically centered as a group, regardless of how many you have:
 
-1. **Top-left corner**
-2. **Top-right corner**  
-3. **Header-left**
-4. **Header-right**
-5. **Header-center-left**
-6. **Header-center-right**
+- **1 logo**: Centered alone
+- **2 logos**: Both centered together
+- **3 logos**: All three centered together
+- **6 logos**: All six spread across header, centered as group
+- **Missing numbers**: Skipped automatically (1.png, 3.png, 5.png works fine)
 
 ### ✅ **Benefits of This Approach**
 
 - **🚀 Zero Configuration** - No `secrets.json` setup needed
+- **🎯 Predictable Order** - Filename determines exact position
 - **🔒 Always Reliable** - No CORS issues, no broken URLs
 - **⚡ Fast Loading** - Local files, no network requests
-- **🎯 Automatic Sizing** - All logos properly scaled and positioned
+- **🎨 Flexible Layout** - Automatically adjusts to logo count
 - **🛡️ Secure** - No external dependencies or tracking
 
 ### 🧪 **Testing Your Logos**
 
-1. **Add logo files** to `frontend/public/logos/` directory
-2. **Deploy changes**: `cdk deploy SnapMagicStack`
-3. **Generate test card** to verify logos appear correctly
-4. **Check browser console** for logo discovery messages
+1. **Name your logos**: `1.png`, `2.png`, `3.png`, etc.
+2. **Add to directory**: `frontend/public/logos/`
+3. **Deploy changes**: `cdk deploy SnapMagicStack`
+4. **Generate test card** to verify logos appear in correct order
+5. **Check browser console** for logo discovery messages
 
 ### 💡 **Best Practices**
 
-1. **Use descriptive filenames** (e.g., `company-logo.png` instead of `image1.png`)
+1. **Use numbered filenames** (`1.png`, `2.png`, etc.)
 2. **Use PNG format** with transparency for best results
-3. **Test with different logo combinations** before production
+3. **Test with different logo counts** before production
 4. **Keep logos professional** and event-appropriate
+5. **Start with `1.png`** for your most important logo
 
 ### 🔧 **Troubleshooting**
 
-- **Logo not appearing?** Check the filename matches supported patterns
+- **Logo not appearing?** Check filename is exactly `1.png`, `2.png`, etc.
+- **Wrong order?** Rename files to correct numbers
 - **Logo quality issues?** Use PNG format with transparency
-- **Wrong position?** Logos are positioned automatically in discovery order
-- **Need more logos?** Maximum 6 logos are supported
+- **Need more logos?** Maximum 6 logos supported (1.png through 6.png)
 
 ---
 

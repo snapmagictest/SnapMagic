@@ -179,57 +179,69 @@ class SnapMagicTemplateSystem {
     }
     
     /**
-     * Draw all logos found in the logos directory automatically
+     * Draw logos using numbered system (1.png, 2.png, etc.) with flexible centering
      */
     async drawLogos() {
-        console.log('🎨 Auto-discovering logos in logos/ directory...');
+        console.log('🎨 Looking for numbered logos (1.png, 2.png, etc.)...');
         
-        // Define common logo filenames to try
-        const commonLogoFiles = [
-            'logo.png', 'logo.jpg', 'logo.svg',
-            'company-logo.png', 'company-logo.jpg', 'company-logo.svg',
-            'event-logo.png', 'event-logo.jpg', 'event-logo.svg',
-            'sponsor-logo.png', 'sponsor-logo.jpg', 'sponsor-logo.svg',
-            'partner-logo.png', 'partner-logo.jpg', 'partner-logo.svg',
-            'brand-logo.png', 'brand-logo.jpg', 'brand-logo.svg'
-        ];
+        // Check for numbered logos 1-6
+        const foundLogos = [];
         
-        // Define positions for up to 6 logos
-        const positions = [
-            { name: 'top-left', x: 15, y: 15 },
-            { name: 'top-right', x: this.TEMPLATE_WIDTH - 15 - this.LOGO_SIZE, y: 15 },
-            { name: 'header-left', x: 15, y: 50 },
-            { name: 'header-right', x: this.TEMPLATE_WIDTH - 15 - this.LOGO_SIZE, y: 50 },
-            { name: 'header-center-left', x: (this.TEMPLATE_WIDTH / 2) - this.LOGO_SIZE - 10, y: 65 },
-            { name: 'header-center-right', x: (this.TEMPLATE_WIDTH / 2) + 10, y: 65 }
-        ];
-        
-        let logoCount = 0;
-        
-        // Try to load each common logo file
-        for (const filename of commonLogoFiles) {
-            if (logoCount >= positions.length) break; // Max 6 logos
-            
-            const logoUrl = `logos/${filename}`;
-            const position = positions[logoCount];
-            
+        for (let i = 1; i <= 6; i++) {
+            const logoUrl = `logos/${i}.png`;
             try {
                 const logoExists = await this.checkIfLogoExists(logoUrl);
                 if (logoExists) {
-                    console.log(`📁 Found logo: ${filename} - placing at ${position.name}`);
-                    await this.drawLogo(logoUrl, position.x, position.y, this.LOGO_SIZE, filename);
-                    logoCount++;
+                    foundLogos.push({
+                        number: i,
+                        url: logoUrl,
+                        filename: `${i}.png`
+                    });
+                    console.log(`📁 Found logo: ${i}.png`);
                 }
             } catch (error) {
-                // Logo doesn't exist, continue to next
+                // Logo doesn't exist, continue
                 continue;
             }
         }
         
-        if (logoCount === 0) {
-            console.log('ℹ️ No logos found in logos/ directory');
-        } else {
-            console.log(`✅ Successfully loaded ${logoCount} logo(s)`);
+        if (foundLogos.length === 0) {
+            console.log('ℹ️ No numbered logos found (1.png, 2.png, etc.)');
+            return;
+        }
+        
+        console.log(`✅ Found ${foundLogos.length} logo(s), displaying centered from left to right`);
+        
+        // Calculate flexible centering based on number of logos
+        await this.drawLogosFlexiblyCentered(foundLogos);
+    }
+    
+    /**
+     * Draw logos flexibly centered based on how many are present
+     * @param {Array} logos - Array of logo objects to draw
+     */
+    async drawLogosFlexiblyCentered(logos) {
+        const logoCount = logos.length;
+        const logoSpacing = 60; // Space between logos
+        
+        // Calculate total width needed for all logos
+        const totalLogosWidth = (logoCount * this.LOGO_SIZE) + ((logoCount - 1) * (logoSpacing - this.LOGO_SIZE));
+        
+        // Calculate starting X position to center all logos
+        const startX = (this.TEMPLATE_WIDTH - totalLogosWidth) / 2;
+        
+        // Y position below the event name in header
+        const logoY = 10 + 45; // Header top + space for event name
+        
+        console.log(`📐 Centering ${logoCount} logos: total width ${totalLogosWidth}px, starting at X=${startX}`);
+        
+        // Draw each logo from left to right
+        for (let i = 0; i < logos.length; i++) {
+            const logo = logos[i];
+            const logoX = startX + (i * logoSpacing);
+            
+            console.log(`🎯 Drawing logo ${logo.number} at position (${logoX}, ${logoY})`);
+            await this.drawLogo(logo.url, logoX, logoY, this.LOGO_SIZE, logo.filename);
         }
     }
     
