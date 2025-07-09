@@ -13,20 +13,20 @@ class SnapMagicTemplateSystem {
         this.TEMPLATE_WIDTH = 500;   // ~4.2cm at 300 DPI
         this.TEMPLATE_HEIGHT = 750;  // ~6.2cm at 300 DPI
         
-        // Improved Nova Canvas dimensions and positioning
-        this.NOVA_WIDTH = 370;       // Increased width slightly
-        this.NOVA_HEIGHT = 580;      // Increased height significantly
-        this.NOVA_X = 65;            // Adjusted for smaller side panels
-        this.NOVA_Y = 110;           // Adjusted for better spacing
+        // Clean adjacent layout - no overlaps, all elements touching
+        this.NOVA_WIDTH = 370;       // Image width
+        this.NOVA_HEIGHT = 560;      // Reduced height to not overlap panels
+        this.NOVA_X = 65;            // Positioned to be adjacent to side panels
+        this.NOVA_Y = 110;           // Adjacent to header bottom
         
-        // Professional template areas with better spacing
+        // Professional template areas with adjacent spacing
         this.HEADER_HEIGHT = 100;    // Header for event name + logos
         this.FOOTER_HEIGHT = 80;     // Footer for new AWS logo
-        this.SIDE_PANEL_WIDTH = 60;  // Smaller side panels (was 70)
+        this.SIDE_PANEL_WIDTH = 60;  // Side panel width
         this.LOGO_AREA_HEIGHT = 45;  // Dedicated space for logos
         this.EVENT_TEXT_HEIGHT = 35; // Space for event name
         this.LOGO_SIZE = 40;         // Larger logos for better visibility
-        this.BORDER_RADIUS = 15;     // Rounded corners for modern look
+        this.BORDER_RADIUS = 8;      // Smaller radius for cleaner adjacent look
         
         // Set template configuration
         this.setTemplateConfiguration();
@@ -282,64 +282,64 @@ class SnapMagicTemplateSystem {
      * Draw side panels with seamless connection to header and footer
      */
     async drawSidePanels() {
-        // Side panels now connect seamlessly from header to footer
-        const panelStartY = 10; // Start at same level as header
-        const panelHeight = this.TEMPLATE_HEIGHT - 20; // Full height minus margins
+        // Side panels are adjacent to header and footer, not overlapping
+        const panelStartY = 10 + this.HEADER_HEIGHT; // Start after header ends
+        const panelHeight = this.TEMPLATE_HEIGHT - 20 - this.HEADER_HEIGHT - this.FOOTER_HEIGHT; // Height between header and footer
         
-        // Left panel background - seamless connection
+        // Left panel background - adjacent positioning
         const leftPanelGradient = this.ctx.createLinearGradient(0, panelStartY, 0, panelStartY + panelHeight);
         leftPanelGradient.addColorStop(0, 'rgba(255, 255, 255, 0.12)');
         leftPanelGradient.addColorStop(1, 'rgba(255, 255, 255, 0.08)');
         
-        this.drawRoundedRect(10, panelStartY, this.SIDE_PANEL_WIDTH, panelHeight, 8);
+        this.drawRoundedRect(10, panelStartY, this.SIDE_PANEL_WIDTH, panelHeight, this.BORDER_RADIUS);
         this.ctx.fillStyle = leftPanelGradient;
         this.ctx.fill();
         
         // Left panel border
-        this.drawRoundedRect(10, panelStartY, this.SIDE_PANEL_WIDTH, panelHeight, 8);
+        this.drawRoundedRect(10, panelStartY, this.SIDE_PANEL_WIDTH, panelHeight, this.BORDER_RADIUS);
         this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
         this.ctx.lineWidth = 1;
         this.ctx.stroke();
         
-        // Right panel background - seamless connection
+        // Right panel background - adjacent positioning
         const rightPanelGradient = this.ctx.createLinearGradient(0, panelStartY, 0, panelStartY + panelHeight);
         rightPanelGradient.addColorStop(0, 'rgba(255, 255, 255, 0.12)');
         rightPanelGradient.addColorStop(1, 'rgba(255, 255, 255, 0.08)');
         
         const rightPanelX = this.TEMPLATE_WIDTH - 10 - this.SIDE_PANEL_WIDTH;
-        this.drawRoundedRect(rightPanelX, panelStartY, this.SIDE_PANEL_WIDTH, panelHeight, 8);
+        this.drawRoundedRect(rightPanelX, panelStartY, this.SIDE_PANEL_WIDTH, panelHeight, this.BORDER_RADIUS);
         this.ctx.fillStyle = rightPanelGradient;
         this.ctx.fill();
         
         // Right panel border
-        this.drawRoundedRect(rightPanelX, panelStartY, this.SIDE_PANEL_WIDTH, panelHeight, 8);
+        this.drawRoundedRect(rightPanelX, panelStartY, this.SIDE_PANEL_WIDTH, panelHeight, this.BORDER_RADIUS);
         this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
         this.ctx.lineWidth = 1;
         this.ctx.stroke();
         
         // Left panel text - "PLACEHOLDER" in white
-        await this.drawLeftPanelText();
+        await this.drawLeftPanelText(panelStartY, panelHeight);
         
-        // Right panel - AWS logo vertically (bigger and stretched)
-        await this.drawRightPanelLogo();
+        // Right panel - AWS logo vertically (properly proportioned, not stretched)
+        await this.drawRightPanelLogo(panelStartY, panelHeight);
     }
     
     /**
      * Draw "PLACEHOLDER" text vertically on left panel
      */
-    async drawLeftPanelText() {
+    async drawLeftPanelText(panelStartY, panelHeight) {
         this.ctx.save();
         
-        // Position for vertical text
+        // Position for vertical text in the center of the side panel
         const textX = 10 + (this.SIDE_PANEL_WIDTH / 2);
-        const textY = this.NOVA_Y + (this.NOVA_HEIGHT / 2);
+        const textY = panelStartY + (panelHeight / 2);
         
         // Rotate context for vertical text
         this.ctx.translate(textX, textY);
         this.ctx.rotate(-Math.PI / 2);
         
         // White text as requested
-        this.ctx.fillStyle = '#FFFFFF'; // Changed to white
+        this.ctx.fillStyle = '#FFFFFF';
         this.ctx.font = 'bold 16px "Amazon Ember", "Helvetica Neue", Arial, sans-serif';
         this.ctx.textAlign = 'center';
         this.ctx.textBaseline = 'middle';
@@ -362,35 +362,35 @@ class SnapMagicTemplateSystem {
     }
     
     /**
-     * Draw old AWS logo vertically on right panel (bigger and stretched but readable)
+     * Draw old AWS logo vertically on right panel (properly proportioned and readable)
      */
-    async drawRightPanelLogo() {
+    async drawRightPanelLogo(panelStartY, panelHeight) {
         return new Promise((resolve) => {
             const oldAwsLogo = new Image();
             
             oldAwsLogo.onload = () => {
                 this.ctx.save();
                 
-                // Make logo bigger and use more of the panel space
-                const maxLogoWidth = this.SIDE_PANEL_WIDTH - 10; // Less margin for bigger logo
-                const maxLogoHeight = (this.TEMPLATE_HEIGHT - 200) * 0.6; // Use 60% of available height
+                // Keep proper proportions - no stretching!
+                const maxLogoWidth = this.SIDE_PANEL_WIDTH - 15; // Leave margins
+                const maxLogoHeight = panelHeight * 0.4; // Use 40% of panel height
                 
                 const logoAspectRatio = oldAwsLogo.width / oldAwsLogo.height;
                 
-                // Stretch the logo to fit better (prioritize height)
-                let logoHeight = maxLogoHeight;
-                let logoWidth = Math.min(maxLogoWidth, logoHeight * logoAspectRatio);
+                // Calculate proper size maintaining aspect ratio
+                let logoWidth = maxLogoWidth;
+                let logoHeight = logoWidth / logoAspectRatio;
                 
-                // If we can stretch width more without losing readability, do it
-                if (logoWidth < maxLogoWidth * 0.9) {
-                    logoWidth = maxLogoWidth * 0.9; // Use 90% of available width
-                    // Don't recalculate height - this creates the "stretched" effect
+                // If height is too big, scale down by height instead
+                if (logoHeight > maxLogoHeight) {
+                    logoHeight = maxLogoHeight;
+                    logoWidth = logoHeight * logoAspectRatio;
                 }
                 
                 // Position in right panel center
                 const rightPanelX = this.TEMPLATE_WIDTH - 10 - this.SIDE_PANEL_WIDTH;
                 const centerX = rightPanelX + (this.SIDE_PANEL_WIDTH / 2);
-                const centerY = this.TEMPLATE_HEIGHT / 2; // Center vertically on entire card
+                const centerY = panelStartY + (panelHeight / 2);
                 
                 // Rotate for vertical placement (reading left to right)
                 this.ctx.translate(centerX, centerY);
@@ -400,13 +400,13 @@ class SnapMagicTemplateSystem {
                 const logoX = -logoWidth / 2;
                 const logoY = -logoHeight / 2;
                 
-                // Enhanced glow effect for bigger logo
+                // Enhanced glow effect
                 this.ctx.shadowColor = 'rgba(255, 255, 255, 0.4)';
                 this.ctx.shadowOffsetX = 0;
                 this.ctx.shadowOffsetY = 0;
                 this.ctx.shadowBlur = 8;
                 
-                // Draw the stretched AWS logo
+                // Draw the properly proportioned AWS logo
                 this.ctx.imageSmoothingEnabled = true;
                 this.ctx.imageSmoothingQuality = 'high';
                 this.ctx.drawImage(oldAwsLogo, logoX, logoY, logoWidth, logoHeight);
@@ -416,7 +416,7 @@ class SnapMagicTemplateSystem {
                 this.ctx.shadowBlur = 0;
                 
                 this.ctx.restore();
-                console.log(`✅ Right panel AWS logo drawn bigger and stretched (${logoWidth}x${logoHeight})`);
+                console.log(`✅ Right panel AWS logo drawn properly proportioned (${logoWidth}x${logoHeight})`);
                 resolve();
             };
             
