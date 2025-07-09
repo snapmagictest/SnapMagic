@@ -416,17 +416,32 @@ class SnapMagicTemplateSystem {
         this.ctx.lineWidth = 1;
         this.ctx.stroke();
         
-        // Left panel text - "PLACEHOLDER" in white
-        await this.drawLeftPanelText(panelStartY, panelHeight);
+        // Left panel - user name or AWS logo
+        await this.drawLeftPanelContent(panelStartY, panelHeight);
         
         // Right panel - AWS logo as big as possible
         await this.drawRightPanelLogo(panelStartY, panelHeight);
     }
     
     /**
-     * Draw "PLACEHOLDER" text vertically on left panel
+     * Draw user name or AWS logo on left panel based on user input
      */
-    async drawLeftPanelText(panelStartY, panelHeight) {
+    async drawLeftPanelContent(panelStartY, panelHeight) {
+        const userName = this.templateConfig.userName || '';
+        
+        if (userName.trim()) {
+            // Draw user name vertically
+            await this.drawLeftPanelText(panelStartY, panelHeight, userName.trim());
+        } else {
+            // Draw AWS logo (duplicate of right panel)
+            await this.drawLeftPanelLogo(panelStartY, panelHeight);
+        }
+    }
+    
+    /**
+     * Draw user name text vertically on left panel
+     */
+    async drawLeftPanelText(panelStartY, panelHeight, userName) {
         this.ctx.save();
         
         // Position for vertical text in the center of the side panel
@@ -437,7 +452,7 @@ class SnapMagicTemplateSystem {
         this.ctx.translate(textX, textY);
         this.ctx.rotate(-Math.PI / 2);
         
-        // White text as requested
+        // White text styling
         this.ctx.fillStyle = '#FFFFFF';
         this.ctx.font = 'bold 16px "Amazon Ember", "Helvetica Neue", Arial, sans-serif';
         this.ctx.textAlign = 'center';
@@ -449,7 +464,7 @@ class SnapMagicTemplateSystem {
         this.ctx.shadowOffsetY = 1;
         this.ctx.shadowBlur = 2;
         
-        this.ctx.fillText('PLACEHOLDER', 0, 0);
+        this.ctx.fillText(userName, 0, 0);
         
         // Reset shadow
         this.ctx.shadowColor = 'transparent';
@@ -458,6 +473,55 @@ class SnapMagicTemplateSystem {
         this.ctx.shadowBlur = 0;
         
         this.ctx.restore();
+        console.log(`✅ Left panel user name drawn: "${userName}"`);
+    }
+    
+    /**
+     * Draw AWS logo on left panel (duplicate of right panel)
+     */
+    async drawLeftPanelLogo(panelStartY, panelHeight) {
+        return new Promise((resolve) => {
+            const awsLogo = new Image();
+            
+            awsLogo.onload = () => {
+                this.ctx.save();
+                
+                // Calculate logo size for left panel (same logic as right panel)
+                const maxLogoHeight = panelHeight - 40; // Leave margins
+                const logoAspectRatio = awsLogo.width / awsLogo.height;
+                
+                let logoHeight = maxLogoHeight;
+                let logoWidth = logoHeight * logoAspectRatio;
+                
+                // If too wide, scale down
+                const maxLogoWidth = this.SIDE_PANEL_WIDTH - 20;
+                if (logoWidth > maxLogoWidth) {
+                    logoWidth = maxLogoWidth;
+                    logoHeight = logoWidth / logoAspectRatio;
+                }
+                
+                // Center the logo in the left panel
+                const logoX = 10 + (this.SIDE_PANEL_WIDTH - logoWidth) / 2;
+                const logoY = panelStartY + (panelHeight - logoHeight) / 2;
+                
+                // Draw the AWS logo with high quality (no glow for print quality)
+                this.ctx.imageSmoothingEnabled = true;
+                this.ctx.imageSmoothingQuality = 'high';
+                this.ctx.drawImage(awsLogo, logoX, logoY, logoWidth, logoHeight);
+                
+                this.ctx.restore();
+                console.log(`✅ Left panel AWS logo drawn (duplicate) at (${logoX.toFixed(1)}, ${logoY.toFixed(1)})`);
+                resolve();
+            };
+            
+            awsLogo.onerror = () => {
+                console.error('❌ Failed to load AWS logo for left panel');
+                resolve();
+            };
+            
+            // Use the same AWS logo as right panel
+            awsLogo.src = 'https://upload.wikimedia.org/wikipedia/commons/9/93/Amazon_Web_Services_Logo.svg';
+        });
     }
     
     /**

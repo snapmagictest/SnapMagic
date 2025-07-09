@@ -296,7 +296,7 @@ class SnapMagicApp {
         this.showNameInputModal();
     }
 
-    async displayGeneratedCard(data) {
+    async displayGeneratedCard(data, userName = '') {
         const novaImageBase64 = data.result; // Raw Nova Canvas image
         const userPrompt = this.elements.promptInput.value.trim();
         
@@ -316,6 +316,10 @@ class SnapMagicApp {
                     checkConfig();
                 });
             }
+            
+            // Set the user name in template config
+            this.templateSystem.templateConfig.userName = userName;
+            console.log('👤 Template userName set to:', userName || 'No name (AWS logo)');
             
             // Create final trading card with template
             console.log('🎴 Compositing trading card with template...');
@@ -861,7 +865,7 @@ class SnapMagicApp {
             if (data.success) {
                 console.log('✅ Card generation successful');
                 this.generatedCardData = data;
-                this.displayGeneratedCard(data);
+                this.displayGeneratedCard(data, userName);
                 this.hideProcessing();
             } else {
                 console.error('❌ Card generation failed:', data.error);
