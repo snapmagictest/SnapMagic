@@ -452,9 +452,9 @@ class SnapMagicTemplateSystem {
         this.ctx.translate(textX, textY);
         this.ctx.rotate(-Math.PI / 2);
         
-        // White text styling
+        // White text styling with bigger font
         this.ctx.fillStyle = '#FFFFFF';
-        this.ctx.font = 'bold 16px "Amazon Ember", "Helvetica Neue", Arial, sans-serif';
+        this.ctx.font = 'bold 20px "Amazon Ember", "Helvetica Neue", Arial, sans-serif'; // Increased from 16px to 20px
         this.ctx.textAlign = 'center';
         this.ctx.textBaseline = 'middle';
         
@@ -464,7 +464,8 @@ class SnapMagicTemplateSystem {
         this.ctx.shadowOffsetY = 1;
         this.ctx.shadowBlur = 2;
         
-        this.ctx.fillText(userName, 0, 0);
+        // Convert to uppercase and draw
+        this.ctx.fillText(userName.toUpperCase(), 0, 0);
         
         // Reset shadow
         this.ctx.shadowColor = 'transparent';
@@ -473,7 +474,7 @@ class SnapMagicTemplateSystem {
         this.ctx.shadowBlur = 0;
         
         this.ctx.restore();
-        console.log(`✅ Left panel user name drawn: "${userName}"`);
+        console.log(`✅ Left panel user name drawn: "${userName.toUpperCase()}" (uppercase, 20px font)`);
     }
     
     /**
