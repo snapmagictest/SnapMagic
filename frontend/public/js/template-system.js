@@ -489,20 +489,10 @@ class SnapMagicTemplateSystem {
                 const logoX = -logoSize.width / 2;
                 const logoY = -logoSize.height / 2;
                 
-                // Enhanced glow effect
-                this.ctx.shadowColor = 'rgba(255, 255, 255, 0.6)';
-                this.ctx.shadowOffsetX = 0;
-                this.ctx.shadowOffsetY = 0;
-                this.ctx.shadowBlur = 12;
-                
-                // Draw the properly sized AWS logo
+                // Draw the properly sized AWS logo (no glow for print quality)
                 this.ctx.imageSmoothingEnabled = true;
                 this.ctx.imageSmoothingQuality = 'high';
                 this.ctx.drawImage(awsLogo, logoX, logoY, logoSize.width, logoSize.height);
-                
-                // Reset shadow
-                this.ctx.shadowColor = 'transparent';
-                this.ctx.shadowBlur = 0;
                 
                 this.ctx.restore();
                 console.log(`✅ Right panel AWS logo drawn with universal sizing`);
@@ -713,22 +703,10 @@ class SnapMagicTemplateSystem {
                 const drawX = x + (maxSize - logoSize.width) / 2;
                 const drawY = y + (maxSize - logoSize.height) / 2;
                 
-                // Add subtle drop shadow for logos
-                this.ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
-                this.ctx.shadowOffsetX = 2;
-                this.ctx.shadowOffsetY = 2;
-                this.ctx.shadowBlur = 4;
-                
-                // Draw the logo with high quality
+                // Draw the logo with high quality (no glow effects for print quality)
                 this.ctx.imageSmoothingEnabled = true;
                 this.ctx.imageSmoothingQuality = 'high';
                 this.ctx.drawImage(logoImg, drawX, drawY, logoSize.width, logoSize.height);
-                
-                // Reset shadow
-                this.ctx.shadowColor = 'transparent';
-                this.ctx.shadowOffsetX = 0;
-                this.ctx.shadowOffsetY = 0;
-                this.ctx.shadowBlur = 0;
                 
                 console.log(`✅ Logo ${alt} drawn with universal sizing at (${drawX.toFixed(1)}, ${drawY.toFixed(1)})`);
                 resolve();
@@ -801,20 +779,10 @@ class SnapMagicTemplateSystem {
                 const logoX = (this.TEMPLATE_WIDTH - logoWidth) / 2;
                 const logoY = footerY + (this.FOOTER_HEIGHT - logoHeight) / 2;
                 
-                // Enhanced glow effect (keep the glow you like!)
-                this.ctx.shadowColor = 'rgba(255, 255, 255, 0.5)';
-                this.ctx.shadowOffsetX = 0;
-                this.ctx.shadowOffsetY = 0;
-                this.ctx.shadowBlur = 12; // Slightly more glow for bigger logo
-                
-                // Draw the new stacked AWS logo with high quality
+                // Draw the new stacked AWS logo with high quality (no glow for print quality)
                 this.ctx.imageSmoothingEnabled = true;
                 this.ctx.imageSmoothingQuality = 'high';
                 this.ctx.drawImage(awsLogo, logoX, logoY, logoWidth, logoHeight);
-                
-                // Reset shadow
-                this.ctx.shadowColor = 'transparent';
-                this.ctx.shadowBlur = 0;
                 
                 console.log(`✅ Footer AWS logo drawn bigger with glow (${logoWidth}x${logoHeight})`);
                 resolve();
