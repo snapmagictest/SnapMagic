@@ -584,35 +584,6 @@ class SnapMagicTemplateSystem {
     }
             
     /**
-     * Draw enhanced design when no logos are present
-     */
-    async drawNoLogosDesign() {
-        // Add decorative elements to make the header more interesting without logos
-        const centerX = this.TEMPLATE_WIDTH / 2;
-        const decorativeY = 10 + this.EVENT_TEXT_HEIGHT + 20;
-        
-        // Draw subtle decorative line
-        this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
-        this.ctx.lineWidth = 2;
-        this.ctx.beginPath();
-        this.ctx.moveTo(centerX - 60, decorativeY);
-        this.ctx.lineTo(centerX + 60, decorativeY);
-        this.ctx.stroke();
-        
-        // Add small decorative dots
-        this.ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
-        this.ctx.beginPath();
-        this.ctx.arc(centerX - 70, decorativeY, 3, 0, 2 * Math.PI);
-        this.ctx.fill();
-        
-        this.ctx.beginPath();
-        this.ctx.arc(centerX + 70, decorativeY, 3, 0, 2 * Math.PI);
-        this.ctx.fill();
-        
-        console.log('✨ Clean event-only design applied with decorative watermark!');
-    }
-    
-    /**
      * Draw logos directly in header panel with flexible spacing
      * @param {Array} logos - Array of logo objects to draw
      */
@@ -775,9 +746,9 @@ class SnapMagicTemplateSystem {
                     }
                 }
                 
-                // Center the logo in the footer
+                // Center the logo in the footer (fix vertical centering)
                 const logoX = (this.TEMPLATE_WIDTH - logoWidth) / 2;
-                const logoY = footerY + (this.FOOTER_HEIGHT - logoHeight) / 2;
+                const logoY = footerY + (this.FOOTER_HEIGHT - logoHeight) / 2 - 5; // Adjust up by 5px from bottom
                 
                 // Draw the new stacked AWS logo with high quality (no glow for print quality)
                 this.ctx.imageSmoothingEnabled = true;
