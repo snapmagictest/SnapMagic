@@ -541,8 +541,8 @@ class SnapMagicTemplateSystem {
                 resolve();
             };
             
-            // Use the same AWS logo source as right panel
-            awsLogo.src = 'https://upload.wikimedia.org/wikipedia/commons/9/93/Amazon_Web_Services_Logo.svg';
+            // Use the EXACT same AWS logo source as right panel
+            awsLogo.src = 'powered-by-aws-white-horizontal.png';
         });
     }
     
