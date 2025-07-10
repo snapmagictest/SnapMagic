@@ -33,41 +33,85 @@ def load_limits() -> Dict[str, int]:
         logger.error(f"Failed to load limits: {str(e)}")
         return {'cards': 5, 'videos': 3}  # Safe defaults
 
-def check_usage_limit(username: str, generation_type: str) -> bool:
-    """Check if user has exceeded usage limits"""
+def check_usage_limit(username: str, generation_type: str, request_headers: Dict[str, str] = None) -> bool:
+    """Check if user has exceeded usage limits using browser fingerprinting"""
     limits = load_limits()
     
-    if username not in usage_counts:
-        usage_counts[username] = {'cards': 0, 'videos': 0}
+    # Generate session key from browser fingerprinting data
+    session_key = generate_session_key(request_headers or {})
     
-    current_count = usage_counts[username].get(generation_type, 0)
+    if session_key not in usage_counts:
+        usage_counts[session_key] = {'cards': 0, 'videos': 0}
+    
+    current_count = usage_counts[session_key].get(generation_type, 0)
     limit = limits.get(generation_type, 5)
     
-    logger.info(f"Usage check - User: {username}, Type: {generation_type}, Count: {current_count}, Limit: {limit}")
+    logger.info(f"Usage check - Session: {session_key[:8]}..., Type: {generation_type}, Count: {current_count}, Limit: {limit}")
     return current_count < limit
 
-def increment_usage(username: str, generation_type: str):
-    """Increment usage count for user"""
-    if username not in usage_counts:
-        usage_counts[username] = {'cards': 0, 'videos': 0}
+def increment_usage(username: str, generation_type: str, request_headers: Dict[str, str] = None):
+    """Increment usage count for session"""
+    session_key = generate_session_key(request_headers or {})
     
-    usage_counts[username][generation_type] = usage_counts[username].get(generation_type, 0) + 1
-    logger.info(f"Usage incremented - User: {username}, Type: {generation_type}, New count: {usage_counts[username][generation_type]}")
+    if session_key not in usage_counts:
+        usage_counts[session_key] = {'cards': 0, 'videos': 0}
+    
+    usage_counts[session_key][generation_type] = usage_counts[session_key].get(generation_type, 0) + 1
+    logger.info(f"Usage incremented - Session: {session_key[:8]}..., Type: {generation_type}, New count: {usage_counts[session_key][generation_type]}")
 
-def get_remaining_usage(username: str) -> Dict[str, int]:
-    """Get remaining usage for user"""
+def get_remaining_usage(username: str, request_headers: Dict[str, str] = None) -> Dict[str, int]:
+    """Get remaining usage for session"""
     limits = load_limits()
+    session_key = generate_session_key(request_headers or {})
     
-    if username not in usage_counts:
-        usage_counts[username] = {'cards': 0, 'videos': 0}
+    if session_key not in usage_counts:
+        usage_counts[session_key] = {'cards': 0, 'videos': 0}
     
-    used = usage_counts[username]
+    used = usage_counts[session_key]
     remaining = {
         'cards': max(0, limits['cards'] - used.get('cards', 0)),
         'videos': max(0, limits['videos'] - used.get('videos', 0))
     }
     
     return remaining
+
+def generate_session_key(request_headers: Dict[str, str]) -> str:
+    """Generate unique session key from browser fingerprinting data"""
+    import hashlib
+    
+    # Collect browser fingerprinting data
+    fingerprint_data = []
+    
+    # User-Agent (most important)
+    user_agent = request_headers.get('User-Agent', request_headers.get('user-agent', ''))
+    fingerprint_data.append(user_agent)
+    
+    # Accept headers
+    accept = request_headers.get('Accept', request_headers.get('accept', ''))
+    fingerprint_data.append(accept)
+    
+    # Accept-Language
+    accept_lang = request_headers.get('Accept-Language', request_headers.get('accept-language', ''))
+    fingerprint_data.append(accept_lang)
+    
+    # Accept-Encoding
+    accept_encoding = request_headers.get('Accept-Encoding', request_headers.get('accept-encoding', ''))
+    fingerprint_data.append(accept_encoding)
+    
+    # X-Forwarded-For (IP info)
+    x_forwarded = request_headers.get('X-Forwarded-For', request_headers.get('x-forwarded-for', ''))
+    fingerprint_data.append(x_forwarded)
+    
+    # CloudFront-Viewer-Country
+    cf_country = request_headers.get('CloudFront-Viewer-Country', request_headers.get('cloudfront-viewer-country', ''))
+    fingerprint_data.append(cf_country)
+    
+    # Create hash of all fingerprint data
+    fingerprint_string = '|'.join(fingerprint_data)
+    session_hash = hashlib.sha256(fingerprint_string.encode()).hexdigest()
+    
+    logger.info(f"Generated session key: {session_hash[:8]}... from fingerprint data")
+    return session_hash
 
 def load_event_credentials() -> Dict[str, str]:
     """Load event credentials from environment variables (set by CDK from secrets.json)"""
@@ -192,8 +236,9 @@ def lambda_handler(event, context):
             username = token_payload.get('username', 'unknown')
             
             # Check usage limits
-            if not check_usage_limit(username, 'cards'):
-                remaining = get_remaining_usage(username)
+            request_headers = event.get('headers', {})
+            if not check_usage_limit(username, 'cards', request_headers):
+                remaining = get_remaining_usage(username, request_headers)
                 return create_error_response(
                     f"Card generation limit reached. You have {remaining['cards']} cards and {remaining['videos']} videos remaining.", 
                     429
@@ -214,8 +259,8 @@ def lambda_handler(event, context):
                 
                 if result['success']:
                     # Increment usage count
-                    increment_usage(username, 'cards')
-                    remaining = get_remaining_usage(username)
+                    increment_usage(username, 'cards', request_headers)
+                    remaining = get_remaining_usage(username, request_headers)
                     
                     # Return in format frontend expects
                     return create_success_response({
@@ -280,8 +325,9 @@ def lambda_handler(event, context):
             username = token_payload.get('username', 'unknown')
             
             # Check usage limits
-            if not check_usage_limit(username, 'videos'):
-                remaining = get_remaining_usage(username)
+            request_headers = event.get('headers', {})
+            if not check_usage_limit(username, 'videos', request_headers):
+                remaining = get_remaining_usage(username, request_headers)
                 return create_error_response(
                     f"Video generation limit reached. You have {remaining['cards']} cards and {remaining['videos']} videos remaining.", 
                     429
@@ -318,8 +364,8 @@ def lambda_handler(event, context):
                 
                 if result['success']:
                     # Increment usage count
-                    increment_usage(username, 'videos')
-                    remaining = get_remaining_usage(username)
+                    increment_usage(username, 'videos', request_headers)
+                    remaining = get_remaining_usage(username, request_headers)
                     
                     logger.info("✅ Video generation successful")
                     return create_success_response({
