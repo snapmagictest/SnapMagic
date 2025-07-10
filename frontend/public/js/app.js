@@ -15,6 +15,12 @@ class SnapMagicApp {
         this.generatedCardData = null;
         this.videoGenerationInProgress = false;
         
+        // Usage tracking
+        this.usageLimits = {
+            cards: { used: 0, total: 5 },
+            videos: { used: 0, total: 3 }
+        };
+        
         // Initialize app
         this.init();
     }
@@ -64,6 +70,10 @@ class SnapMagicApp {
             downloadBtn: document.getElementById('downloadBtn'),
             createVideoBtn: document.getElementById('createVideoBtn'),
             createAnotherBtn: document.getElementById('createAnotherBtn'),
+            
+            // Usage limits display
+            cardUsage: document.getElementById('cardUsage'),
+            videoUsage: document.getElementById('videoUsage'),
             
             // Video generation
             videoSection: document.getElementById('videoSection'),
@@ -168,6 +178,9 @@ class SnapMagicApp {
     showMainApp() {
         this.elements.loginScreen.classList.add('hidden');
         this.elements.mainApp.style.display = 'block';
+        
+        // Initialize usage limits display
+        this.initializeUsageLimits();
     }
 
     // Tab Management
@@ -267,6 +280,68 @@ class SnapMagicApp {
         this.switchTab('instructions');
         this.clearResults();
         this.showLogin();
+    }
+
+    // Usage Limits Management
+    updateUsageLimits(remaining) {
+        if (remaining) {
+            this.usageLimits.cards.used = this.usageLimits.cards.total - remaining.cards;
+            this.usageLimits.videos.used = this.usageLimits.videos.total - remaining.videos;
+            this.displayUsageLimits();
+        }
+    }
+
+    displayUsageLimits() {
+        if (this.elements.cardUsage && this.elements.videoUsage) {
+            const cardRemaining = this.usageLimits.cards.total - this.usageLimits.cards.used;
+            const videoRemaining = this.usageLimits.videos.total - this.usageLimits.videos.used;
+            
+            // Update card usage display
+            this.elements.cardUsage.innerHTML = `<span class="usage-count ${this.getUsageClass(cardRemaining, this.usageLimits.cards.total)}">${cardRemaining} of ${this.usageLimits.cards.total} remaining</span>`;
+            
+            // Update video usage display  
+            this.elements.videoUsage.innerHTML = `<span class="usage-count ${this.getUsageClass(videoRemaining, this.usageLimits.videos.total)}">${videoRemaining} of ${this.usageLimits.videos.total} remaining</span>`;
+            
+            // Update button states
+            this.updateButtonStates(cardRemaining, videoRemaining);
+        }
+    }
+
+    getUsageClass(remaining, total) {
+        const percentage = remaining / total;
+        if (remaining === 0) return 'danger';
+        if (percentage <= 0.3) return 'warning';
+        return 'success';
+    }
+
+    updateButtonStates(cardRemaining, videoRemaining) {
+        // Update generate card button
+        if (this.elements.generateBtn) {
+            if (cardRemaining <= 0) {
+                this.elements.generateBtn.disabled = true;
+                this.elements.generateBtn.innerHTML = '🚫 Card Limit Reached';
+            } else {
+                this.elements.generateBtn.disabled = false;
+                this.elements.generateBtn.innerHTML = '🎨 Generate Trading Card';
+            }
+        }
+        
+        // Update create video button
+        if (this.elements.createVideoBtn) {
+            if (videoRemaining <= 0) {
+                this.elements.createVideoBtn.disabled = true;
+                this.elements.createVideoBtn.innerHTML = '🚫 Video Limit Reached';
+            } else {
+                this.elements.createVideoBtn.disabled = false;
+                this.elements.createVideoBtn.innerHTML = '🎬 Create Video';
+            }
+        }
+    }
+
+    initializeUsageLimits() {
+        // Set initial display
+        this.elements.cardUsage.innerHTML = `<span class="usage-count success">${this.usageLimits.cards.total} of ${this.usageLimits.cards.total} remaining</span>`;
+        this.elements.videoUsage.innerHTML = `<span class="usage-count success">${this.usageLimits.videos.total} of ${this.usageLimits.videos.total} remaining</span>`;
     }
 
     // Card Generation
@@ -436,13 +511,25 @@ class SnapMagicApp {
             
             if (data.success && data.metadata?.invocation_arn) {
                 console.log('✅ Video generation initiated');
+                
+                // Update usage limits from API response
+                if (data.remaining) {
+                    this.updateUsageLimits(data.remaining);
+                }
+                
                 const invocationArn = data.metadata.invocation_arn;
                 console.log('🔍 Using full invocation ARN:', invocationArn);
                 this.startVideoPolling(invocationArn, data.metadata);
             } else {
                 console.error('❌ Video generation failed:', data.error);
                 this.hideProcessing();
-                this.showError(data.error || 'Video generation failed. Please try again.');
+                
+                // Check for limit reached error
+                if (response.status === 429) {
+                    this.showError(`🚫 Video Generation Limit Reached\n\n${data.error}\n\nLimits reset when the event system restarts. Contact event staff if you need assistance.`);
+                } else {
+                    this.showError(data.error || 'Video generation failed. Please try again.');
+                }
                 this.videoGenerationInProgress = false;
             }
         } catch (error) {
@@ -865,14 +952,22 @@ class SnapMagicApp {
             if (data.success) {
                 console.log('✅ Card generation successful');
                 this.generatedCardData = data;
+                
+                // Update usage limits from API response
+                if (data.remaining) {
+                    this.updateUsageLimits(data.remaining);
+                }
+                
                 this.displayGeneratedCard(data, userName);
                 this.hideProcessing();
             } else {
                 console.error('❌ Card generation failed:', data.error);
                 this.hideProcessing();
                 
-                // Check for content filter message specifically
-                if (data.error && data.error.includes('content filters')) {
+                // Check for limit reached error
+                if (response.status === 429) {
+                    this.showError(`🚫 Generation Limit Reached\n\n${data.error}\n\nLimits reset when the event system restarts. Contact event staff if you need assistance.`);
+                } else if (data.error && data.error.includes('content filters')) {
                     this.showError(`🚫 Content Blocked by AI Safety Filters\n\n${data.error}\n\nPlease try a different prompt that doesn't include potentially sensitive content.`);
                 } else {
                     this.showError(data.error || 'Card generation failed. Please try again.');

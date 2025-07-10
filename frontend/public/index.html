@@ -839,6 +839,65 @@
             box-shadow: none;
         }
 
+        /* Usage Limits Display */
+        .usage-limits {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius-md);
+            padding: 1rem;
+            margin: 1.5rem 0;
+            backdrop-filter: blur(8px);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .usage-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex: 1;
+        }
+
+        .usage-icon {
+            font-size: 1.2rem;
+        }
+
+        .usage-text {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .usage-count {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .usage-count.warning {
+            color: #ffa726;
+        }
+
+        .usage-count.danger {
+            color: #ef5350;
+        }
+
+        .usage-count.success {
+            color: #66bb6a;
+        }
+
+        @media (max-width: 768px) {
+            .usage-limits {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            
+            .usage-item {
+                justify-content: center;
+            }
+        }
+
         .result-image {
             width: 100%;
             max-width: 400px;
@@ -1318,6 +1377,18 @@
                                 <button class="example-btn" data-prompt="A cyberpunk samurai with glowing neon katana standing in rain-soaked Tokyo streets">⚡ Neon Samurai</button>
                                 <button class="example-btn" data-prompt="Majestic dragon emerging from swirling portal of cosmic energy and stardust">🌌 Cosmic Dragon</button>
                                 <button class="example-btn" data-prompt="Steampunk airship captain with mechanical arm and brass goggles in stormy skies">⚙️ Sky Captain</button>
+                            </div>
+                        </div>
+                        
+                        <!-- Usage Limits Display -->
+                        <div id="usageLimits" class="usage-limits">
+                            <div class="usage-item">
+                                <span class="usage-icon">🎴</span>
+                                <span class="usage-text">Cards: <span id="cardUsage">Loading...</span></span>
+                            </div>
+                            <div class="usage-item">
+                                <span class="usage-icon">🎬</span>
+                                <span class="usage-text">Videos: <span id="videoUsage">Loading...</span></span>
                             </div>
                         </div>
                         
