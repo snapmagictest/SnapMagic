@@ -219,7 +219,10 @@ frontend:
         NOVA_REEL_MODEL: inputs.novaReelModel,
         // Template configuration from secrets.json
         TEMPLATE_EVENT_NAME: inputs.cardTemplate?.eventName || 'AWS Event',
-        TEMPLATE_LOGOS_JSON: JSON.stringify(inputs.cardTemplate?.logos || [])
+        TEMPLATE_LOGOS_JSON: JSON.stringify(inputs.cardTemplate?.logos || []),
+        // Usage limits from secrets.json
+        CARDS_PER_USER: String(inputs.limits?.cardsPerUser || 5),
+        VIDEOS_PER_USER: String(inputs.limits?.videosPerUser || 3)
       },
       description: 'SnapMagic AI backend - Trading Cards & Video Generation'
     });

@@ -32,7 +32,8 @@ function loadSecretsConfig(): DeploymentInputs | null {
         basicAuthPassword: secrets.app.passwordProtection.password,
         novaCanvasModel: secrets.models.novaCanvas,
         novaReelModel: secrets.models.novaReel,
-        cardTemplate: secrets.cardTemplate || undefined  // Include cardTemplate section
+        cardTemplate: secrets.cardTemplate || undefined,  // Include cardTemplate section
+        limits: secrets.limits || undefined  // Include limits section
       };
     }
     return null;

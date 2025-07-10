@@ -15,6 +15,60 @@ from video_generator import VideoGenerator
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
+# Simple usage tracking in Lambda memory
+usage_counts = {}
+
+def load_limits() -> Dict[str, int]:
+    """Load usage limits from environment variables (set by CDK from secrets.json)"""
+    try:
+        cards_limit = int(os.environ.get('CARDS_PER_USER', '5'))
+        videos_limit = int(os.environ.get('VIDEOS_PER_USER', '3'))
+        
+        logger.info(f"Usage limits loaded - Cards: {cards_limit}, Videos: {videos_limit}")
+        return {
+            'cards': cards_limit,
+            'videos': videos_limit
+        }
+    except Exception as e:
+        logger.error(f"Failed to load limits: {str(e)}")
+        return {'cards': 5, 'videos': 3}  # Safe defaults
+
+def check_usage_limit(username: str, generation_type: str) -> bool:
+    """Check if user has exceeded usage limits"""
+    limits = load_limits()
+    
+    if username not in usage_counts:
+        usage_counts[username] = {'cards': 0, 'videos': 0}
+    
+    current_count = usage_counts[username].get(generation_type, 0)
+    limit = limits.get(generation_type, 5)
+    
+    logger.info(f"Usage check - User: {username}, Type: {generation_type}, Count: {current_count}, Limit: {limit}")
+    return current_count < limit
+
+def increment_usage(username: str, generation_type: str):
+    """Increment usage count for user"""
+    if username not in usage_counts:
+        usage_counts[username] = {'cards': 0, 'videos': 0}
+    
+    usage_counts[username][generation_type] = usage_counts[username].get(generation_type, 0) + 1
+    logger.info(f"Usage incremented - User: {username}, Type: {generation_type}, New count: {usage_counts[username][generation_type]}")
+
+def get_remaining_usage(username: str) -> Dict[str, int]:
+    """Get remaining usage for user"""
+    limits = load_limits()
+    
+    if username not in usage_counts:
+        usage_counts[username] = {'cards': 0, 'videos': 0}
+    
+    used = usage_counts[username]
+    remaining = {
+        'cards': max(0, limits['cards'] - used.get('cards', 0)),
+        'videos': max(0, limits['videos'] - used.get('videos', 0))
+    }
+    
+    return remaining
+
 def load_event_credentials() -> Dict[str, str]:
     """Load event credentials from environment variables (set by CDK from secrets.json)"""
     try:
@@ -135,6 +189,16 @@ def lambda_handler(event, context):
         # REPLACES OLD FUNKOPOP FUNCTIONALITY
         # ========================================
         if action == 'transform_card':
+            username = token_payload.get('username', 'unknown')
+            
+            # Check usage limits
+            if not check_usage_limit(username, 'cards'):
+                remaining = get_remaining_usage(username)
+                return create_error_response(
+                    f"Card generation limit reached. You have {remaining['cards']} cards and {remaining['videos']} videos remaining.", 
+                    429
+                )
+            
             prompt = body.get('prompt', '')
             if not prompt:
                 return create_error_response("Missing prompt parameter", 400)
@@ -149,13 +213,18 @@ def lambda_handler(event, context):
                 result = card_generator.generate_trading_card(prompt)
                 
                 if result['success']:
+                    # Increment usage count
+                    increment_usage(username, 'cards')
+                    remaining = get_remaining_usage(username)
+                    
                     # Return in format frontend expects
                     return create_success_response({
                         'success': True,
                         'message': 'Trading card generated successfully',
                         'result': result['result'],  # Base64 image data
                         'imageSrc': result.get('imageSrc'),  # Data URL for frontend
-                        'metadata': result.get('metadata', {})
+                        'metadata': result.get('metadata', {}),
+                        'remaining': remaining  # Add remaining counts
                     })
                 else:
                     return create_error_response(f"Generation failed: {result.get('error', 'Unknown error')}", 500)
@@ -208,6 +277,16 @@ def lambda_handler(event, context):
         # ANIMATE TRADING CARDS WITH S3 STORAGE
         # ========================================
         elif action == 'generate_video':
+            username = token_payload.get('username', 'unknown')
+            
+            # Check usage limits
+            if not check_usage_limit(username, 'videos'):
+                remaining = get_remaining_usage(username)
+                return create_error_response(
+                    f"Video generation limit reached. You have {remaining['cards']} cards and {remaining['videos']} videos remaining.", 
+                    429
+                )
+            
             card_image = body.get('card_image', '')
             animation_prompt = body.get('animation_prompt', '')
             
@@ -238,12 +317,17 @@ def lambda_handler(event, context):
                 logger.info(f"🎬 Video generation result: {result.get('success', False)}")
                 
                 if result['success']:
+                    # Increment usage count
+                    increment_usage(username, 'videos')
+                    remaining = get_remaining_usage(username)
+                    
                     logger.info("✅ Video generation successful")
                     return create_success_response({
                         'success': True,
                         'message': 'Video generation started successfully',
                         'result': result.get('video_base64'),
                         'video_url': result.get('video_url'),
+                        'remaining': remaining,  # Add remaining counts
                         'metadata': {
                             'video_id': result.get('video_id'),
                             'invocation_arn': result.get('invocation_arn'),
