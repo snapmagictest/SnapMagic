@@ -48,8 +48,29 @@ def get_client_ip(request_headers: Dict[str, str]) -> str:
     # Last resort - use a default
     return 'unknown'
 
-def get_usage_from_s3(client_ip: str) -> Dict[str, int]:
-    """Count existing cards and videos for IP address by checking S3 files"""
+def get_session_identifier(request_headers: Dict[str, str]) -> str:
+    """
+    Generate a more robust session identifier for shared IP scenarios
+    Combines IP with basic browser info to handle incognito/shared IPs better
+    """
+    import hashlib
+    
+    # Get base IP
+    client_ip = get_client_ip(request_headers)
+    
+    # Add minimal browser fingerprinting for shared IP disambiguation
+    user_agent = request_headers.get('User-Agent', request_headers.get('user-agent', ''))[:100]  # Truncate
+    accept_lang = request_headers.get('Accept-Language', request_headers.get('accept-language', ''))[:50]  # Truncate
+    
+    # Create a session hash (not for security, just for disambiguation)
+    session_data = f"{client_ip}|{user_agent}|{accept_lang}"
+    session_hash = hashlib.md5(session_data.encode()).hexdigest()[:8]  # Short hash
+    
+    # Return IP with session suffix for better shared IP handling
+    return f"{client_ip}_{session_hash}"
+
+def get_usage_from_s3(session_id: str) -> Dict[str, int]:
+    """Count existing cards and videos for session ID by checking S3 files"""
     try:
         import boto3
         s3_client = boto3.client('s3')
@@ -59,49 +80,49 @@ def get_usage_from_s3(client_ip: str) -> Dict[str, int]:
             logger.warning("S3_BUCKET_NAME not configured")
             return {'cards': 0, 'videos': 0}
         
-        # Count cards for this IP
+        # Count cards for this session
         cards_response = s3_client.list_objects_v2(
             Bucket=bucket_name,
-            Prefix=f'cards/{client_ip}_card_'
+            Prefix=f'cards/{session_id}_card_'
         )
         cards_count = len(cards_response.get('Contents', []))
         
-        # Count videos for this IP  
+        # Count videos for this session  
         videos_response = s3_client.list_objects_v2(
             Bucket=bucket_name,
-            Prefix=f'videos/{client_ip}_video_'
+            Prefix=f'videos/{session_id}_video_'
         )
         videos_count = len(videos_response.get('Contents', []))
         
-        logger.info(f"IP {client_ip} usage: {cards_count} cards, {videos_count} videos")
+        logger.info(f"Session {session_id} usage: {cards_count} cards, {videos_count} videos")
         return {'cards': cards_count, 'videos': videos_count}
         
     except Exception as e:
-        logger.error(f"Failed to get S3 usage for IP {client_ip}: {str(e)}")
+        logger.error(f"Failed to get S3 usage for session {session_id}: {str(e)}")
         return {'cards': 0, 'videos': 0}
 
-def check_usage_limit(client_ip: str, generation_type: str) -> bool:
-    """Check if IP has exceeded usage limits by counting S3 files"""
+def check_usage_limit(session_id: str, generation_type: str) -> bool:
+    """Check if session has exceeded usage limits by counting S3 files"""
     limits = load_limits()
-    current_usage = get_usage_from_s3(client_ip)
+    current_usage = get_usage_from_s3(session_id)
     
     current_count = current_usage.get(generation_type, 0)
     limit = limits.get(generation_type, 5)
     
-    logger.info(f"Usage check - IP: {client_ip}, Type: {generation_type}, Count: {current_count}, Limit: {limit}")
+    logger.info(f"Usage check - Session: {session_id}, Type: {generation_type}, Count: {current_count}, Limit: {limit}")
     return current_count < limit
 
-def get_remaining_usage(client_ip: str) -> Dict[str, int]:
-    """Get remaining usage for IP by counting S3 files"""
+def get_remaining_usage(session_id: str) -> Dict[str, int]:
+    """Get remaining usage for session by counting S3 files"""
     limits = load_limits()
-    current_usage = get_usage_from_s3(client_ip)
+    current_usage = get_usage_from_s3(session_id)
     
     remaining = {
         'cards': max(0, limits['cards'] - current_usage.get('cards', 0)),
         'videos': max(0, limits['videos'] - current_usage.get('videos', 0))
     }
     
-    logger.info(f"IP {client_ip} remaining: {remaining}")
+    logger.info(f"Session {session_id} remaining: {remaining}")
     return remaining
 
 def load_event_credentials() -> Dict[str, str]:
@@ -193,12 +214,13 @@ def lambda_handler(event, context):
                 auth_handler = SnapMagicAuthSimple()
                 token = auth_handler.generate_token(username)
                 
-                # Get client IP and check usage limits
+                # Get session identifier and check usage limits
                 request_headers = event.get('headers', {})
+                session_id = get_session_identifier(request_headers)
                 client_ip = get_client_ip(request_headers)
-                remaining_usage = get_remaining_usage(client_ip)
+                remaining_usage = get_remaining_usage(session_id)
                 
-                logger.info(f"Login successful for IP {client_ip}, remaining usage: {remaining_usage}")
+                logger.info(f"Login successful for session {session_id} (IP: {client_ip}), remaining usage: {remaining_usage}")
                 
                 return create_success_response({
                     'success': True,  # Frontend expects this field
@@ -207,6 +229,7 @@ def lambda_handler(event, context):
                     'expires_in': 86400,  # 24 hours
                     'user': {'username': username},
                     'remaining': remaining_usage,  # Include usage info at login
+                    'session_id': session_id,  # For debugging
                     'client_ip': client_ip  # For debugging
                 })
             else:
@@ -237,20 +260,19 @@ def lambda_handler(event, context):
         if action == 'transform_card':
             username = token_payload.get('username', 'unknown')
             
-            # Get client IP and check usage limits
+            # Get session identifier and check usage limits
             request_headers = event.get('headers', {})
+            session_id = get_session_identifier(request_headers)
             client_ip = get_client_ip(request_headers)
             
-            if not check_usage_limit(client_ip, 'cards'):
-                remaining = get_remaining_usage(client_ip)
+            if not check_usage_limit(session_id, 'cards'):
+                remaining = get_remaining_usage(session_id)
                 return create_error_response(
-                    f"Card generation limit reached for your IP address. You have {remaining['cards']} cards and {remaining['videos']} videos remaining.", 
+                    f"Card generation limit reached for your session. You have {remaining['cards']} cards and {remaining['videos']} videos remaining.", 
                     429
                 )
             
             prompt = body.get('prompt', '')
-            user_name = body.get('user_name', '')
-            
             if not prompt:
                 return create_error_response("Missing prompt parameter", 400)
             
@@ -260,27 +282,15 @@ def lambda_handler(event, context):
                 return create_error_response(error_msg, 400)
             
             try:
-                # Generate trading card
+                # Generate trading card (raw Nova Canvas image)
                 result = card_generator.generate_trading_card(prompt)
                 
                 if result['success']:
-                    # Immediately store the raw card in S3 with IP-based filename
-                    # This ensures usage counting is accurate
-                    store_result = card_generator.store_final_card_in_s3(
-                        result['result'],  # Raw Nova Canvas image
-                        prompt,
-                        user_name,
-                        username,
-                        client_ip
-                    )
+                    # Don't store here - let frontend store the final composited card
+                    # This ensures we store what the user actually downloads
                     
-                    if store_result['success']:
-                        logger.info(f"✅ Card stored in S3: {store_result['s3_key']}")
-                    else:
-                        logger.warning(f"⚠️ Failed to store card in S3: {store_result['error']}")
-                    
-                    # Get updated remaining usage (will be recalculated from S3)
-                    remaining = get_remaining_usage(client_ip)
+                    # Get current remaining usage (before increment)
+                    remaining = get_remaining_usage(session_id)
                     
                     # Return in format frontend expects
                     return create_success_response({
@@ -289,9 +299,9 @@ def lambda_handler(event, context):
                         'result': result['result'],  # Base64 image data
                         'imageSrc': result.get('imageSrc'),  # Data URL for frontend
                         'metadata': result.get('metadata', {}),
-                        'remaining': remaining,  # Updated remaining counts
-                        'client_ip': client_ip,  # For debugging
-                        's3_stored': store_result['success']  # Indicate if S3 storage worked
+                        'remaining': remaining,  # Current remaining counts
+                        'session_id': session_id,  # For debugging
+                        'client_ip': client_ip  # For debugging
                     })
                 else:
                     return create_error_response(f"Generation failed: {result.get('error', 'Unknown error')}", 500)
@@ -429,17 +439,18 @@ def lambda_handler(event, context):
                 return create_error_response("Missing final_card_base64 parameter", 400)
             
             try:
-                # Get client IP for filename
+                # Get session identifier for filename
                 request_headers = event.get('headers', {})
+                session_id = get_session_identifier(request_headers)
                 client_ip = get_client_ip(request_headers)
                 
-                # Store final card in S3 cards/ folder with IP-based filename
+                # Store final card in S3 cards/ folder with session-based filename
                 result = card_generator.store_final_card_in_s3(
                     final_card_base64, 
                     prompt, 
                     user_name, 
                     username,
-                    client_ip  # Pass IP for filename generation
+                    session_id  # Pass session ID for filename generation
                 )
                 
                 if result['success']:

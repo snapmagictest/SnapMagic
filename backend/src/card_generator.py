@@ -224,16 +224,16 @@ class TradingCardGenerator:
             'error': error_message
         }
     
-    def store_final_card_in_s3(self, final_card_base64: str, prompt: str, user_name: str, username: str, client_ip: str) -> Dict[str, Any]:
+    def store_final_card_in_s3(self, final_card_base64: str, prompt: str, user_name: str, username: str, session_id: str) -> Dict[str, Any]:
         """
-        Store the final composited trading card in S3 cards/ folder with IP-based filename
+        Store the final composited trading card in S3 cards/ folder with session-based filename
         
         Args:
             final_card_base64: Base64 encoded final composited card
             prompt: Original user prompt
             user_name: Name on the card (or empty for AWS logo)
             username: Authenticated username
-            client_ip: Client IP address for filename
+            session_id: Session identifier (IP + browser hash for shared IP handling)
             
         Returns:
             Dictionary containing success status and S3 key/URL
@@ -251,18 +251,18 @@ class TradingCardGenerator:
             # Decode base64 image data
             image_data = base64.b64decode(final_card_base64)
             
-            # Count existing cards for this IP to get next number
+            # Count existing cards for this session to get next number
             existing_cards = self.s3_client.list_objects_v2(
                 Bucket=self.s3_bucket,
-                Prefix=f'cards/{client_ip}_card_'
+                Prefix=f'cards/{session_id}_card_'
             )
             card_count = len(existing_cards.get('Contents', [])) + 1  # Next card number
             
             # Generate timestamp
             timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
             
-            # Create IP-based filename: IP_card_COUNT_timestamp.png
-            filename = f"{client_ip}_card_{card_count}_{timestamp}.png"
+            # Create session-based filename: SESSION_card_COUNT_timestamp.png
+            filename = f"{session_id}_card_{card_count}_{timestamp}.png"
             s3_key = f"cards/{filename}"
             
             # Upload to S3
@@ -274,7 +274,7 @@ class TradingCardGenerator:
                 Body=image_data,
                 ContentType='image/png',
                 Metadata={
-                    'client_ip': client_ip,
+                    'session_id': session_id,
                     'card_number': str(card_count),
                     'user_name': user_name or 'AWS_Logo',
                     'username': username,
@@ -286,7 +286,7 @@ class TradingCardGenerator:
             # Generate S3 URL
             s3_url = f"https://{self.s3_bucket}.s3.amazonaws.com/{s3_key}"
             
-            logger.info(f"✅ Final card stored successfully: {s3_key} (Card #{card_count} for IP {client_ip})")
+            logger.info(f"✅ Final card stored successfully: {s3_key} (Card #{card_count} for session {session_id})")
             
             return {
                 'success': True,
@@ -294,7 +294,7 @@ class TradingCardGenerator:
                 's3_url': s3_url,
                 'filename': filename,
                 'card_number': card_count,
-                'client_ip': client_ip
+                'session_id': session_id
             }
             
         except Exception as e:

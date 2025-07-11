@@ -415,8 +415,8 @@ class SnapMagicApp {
                 finalImageSrc: finalImageSrc
             };
             
-            // Note: Backend already stored the raw card in S3 for usage tracking
-            // No need to store again here
+            // Store the final composited card in S3 (what user actually downloads)
+            await this.storeFinalCardInS3(finalCardBase64, userPrompt, userName);
             
             // Display the final composed card
             this.elements.resultContainer.innerHTML = `
@@ -435,8 +435,12 @@ class SnapMagicApp {
             `;
             this.elements.resultActions.classList.remove('hidden');
             
-            // Note: Backend already stored the raw card in S3 for usage tracking
-            // No need to store again here
+            // Store the raw Nova Canvas image as fallback
+            try {
+                await this.storeFinalCardInS3(novaImageBase64, userPrompt, userName);
+            } catch (storageError) {
+                console.warn('⚠️ Failed to store fallback card in S3:', storageError);
+            }
         }
     }
 
