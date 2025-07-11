@@ -993,10 +993,8 @@ class SnapMagicApp {
                 console.log('✅ Card generation successful');
                 this.generatedCardData = data;
                 
-                // Update usage limits from API response
-                if (data.remaining) {
-                    this.updateUsageLimits(data.remaining);
-                }
+                // Don't update usage limits here - wait until after S3 storage
+                // The actual usage count changes when the card is stored in S3
                 
                 this.displayGeneratedCard(data, userName);
                 this.hideProcessing();
@@ -1052,12 +1050,52 @@ class SnapMagicApp {
             
             if (result.success) {
                 console.log('✅ Final card stored in S3:', result.s3_key);
+                
+                // Now update usage limits after successful storage
+                // This is when the actual usage count changes
+                await this.refreshUsageLimits();
+                
             } else {
                 console.warn('⚠️ Failed to store card in S3:', result.error);
             }
         } catch (error) {
             console.warn('⚠️ Error storing card in S3:', error);
             // Don't throw - this is not critical for user experience
+        }
+    }
+    
+    /**
+     * Refresh usage limits by making a new login call to get updated counts
+     */
+    async refreshUsageLimits() {
+        try {
+            console.log('🔄 Refreshing usage limits after card storage...');
+            
+            const apiBaseUrl = window.SNAPMAGIC_CONFIG.API_URL;
+            const endpoint = `${apiBaseUrl}api/login`;
+            
+            // Make a fresh login call to get updated usage limits
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    username: 'demo', // Use the current credentials
+                    password: 'demo'
+                })
+            });
+
+            const data = await response.json();
+            
+            if (data.success && data.remaining) {
+                console.log('📊 Updated usage limits:', data.remaining);
+                this.updateUsageLimits(data.remaining);
+            } else {
+                console.warn('⚠️ Failed to refresh usage limits');
+            }
+        } catch (error) {
+            console.warn('⚠️ Error refreshing usage limits:', error);
         }
     }
 }
