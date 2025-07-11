@@ -179,8 +179,8 @@ class SnapMagicApp {
         this.elements.loginScreen.classList.add('hidden');
         this.elements.mainApp.style.display = 'block';
         
-        // Initialize usage limits display
-        this.initializeUsageLimits();
+        // Don't call initializeUsageLimits() here - login already set correct limits
+        console.log('📱 Main app displayed - usage limits already set from login');
     }
 
     // Tab Management
@@ -254,6 +254,12 @@ class SnapMagicApp {
                 if (data.remaining) {
                     this.updateUsageLimits(data.remaining);
                     console.log('📊 Usage limits loaded from server:', data.remaining);
+                    
+                    // Ensure limits are displayed after a short delay (in case elements aren't ready)
+                    setTimeout(() => {
+                        this.displayUsageLimits();
+                        console.log('🔄 Usage limits re-displayed after delay');
+                    }, 100);
                 }
                 
                 // Username display removed for events
@@ -291,16 +297,27 @@ class SnapMagicApp {
     // Usage Limits Management
     updateUsageLimits(remaining) {
         if (remaining) {
+            // Backend sends remaining counts directly, so use them directly
+            console.log('📊 Updating usage limits with:', remaining);
+            
+            // Update internal tracking (for compatibility)
+            this.usageLimits.cards.total = 5; // From secrets.json
+            this.usageLimits.videos.total = 3; // From secrets.json
             this.usageLimits.cards.used = this.usageLimits.cards.total - remaining.cards;
             this.usageLimits.videos.used = this.usageLimits.videos.total - remaining.videos;
+            
+            // Display the limits immediately
             this.displayUsageLimits();
         }
     }
 
     displayUsageLimits() {
         if (this.elements.cardUsage && this.elements.videoUsage) {
+            // Use the remaining counts directly from backend
             const cardRemaining = this.usageLimits.cards.total - this.usageLimits.cards.used;
             const videoRemaining = this.usageLimits.videos.total - this.usageLimits.videos.used;
+            
+            console.log('🎯 Displaying usage limits:', { cardRemaining, videoRemaining });
             
             // Update card usage display
             this.elements.cardUsage.innerHTML = `<span class="usage-count ${this.getUsageClass(cardRemaining, this.usageLimits.cards.total)}">${cardRemaining} of ${this.usageLimits.cards.total} remaining</span>`;
@@ -310,6 +327,13 @@ class SnapMagicApp {
             
             // Update button states
             this.updateButtonStates(cardRemaining, videoRemaining);
+            
+            console.log('✅ Usage limits displayed successfully');
+        } else {
+            console.error('❌ Usage limit elements not found:', {
+                cardUsage: !!this.elements.cardUsage,
+                videoUsage: !!this.elements.videoUsage
+            });
         }
     }
 
