@@ -47,6 +47,14 @@ class TradingCardGenerator:
             # Initialize AWS Bedrock Runtime client
             self.bedrock_runtime_client = boto3.client('bedrock-runtime')
             
+            # Initialize S3 client for storing final cards
+            self.s3_client = boto3.client('s3')
+            
+            # Get S3 bucket name from environment variable
+            self.s3_bucket = os.environ.get('S3_BUCKET_NAME')
+            if not self.s3_bucket:
+                logger.warning("⚠️ S3_BUCKET_NAME not set - final card storage will be disabled")
+            
             logger.info("🎴 TradingCardGenerator initialized successfully")
             
         except Exception as e:
@@ -215,6 +223,83 @@ class TradingCardGenerator:
             'success': False,
             'error': error_message
         }
+    
+    def store_final_card_in_s3(self, final_card_base64: str, prompt: str, user_name: str, username: str) -> Dict[str, Any]:
+        """
+        Store the final composited trading card in S3 cards/ folder
+        
+        Args:
+            final_card_base64: Base64 encoded final composited card
+            prompt: Original user prompt
+            user_name: Name on the card (or empty for AWS logo)
+            username: Authenticated username
+            
+        Returns:
+            Dictionary containing success status and S3 key/URL
+        """
+        if not self.s3_bucket:
+            return {
+                'success': False,
+                'error': 'S3 bucket not configured'
+            }
+        
+        try:
+            import base64
+            from datetime import datetime
+            
+            # Decode base64 image data
+            image_data = base64.b64decode(final_card_base64)
+            
+            # Generate S3 key for cards/ folder
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            safe_prompt = ''.join(c for c in prompt[:30] if c.isalnum() or c in (' ', '-', '_')).strip()
+            safe_prompt = safe_prompt.replace(' ', '_')
+            
+            # Create descriptive filename
+            if user_name:
+                safe_user_name = ''.join(c for c in user_name[:20] if c.isalnum() or c in (' ', '-', '_')).strip()
+                safe_user_name = safe_user_name.replace(' ', '_')
+                filename = f"{timestamp}_{safe_user_name}_{safe_prompt}.png"
+            else:
+                filename = f"{timestamp}_AWS_{safe_prompt}.png"
+            
+            s3_key = f"cards/{filename}"
+            
+            # Upload to S3
+            logger.info(f"💾 Uploading final card to S3: {s3_key}")
+            
+            self.s3_client.put_object(
+                Bucket=self.s3_bucket,
+                Key=s3_key,
+                Body=image_data,
+                ContentType='image/png',
+                Metadata={
+                    'prompt': prompt[:1000],  # Truncate if too long
+                    'user_name': user_name or 'AWS_Logo',
+                    'username': username,
+                    'generated_at': datetime.now().isoformat(),
+                    'card_type': 'final_composited'
+                }
+            )
+            
+            # Generate S3 URL
+            s3_url = f"https://{self.s3_bucket}.s3.amazonaws.com/{s3_key}"
+            
+            logger.info(f"✅ Final card stored successfully: {s3_key}")
+            
+            return {
+                'success': True,
+                's3_key': s3_key,
+                's3_url': s3_url,
+                'filename': filename
+            }
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to store final card in S3: {str(e)}")
+            return {
+                'success': False,
+                'error': f"S3 storage failed: {str(e)}"
+            }
 
 
 # Maintain backward compatibility with old class name

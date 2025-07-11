@@ -215,6 +215,7 @@ frontend:
         EVENT_USERNAME: inputs.basicAuthUsername || 'demo',
         EVENT_PASSWORD: inputs.basicAuthPassword || 'demo',
         VIDEO_BUCKET_NAME: videoStorageBucket.bucketName,
+        S3_BUCKET_NAME: videoStorageBucket.bucketName,  // Use same bucket for cards storage
         NOVA_CANVAS_MODEL: inputs.novaCanvasModel,
         NOVA_REEL_MODEL: inputs.novaReelModel,
         // Template configuration from secrets.json

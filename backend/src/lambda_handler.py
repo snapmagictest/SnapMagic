@@ -173,6 +173,8 @@ def lambda_handler(event, context):
                 action = 'get_video_status'
             else:
                 action = 'transform_card'  # Default to card generation
+        elif '/api/store-card' in request_path:
+            action = 'store_final_card'
         elif '/api/transform-image' in request_path:  # Keep old endpoint for compatibility
             action = 'transform_card'
         elif '/health' in request_path:
@@ -391,6 +393,45 @@ def lambda_handler(event, context):
             except Exception as e:
                 logger.error(f"❌ Video generation exception: {str(e)}")
                 return create_error_response(f"Video generation failed: {str(e)}", 500)
+        
+        # ========================================
+        # NEW: STORE FINAL CARD IN S3
+        # STORE COMPOSITED CARDS IN cards/ FOLDER
+        # ========================================
+        elif action == 'store_final_card':
+            username = token_payload.get('username', 'unknown')
+            
+            final_card_base64 = body.get('final_card_base64', '')
+            prompt = body.get('prompt', '')
+            user_name = body.get('user_name', '')
+            
+            if not final_card_base64:
+                return create_error_response("Missing final_card_base64 parameter", 400)
+            
+            try:
+                # Store final card in S3 cards/ folder
+                result = card_generator.store_final_card_in_s3(
+                    final_card_base64, 
+                    prompt, 
+                    user_name, 
+                    username
+                )
+                
+                if result['success']:
+                    logger.info(f"✅ Final card stored in S3: {result['s3_key']}")
+                    return create_success_response({
+                        'success': True,
+                        'message': 'Final card stored successfully',
+                        's3_key': result['s3_key'],
+                        's3_url': result.get('s3_url')
+                    })
+                else:
+                    logger.error(f"❌ Failed to store final card: {result.get('error')}")
+                    return create_error_response(f"Failed to store card: {result.get('error')}", 500)
+                    
+            except Exception as e:
+                logger.error(f"❌ Store final card exception: {str(e)}")
+                return create_error_response(f"Failed to store card: {str(e)}", 500)
         
         # ========================================
         # HEALTH CHECK ENDPOINT
