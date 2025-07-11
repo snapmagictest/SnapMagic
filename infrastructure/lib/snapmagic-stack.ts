@@ -280,6 +280,12 @@ frontend:
       authorizationType: apigateway.AuthorizationType.NONE
     });
     
+    // Print card endpoint (for print tracking with usage limits)
+    const printCardResource = apiResource.addResource('print-card');
+    printCardResource.addMethod('POST', lambdaIntegration, {
+      authorizationType: apigateway.AuthorizationType.NONE
+    });
+    
     // Transform image endpoint (keep for compatibility)
     const transformImageResource = apiResource.addResource('transform-image');
     transformImageResource.addMethod('POST', lambdaIntegration, {

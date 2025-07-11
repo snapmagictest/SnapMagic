@@ -306,6 +306,8 @@ def lambda_handler(event, context):
                 action = 'transform_card'  # Default to card generation
         elif '/api/store-card' in request_path:
             action = 'store_final_card'
+        elif '/api/print-card' in request_path:
+            action = 'print_card'
         elif '/api/transform-image' in request_path:  # Keep old endpoint for compatibility
             action = 'transform_card'
         elif '/health' in request_path:
