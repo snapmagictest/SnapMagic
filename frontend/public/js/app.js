@@ -406,6 +406,8 @@ class SnapMagicApp {
 
         try {
             console.log('🖨️ Print queue request initiated');
+            console.log('🔍 Card data type:', typeof this.generatedCardData);
+            console.log('🔍 Card data keys:', Object.keys(this.generatedCardData));
             
             // Check if print limit is reached
             const printRemaining = this.usageLimits.prints.total - this.usageLimits.prints.used;
@@ -416,11 +418,41 @@ class SnapMagicApp {
             
             this.showProcessing('Adding card to print queue...');
             
-            // Get card image as base64 (remove data:image/png;base64, prefix if present)
-            let cardImageBase64 = this.generatedCardData;
-            if (cardImageBase64.startsWith('data:image/')) {
-                cardImageBase64 = cardImageBase64.split(',')[1];
+            // Extract card image base64 from the generatedCardData object
+            // Use the same logic as the download function
+            let cardImageBase64 = '';
+            let imageSrc = '';
+            
+            if (this.generatedCardData.finalImageSrc) {
+                // Use final composed card (with template) if available
+                imageSrc = this.generatedCardData.finalImageSrc;
+                console.log('✅ Using final composed card image');
+            } else if (this.generatedCardData.imageSrc) {
+                // Use regular image source
+                imageSrc = this.generatedCardData.imageSrc;
+                console.log('✅ Using regular card image');
+            } else if (this.generatedCardData.result) {
+                // Use raw Nova Canvas result
+                imageSrc = `data:image/png;base64,${this.generatedCardData.result}`;
+                console.log('✅ Using raw Nova Canvas result');
+            } else {
+                throw new Error('No valid card image data found in generatedCardData object');
             }
+            
+            // Extract base64 data from data URL
+            if (imageSrc.startsWith('data:image/')) {
+                cardImageBase64 = imageSrc.split(',')[1];
+            } else {
+                // If it's already base64, use it directly
+                cardImageBase64 = imageSrc;
+            }
+            
+            // Validate we have base64 data
+            if (!cardImageBase64 || cardImageBase64.length < 100) {
+                throw new Error('Invalid card image data. Please generate a new card and try again.');
+            }
+            
+            console.log('✅ Card image data prepared, length:', cardImageBase64.length);
             
             // Add card to print queue
             const apiBaseUrl = window.SNAPMAGIC_CONFIG.API_URL;
