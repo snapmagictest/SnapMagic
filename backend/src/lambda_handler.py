@@ -334,18 +334,43 @@ def lambda_handler(event, context):
         # CHECK S3 FOR COMPLETED VIDEOS
         # ========================================
         elif action == 'get_video_status':
+            username = token_payload.get('username', 'unknown')
             invocation_arn = body.get('invocation_arn', '')
+            animation_prompt = body.get('animation_prompt', '')  # Store prompt for session filename
             
             if not invocation_arn:
                 logger.error("❌ Missing invocation_arn parameter")
                 return create_error_response("Missing invocation_arn parameter", 400)
             
             try:
+                # Get session identifier for video storage
+                request_headers = event.get('headers', {})
+                session_id = get_session_identifier(request_headers)
+                client_ip = get_client_ip(request_headers)
+                
                 # Check video status using Bedrock API
-                logger.info(f"🔍 Checking video status for ARN: {invocation_arn}")
+                logger.info(f"🔍 Checking video status for ARN: {invocation_arn}, Session: {session_id}")
                 result = video_generator.get_video_status(invocation_arn)
                 
-                if result['success']:
+                if result['success'] and result.get('status') == 'completed':
+                    # Video is completed - store it with session-based filename
+                    logger.info("✅ Video completed - storing with session-based filename...")
+                    
+                    storage_result = video_generator.store_video_with_session_filename(
+                        invocation_arn, 
+                        session_id, 
+                        animation_prompt, 
+                        username
+                    )
+                    
+                    if storage_result['success']:
+                        logger.info(f"✅ Video stored with session filename: {storage_result['session_s3_key']}")
+                    else:
+                        logger.warning(f"⚠️ Failed to store video with session filename: {storage_result['error']}")
+                    
+                    # Get updated remaining usage after video storage
+                    remaining = get_remaining_usage(session_id)
+                    
                     logger.info(f"✅ Video status check successful: {result.get('status')}")
                     return create_success_response({
                         'success': True,
@@ -353,14 +378,28 @@ def lambda_handler(event, context):
                         'video_base64': result.get('video_base64'),
                         'video_url': result.get('video_url'),
                         'message': result.get('message'),
+                        'invocation_arn': invocation_arn,
+                        'remaining': remaining,  # Updated usage counts
+                        'session_stored': storage_result['success'],  # Indicate if session storage worked
+                        'session_id': session_id,  # For debugging
+                        'client_ip': client_ip  # For debugging
+                    })
+                elif result['success']:
+                    # Video still processing
+                    logger.info(f"⏳ Video still processing: {result.get('message')}")
+                    return create_success_response({
+                        'success': True,
+                        'status': result.get('status', 'processing'),
+                        'message': result.get('message', 'Video is still processing'),
                         'invocation_arn': invocation_arn
                     })
                 else:
-                    logger.info(f"⏳ Video not ready yet: {result.get('message')}")
+                    # Video failed or other error
+                    logger.info(f"❌ Video status error: {result.get('message')}")
                     return create_success_response({
                         'success': True,
-                        'status': 'processing',
-                        'message': result.get('message', 'Video is still processing'),
+                        'status': 'failed',
+                        'message': result.get('message', 'Video generation failed'),
                         'invocation_arn': invocation_arn
                     })
                     

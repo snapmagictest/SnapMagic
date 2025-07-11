@@ -152,6 +152,81 @@ class TradingCardVideoGenerator:
             logger.error(f"❌ Error checking video status via Bedrock API: {str(e)}")
             return self._create_error_response(f'Error checking video status: {str(e)}')
     
+    def store_video_with_session_filename(self, invocation_arn: str, session_id: str, prompt: str, username: str) -> Dict[str, Any]:
+        """
+        Store completed video with session-based filename for usage tracking
+        
+        Args:
+            invocation_arn: The invocation ARN from Bedrock
+            session_id: Session identifier (IP + browser hash)
+            prompt: Animation prompt used
+            username: Authenticated username
+            
+        Returns:
+            Dictionary containing success status and session-based S3 key
+        """
+        try:
+            from datetime import datetime
+            
+            # Extract invocation ID from ARN for original S3 path
+            invocation_id = invocation_arn.split('/')[-1]
+            original_s3_key = f"{self.VIDEO_FOLDER_PREFIX}{invocation_id}/{self.OUTPUT_VIDEO_FILENAME}"
+            
+            # Count existing videos for this session to get next number
+            existing_videos = self.s3_client.list_objects_v2(
+                Bucket=self.video_storage_bucket,
+                Prefix=f'videos/{session_id}_video_'
+            )
+            video_count = len(existing_videos.get('Contents', [])) + 1  # Next video number
+            
+            # Generate timestamp
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            
+            # Create session-based filename: SESSION_video_COUNT_timestamp.mp4
+            session_filename = f"{session_id}_video_{video_count}_{timestamp}.mp4"
+            session_s3_key = f"videos/{session_filename}"
+            
+            # Copy video from original Bedrock location to session-based location
+            logger.info(f"📹 Copying video from {original_s3_key} to {session_s3_key}")
+            
+            copy_source = {
+                'Bucket': self.video_storage_bucket,
+                'Key': original_s3_key
+            }
+            
+            self.s3_client.copy_object(
+                CopySource=copy_source,
+                Bucket=self.video_storage_bucket,
+                Key=session_s3_key,
+                Metadata={
+                    'session_id': session_id,
+                    'video_number': str(video_count),
+                    'username': username,
+                    'animation_prompt': prompt[:500],  # Truncate if too long
+                    'generated_at': datetime.now().isoformat(),
+                    'video_type': 'session_tracked',
+                    'original_invocation_id': invocation_id
+                },
+                MetadataDirective='REPLACE'
+            )
+            
+            logger.info(f"✅ Video stored with session filename: {session_s3_key} (Video #{video_count} for session {session_id})")
+            
+            return {
+                'success': True,
+                'session_s3_key': session_s3_key,
+                'session_filename': session_filename,
+                'video_number': video_count,
+                'session_id': session_id
+            }
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to store video with session filename: {str(e)}")
+            return {
+                'success': False,
+                'error': f"Session-based video storage failed: {str(e)}"
+            }
+
     def _handle_completed_video(self, invocation_arn: str) -> Dict[str, Any]:
         """
         Handle completed video generation - create presigned URL for access
