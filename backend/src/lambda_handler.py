@@ -34,7 +34,7 @@ def load_limits() -> Dict[str, int]:
 
 def store_print_record(session_id: str, username: str, card_prompt: str, card_image_base64: str) -> Dict[str, Any]:
     """
-    Store print image in S3 using same mechanism as cards/videos - just save the PNG
+    Store print image in print-queue folder with session-based naming - no JSON needed
     
     Args:
         session_id: Session identifier (IP + browser hash)
@@ -60,9 +60,10 @@ def store_print_record(session_id: str, username: str, card_prompt: str, card_im
             }
         
         # Count existing prints for this session to get next print number
+        # Look in print-queue folder for files with this session ID
         existing_prints = s3_client.list_objects_v2(
             Bucket=bucket_name,
-            Prefix=f'prints/{session_id}_print_'
+            Prefix=f'print-queue/{session_id}_print_'
         )
         print_count = len(existing_prints.get('Contents', [])) + 1  # Next print number for this session
         
@@ -70,15 +71,15 @@ def store_print_record(session_id: str, username: str, card_prompt: str, card_im
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         
         # Create session-based print filename: SESSION_print_COUNT_timestamp.png
-        # Same pattern as cards: SESSION_card_COUNT_timestamp.png
+        # Same pattern as cards: SESSION_card_COUNT_timestamp.png but with _print_
         print_filename = f"{session_id}_print_{print_count}_{timestamp}.png"
-        print_s3_key = f"prints/{print_filename}"
+        print_s3_key = f"print-queue/{print_filename}"
         
         # Decode base64 image
         image_data = base64.b64decode(card_image_base64)
         
-        # Store print image in S3 (same as cards/videos - just the file)
-        logger.info(f"🖨️ Storing print image in S3: {print_s3_key}")
+        # Store print image directly in print-queue folder
+        logger.info(f"🖨️ Storing print in print-queue: {print_s3_key}")
         
         s3_client.put_object(
             Bucket=bucket_name,
@@ -95,7 +96,7 @@ def store_print_record(session_id: str, username: str, card_prompt: str, card_im
             }
         )
         
-        logger.info(f"✅ Print stored successfully: {print_filename} (Print #{print_count} for session {session_id})")
+        logger.info(f"✅ Print stored in queue: {print_filename} (Print #{print_count} for session {session_id})")
         
         return {
             'success': True,
@@ -178,11 +179,11 @@ def get_usage_from_s3(session_id: str) -> Dict[str, int]:
         )
         videos_count = len(videos_response.get('Contents', []))
         
-        # Count prints for this session
+        # Count prints for this session (now in print-queue folder)
         logger.info(f"🔍 Counting prints for session {session_id} in bucket {bucket_name}")
         prints_response = s3_client.list_objects_v2(
             Bucket=bucket_name,
-            Prefix=f'prints/{session_id}_print_'
+            Prefix=f'print-queue/{session_id}_print_'
         )
         prints_count = len(prints_response.get('Contents', []))
         
