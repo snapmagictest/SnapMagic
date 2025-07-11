@@ -81,6 +81,7 @@ def get_usage_from_s3(session_id: str) -> Dict[str, int]:
             return {'cards': 0, 'videos': 0}
         
         # Count cards for this session
+        logger.info(f"🔍 Counting cards for session {session_id} in bucket {bucket_name}")
         cards_response = s3_client.list_objects_v2(
             Bucket=bucket_name,
             Prefix=f'cards/{session_id}_card_'
@@ -88,17 +89,25 @@ def get_usage_from_s3(session_id: str) -> Dict[str, int]:
         cards_count = len(cards_response.get('Contents', []))
         
         # Count videos for this session  
+        logger.info(f"🔍 Counting videos for session {session_id} in bucket {bucket_name}")
         videos_response = s3_client.list_objects_v2(
             Bucket=bucket_name,
             Prefix=f'videos/{session_id}_video_'
         )
         videos_count = len(videos_response.get('Contents', []))
         
-        logger.info(f"Session {session_id} usage: {cards_count} cards, {videos_count} videos")
+        logger.info(f"📊 Session {session_id} current usage: {cards_count} cards, {videos_count} videos")
+        
+        # Log the actual files found for debugging
+        if cards_response.get('Contents'):
+            logger.info(f"📁 Found card files: {[obj['Key'] for obj in cards_response['Contents']]}")
+        if videos_response.get('Contents'):
+            logger.info(f"📁 Found video files: {[obj['Key'] for obj in videos_response['Contents']]}")
+        
         return {'cards': cards_count, 'videos': videos_count}
         
     except Exception as e:
-        logger.error(f"Failed to get S3 usage for session {session_id}: {str(e)}")
+        logger.error(f"❌ Failed to get S3 usage for session {session_id}: {str(e)}")
         return {'cards': 0, 'videos': 0}
 
 def check_usage_limit(session_id: str, generation_type: str) -> bool:
@@ -113,16 +122,26 @@ def check_usage_limit(session_id: str, generation_type: str) -> bool:
     return current_count < limit
 
 def get_remaining_usage(session_id: str) -> Dict[str, int]:
-    """Get remaining usage for session by counting S3 files"""
+    """Get remaining usage for session by counting S3 files and subtracting from limits"""
     limits = load_limits()
     current_usage = get_usage_from_s3(session_id)
     
+    # Calculate remaining: max_limit - used_count
+    cards_used = current_usage.get('cards', 0)
+    videos_used = current_usage.get('videos', 0)
+    
+    cards_remaining = max(0, limits['cards'] - cards_used)
+    videos_remaining = max(0, limits['videos'] - videos_used)
+    
     remaining = {
-        'cards': max(0, limits['cards'] - current_usage.get('cards', 0)),
-        'videos': max(0, limits['videos'] - current_usage.get('videos', 0))
+        'cards': cards_remaining,
+        'videos': videos_remaining
     }
     
-    logger.info(f"Session {session_id} remaining: {remaining}")
+    logger.info(f"📊 Session {session_id} calculation:")
+    logger.info(f"   Cards: {cards_used} used / {limits['cards']} max = {cards_remaining} remaining")
+    logger.info(f"   Videos: {videos_used} used / {limits['videos']} max = {videos_remaining} remaining")
+    
     return remaining
 
 def load_event_credentials() -> Dict[str, str]:
