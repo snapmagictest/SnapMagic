@@ -375,19 +375,22 @@ def lambda_handler(event, context):
         elif action == 'generate_video':
             username = token_payload.get('username', 'unknown')
             
-            # Check usage limits
+            # Get session identifier and check usage limits
             request_headers = event.get('headers', {})
-            if not check_usage_limit(username, 'videos', request_headers):
-                remaining = get_remaining_usage(username, request_headers)
+            session_id = get_session_identifier(request_headers)
+            client_ip = get_client_ip(request_headers)
+            
+            if not check_usage_limit(session_id, 'videos'):
+                remaining = get_remaining_usage(session_id)
                 return create_error_response(
-                    f"Video generation limit reached. You have {remaining['cards']} cards and {remaining['videos']} videos remaining.", 
+                    f"Video generation limit reached for your session. You have {remaining['cards']} cards and {remaining['videos']} videos remaining.", 
                     429
                 )
             
             card_image = body.get('card_image', '')
             animation_prompt = body.get('animation_prompt', '')
             
-            logger.info(f"🎬 Video generation request - card_image length: {len(card_image)}, prompt: {animation_prompt[:50]}...")
+            logger.info(f"🎬 Video generation request - session: {session_id}, card_image length: {len(card_image)}, prompt: {animation_prompt[:50]}...")
             
             if not card_image:
                 logger.error("❌ Missing card_image parameter")
@@ -414,9 +417,8 @@ def lambda_handler(event, context):
                 logger.info(f"🎬 Video generation result: {result.get('success', False)}")
                 
                 if result['success']:
-                    # Increment usage count
-                    increment_usage(username, 'videos', request_headers)
-                    remaining = get_remaining_usage(username, request_headers)
+                    # Get updated remaining usage (will be recalculated from S3 after video storage)
+                    remaining = get_remaining_usage(session_id)
                     
                     logger.info("✅ Video generation successful")
                     return create_success_response({
@@ -425,6 +427,8 @@ def lambda_handler(event, context):
                         'result': result.get('video_base64'),
                         'video_url': result.get('video_url'),
                         'remaining': remaining,  # Add remaining counts
+                        'session_id': session_id,  # For debugging
+                        'client_ip': client_ip,  # For debugging
                         'metadata': {
                             'video_id': result.get('video_id'),
                             'invocation_arn': result.get('invocation_arn'),
