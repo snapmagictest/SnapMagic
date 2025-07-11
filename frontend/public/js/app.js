@@ -483,7 +483,7 @@ class SnapMagicApp {
                 
                 this.hideProcessing();
                 
-                // Show success message with print information using modal
+                // Show success message with print information using existing modal system
                 console.log('✅ Card added to print successfully');
                 this.showPrintSuccessModal(data.print_filename);
                 
@@ -505,131 +505,34 @@ class SnapMagicApp {
         }
     }
     
-    // Show Print Success Modal
+    // Show Print Success Modal (using existing modal system)
     showPrintSuccessModal(filename) {
-        // Create modal backdrop
-        const modalBackdrop = document.createElement('div');
-        modalBackdrop.className = 'modal-backdrop';
-        modalBackdrop.style.cssText = `
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            backdrop-filter: blur(5px);
-        `;
-        
-        // Create modal content
-        const modal = document.createElement('div');
-        modal.className = 'print-success-modal';
-        modal.style.cssText = `
-            background: white;
-            border-radius: 12px;
-            padding: 30px;
-            max-width: 500px;
-            width: 90%;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-            text-align: center;
-            animation: modalSlideIn 0.3s ease-out;
-        `;
-        
-        // Add animation keyframes
-        if (!document.querySelector('#modal-animations')) {
-            const style = document.createElement('style');
-            style.id = 'modal-animations';
-            style.textContent = `
-                @keyframes modalSlideIn {
-                    from {
-                        opacity: 0;
-                        transform: translateY(-50px) scale(0.9);
-                    }
-                    to {
-                        opacity: 1;
-                        transform: translateY(0) scale(1);
-                    }
-                }
-            `;
-            document.head.appendChild(style);
+        // Set the filename in the modal
+        const filenameElement = document.getElementById('printFilename');
+        if (filenameElement) {
+            filenameElement.textContent = filename;
         }
         
-        modal.innerHTML = `
-            <div style="margin-bottom: 20px;">
-                <div style="font-size: 48px; margin-bottom: 15px;">🖨️</div>
-                <h2 style="color: #2c3e50; margin: 0 0 10px 0; font-size: 24px;">Card Added to Print!</h2>
-                <p style="color: #7f8c8d; margin: 0; font-size: 16px;">Your card has been saved for printing</p>
-            </div>
-            
-            <div style="background: #f8f9fa; border-radius: 8px; padding: 20px; margin: 20px 0; border-left: 4px solid #17a2b8;">
-                <div style="font-weight: bold; color: #495057; margin-bottom: 8px;">Print Filename:</div>
-                <div style="font-family: 'Courier New', monospace; font-size: 14px; color: #6c757d; word-break: break-all; background: white; padding: 10px; border-radius: 4px; border: 1px solid #dee2e6;">
-                    ${filename}
-                </div>
-            </div>
-            
-            <div style="margin-top: 25px;">
-                <button id="printModalClose" style="
-                    background: #17a2b8;
-                    color: white;
-                    border: none;
-                    padding: 12px 30px;
-                    border-radius: 6px;
-                    font-size: 16px;
-                    font-weight: 500;
-                    cursor: pointer;
-                    transition: background-color 0.2s;
-                " onmouseover="this.style.background='#138496'" onmouseout="this.style.background='#17a2b8'">
-                    Got it!
-                </button>
-            </div>
-        `;
-        
-        modalBackdrop.appendChild(modal);
-        document.body.appendChild(modalBackdrop);
-        
-        // Close modal function
-        const closeModal = () => {
-            modalBackdrop.style.animation = 'fadeOut 0.2s ease-in';
-            setTimeout(() => {
-                if (modalBackdrop.parentNode) {
-                    modalBackdrop.parentNode.removeChild(modalBackdrop);
-                }
-            }, 200);
-        };
-        
-        // Add fade out animation
-        if (!document.querySelector('#modal-fadeout')) {
-            const style = document.createElement('style');
-            style.id = 'modal-fadeout';
-            style.textContent = `
-                @keyframes fadeOut {
-                    from { opacity: 1; }
-                    to { opacity: 0; }
-                }
-            `;
-            document.head.appendChild(style);
+        // Show the modal by removing hidden class
+        const modal = document.getElementById('printSuccessModal');
+        if (modal) {
+            modal.classList.remove('hidden');
         }
         
-        // Event listeners
-        document.getElementById('printModalClose').addEventListener('click', closeModal);
-        modalBackdrop.addEventListener('click', (e) => {
-            if (e.target === modalBackdrop) {
-                closeModal();
-            }
-        });
+        // Set up close button event listener
+        const closeBtn = document.getElementById('printSuccessOkBtn');
+        if (closeBtn) {
+            closeBtn.onclick = () => {
+                modal.classList.add('hidden');
+            };
+        }
         
-        // Close on Escape key
-        const escapeHandler = (e) => {
-            if (e.key === 'Escape') {
-                closeModal();
-                document.removeEventListener('keydown', escapeHandler);
+        // Close modal when clicking outside
+        modal.onclick = (e) => {
+            if (e.target === modal) {
+                modal.classList.add('hidden');
             }
         };
-        document.addEventListener('keydown', escapeHandler);
     }
 
     // Card Generation
