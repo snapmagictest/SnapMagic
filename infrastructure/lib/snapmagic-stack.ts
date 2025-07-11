@@ -223,7 +223,8 @@ frontend:
         TEMPLATE_LOGOS_JSON: JSON.stringify(inputs.cardTemplate?.logos || []),
         // Usage limits from secrets.json
         CARDS_PER_USER: String(inputs.limits?.cardsPerUser || 5),
-        VIDEOS_PER_USER: String(inputs.limits?.videosPerUser || 3)
+        VIDEOS_PER_USER: String(inputs.limits?.videosPerUser || 3),
+        PRINTS_PER_USER: String(inputs.limits?.printsPerUser || 1)
       },
       description: 'SnapMagic AI backend - Trading Cards & Video Generation'
     });

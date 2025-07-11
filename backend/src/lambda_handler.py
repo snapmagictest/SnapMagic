@@ -20,15 +20,101 @@ def load_limits() -> Dict[str, int]:
     try:
         cards_limit = int(os.environ.get('CARDS_PER_USER', '5'))
         videos_limit = int(os.environ.get('VIDEOS_PER_USER', '3'))
+        prints_limit = int(os.environ.get('PRINTS_PER_USER', '1'))
         
-        logger.info(f"Usage limits loaded - Cards: {cards_limit}, Videos: {videos_limit}")
+        logger.info(f"Usage limits loaded - Cards: {cards_limit}, Videos: {videos_limit}, Prints: {prints_limit}")
         return {
             'cards': cards_limit,
-            'videos': videos_limit
+            'videos': videos_limit,
+            'prints': prints_limit
         }
     except Exception as e:
         logger.error(f"Failed to load limits: {str(e)}")
-        return {'cards': 5, 'videos': 3}  # Safe defaults
+        return {'cards': 5, 'videos': 3, 'prints': 1}  # Safe defaults
+
+def store_print_record(session_id: str, username: str, card_prompt: str) -> Dict[str, Any]:
+    """
+    Store print record in S3 prints/ folder with session-based filename
+    
+    Args:
+        session_id: Session identifier (IP + browser hash)
+        username: Authenticated username
+        card_prompt: Original card prompt that was printed
+        
+    Returns:
+        Dictionary containing success status and S3 key
+    """
+    try:
+        import boto3
+        import json
+        from datetime import datetime
+        
+        s3_client = boto3.client('s3')
+        bucket_name = os.environ.get('S3_BUCKET_NAME')
+        
+        if not bucket_name:
+            return {
+                'success': False,
+                'error': 'S3 bucket not configured'
+            }
+        
+        # Count existing prints for this session to get next number
+        existing_prints = s3_client.list_objects_v2(
+            Bucket=bucket_name,
+            Prefix=f'prints/{session_id}_print_'
+        )
+        print_count = len(existing_prints.get('Contents', [])) + 1  # Next print number
+        
+        # Generate timestamp
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        
+        # Create session-based filename: SESSION_print_COUNT_timestamp.json
+        filename = f"{session_id}_print_{print_count}_{timestamp}.json"
+        s3_key = f"prints/{filename}"
+        
+        # Create print record data
+        print_record = {
+            'session_id': session_id,
+            'print_number': print_count,
+            'username': username,
+            'card_prompt': card_prompt,
+            'printed_at': datetime.now().isoformat(),
+            'print_type': 'trading_card'
+        }
+        
+        # Upload print record to S3
+        logger.info(f"🖨️ Storing print record in S3: {s3_key}")
+        
+        s3_client.put_object(
+            Bucket=bucket_name,
+            Key=s3_key,
+            Body=json.dumps(print_record, indent=2),
+            ContentType='application/json',
+            Metadata={
+                'session_id': session_id,
+                'print_number': str(print_count),
+                'username': username,
+                'printed_at': datetime.now().isoformat(),
+                'record_type': 'print_tracking'
+            }
+        )
+        
+        logger.info(f"✅ Print record stored successfully: {s3_key} (Print #{print_count} for session {session_id})")
+        
+        return {
+            'success': True,
+            's3_key': s3_key,
+            'filename': filename,
+            'print_number': print_count,
+            'session_id': session_id
+        }
+        
+    except Exception as e:
+        logger.error(f"❌ Failed to store print record: {str(e)}")
+        return {
+            'success': False,
+            'error': f"Print record storage failed: {str(e)}"
+        }
 
 def get_client_ip(request_headers: Dict[str, str]) -> str:
     """Extract client IP address from request headers"""
@@ -70,7 +156,7 @@ def get_session_identifier(request_headers: Dict[str, str]) -> str:
     return f"{client_ip}_{session_hash}"
 
 def get_usage_from_s3(session_id: str) -> Dict[str, int]:
-    """Count existing cards and videos for session ID by checking S3 files"""
+    """Count existing cards, videos, and prints for session ID by checking S3 files"""
     try:
         import boto3
         s3_client = boto3.client('s3')
@@ -78,7 +164,7 @@ def get_usage_from_s3(session_id: str) -> Dict[str, int]:
         
         if not bucket_name:
             logger.warning("S3_BUCKET_NAME not configured")
-            return {'cards': 0, 'videos': 0}
+            return {'cards': 0, 'videos': 0, 'prints': 0}
         
         # Count cards for this session
         logger.info(f"🔍 Counting cards for session {session_id} in bucket {bucket_name}")
@@ -96,19 +182,29 @@ def get_usage_from_s3(session_id: str) -> Dict[str, int]:
         )
         videos_count = len(videos_response.get('Contents', []))
         
-        logger.info(f"📊 Session {session_id} current usage: {cards_count} cards, {videos_count} videos")
+        # Count prints for this session
+        logger.info(f"🔍 Counting prints for session {session_id} in bucket {bucket_name}")
+        prints_response = s3_client.list_objects_v2(
+            Bucket=bucket_name,
+            Prefix=f'prints/{session_id}_print_'
+        )
+        prints_count = len(prints_response.get('Contents', []))
+        
+        logger.info(f"📊 Session {session_id} current usage: {cards_count} cards, {videos_count} videos, {prints_count} prints")
         
         # Log the actual files found for debugging
         if cards_response.get('Contents'):
             logger.info(f"📁 Found card files: {[obj['Key'] for obj in cards_response['Contents']]}")
         if videos_response.get('Contents'):
             logger.info(f"📁 Found video files: {[obj['Key'] for obj in videos_response['Contents']]}")
+        if prints_response.get('Contents'):
+            logger.info(f"📁 Found print files: {[obj['Key'] for obj in prints_response['Contents']]}")
         
-        return {'cards': cards_count, 'videos': videos_count}
+        return {'cards': cards_count, 'videos': videos_count, 'prints': prints_count}
         
     except Exception as e:
         logger.error(f"❌ Failed to get S3 usage for session {session_id}: {str(e)}")
-        return {'cards': 0, 'videos': 0}
+        return {'cards': 0, 'videos': 0, 'prints': 0}
 
 def check_usage_limit(session_id: str, generation_type: str) -> bool:
     """Check if session has exceeded usage limits by counting S3 files"""
@@ -129,18 +225,22 @@ def get_remaining_usage(session_id: str) -> Dict[str, int]:
     # Calculate remaining: max_limit - used_count
     cards_used = current_usage.get('cards', 0)
     videos_used = current_usage.get('videos', 0)
+    prints_used = current_usage.get('prints', 0)
     
     cards_remaining = max(0, limits['cards'] - cards_used)
     videos_remaining = max(0, limits['videos'] - videos_used)
+    prints_remaining = max(0, limits['prints'] - prints_used)
     
     remaining = {
         'cards': cards_remaining,
-        'videos': videos_remaining
+        'videos': videos_remaining,
+        'prints': prints_remaining
     }
     
     logger.info(f"📊 Session {session_id} calculation:")
     logger.info(f"   Cards: {cards_used} used / {limits['cards']} max = {cards_remaining} remaining")
     logger.info(f"   Videos: {videos_used} used / {limits['videos']} max = {videos_remaining} remaining")
+    logger.info(f"   Prints: {prints_used} used / {limits['prints']} max = {prints_remaining} remaining")
     
     return remaining
 
@@ -409,6 +509,57 @@ def lambda_handler(event, context):
         
         # ========================================
         # NEW: NOVA REEL VIDEO GENERATION
+        # PRINT TRADING CARDS WITH USAGE TRACKING
+        # ========================================
+        elif action == 'print_card':
+            username = token_payload.get('username', 'unknown')
+            
+            # Get session identifier and check print limits
+            request_headers = event.get('headers', {})
+            session_id = get_session_identifier(request_headers)
+            client_ip = get_client_ip(request_headers)
+            
+            if not check_usage_limit(session_id, 'prints'):
+                remaining = get_remaining_usage(session_id)
+                return create_error_response(
+                    f"Print limit reached for your session. You have {remaining['prints']} prints remaining.", 
+                    429
+                )
+            
+            card_prompt = body.get('card_prompt', '')
+            
+            if not card_prompt:
+                logger.error("❌ Missing card_prompt parameter")
+                return create_error_response("Missing card_prompt parameter", 400)
+            
+            try:
+                # Store print record in S3 for usage tracking
+                logger.info(f"🖨️ Print request - session: {session_id}, prompt: {card_prompt[:50]}...")
+                
+                result = store_print_record(session_id, username, card_prompt)
+                
+                if result['success']:
+                    # Get updated remaining usage after print record storage
+                    remaining = get_remaining_usage(session_id)
+                    
+                    logger.info("✅ Print record stored successfully")
+                    return create_success_response({
+                        'success': True,
+                        'message': 'Print authorized and recorded',
+                        'print_number': result['print_number'],
+                        'remaining': remaining,  # Updated usage counts
+                        'session_id': session_id,  # For debugging
+                        'client_ip': client_ip,  # For debugging
+                        's3_key': result['s3_key']
+                    })
+                else:
+                    logger.error(f"❌ Failed to store print record: {result.get('error')}")
+                    return create_error_response(f"Print recording failed: {result.get('error')}", 500)
+                    
+            except Exception as e:
+                logger.error(f"❌ Print request exception: {str(e)}")
+                return create_error_response(f"Print request failed: {str(e)}", 500)
+
         # ANIMATE TRADING CARDS WITH S3 STORAGE
         # ========================================
         elif action == 'generate_video':

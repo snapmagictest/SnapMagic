@@ -18,7 +18,8 @@ class SnapMagicApp {
         // Usage tracking
         this.usageLimits = {
             cards: { used: 0, total: 5 },
-            videos: { used: 0, total: 3 }
+            videos: { used: 0, total: 3 },
+            prints: { used: 0, total: 1 }
         };
         
         // Initialize app
@@ -68,12 +69,14 @@ class SnapMagicApp {
             resultContainer: document.getElementById('resultContainer'),
             resultActions: document.getElementById('resultActions'),
             downloadBtn: document.getElementById('downloadBtn'),
+            printBtn: document.getElementById('printBtn'),
             createVideoBtn: document.getElementById('createVideoBtn'),
             createAnotherBtn: document.getElementById('createAnotherBtn'),
             
             // Usage limits display
             cardUsage: document.getElementById('cardUsage'),
             videoUsage: document.getElementById('videoUsage'),
+            printUsage: document.getElementById('printUsage'),
             
             // Video generation
             videoSection: document.getElementById('videoSection'),
@@ -117,6 +120,7 @@ class SnapMagicApp {
         // Card generation
         this.elements.generateBtn.addEventListener('click', () => this.handleGenerateCard());
         this.elements.downloadBtn.addEventListener('click', () => this.handleDownloadCard());
+        this.elements.printBtn.addEventListener('click', () => this.handlePrintCard());
         this.elements.createVideoBtn.addEventListener('click', () => this.handleCreateVideo());
         this.elements.createAnotherBtn.addEventListener('click', () => this.handleCreateAnother());
         
@@ -303,8 +307,10 @@ class SnapMagicApp {
             // Update internal tracking (for compatibility)
             this.usageLimits.cards.total = 5; // From secrets.json
             this.usageLimits.videos.total = 3; // From secrets.json
+            this.usageLimits.prints.total = 1; // From secrets.json
             this.usageLimits.cards.used = this.usageLimits.cards.total - remaining.cards;
             this.usageLimits.videos.used = this.usageLimits.videos.total - remaining.videos;
+            this.usageLimits.prints.used = this.usageLimits.prints.total - remaining.prints;
             
             // Display the limits immediately
             this.displayUsageLimits();
@@ -312,12 +318,13 @@ class SnapMagicApp {
     }
 
     displayUsageLimits() {
-        if (this.elements.cardUsage && this.elements.videoUsage) {
+        if (this.elements.cardUsage && this.elements.videoUsage && this.elements.printUsage) {
             // Use the remaining counts directly from backend
             const cardRemaining = this.usageLimits.cards.total - this.usageLimits.cards.used;
             const videoRemaining = this.usageLimits.videos.total - this.usageLimits.videos.used;
+            const printRemaining = this.usageLimits.prints.total - this.usageLimits.prints.used;
             
-            console.log('🎯 Displaying usage limits:', { cardRemaining, videoRemaining });
+            console.log('🎯 Displaying usage limits:', { cardRemaining, videoRemaining, printRemaining });
             
             // Update card usage display
             this.elements.cardUsage.innerHTML = `<span class="usage-count ${this.getUsageClass(cardRemaining, this.usageLimits.cards.total)}">${cardRemaining} of ${this.usageLimits.cards.total} remaining</span>`;
@@ -325,14 +332,18 @@ class SnapMagicApp {
             // Update video usage display  
             this.elements.videoUsage.innerHTML = `<span class="usage-count ${this.getUsageClass(videoRemaining, this.usageLimits.videos.total)}">${videoRemaining} of ${this.usageLimits.videos.total} remaining</span>`;
             
+            // Update print usage display
+            this.elements.printUsage.innerHTML = `<span class="usage-count ${this.getUsageClass(printRemaining, this.usageLimits.prints.total)}">${printRemaining} of ${this.usageLimits.prints.total} remaining</span>`;
+            
             // Update button states
-            this.updateButtonStates(cardRemaining, videoRemaining);
+            this.updateButtonStates(cardRemaining, videoRemaining, printRemaining);
             
             console.log('✅ Usage limits displayed successfully');
         } else {
             console.error('❌ Usage limit elements not found:', {
                 cardUsage: !!this.elements.cardUsage,
-                videoUsage: !!this.elements.videoUsage
+                videoUsage: !!this.elements.videoUsage,
+                printUsage: !!this.elements.printUsage
             });
         }
     }
@@ -344,7 +355,7 @@ class SnapMagicApp {
         return 'success';
     }
 
-    updateButtonStates(cardRemaining, videoRemaining) {
+    updateButtonStates(cardRemaining, videoRemaining, printRemaining) {
         // Update generate card button
         if (this.elements.generateBtn) {
             if (cardRemaining <= 0) {
@@ -366,12 +377,143 @@ class SnapMagicApp {
                 this.elements.createVideoBtn.innerHTML = '🎬 Create Video';
             }
         }
+        
+        // Update print button
+        if (this.elements.printBtn) {
+            if (printRemaining <= 0) {
+                this.elements.printBtn.disabled = true;
+                this.elements.printBtn.innerHTML = '🚫 Print Used';
+            } else {
+                this.elements.printBtn.disabled = false;
+                this.elements.printBtn.innerHTML = '🖨️ Print Card';
+            }
+        }
     }
 
     initializeUsageLimits() {
         // Set initial display
         this.elements.cardUsage.innerHTML = `<span class="usage-count success">${this.usageLimits.cards.total} of ${this.usageLimits.cards.total} remaining</span>`;
         this.elements.videoUsage.innerHTML = `<span class="usage-count success">${this.usageLimits.videos.total} of ${this.usageLimits.videos.total} remaining</span>`;
+        this.elements.printUsage.innerHTML = `<span class="usage-count success">${this.usageLimits.prints.total} of ${this.usageLimits.prints.total} remaining</span>`;
+    }
+
+    // Print Card Handler
+    async handlePrintCard() {
+        if (!this.generatedCardData) {
+            this.showError('No card available to print. Please generate a card first.');
+            return;
+        }
+
+        try {
+            console.log('🖨️ Print card request initiated');
+            
+            // Check if print limit is reached
+            const printRemaining = this.usageLimits.prints.total - this.usageLimits.prints.used;
+            if (printRemaining <= 0) {
+                this.showError('🚫 Print Limit Reached\n\nYou have already used your print allowance for this session.\n\nLimits reset when the event system restarts.');
+                return;
+            }
+            
+            this.showProcessing('Recording print request...');
+            
+            // Record print action with backend
+            const apiBaseUrl = window.SNAPMAGIC_CONFIG.API_URL;
+            const endpoint = `${apiBaseUrl}api/print-card`;
+            
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.currentUser.token}`
+                },
+                body: JSON.stringify({
+                    action: 'print_card',
+                    card_prompt: this.lastUsedPrompt || 'Generated card'
+                })
+            });
+
+            const data = await response.json();
+            
+            if (data.success) {
+                console.log('✅ Print request recorded successfully');
+                
+                // Update usage limits after print is recorded
+                if (data.remaining) {
+                    this.updateUsageLimits(data.remaining);
+                }
+                
+                this.hideProcessing();
+                
+                // Open print dialog
+                this.openPrintDialog();
+                
+                // Show success message
+                this.showSuccess('🖨️ Print Authorized!\n\nYour print has been recorded. The print dialog will open automatically.');
+                
+            } else {
+                console.error('❌ Print request failed:', data.error);
+                this.hideProcessing();
+                
+                if (response.status === 429) {
+                    this.showError(`🚫 Print Limit Reached\n\n${data.error}\n\nLimits reset when the event system restarts.`);
+                } else {
+                    this.showError(`Print request failed: ${data.error}`);
+                }
+            }
+            
+        } catch (error) {
+            console.error('❌ Print request error:', error);
+            this.hideProcessing();
+            this.showError(`Print request failed: ${error.message}`);
+        }
+    }
+    
+    // Open Print Dialog
+    openPrintDialog() {
+        try {
+            // Create a new window with the card for printing
+            const cardImage = this.elements.resultImage.src;
+            
+            const printWindow = window.open('', '_blank', 'width=800,height=600');
+            printWindow.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Print Trading Card</title>
+                    <style>
+                        body {
+                            margin: 0;
+                            padding: 20px;
+                            display: flex;
+                            justify-content: center;
+                            align-items: center;
+                            min-height: 100vh;
+                            background: white;
+                        }
+                        img {
+                            max-width: 100%;
+                            max-height: 100%;
+                            border: 1px solid #ddd;
+                            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+                        }
+                        @media print {
+                            body { margin: 0; padding: 0; }
+                            img { max-width: none; max-height: none; width: auto; height: auto; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <img src="${cardImage}" alt="Trading Card" onload="window.print(); window.close();">
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+            
+        } catch (error) {
+            console.error('❌ Failed to open print dialog:', error);
+            // Fallback: just print the current page
+            window.print();
+        }
     }
 
     // Card Generation
