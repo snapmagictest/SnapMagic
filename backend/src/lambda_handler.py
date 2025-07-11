@@ -34,20 +34,19 @@ def load_limits() -> Dict[str, int]:
 
 def store_print_record(session_id: str, username: str, card_prompt: str, card_image_base64: str) -> Dict[str, Any]:
     """
-    Store print record and add card to print queue in S3 with session-based naming
+    Store print image in S3 using same mechanism as cards/videos - just save the PNG
     
     Args:
         session_id: Session identifier (IP + browser hash)
         username: Authenticated username
         card_prompt: Original card prompt that was printed
-        card_image_base64: Base64 encoded card image to add to print queue
+        card_image_base64: Base64 encoded card image to store
         
     Returns:
-        Dictionary containing success status and print queue information
+        Dictionary containing success status and print information
     """
     try:
         import boto3
-        import json
         import base64
         from datetime import datetime
         
@@ -67,66 +66,23 @@ def store_print_record(session_id: str, username: str, card_prompt: str, card_im
         )
         print_count = len(existing_prints.get('Contents', [])) + 1  # Next print number for this session
         
-        # Count existing items in print queue to get total queue position
-        print_queue_response = s3_client.list_objects_v2(
-            Bucket=bucket_name,
-            Prefix='print-queue/'
-        )
-        total_queue_items = len(print_queue_response.get('Contents', []))
-        queue_position = total_queue_items + 1  # Position in overall queue
-        
         # Generate timestamp
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         
-        # Create session-based print record filename: SESSION_print_COUNT_timestamp.json
-        record_filename = f"{session_id}_print_{print_count}_{timestamp}.json"
-        record_s3_key = f"prints/{record_filename}"
-        
-        # Create session-based print queue filename: SESSION_print_COUNT_timestamp.png
-        # This follows the same pattern as cards but with _print_ instead of _card_
-        queue_filename = f"{session_id}_print_{print_count}_{timestamp}.png"
-        queue_s3_key = f"print-queue/{queue_filename}"
-        
-        # Create print record data
-        print_record = {
-            'session_id': session_id,
-            'print_number': print_count,
-            'queue_position': queue_position,
-            'username': username,
-            'card_prompt': card_prompt,
-            'printed_at': datetime.now().isoformat(),
-            'print_type': 'trading_card',
-            'queue_filename': queue_filename,
-            'status': 'queued'
-        }
-        
-        # Upload print record to S3
-        logger.info(f"🖨️ Storing print record in S3: {record_s3_key}")
-        
-        s3_client.put_object(
-            Bucket=bucket_name,
-            Key=record_s3_key,
-            Body=json.dumps(print_record, indent=2),
-            ContentType='application/json',
-            Metadata={
-                'session_id': session_id,
-                'print_number': str(print_count),
-                'queue_position': str(queue_position),
-                'username': username,
-                'printed_at': datetime.now().isoformat(),
-                'record_type': 'print_tracking'
-            }
-        )
-        
-        # Add card image to print queue with session-based naming
-        logger.info(f"📄 Adding card to print queue: {queue_s3_key}")
+        # Create session-based print filename: SESSION_print_COUNT_timestamp.png
+        # Same pattern as cards: SESSION_card_COUNT_timestamp.png
+        print_filename = f"{session_id}_print_{print_count}_{timestamp}.png"
+        print_s3_key = f"prints/{print_filename}"
         
         # Decode base64 image
         image_data = base64.b64decode(card_image_base64)
         
+        # Store print image in S3 (same as cards/videos - just the file)
+        logger.info(f"🖨️ Storing print image in S3: {print_s3_key}")
+        
         s3_client.put_object(
             Bucket=bucket_name,
-            Key=queue_s3_key,
+            Key=print_s3_key,
             Body=image_data,
             ContentType='image/png',
             Metadata={
@@ -134,30 +90,26 @@ def store_print_record(session_id: str, username: str, card_prompt: str, card_im
                 'username': username,
                 'card_prompt': card_prompt[:500],  # Truncate if too long
                 'print_number': str(print_count),
-                'queue_position': str(queue_position),
-                'queued_at': datetime.now().isoformat(),
-                'print_status': 'queued'
+                'printed_at': datetime.now().isoformat(),
+                'print_type': 'trading_card'
             }
         )
         
-        logger.info(f"✅ Print queued successfully: {queue_filename} (Print #{print_count} for session {session_id}, Queue position #{queue_position})")
+        logger.info(f"✅ Print stored successfully: {print_filename} (Print #{print_count} for session {session_id})")
         
         return {
             'success': True,
-            'record_s3_key': record_s3_key,
-            'queue_s3_key': queue_s3_key,
-            'record_filename': record_filename,
-            'queue_filename': queue_filename,
+            'print_s3_key': print_s3_key,
+            'print_filename': print_filename,
             'print_number': print_count,
-            'queue_position': queue_position,
             'session_id': session_id
         }
         
     except Exception as e:
-        logger.error(f"❌ Failed to store print record and queue: {str(e)}")
+        logger.error(f"❌ Failed to store print: {str(e)}")
         return {
             'success': False,
-            'error': f"Print queue storage failed: {str(e)}"
+            'error': f"Print storage failed: {str(e)}"
         }
 
 def get_client_ip(request_headers: Dict[str, str]) -> str:
@@ -590,21 +542,19 @@ def lambda_handler(event, context):
                 result = store_print_record(session_id, username, card_prompt, card_image_base64)
                 
                 if result['success']:
-                    # Get updated remaining usage after print record storage
+                    # Get updated remaining usage after print storage
                     remaining = get_remaining_usage(session_id)
                     
-                    logger.info("✅ Card added to print queue successfully")
+                    logger.info("✅ Card print stored successfully")
                     return create_success_response({
                         'success': True,
-                        'message': f'Card added to print queue (Position #{result["queue_position"]})',
+                        'message': f'Card saved for printing',
                         'print_number': result['print_number'],
-                        'queue_position': result['queue_position'],
-                        'queue_filename': result['queue_filename'],
+                        'print_filename': result['print_filename'],
                         'remaining': remaining,  # Updated usage counts
                         'session_id': session_id,  # For debugging
                         'client_ip': client_ip,  # For debugging
-                        'record_s3_key': result['record_s3_key'],
-                        'queue_s3_key': result['queue_s3_key']
+                        'print_s3_key': result['print_s3_key']
                     })
                 else:
                     logger.error(f"❌ Failed to add card to print queue: {result.get('error')}")

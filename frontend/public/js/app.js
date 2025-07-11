@@ -385,7 +385,7 @@ class SnapMagicApp {
                 this.elements.printBtn.innerHTML = '🚫 Print Used';
             } else {
                 this.elements.printBtn.disabled = false;
-                this.elements.printBtn.innerHTML = '🖨️ Add to Print Queue';
+                this.elements.printBtn.innerHTML = '🖨️ Save for Print';
             }
         }
     }
@@ -483,8 +483,9 @@ class SnapMagicApp {
                 
                 this.hideProcessing();
                 
-                // Show success message with queue information
-                this.showSuccess(`🖨️ Card Added to Print Queue!\n\nQueue Position: #${data.queue_position}\nFilename: ${data.queue_filename}\n\nYour card has been added to the print queue. The print operator will process it in order.`);
+                // Show success message with print information
+                console.log('✅ Card added to print successfully');
+                alert(`🖨️ Card Added to Print!\n\nFilename: ${data.print_filename}\n\nYour card has been saved for printing.`);
                 
             } else {
                 console.error('❌ Print queue request failed:', data.error);
