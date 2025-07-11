@@ -273,6 +273,12 @@ frontend:
       authorizationType: apigateway.AuthorizationType.NONE
     });
     
+    // Store card endpoint (for storing final composited cards in S3)
+    const storeCardResource = apiResource.addResource('store-card');
+    storeCardResource.addMethod('POST', lambdaIntegration, {
+      authorizationType: apigateway.AuthorizationType.NONE
+    });
+    
     // Transform image endpoint (keep for compatibility)
     const transformImageResource = apiResource.addResource('transform-image');
     transformImageResource.addMethod('POST', lambdaIntegration, {
