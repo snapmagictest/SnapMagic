@@ -385,7 +385,7 @@ class SnapMagicApp {
                 this.elements.printBtn.innerHTML = '🚫 Print Used';
             } else {
                 this.elements.printBtn.disabled = false;
-                this.elements.printBtn.innerHTML = '🖨️ Print Card';
+                this.elements.printBtn.innerHTML = '🖨️ Add to Print Queue';
             }
         }
     }
@@ -405,7 +405,7 @@ class SnapMagicApp {
         }
 
         try {
-            console.log('🖨️ Print card request initiated');
+            console.log('🖨️ Print queue request initiated');
             
             // Check if print limit is reached
             const printRemaining = this.usageLimits.prints.total - this.usageLimits.prints.used;
@@ -414,9 +414,15 @@ class SnapMagicApp {
                 return;
             }
             
-            this.showProcessing('Recording print request...');
+            this.showProcessing('Adding card to print queue...');
             
-            // Record print action with backend
+            // Get card image as base64 (remove data:image/png;base64, prefix if present)
+            let cardImageBase64 = this.generatedCardData;
+            if (cardImageBase64.startsWith('data:image/')) {
+                cardImageBase64 = cardImageBase64.split(',')[1];
+            }
+            
+            // Add card to print queue
             const apiBaseUrl = window.SNAPMAGIC_CONFIG.API_URL;
             const endpoint = `${apiBaseUrl}api/print-card`;
             
@@ -428,94 +434,44 @@ class SnapMagicApp {
                 },
                 body: JSON.stringify({
                     action: 'print_card',
-                    card_prompt: this.lastUsedPrompt || 'Generated card'
+                    card_prompt: this.lastUsedPrompt || 'Generated card',
+                    card_image: cardImageBase64
                 })
             });
 
             const data = await response.json();
             
             if (data.success) {
-                console.log('✅ Print request recorded successfully');
+                console.log('✅ Card added to print queue successfully');
                 
-                // Update usage limits after print is recorded
+                // Update usage limits after print is queued
                 if (data.remaining) {
                     this.updateUsageLimits(data.remaining);
                 }
                 
                 this.hideProcessing();
                 
-                // Open print dialog
-                this.openPrintDialog();
-                
-                // Show success message
-                this.showSuccess('🖨️ Print Authorized!\n\nYour print has been recorded. The print dialog will open automatically.');
+                // Show success message with queue information
+                this.showSuccess(`🖨️ Card Added to Print Queue!\n\nQueue Number: #${data.queue_number}\nFilename: ${data.queue_filename}\n\nYour card has been added to the print queue. The print operator will process it in order.`);
                 
             } else {
-                console.error('❌ Print request failed:', data.error);
+                console.error('❌ Print queue request failed:', data.error);
                 this.hideProcessing();
                 
                 if (response.status === 429) {
                     this.showError(`🚫 Print Limit Reached\n\n${data.error}\n\nLimits reset when the event system restarts.`);
                 } else {
-                    this.showError(`Print request failed: ${data.error}`);
+                    this.showError(`Print queue failed: ${data.error}`);
                 }
             }
             
         } catch (error) {
-            console.error('❌ Print request error:', error);
+            console.error('❌ Print queue error:', error);
             this.hideProcessing();
-            this.showError(`Print request failed: ${error.message}`);
+            this.showError(`Print queue failed: ${error.message}`);
         }
     }
     
-    // Open Print Dialog
-    openPrintDialog() {
-        try {
-            // Create a new window with the card for printing
-            const cardImage = this.elements.resultImage.src;
-            
-            const printWindow = window.open('', '_blank', 'width=800,height=600');
-            printWindow.document.write(`
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <title>Print Trading Card</title>
-                    <style>
-                        body {
-                            margin: 0;
-                            padding: 20px;
-                            display: flex;
-                            justify-content: center;
-                            align-items: center;
-                            min-height: 100vh;
-                            background: white;
-                        }
-                        img {
-                            max-width: 100%;
-                            max-height: 100%;
-                            border: 1px solid #ddd;
-                            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-                        }
-                        @media print {
-                            body { margin: 0; padding: 0; }
-                            img { max-width: none; max-height: none; width: auto; height: auto; }
-                        }
-                    </style>
-                </head>
-                <body>
-                    <img src="${cardImage}" alt="Trading Card" onload="window.print(); window.close();">
-                </body>
-                </html>
-            `);
-            printWindow.document.close();
-            
-        } catch (error) {
-            console.error('❌ Failed to open print dialog:', error);
-            // Fallback: just print the current page
-            window.print();
-        }
-    }
-
     // Card Generation
     async handleGenerateCard() {
         const userPrompt = this.elements.promptInput.value.trim();
