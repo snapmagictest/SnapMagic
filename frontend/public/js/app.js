@@ -250,6 +250,12 @@ class SnapMagicApp {
                 this.authToken = data.token;
                 this.currentUser = { username, token: data.token };
                 
+                // Update usage limits from login response
+                if (data.remaining) {
+                    this.updateUsageLimits(data.remaining);
+                    console.log('📊 Usage limits loaded from server:', data.remaining);
+                }
+                
                 // Username display removed for events
                 // this.elements.usernameDisplay.textContent = username;
                 this.hideProcessing();

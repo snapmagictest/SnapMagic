@@ -224,15 +224,16 @@ class TradingCardGenerator:
             'error': error_message
         }
     
-    def store_final_card_in_s3(self, final_card_base64: str, prompt: str, user_name: str, username: str) -> Dict[str, Any]:
+    def store_final_card_in_s3(self, final_card_base64: str, prompt: str, user_name: str, username: str, client_ip: str) -> Dict[str, Any]:
         """
-        Store the final composited trading card in S3 cards/ folder
+        Store the final composited trading card in S3 cards/ folder with IP-based filename
         
         Args:
             final_card_base64: Base64 encoded final composited card
             prompt: Original user prompt
             user_name: Name on the card (or empty for AWS logo)
             username: Authenticated username
+            client_ip: Client IP address for filename
             
         Returns:
             Dictionary containing success status and S3 key/URL
@@ -250,19 +251,18 @@ class TradingCardGenerator:
             # Decode base64 image data
             image_data = base64.b64decode(final_card_base64)
             
-            # Generate S3 key for cards/ folder
+            # Count existing cards for this IP to get next number
+            existing_cards = self.s3_client.list_objects_v2(
+                Bucket=self.s3_bucket,
+                Prefix=f'cards/{client_ip}_card_'
+            )
+            card_count = len(existing_cards.get('Contents', [])) + 1  # Next card number
+            
+            # Generate timestamp
             timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-            safe_prompt = ''.join(c for c in prompt[:30] if c.isalnum() or c in (' ', '-', '_')).strip()
-            safe_prompt = safe_prompt.replace(' ', '_')
             
-            # Create descriptive filename
-            if user_name:
-                safe_user_name = ''.join(c for c in user_name[:20] if c.isalnum() or c in (' ', '-', '_')).strip()
-                safe_user_name = safe_user_name.replace(' ', '_')
-                filename = f"{timestamp}_{safe_user_name}_{safe_prompt}.png"
-            else:
-                filename = f"{timestamp}_AWS_{safe_prompt}.png"
-            
+            # Create IP-based filename: IP_card_COUNT_timestamp.png
+            filename = f"{client_ip}_card_{card_count}_{timestamp}.png"
             s3_key = f"cards/{filename}"
             
             # Upload to S3
@@ -274,7 +274,8 @@ class TradingCardGenerator:
                 Body=image_data,
                 ContentType='image/png',
                 Metadata={
-                    'prompt': prompt[:1000],  # Truncate if too long
+                    'client_ip': client_ip,
+                    'card_number': str(card_count),
                     'user_name': user_name or 'AWS_Logo',
                     'username': username,
                     'generated_at': datetime.now().isoformat(),
@@ -285,13 +286,15 @@ class TradingCardGenerator:
             # Generate S3 URL
             s3_url = f"https://{self.s3_bucket}.s3.amazonaws.com/{s3_key}"
             
-            logger.info(f"✅ Final card stored successfully: {s3_key}")
+            logger.info(f"✅ Final card stored successfully: {s3_key} (Card #{card_count} for IP {client_ip})")
             
             return {
                 'success': True,
                 's3_key': s3_key,
                 's3_url': s3_url,
-                'filename': filename
+                'filename': filename,
+                'card_number': card_count,
+                'client_ip': client_ip
             }
             
         except Exception as e:

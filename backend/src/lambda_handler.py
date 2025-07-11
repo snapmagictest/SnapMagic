@@ -15,9 +15,6 @@ from video_generator import VideoGenerator
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
-# Simple usage tracking in Lambda memory
-usage_counts = {}
-
 def load_limits() -> Dict[str, int]:
     """Load usage limits from environment variables (set by CDK from secrets.json)"""
     try:
@@ -33,85 +30,79 @@ def load_limits() -> Dict[str, int]:
         logger.error(f"Failed to load limits: {str(e)}")
         return {'cards': 5, 'videos': 3}  # Safe defaults
 
-def check_usage_limit(username: str, generation_type: str, request_headers: Dict[str, str] = None) -> bool:
-    """Check if user has exceeded usage limits using browser fingerprinting"""
+def get_client_ip(request_headers: Dict[str, str]) -> str:
+    """Extract client IP address from request headers"""
+    # Try X-Forwarded-For first (from CloudFront/API Gateway)
+    x_forwarded = request_headers.get('X-Forwarded-For', request_headers.get('x-forwarded-for', ''))
+    if x_forwarded:
+        # X-Forwarded-For can contain multiple IPs, take the first one (original client)
+        client_ip = x_forwarded.split(',')[0].strip()
+        if client_ip:
+            return client_ip
+    
+    # Fallback to other headers
+    real_ip = request_headers.get('X-Real-IP', request_headers.get('x-real-ip', ''))
+    if real_ip:
+        return real_ip
+    
+    # Last resort - use a default
+    return 'unknown'
+
+def get_usage_from_s3(client_ip: str) -> Dict[str, int]:
+    """Count existing cards and videos for IP address by checking S3 files"""
+    try:
+        import boto3
+        s3_client = boto3.client('s3')
+        bucket_name = os.environ.get('S3_BUCKET_NAME')
+        
+        if not bucket_name:
+            logger.warning("S3_BUCKET_NAME not configured")
+            return {'cards': 0, 'videos': 0}
+        
+        # Count cards for this IP
+        cards_response = s3_client.list_objects_v2(
+            Bucket=bucket_name,
+            Prefix=f'cards/{client_ip}_card_'
+        )
+        cards_count = len(cards_response.get('Contents', []))
+        
+        # Count videos for this IP  
+        videos_response = s3_client.list_objects_v2(
+            Bucket=bucket_name,
+            Prefix=f'videos/{client_ip}_video_'
+        )
+        videos_count = len(videos_response.get('Contents', []))
+        
+        logger.info(f"IP {client_ip} usage: {cards_count} cards, {videos_count} videos")
+        return {'cards': cards_count, 'videos': videos_count}
+        
+    except Exception as e:
+        logger.error(f"Failed to get S3 usage for IP {client_ip}: {str(e)}")
+        return {'cards': 0, 'videos': 0}
+
+def check_usage_limit(client_ip: str, generation_type: str) -> bool:
+    """Check if IP has exceeded usage limits by counting S3 files"""
     limits = load_limits()
+    current_usage = get_usage_from_s3(client_ip)
     
-    # Generate session key from browser fingerprinting data
-    session_key = generate_session_key(request_headers or {})
-    
-    if session_key not in usage_counts:
-        usage_counts[session_key] = {'cards': 0, 'videos': 0}
-    
-    current_count = usage_counts[session_key].get(generation_type, 0)
+    current_count = current_usage.get(generation_type, 0)
     limit = limits.get(generation_type, 5)
     
-    logger.info(f"Usage check - Session: {session_key[:8]}..., Type: {generation_type}, Count: {current_count}, Limit: {limit}")
+    logger.info(f"Usage check - IP: {client_ip}, Type: {generation_type}, Count: {current_count}, Limit: {limit}")
     return current_count < limit
 
-def increment_usage(username: str, generation_type: str, request_headers: Dict[str, str] = None):
-    """Increment usage count for session"""
-    session_key = generate_session_key(request_headers or {})
-    
-    if session_key not in usage_counts:
-        usage_counts[session_key] = {'cards': 0, 'videos': 0}
-    
-    usage_counts[session_key][generation_type] = usage_counts[session_key].get(generation_type, 0) + 1
-    logger.info(f"Usage incremented - Session: {session_key[:8]}..., Type: {generation_type}, New count: {usage_counts[session_key][generation_type]}")
-
-def get_remaining_usage(username: str, request_headers: Dict[str, str] = None) -> Dict[str, int]:
-    """Get remaining usage for session"""
+def get_remaining_usage(client_ip: str) -> Dict[str, int]:
+    """Get remaining usage for IP by counting S3 files"""
     limits = load_limits()
-    session_key = generate_session_key(request_headers or {})
+    current_usage = get_usage_from_s3(client_ip)
     
-    if session_key not in usage_counts:
-        usage_counts[session_key] = {'cards': 0, 'videos': 0}
-    
-    used = usage_counts[session_key]
     remaining = {
-        'cards': max(0, limits['cards'] - used.get('cards', 0)),
-        'videos': max(0, limits['videos'] - used.get('videos', 0))
+        'cards': max(0, limits['cards'] - current_usage.get('cards', 0)),
+        'videos': max(0, limits['videos'] - current_usage.get('videos', 0))
     }
     
+    logger.info(f"IP {client_ip} remaining: {remaining}")
     return remaining
-
-def generate_session_key(request_headers: Dict[str, str]) -> str:
-    """Generate unique session key from browser fingerprinting data"""
-    import hashlib
-    
-    # Collect browser fingerprinting data
-    fingerprint_data = []
-    
-    # User-Agent (most important)
-    user_agent = request_headers.get('User-Agent', request_headers.get('user-agent', ''))
-    fingerprint_data.append(user_agent)
-    
-    # Accept headers
-    accept = request_headers.get('Accept', request_headers.get('accept', ''))
-    fingerprint_data.append(accept)
-    
-    # Accept-Language
-    accept_lang = request_headers.get('Accept-Language', request_headers.get('accept-language', ''))
-    fingerprint_data.append(accept_lang)
-    
-    # Accept-Encoding
-    accept_encoding = request_headers.get('Accept-Encoding', request_headers.get('accept-encoding', ''))
-    fingerprint_data.append(accept_encoding)
-    
-    # X-Forwarded-For (IP info)
-    x_forwarded = request_headers.get('X-Forwarded-For', request_headers.get('x-forwarded-for', ''))
-    fingerprint_data.append(x_forwarded)
-    
-    # CloudFront-Viewer-Country
-    cf_country = request_headers.get('CloudFront-Viewer-Country', request_headers.get('cloudfront-viewer-country', ''))
-    fingerprint_data.append(cf_country)
-    
-    # Create hash of all fingerprint data
-    fingerprint_string = '|'.join(fingerprint_data)
-    session_hash = hashlib.sha256(fingerprint_string.encode()).hexdigest()
-    
-    logger.info(f"Generated session key: {session_hash[:8]}... from fingerprint data")
-    return session_hash
 
 def load_event_credentials() -> Dict[str, str]:
     """Load event credentials from environment variables (set by CDK from secrets.json)"""
@@ -201,13 +192,22 @@ def lambda_handler(event, context):
                 # Create token using the existing auth module
                 auth_handler = SnapMagicAuthSimple()
                 token = auth_handler.generate_token(username)
-                logger.info("Login successful, token generated")
+                
+                # Get client IP and check usage limits
+                request_headers = event.get('headers', {})
+                client_ip = get_client_ip(request_headers)
+                remaining_usage = get_remaining_usage(client_ip)
+                
+                logger.info(f"Login successful for IP {client_ip}, remaining usage: {remaining_usage}")
+                
                 return create_success_response({
                     'success': True,  # Frontend expects this field
                     'message': 'Login successful',
                     'token': token,
                     'expires_in': 86400,  # 24 hours
-                    'user': {'username': username}
+                    'user': {'username': username},
+                    'remaining': remaining_usage,  # Include usage info at login
+                    'client_ip': client_ip  # For debugging
                 })
             else:
                 logger.warning(f"Invalid login attempt: {username}")
@@ -237,12 +237,14 @@ def lambda_handler(event, context):
         if action == 'transform_card':
             username = token_payload.get('username', 'unknown')
             
-            # Check usage limits
+            # Get client IP and check usage limits
             request_headers = event.get('headers', {})
-            if not check_usage_limit(username, 'cards', request_headers):
-                remaining = get_remaining_usage(username, request_headers)
+            client_ip = get_client_ip(request_headers)
+            
+            if not check_usage_limit(client_ip, 'cards'):
+                remaining = get_remaining_usage(client_ip)
                 return create_error_response(
-                    f"Card generation limit reached. You have {remaining['cards']} cards and {remaining['videos']} videos remaining.", 
+                    f"Card generation limit reached for your IP address. You have {remaining['cards']} cards and {remaining['videos']} videos remaining.", 
                     429
                 )
             
@@ -260,9 +262,8 @@ def lambda_handler(event, context):
                 result = card_generator.generate_trading_card(prompt)
                 
                 if result['success']:
-                    # Increment usage count
-                    increment_usage(username, 'cards', request_headers)
-                    remaining = get_remaining_usage(username, request_headers)
+                    # Get updated remaining usage (will be recalculated from S3)
+                    remaining = get_remaining_usage(client_ip)
                     
                     # Return in format frontend expects
                     return create_success_response({
@@ -271,7 +272,8 @@ def lambda_handler(event, context):
                         'result': result['result'],  # Base64 image data
                         'imageSrc': result.get('imageSrc'),  # Data URL for frontend
                         'metadata': result.get('metadata', {}),
-                        'remaining': remaining  # Add remaining counts
+                        'remaining': remaining,  # Updated remaining counts
+                        'client_ip': client_ip  # For debugging
                     })
                 else:
                     return create_error_response(f"Generation failed: {result.get('error', 'Unknown error')}", 500)
@@ -409,12 +411,17 @@ def lambda_handler(event, context):
                 return create_error_response("Missing final_card_base64 parameter", 400)
             
             try:
-                # Store final card in S3 cards/ folder
+                # Get client IP for filename
+                request_headers = event.get('headers', {})
+                client_ip = get_client_ip(request_headers)
+                
+                # Store final card in S3 cards/ folder with IP-based filename
                 result = card_generator.store_final_card_in_s3(
                     final_card_base64, 
                     prompt, 
                     user_name, 
-                    username
+                    username,
+                    client_ip  # Pass IP for filename generation
                 )
                 
                 if result['success']:
