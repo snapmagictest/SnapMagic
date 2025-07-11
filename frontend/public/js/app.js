@@ -484,7 +484,7 @@ class SnapMagicApp {
                 this.hideProcessing();
                 
                 // Show success message with queue information
-                this.showSuccess(`🖨️ Card Added to Print Queue!\n\nQueue Number: #${data.queue_number}\nFilename: ${data.queue_filename}\n\nYour card has been added to the print queue. The print operator will process it in order.`);
+                this.showSuccess(`🖨️ Card Added to Print Queue!\n\nQueue Position: #${data.queue_position}\nFilename: ${data.queue_filename}\n\nYour card has been added to the print queue. The print operator will process it in order.`);
                 
             } else {
                 console.error('❌ Print queue request failed:', data.error);

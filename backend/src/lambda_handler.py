@@ -34,7 +34,7 @@ def load_limits() -> Dict[str, int]:
 
 def store_print_record(session_id: str, username: str, card_prompt: str, card_image_base64: str) -> Dict[str, Any]:
     """
-    Store print record and add card to print queue in S3
+    Store print record and add card to print queue in S3 with session-based naming
     
     Args:
         session_id: Session identifier (IP + browser hash)
@@ -60,19 +60,20 @@ def store_print_record(session_id: str, username: str, card_prompt: str, card_im
                 'error': 'S3 bucket not configured'
             }
         
-        # Count existing prints for this session to get next number
+        # Count existing prints for this session to get next print number
         existing_prints = s3_client.list_objects_v2(
             Bucket=bucket_name,
             Prefix=f'prints/{session_id}_print_'
         )
-        print_count = len(existing_prints.get('Contents', [])) + 1  # Next print number
+        print_count = len(existing_prints.get('Contents', [])) + 1  # Next print number for this session
         
-        # Count existing items in print queue to get next queue number
+        # Count existing items in print queue to get total queue position
         print_queue_response = s3_client.list_objects_v2(
             Bucket=bucket_name,
-            Prefix='print-queue/print_'
+            Prefix='print-queue/'
         )
-        queue_number = len(print_queue_response.get('Contents', [])) + 1  # Next in queue
+        total_queue_items = len(print_queue_response.get('Contents', []))
+        queue_position = total_queue_items + 1  # Position in overall queue
         
         # Generate timestamp
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
@@ -81,15 +82,16 @@ def store_print_record(session_id: str, username: str, card_prompt: str, card_im
         record_filename = f"{session_id}_print_{print_count}_{timestamp}.json"
         record_s3_key = f"prints/{record_filename}"
         
-        # Create print queue filename: print_XXX.png (sequential queue numbers)
-        queue_filename = f"print_{queue_number:03d}.png"  # 001, 002, 003, etc.
+        # Create session-based print queue filename: SESSION_print_COUNT_timestamp.png
+        # This follows the same pattern as cards but with _print_ instead of _card_
+        queue_filename = f"{session_id}_print_{print_count}_{timestamp}.png"
         queue_s3_key = f"print-queue/{queue_filename}"
         
         # Create print record data
         print_record = {
             'session_id': session_id,
             'print_number': print_count,
-            'queue_number': queue_number,
+            'queue_position': queue_position,
             'username': username,
             'card_prompt': card_prompt,
             'printed_at': datetime.now().isoformat(),
@@ -109,14 +111,14 @@ def store_print_record(session_id: str, username: str, card_prompt: str, card_im
             Metadata={
                 'session_id': session_id,
                 'print_number': str(print_count),
-                'queue_number': str(queue_number),
+                'queue_position': str(queue_position),
                 'username': username,
                 'printed_at': datetime.now().isoformat(),
                 'record_type': 'print_tracking'
             }
         )
         
-        # Add card image to print queue
+        # Add card image to print queue with session-based naming
         logger.info(f"📄 Adding card to print queue: {queue_s3_key}")
         
         # Decode base64 image
@@ -131,13 +133,14 @@ def store_print_record(session_id: str, username: str, card_prompt: str, card_im
                 'session_id': session_id,
                 'username': username,
                 'card_prompt': card_prompt[:500],  # Truncate if too long
-                'queue_number': str(queue_number),
+                'print_number': str(print_count),
+                'queue_position': str(queue_position),
                 'queued_at': datetime.now().isoformat(),
                 'print_status': 'queued'
             }
         )
         
-        logger.info(f"✅ Print queued successfully: Queue #{queue_number} (Print #{print_count} for session {session_id})")
+        logger.info(f"✅ Print queued successfully: {queue_filename} (Print #{print_count} for session {session_id}, Queue position #{queue_position})")
         
         return {
             'success': True,
@@ -146,7 +149,7 @@ def store_print_record(session_id: str, username: str, card_prompt: str, card_im
             'record_filename': record_filename,
             'queue_filename': queue_filename,
             'print_number': print_count,
-            'queue_number': queue_number,
+            'queue_position': queue_position,
             'session_id': session_id
         }
         
@@ -593,9 +596,9 @@ def lambda_handler(event, context):
                     logger.info("✅ Card added to print queue successfully")
                     return create_success_response({
                         'success': True,
-                        'message': f'Card added to print queue #{result["queue_number"]}',
+                        'message': f'Card added to print queue (Position #{result["queue_position"]})',
                         'print_number': result['print_number'],
-                        'queue_number': result['queue_number'],
+                        'queue_position': result['queue_position'],
                         'queue_filename': result['queue_filename'],
                         'remaining': remaining,  # Updated usage counts
                         'session_id': session_id,  # For debugging
