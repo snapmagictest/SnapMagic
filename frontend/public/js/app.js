@@ -552,10 +552,8 @@ class SnapMagicApp {
             if (data.success && data.metadata?.invocation_arn) {
                 console.log('✅ Video generation initiated');
                 
-                // Update usage limits from API response
-                if (data.remaining) {
-                    this.updateUsageLimits(data.remaining);
-                }
+                // Don't update usage limits here - wait until video completes and is stored in S3
+                // The actual usage count changes when the video is completed and stored with session filename
                 
                 const invocationArn = data.metadata.invocation_arn;
                 console.log('🔍 Using full invocation ARN:', invocationArn);
@@ -721,6 +719,17 @@ class SnapMagicApp {
 
             if (result.success && (result.status === 'SUCCEEDED' || result.status === 'completed') && result.video_url) {
                 console.log('✅ Video generation completed successfully!');
+                
+                // Update usage limits after video completion (same as cards)
+                if (result.remaining) {
+                    console.log('📊 Updating usage limits after video completion:', result.remaining);
+                    this.updateUsageLimits(result.remaining);
+                } else {
+                    // Fallback: refresh usage limits if not provided in response
+                    console.log('🔄 Refreshing usage limits after video completion...');
+                    await this.refreshUsageLimits();
+                }
+                
                 this.hideProcessing();
                 this.displayGeneratedVideo(result.video_url);
                 this.videoGenerationInProgress = false;
