@@ -249,6 +249,8 @@ def lambda_handler(event, context):
                 )
             
             prompt = body.get('prompt', '')
+            user_name = body.get('user_name', '')
+            
             if not prompt:
                 return create_error_response("Missing prompt parameter", 400)
             
@@ -262,6 +264,21 @@ def lambda_handler(event, context):
                 result = card_generator.generate_trading_card(prompt)
                 
                 if result['success']:
+                    # Immediately store the raw card in S3 with IP-based filename
+                    # This ensures usage counting is accurate
+                    store_result = card_generator.store_final_card_in_s3(
+                        result['result'],  # Raw Nova Canvas image
+                        prompt,
+                        user_name,
+                        username,
+                        client_ip
+                    )
+                    
+                    if store_result['success']:
+                        logger.info(f"✅ Card stored in S3: {store_result['s3_key']}")
+                    else:
+                        logger.warning(f"⚠️ Failed to store card in S3: {store_result['error']}")
+                    
                     # Get updated remaining usage (will be recalculated from S3)
                     remaining = get_remaining_usage(client_ip)
                     
@@ -273,7 +290,8 @@ def lambda_handler(event, context):
                         'imageSrc': result.get('imageSrc'),  # Data URL for frontend
                         'metadata': result.get('metadata', {}),
                         'remaining': remaining,  # Updated remaining counts
-                        'client_ip': client_ip  # For debugging
+                        'client_ip': client_ip,  # For debugging
+                        's3_stored': store_result['success']  # Indicate if S3 storage worked
                     })
                 else:
                     return create_error_response(f"Generation failed: {result.get('error', 'Unknown error')}", 500)
