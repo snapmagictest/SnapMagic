@@ -428,6 +428,13 @@ class SnapMagicApp {
                 <p class="error-text">Template composition failed. Showing raw AI-generated image.</p>
             `;
             this.elements.resultActions.classList.remove('hidden');
+            
+            // Still store the raw Nova Canvas image in S3
+            try {
+                await this.storeFinalCardInS3(novaImageBase64, userPrompt, userName);
+            } catch (storageError) {
+                console.warn('⚠️ Failed to store fallback card in S3:', storageError);
+            }
         }
     }
 
