@@ -49,8 +49,8 @@ def create_standard_session_id(client_ip: str, override_number: int = 1) -> str:
 
 def get_current_override_number(client_ip: str) -> int:
     """
-    Get current override number for IP by checking S3 files
-    Returns the highest override number found, or 1 if none exist
+    Get current override number for IP by finding the HIGHEST override number in S3
+    This establishes the correct BASE for the user session
     """
     try:
         import boto3
@@ -60,47 +60,100 @@ def get_current_override_number(client_ip: str) -> int:
         if not bucket_name:
             return 1
         
-        # Check all folders for this IP to find highest override number
+        # Check all folders for this IP to find HIGHEST override number
         max_override = 0
+        
+        logger.info(f"🔍 Establishing base override for IP {client_ip}")
         
         for prefix in ['cards', 'videos', 'print-queue']:
             response = s3_client.list_objects_v2(
                 Bucket=bucket_name,
                 Prefix=f'{prefix}/{client_ip}_override'
             )
+            
             for obj in response.get('Contents', []):
                 filename = obj['Key']
+                logger.info(f"📁 Found file: {filename}")
+                
                 if '_override' in filename:
-                    # Extract override number from filename like: IP_override1_card_1_timestamp.png
+                    # Extract override number from filename like: IP_override2_card_1_timestamp.png
                     try:
                         parts = filename.split('_override')[1]
                         override_num = int(parts.split('_')[0])
                         max_override = max(max_override, override_num)
-                    except (ValueError, IndexError):
+                        logger.info(f"📊 Extracted override number: {override_num}, current max: {max_override}")
+                    except (ValueError, IndexError) as e:
+                        logger.warning(f"⚠️ Could not parse override number from {filename}: {e}")
                         continue
         
-        # Return current override number (starts at 1 if none found)
-        current_override = max(1, max_override)
-        logger.info(f"📊 IP {client_ip} current override number: {current_override}")
-        return current_override
+        # The current base is the highest override found, or 1 if none exist
+        current_base = max(1, max_override)
+        logger.info(f"✅ Established base override for IP {client_ip}: override{current_base}")
+        
+        return current_base
         
     except Exception as e:
-        logger.error(f"❌ Failed to get override number for IP {client_ip}: {str(e)}")
+        logger.error(f"❌ Failed to establish base override for IP {client_ip}: {str(e)}")
         return 1
 
-def increment_override_number(client_ip: str) -> int:
+
+
+def get_next_card_number_for_session(client_ip: str, override_number: int, file_type: str) -> int:
     """
-    Increment override number when staff presses override button
-    Returns the NEW override number to use
+    Get the next card number for a specific override session by counting existing files
+    NO HARDCODING - Always count actual files in S3
+    
+    Args:
+        client_ip: Client IP address
+        override_number: Override session number (1, 2, 3, etc.)
+        file_type: 'card', 'print', 'video'
+        
+    Returns:
+        Next card number (1, 2, 3, etc.)
     """
-    current = get_current_override_number(client_ip)
-    new_override = current + 1
-    logger.info(f"🔓 Staff override pressed - IP {client_ip}: override{current} → override{new_override}")
-    return new_override
+    try:
+        import boto3
+        s3_client = boto3.client('s3')
+        bucket_name = os.environ.get('S3_BUCKET_NAME')
+        
+        if not bucket_name:
+            return 1
+        
+        # Determine folder based on file type
+        folder_map = {
+            'card': 'cards',
+            'print': 'print-queue', 
+            'video': 'videos'
+        }
+        folder = folder_map.get(file_type, 'cards')
+        
+        # Count existing files for this specific override session
+        session_prefix = f"{client_ip}_override{override_number}_card_"
+        
+        response = s3_client.list_objects_v2(
+            Bucket=bucket_name,
+            Prefix=f'{folder}/{session_prefix}'
+        )
+        
+        existing_count = len(response.get('Contents', []))
+        next_card_number = existing_count + 1
+        
+        logger.info(f"📊 IP {client_ip} override{override_number} {file_type}: {existing_count} existing, next card #{next_card_number}")
+        
+        # Log existing files for debugging
+        if response.get('Contents'):
+            existing_files = [obj['Key'] for obj in response['Contents']]
+            logger.info(f"📁 Existing files: {existing_files}")
+        
+        return next_card_number
+        
+    except Exception as e:
+        logger.error(f"❌ Failed to get next card number: {str(e)}")
+        return 1
 
 def create_standard_filename(session_id: str, file_type: str, extension: str) -> tuple[str, str]:
     """
-    Create standardized filename with timestamp for ALL files
+    Create standardized filename with DYNAMIC card numbering - NO HARDCODING
     
     Args:
         session_id: IP_override1, IP_override2, etc.
@@ -112,8 +165,21 @@ def create_standard_filename(session_id: str, file_type: str, extension: str) ->
     """
     from datetime import datetime
     
+    # Extract IP and override number from session_id
+    parts = session_id.split('_override')
+    if len(parts) != 2:
+        logger.error(f"❌ Invalid session_id format: {session_id}")
+        return f"error_{session_id}.{extension}", f"error/error_{session_id}.{extension}"
+    
+    client_ip = parts[0]
+    override_number = int(parts[1])
+    
+    # Get next card number dynamically - NO HARDCODING
+    next_card_number = get_next_card_number_for_session(client_ip, override_number, file_type)
+    
+    # Create filename with dynamic card number
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-    filename = f"{session_id}_card_1_{timestamp}.{extension}"
+    filename = f"{session_id}_card_{next_card_number}_{timestamp}.{extension}"
     
     # Determine folder based on file type
     folder_map = {
@@ -124,11 +190,14 @@ def create_standard_filename(session_id: str, file_type: str, extension: str) ->
     folder = folder_map.get(file_type, 'cards')
     
     s3_key = f"{folder}/{filename}"
+    
+    logger.info(f"📝 Created filename: {filename} (card #{next_card_number})")
+    
     return filename, s3_key
 
 def check_usage_limit_simplified(client_ip: str, generation_type: str, override_code: str = None) -> tuple[bool, str]:
     """
-    Simplified usage check - ALWAYS uses standard override pattern
+    Simplified usage check with proper base establishment
     
     Args:
         client_ip: Client IP address
@@ -143,27 +212,33 @@ def check_usage_limit_simplified(client_ip: str, generation_type: str, override_
     valid_override_code = os.environ.get('OVERRIDE_CODE', 'snap')
     if override_code and override_code == valid_override_code:
         # Staff pressed override - increment to next override number
-        new_override_number = increment_override_number(client_ip)
+        current_base = get_current_override_number(client_ip)
+        new_override_number = current_base + 1
         session_id = create_standard_session_id(client_ip, new_override_number)
-        logger.info(f"🎁 Staff override applied - using {session_id}")
+        logger.info(f"🎁 Staff override applied - IP {client_ip}: override{current_base} → override{new_override_number}")
+        logger.info(f"📝 New session ID: {session_id}")
         return True, session_id
     
-    # Normal usage - use current override number (starts at 1)
-    current_override = get_current_override_number(client_ip)
-    session_id = create_standard_session_id(client_ip, current_override)
+    # Normal usage - establish correct base first
+    current_base = get_current_override_number(client_ip)
+    session_id = create_standard_session_id(client_ip, current_base)
     
-    # Check normal usage limits (simplified - just check total files for this override)
+    logger.info(f"🎯 Using established base for IP {client_ip}: override{current_base}")
+    logger.info(f"📝 Session ID: {session_id}")
+    
+    # Check normal usage limits for the current base override session
     limits = load_limits()
-    current_usage = get_usage_for_override_session(client_ip, current_override)
+    current_usage = get_usage_for_override_session(client_ip, current_base)
     current_count = current_usage.get(generation_type, 0)
     limit = limits.get(generation_type, 5)
     
-    logger.info(f"Usage check - IP: {client_ip}, Override: {current_override}, Type: {generation_type}, Count: {current_count}, Limit: {limit}")
+    logger.info(f"📊 Usage check - IP: {client_ip}, Base: override{current_base}, Type: {generation_type}")
+    logger.info(f"📊 Current count: {current_count}, Limit: {limit}, Allowed: {current_count < limit}")
     
     return current_count < limit, session_id
 
 def get_usage_for_override_session(client_ip: str, override_number: int) -> Dict[str, int]:
-    """Count files for specific override session"""
+    """Count files ONLY for specific override session - NOT all files for IP"""
     try:
         import boto3
         s3_client = boto3.client('s3')
@@ -172,31 +247,47 @@ def get_usage_for_override_session(client_ip: str, override_number: int) -> Dict
         if not bucket_name:
             return {'cards': 0, 'videos': 0, 'prints': 0}
         
+        # CRITICAL: Only count files for THIS specific override session
         session_prefix = f"{client_ip}_override{override_number}_"
         usage = {'cards': 0, 'videos': 0, 'prints': 0}
         
-        # Count cards
+        logger.info(f"🔍 Counting usage ONLY for session: {session_prefix}")
+        
+        # Count cards ONLY for this override session
         cards_response = s3_client.list_objects_v2(
             Bucket=bucket_name,
             Prefix=f'cards/{session_prefix}'
         )
-        usage['cards'] = len(cards_response.get('Contents', []))
+        cards_count = len(cards_response.get('Contents', []))
+        usage['cards'] = cards_count
         
-        # Count videos
+        # Count videos ONLY for this override session
         videos_response = s3_client.list_objects_v2(
             Bucket=bucket_name,
             Prefix=f'videos/{session_prefix}'
         )
-        usage['videos'] = len(videos_response.get('Contents', []))
+        videos_count = len(videos_response.get('Contents', []))
+        usage['videos'] = videos_count
         
-        # Count prints
+        # Count prints ONLY for this override session
         prints_response = s3_client.list_objects_v2(
             Bucket=bucket_name,
             Prefix=f'print-queue/{session_prefix}'
         )
-        usage['prints'] = len(prints_response.get('Contents', []))
+        prints_count = len(prints_response.get('Contents', []))
+        usage['prints'] = prints_count
         
-        logger.info(f"📊 IP {client_ip} override{override_number} usage: {usage}")
+        logger.info(f"📊 IP {client_ip} override{override_number} ISOLATED usage: {usage}")
+        logger.info(f"🔍 Searched for prefix: {session_prefix}")
+        
+        # Log actual files found for debugging
+        if cards_response.get('Contents'):
+            logger.info(f"📁 Found cards: {[obj['Key'] for obj in cards_response['Contents']]}")
+        if videos_response.get('Contents'):
+            logger.info(f"📁 Found videos: {[obj['Key'] for obj in videos_response['Contents']]}")
+        if prints_response.get('Contents'):
+            logger.info(f"📁 Found prints: {[obj['Key'] for obj in prints_response['Contents']]}")
+        
         return usage
         
     except Exception as e:
@@ -204,10 +295,14 @@ def get_usage_for_override_session(client_ip: str, override_number: int) -> Dict
         return {'cards': 0, 'videos': 0, 'prints': 0}
 
 def get_remaining_usage_simplified(client_ip: str) -> Dict[str, int]:
-    """Get remaining usage for current override session"""
+    """Get remaining usage for current base override session"""
     limits = load_limits()
-    current_override = get_current_override_number(client_ip)
-    current_usage = get_usage_for_override_session(client_ip, current_override)
+    
+    # Establish correct base first
+    current_base = get_current_override_number(client_ip)
+    current_usage = get_usage_for_override_session(client_ip, current_base)
+    
+    logger.info(f"🎯 Calculating remaining usage for IP {client_ip} base override{current_base}")
     
     # Calculate remaining: max_limit - used_count
     cards_used = current_usage.get('cards', 0)
@@ -224,7 +319,9 @@ def get_remaining_usage_simplified(client_ip: str) -> Dict[str, int]:
         'prints': prints_remaining
     }
     
-    logger.info(f"📊 IP {client_ip} override{current_override} remaining: {remaining}")
+    logger.info(f"📊 IP {client_ip} override{current_base} remaining: {remaining}")
+    logger.info(f"📊 Used: cards={cards_used}, videos={videos_used}, prints={prints_used}")
+    
     return remaining
 
 def store_file_with_standard_pattern(session_id: str, username: str, prompt: str, file_data: bytes, file_type: str, extension: str, content_type: str) -> Dict[str, Any]:
@@ -509,7 +606,7 @@ def lambda_handler(event, context):
                 return create_error_response(f"Card generation failed: {str(e)}", 500)
         
         # ========================================
-        # STORE FINAL CARD IN S3 WITH STANDARD PATTERN
+        # STORE FINAL CARD IN S3 WITH CORRECT OVERRIDE SESSION
         # ========================================
         elif action == 'store_final_card':
             username = token_payload.get('username', 'unknown')
@@ -517,20 +614,30 @@ def lambda_handler(event, context):
             final_card_base64 = body.get('final_card_base64', '')
             prompt = body.get('prompt', '')
             user_name = body.get('user_name', '')
+            override_code = body.get('override_code')  # Check for override code
             
             if not final_card_base64:
                 return create_error_response("Missing final_card_base64 parameter", 400)
             
             try:
-                # Get client IP and current override number
+                # Get client IP
                 request_headers = event.get('headers', {})
                 client_ip = get_client_ip(request_headers)
-                current_override = get_current_override_number(client_ip)
-                session_id_for_files = create_standard_session_id(client_ip, current_override)
                 
-                logger.info(f"📁 Storing final card with standard session ID: {session_id_for_files}")
+                # Determine correct session ID to use
+                if override_code and override_code == os.environ.get('OVERRIDE_CODE', 'snap'):
+                    # Use override session - increment from current base
+                    current_base = get_current_override_number(client_ip)
+                    new_override_number = current_base + 1
+                    session_id_for_files = create_standard_session_id(client_ip, new_override_number)
+                    logger.info(f"🎁 Storing card with override session: {session_id_for_files}")
+                else:
+                    # Use current established base
+                    current_base = get_current_override_number(client_ip)
+                    session_id_for_files = create_standard_session_id(client_ip, current_base)
+                    logger.info(f"📁 Storing card with current base: {session_id_for_files}")
                 
-                # Decode and store using standard pattern
+                # Decode and store using correct session
                 import base64
                 image_data = base64.b64decode(final_card_base64)
                 
@@ -641,11 +748,12 @@ def lambda_handler(event, context):
             
             logger.info(f"🔓 Override request from IP {client_ip}")
             
-            # Increment to next override number
-            new_override_number = increment_override_number(client_ip)
+            # Increment to next override number using established base
+            current_base = get_current_override_number(client_ip)
+            new_override_number = current_base + 1
             new_session_id = create_standard_session_id(client_ip, new_override_number)
             
-            logger.info(f"🎁 Override #{new_override_number} applied for IP {client_ip}")
+            logger.info(f"🎁 Override applied for IP {client_ip}: override{current_base} → override{new_override_number}")
             logger.info(f"📝 New session ID: {new_session_id}")
             
             # Return success with new session info

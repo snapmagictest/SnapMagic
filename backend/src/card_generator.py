@@ -226,7 +226,8 @@ class TradingCardGenerator:
     
     def store_final_card_in_s3(self, final_card_base64: str, prompt: str, user_name: str, username: str, session_id: str) -> Dict[str, Any]:
         """
-        Store the final composited trading card in S3 cards/ folder with standard pattern
+        Store the final composited trading card in S3 cards/ folder with DYNAMIC card numbering
+        NO HARDCODING - Always count existing cards and increment properly
         
         Args:
             final_card_base64: Base64 encoded final composited card
@@ -251,9 +252,28 @@ class TradingCardGenerator:
             # Decode base64 image data
             image_data = base64.b64decode(final_card_base64)
             
-            # Create standard filename with timestamp
+            # Extract IP and override number from session_id
+            parts = session_id.split('_override')
+            if len(parts) != 2:
+                logger.error(f"❌ Invalid session_id format: {session_id}")
+                return {'success': False, 'error': f'Invalid session_id format: {session_id}'}
+            
+            client_ip = parts[0]
+            override_number = int(parts[1])
+            
+            # Count existing cards for this specific override session - NO HARDCODING
+            existing_response = self.s3_client.list_objects_v2(
+                Bucket=self.s3_bucket,
+                Prefix=f'cards/{client_ip}_override{override_number}_card_'
+            )
+            existing_count = len(existing_response.get('Contents', []))
+            next_card_number = existing_count + 1
+            
+            logger.info(f"📊 IP {client_ip} override{override_number}: {existing_count} existing cards, next card #{next_card_number}")
+            
+            # Create filename with DYNAMIC card number
             timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-            filename = f"{session_id}_card_1_{timestamp}.png"
+            filename = f"{session_id}_card_{next_card_number}_{timestamp}.png"
             s3_key = f"cards/{filename}"
             
             # Upload to S3
@@ -269,6 +289,8 @@ class TradingCardGenerator:
                     'user_name': user_name or 'AWS_Logo',
                     'username': username,
                     'prompt': prompt[:100],
+                    'card_number': str(next_card_number),
+                    'override_number': str(override_number),
                     'generated_at': datetime.now().isoformat(),
                     'card_type': 'final_composited'
                 }
@@ -277,14 +299,15 @@ class TradingCardGenerator:
             # Generate S3 URL
             s3_url = f"https://{self.s3_bucket}.s3.amazonaws.com/{s3_key}"
             
-            logger.info(f"✅ Final card stored with standard pattern: {s3_key}")
+            logger.info(f"✅ Final card stored with dynamic numbering: {s3_key} (card #{next_card_number})")
             
             return {
                 'success': True,
                 's3_key': s3_key,
                 's3_url': s3_url,
                 'filename': filename,
-                'session_id': session_id
+                'session_id': session_id,
+                'card_number': next_card_number
             }
             
         except Exception as e:
