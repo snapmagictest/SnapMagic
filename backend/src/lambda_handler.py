@@ -803,12 +803,59 @@ def lambda_handler(event, context):
                 # Clear pending override marker since we're now using it
                 clear_pending_override(client_ip)
                 
-                result = store_print_record_simple(session_id_for_files, username, card_prompt, card_image_base64)
+                # Get print queue number BEFORE storing (so it's accurate)
+                print_queue_number = get_next_print_queue_number()
+                
+                # Create custom print filename with queue number
+                import base64
+                from datetime import datetime
+                
+                image_data = base64.b64decode(card_image_base64)
+                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                
+                # Extract card number from session_id if possible
+                card_number = "1"  # Default
+                try:
+                    # If we can determine which card this is, use it
+                    # For now, use default card_1 format
+                    pass
+                except:
+                    pass
+                
+                # Create filename: IP_override1_card_1_print_3_TIMESTAMP.png
+                print_filename = f"{session_id_for_files}_card_{card_number}_print_{print_queue_number}_{timestamp}.png"
+                s3_key = f"print-queue/{print_filename}"
+                
+                # Store directly in S3 with custom filename
+                import boto3
+                s3_client = boto3.client('s3')
+                bucket_name = os.environ.get('S3_BUCKET_NAME')
+                
+                if bucket_name:
+                    s3_client.put_object(
+                        Bucket=bucket_name,
+                        Key=s3_key,
+                        Body=image_data,
+                        ContentType='image/png',
+                        Metadata={
+                            'session_id': session_id_for_files,
+                            'username': username,
+                            'prompt': card_prompt[:100],
+                            'print_queue_number': str(print_queue_number),
+                            'card_number': card_number,
+                            'file_type': 'print'
+                        }
+                    )
+                    
+                    result = {
+                        'success': True,
+                        'filename': print_filename,
+                        's3_key': s3_key
+                    }
+                else:
+                    result = {'success': False, 'error': 'S3 bucket not configured'}
                 
                 if result['success']:
-                    # Get simple print queue number - count all files in print-queue + 1
-                    print_queue_number = get_next_print_queue_number()
-                    
                     # Get updated remaining usage
                     remaining = get_remaining_usage_simplified(client_ip)
                     
@@ -816,12 +863,12 @@ def lambda_handler(event, context):
                     return create_success_response({
                         'success': True,
                         'message': f'Card saved for printing',
-                        'print_filename': result.get('filename', 'unknown'),
-                        'print_number': str(print_queue_number),  # Simple queue position
+                        'print_filename': print_filename,
+                        'print_number': str(print_queue_number),  # Queue position
                         'remaining': remaining,
                         'session_id': session_id_for_files,
                         'client_ip': client_ip,
-                        'print_s3_key': result.get('s3_key', 'unknown')
+                        'print_s3_key': s3_key
                     })
                 else:
                     logger.error(f"❌ Failed to add card to print queue: {result.get('error')}")
