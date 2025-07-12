@@ -47,6 +47,43 @@ def create_standard_session_id(client_ip: str, override_number: int = 1) -> str:
     logger.info(f"📝 Created standard session ID: {session_id}")
     return session_id
 
+def get_next_video_number_for_session(client_ip: str, override_number: int) -> int:
+    """
+    Get the next video number for a specific override session
+    Count existing video files to get next video number
+    """
+    try:
+        import boto3
+        s3_client = boto3.client('s3')
+        bucket_name = os.environ.get('S3_BUCKET_NAME')
+        
+        if not bucket_name:
+            return 1
+        
+        # Count existing video files for this override session
+        session_prefix = f"{client_ip}_override{override_number}_card_"
+        
+        response = s3_client.list_objects_v2(
+            Bucket=bucket_name,
+            Prefix=f'videos/{session_prefix}'
+        )
+        
+        # Count files that contain "_video_" to get video number
+        video_count = 0
+        for obj in response.get('Contents', []):
+            if '_video_' in obj['Key']:
+                video_count += 1
+        
+        next_video_number = video_count + 1
+        
+        logger.info(f"🎬 IP {client_ip} override{override_number}: {video_count} videos exist, next video #{next_video_number}")
+        
+        return next_video_number
+        
+    except Exception as e:
+        logger.error(f"❌ Failed to get next video number: {str(e)}")
+        return 1
+
 def get_next_print_queue_number() -> int:
     """
     Simple: Count all files in print-queue folder + 1
@@ -996,26 +1033,46 @@ def lambda_handler(event, context):
                     video_base64 = result.get('video_base64')
                     if video_base64:
                         try:
-                            # Store video file with override naming
-                            import base64
+                            # Get video number for this override session
+                            parts = session_id_for_files.split('_override')
+                            client_ip = parts[0]
+                            override_number = int(parts[1])
+                            video_number = get_next_video_number_for_session(client_ip, override_number)
+                            
+                            # Create video filename: IP_override1_card_1_video_2_TIMESTAMP.mp4
+                            from datetime import datetime
+                            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                            video_filename = f"{session_id_for_files}_card_1_video_{video_number}_{timestamp}.mp4"
+                            s3_key = f"videos/{video_filename}"
+                            
+                            # Store video file directly in S3
+                            import base64, boto3
                             video_bytes = base64.b64decode(video_base64)
+                            s3_client = boto3.client('s3')
+                            bucket_name = os.environ.get('S3_BUCKET_NAME')
                             
-                            video_result = store_file_with_standard_pattern(
-                                session_id=session_id_for_files,
-                                username=username,
-                                prompt=prompt,
-                                file_data=video_bytes,
-                                file_type='video',
-                                extension='mp4',
-                                content_type='video/mp4'
-                            )
-                            
-                            if video_result['success']:
-                                logger.info(f"✅ Video stored in S3: {video_result.get('s3_key')}")
+                            if bucket_name:
+                                s3_client.put_object(
+                                    Bucket=bucket_name,
+                                    Key=s3_key,
+                                    Body=video_bytes,
+                                    ContentType='video/mp4',
+                                    Metadata={
+                                        'session_id': session_id_for_files,
+                                        'username': username,
+                                        'prompt': prompt[:100],
+                                        'video_number': str(video_number),
+                                        'file_type': 'video'
+                                    }
+                                )
+                                
+                                video_result = {'success': True, 's3_key': s3_key, 'filename': video_filename}
+                                logger.info(f"✅ Video stored in S3: {s3_key}")
                             else:
-                                logger.warning(f"⚠️ Failed to store video in S3: {video_result.get('error')}")
+                                video_result = {'success': False, 'error': 'S3 bucket not configured'}
                         except Exception as e:
                             logger.warning(f"⚠️ Video storage exception: {str(e)}")
+                            video_result = {'success': False, 'error': str(e)}
                     
                     # Get updated remaining usage
                     remaining = get_remaining_usage_simplified(client_ip)
@@ -1076,26 +1133,42 @@ def lambda_handler(event, context):
                             current_override = get_current_override_number(client_ip)
                             session_id_for_files = create_standard_session_id(client_ip, current_override)
                             
-                            # Store video file with override naming
-                            import base64
+                            # Get video number for this override session
+                            video_number = get_next_video_number_for_session(client_ip, current_override)
+                            
+                            # Create video filename: IP_override1_card_1_video_2_TIMESTAMP.mp4
+                            from datetime import datetime
+                            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                            video_filename = f"{session_id_for_files}_card_1_video_{video_number}_{timestamp}.mp4"
+                            s3_key = f"videos/{video_filename}"
+                            
+                            # Store video file directly in S3
+                            import base64, boto3
                             video_bytes = base64.b64decode(video_base64)
+                            s3_client = boto3.client('s3')
+                            bucket_name = os.environ.get('S3_BUCKET_NAME')
                             
-                            video_result = store_file_with_standard_pattern(
-                                session_id=session_id_for_files,
-                                username=username,
-                                prompt="Video from status check",  # Default prompt
-                                file_data=video_bytes,
-                                file_type='video',
-                                extension='mp4',
-                                content_type='video/mp4'
-                            )
-                            
-                            if video_result['success']:
-                                logger.info(f"✅ Completed video stored in S3: {video_result.get('s3_key')}")
+                            if bucket_name:
+                                s3_client.put_object(
+                                    Bucket=bucket_name,
+                                    Key=s3_key,
+                                    Body=video_bytes,
+                                    ContentType='video/mp4',
+                                    Metadata={
+                                        'session_id': session_id_for_files,
+                                        'username': username,
+                                        'video_number': str(video_number),
+                                        'file_type': 'video'
+                                    }
+                                )
+                                
+                                video_result = {'success': True, 's3_key': s3_key}
+                                logger.info(f"✅ Completed video stored in S3: {s3_key}")
                             else:
-                                logger.warning(f"⚠️ Failed to store completed video in S3: {video_result.get('error')}")
+                                video_result = {'success': False, 'error': 'S3 bucket not configured'}
                         except Exception as e:
                             logger.warning(f"⚠️ Video storage exception in status check: {str(e)}")
+                            video_result = {'success': False, 'error': str(e)}
                     
                     logger.info(f"✅ Video status check successful: {result.get('status')}")
                     return create_success_response({
