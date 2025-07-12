@@ -566,6 +566,8 @@ def lambda_handler(event, context):
                 action = 'generate_video'
             elif body_action == 'get_video_status':
                 action = 'get_video_status'
+            elif body_action == 'get_video_status':
+                action = 'get_video_status'
             elif body_action == 'apply_override':
                 action = 'apply_override'
             else:
@@ -1017,6 +1019,44 @@ def lambda_handler(event, context):
             except Exception as e:
                 logger.error(f"❌ Video generation exception: {str(e)}")
                 return create_error_response(f"Video generation failed: {str(e)}", 500)
+        
+        # ========================================
+        # GET VIDEO STATUS (ASYNC VIDEO CHECKING)
+        # ========================================
+        elif action == 'get_video_status':
+            username = token_payload.get('username', 'unknown')
+            invocation_arn = body.get('invocation_arn', '')
+            
+            if not invocation_arn:
+                logger.error("❌ Missing invocation_arn parameter")
+                return create_error_response("Missing invocation_arn parameter", 400)
+            
+            try:
+                # Get client IP for tracking
+                request_headers = event.get('headers', {})
+                client_ip = get_client_ip(request_headers)
+                
+                # Check video status using video generator
+                logger.info(f"🔍 Checking video status for ARN: {invocation_arn}")
+                result = video_generator.get_video_status(invocation_arn)
+                
+                if result['success']:
+                    logger.info(f"✅ Video status check successful: {result.get('status')}")
+                    return create_success_response({
+                        'success': True,
+                        'status': result.get('status'),
+                        'video_base64': result.get('video_base64'),
+                        'video_url': result.get('video_url'),
+                        'message': result.get('message'),
+                        'invocation_arn': invocation_arn,
+                        'client_ip': client_ip
+                    })
+                else:
+                    return create_error_response(f"Video status check failed: {result.get('error', 'Unknown error')}", 500)
+                    
+            except Exception as e:
+                logger.error(f"❌ Video status check exception: {str(e)}")
+                return create_error_response(f"Video status check failed: {str(e)}", 500)
         
         # HEALTH CHECK ENDPOINT
         elif action == 'health':
