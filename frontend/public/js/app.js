@@ -313,24 +313,34 @@ class SnapMagicApp {
             this.showProcessing('Applying override...');
             
             const apiBaseUrl = window.SNAPMAGIC_CONFIG.API_URL;
-            const response = await fetch(`${apiBaseUrl}api/transform-card`, {
+            const response = await fetch(`${apiBaseUrl}api/apply-override`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${this.currentUser.token}`
                 },
                 body: JSON.stringify({
-                    action: 'transform_card',
-                    prompt: 'Override reset',
+                    action: 'apply_override',
                     override_code: 'snap'
                 })
             });
             
             const data = await response.json();
             
-            if (data.success || response.status === 200) {
-                alert('✅ Override Applied!\n\nYour limits have been reset.\nYou can now generate new content.');
-                console.log('✅ Override applied successfully');
+            if (data.success) {
+                // Update usage limits in frontend
+                if (data.remaining) {
+                    this.updateUsageLimits(data.remaining);
+                    this.displayUsageLimits();
+                }
+                
+                // Store override session info
+                this.overrideNumber = data.override_number;
+                this.modifiedSessionId = data.session_id;
+                
+                alert(`✅ Override #${data.override_number} Applied!\n\nYour limits have been reset:\n• Cards: 5\n• Videos: 3\n• Prints: 1\n\nYou can now generate new content.`);
+                console.log(`✅ Override #${data.override_number} applied successfully`);
+                console.log(`📝 Modified session ID: ${data.session_id}`);
             } else {
                 alert('❌ Override failed: ' + (data.error || 'Unknown error'));
             }
@@ -1213,7 +1223,8 @@ class SnapMagicApp {
             const requestBody = {
                 action: 'transform_card',
                 prompt: userPrompt,
-                user_name: userName || '' // Send empty string if no name
+                user_name: userName || '', // Send empty string if no name
+                override_session_id: this.modifiedSessionId || undefined // Use override session if available
             };
             
             const response = await fetch(endpoint, {

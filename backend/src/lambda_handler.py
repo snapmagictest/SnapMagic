@@ -455,10 +455,19 @@ def lambda_handler(event, context):
         if action == 'transform_card':
             username = token_payload.get('username', 'unknown')
             
-            # Get session identifier and check usage limits
+            # Get session identifier (use override session if provided)
             request_headers = event.get('headers', {})
-            session_id = get_session_identifier(request_headers)
+            base_session_id = get_session_identifier(request_headers)
+            override_session_id = body.get('override_session_id')
+            
+            # Use override session ID if provided, otherwise use base session ID
+            session_id = override_session_id if override_session_id else base_session_id
+            
             client_ip = get_client_ip(request_headers)
+            
+            logger.info(f"🎴 Card generation request - session: {session_id}, client_ip: {client_ip}")
+            if override_session_id:
+                logger.info(f"🔓 Using override session ID: {override_session_id}")
             
             # Extract override code from request body if provided
             override_code = body.get('override_code')
@@ -789,6 +798,50 @@ def lambda_handler(event, context):
                 return create_error_response(f"Failed to store card: {str(e)}", 500)
         
         # ========================================
+        # OVERRIDE SYSTEM - RESET LIMITS WITH TRACKING
+        # ============================================
+        elif action == 'apply_override':
+            username = token_payload.get('username', 'unknown')
+            
+            # Get session identifier
+            request_headers = event.get('headers', {})
+            session_id = get_session_identifier(request_headers)
+            client_ip = get_client_ip(request_headers)
+            
+            # Extract override code from request body
+            override_code = body.get('override_code')
+            
+            if not override_code or override_code != 'snap':
+                return create_error_response("Invalid override code", 400)
+            
+            logger.info(f"🔓 Override request from session {session_id}")
+            
+            # Get next override number for this IP
+            next_override = get_next_override_number_for_ip(client_ip)
+            
+            # Create modified session_id with override tracking
+            modified_session_id = modify_session_id_for_override(session_id, next_override)
+            
+            logger.info(f"🎁 Override #{next_override} applied for IP {client_ip}")
+            logger.info(f"📝 New session ID: {modified_session_id}")
+            
+            # Return success with new session tracking info
+            return {
+                'statusCode': 200,
+                'headers': get_cors_headers(),
+                'body': json.dumps({
+                    'success': True,
+                    'message': f'Override #{next_override} applied successfully',
+                    'override_number': next_override,
+                    'session_id': modified_session_id,
+                    'remaining': {
+                        'cards': 5,
+                        'videos': 3,
+                        'prints': 1
+                    }
+                })
+            }
+
         # HEALTH CHECK ENDPOINT
         # UPDATED FOR CARD GENERATION
         # ========================================
