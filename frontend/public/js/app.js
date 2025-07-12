@@ -458,6 +458,9 @@ class SnapMagicApp {
             const apiBaseUrl = window.SNAPMAGIC_CONFIG.API_URL;
             const endpoint = `${apiBaseUrl}api/print-card`;
             
+            // Get override code from input field
+            const overrideCode = document.getElementById('overrideCode').value.trim();
+            
             const response = await fetch(endpoint, {
                 method: 'POST',
                 headers: {
@@ -467,7 +470,8 @@ class SnapMagicApp {
                 body: JSON.stringify({
                     action: 'print_card',
                     card_prompt: this.lastUsedPrompt || 'Generated card',
-                    card_image: cardImageBase64
+                    card_image: cardImageBase64,
+                    override_code: overrideCode || undefined  // Only send if provided
                 })
             });
 
@@ -703,10 +707,14 @@ class SnapMagicApp {
             // Convert card image to letterboxed JPEG format for video generation
             const letterboxedImage = await this.letterboxCardForVideo(this.generatedCardData.result);
             
+            // Get override code from input field
+            const overrideCode = document.getElementById('overrideCode').value.trim();
+            
             const requestBody = {
                 action: 'generate_video',
                 card_image: letterboxedImage,  // Send JPEG letterboxed 1280x720 image (no transparency)
-                animation_prompt: animationPrompt
+                animation_prompt: animationPrompt,
+                override_code: overrideCode || undefined  // Only send if provided
             };
             
             const response = await fetch(endpoint, {
@@ -1153,11 +1161,17 @@ class SnapMagicApp {
             console.log('🎯 API call to:', endpoint);
             console.log('👤 User name:', userName || 'No name (AWS logo)');
             
+            // Get override code from input field
+            const overrideCode = document.getElementById('overrideCode').value.trim();
+            
             const requestBody = {
                 action: 'transform_card',
                 prompt: userPrompt,
-                user_name: userName || '' // Send empty string if no name
+                user_name: userName || '', // Send empty string if no name
+                override_code: overrideCode || undefined  // Only send if provided
             };
+            
+            console.log('🔓 Override code:', overrideCode ? 'Provided' : 'Not provided');
             
             const response = await fetch(endpoint, {
                 method: 'POST',

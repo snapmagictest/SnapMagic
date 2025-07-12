@@ -206,8 +206,15 @@ def get_usage_from_s3(session_id: str) -> Dict[str, int]:
         logger.error(f"❌ Failed to get S3 usage for session {session_id}: {str(e)}")
         return {'cards': 0, 'videos': 0, 'prints': 0}
 
-def check_usage_limit(session_id: str, generation_type: str) -> bool:
+def check_usage_limit(session_id: str, generation_type: str, override_code: str = None) -> bool:
     """Check if session has exceeded usage limits by counting S3 files"""
+    
+    # Check if override code is provided and valid
+    valid_override_code = os.environ.get('OVERRIDE_CODE', 'SNAPMAGIC2024')
+    if override_code and override_code == valid_override_code:
+        logger.info(f"🔓 Override code used for session {session_id}, type: {generation_type}")
+        return True
+    
     limits = load_limits()
     current_usage = get_usage_from_s3(session_id)
     
@@ -386,10 +393,13 @@ def lambda_handler(event, context):
             session_id = get_session_identifier(request_headers)
             client_ip = get_client_ip(request_headers)
             
-            if not check_usage_limit(session_id, 'cards'):
+            # Extract override code from request body if provided
+            override_code = body.get('override_code')
+            
+            if not check_usage_limit(session_id, 'cards', override_code):
                 remaining = get_remaining_usage(session_id)
                 return create_error_response(
-                    f"Card generation limit reached for your session. You have {remaining['cards']} cards and {remaining['videos']} videos remaining.", 
+                    f"Card generation limit reached for your session. You have {remaining['cards']} cards and {remaining['videos']} videos remaining. Visit the SnapMagic Booth for an override code if you believe this is an error.", 
                     429
                 )
             
@@ -521,10 +531,13 @@ def lambda_handler(event, context):
             session_id = get_session_identifier(request_headers)
             client_ip = get_client_ip(request_headers)
             
-            if not check_usage_limit(session_id, 'prints'):
+            # Extract override code from request body if provided
+            override_code = body.get('override_code')
+            
+            if not check_usage_limit(session_id, 'prints', override_code):
                 remaining = get_remaining_usage(session_id)
                 return create_error_response(
-                    f"Print limit reached for your session. You have {remaining['prints']} prints remaining.", 
+                    f"Print limit reached for your session. You have {remaining['prints']} prints remaining. Visit the SnapMagic Booth for an override code if you believe this is an error.", 
                     429
                 )
             
@@ -578,10 +591,13 @@ def lambda_handler(event, context):
             session_id = get_session_identifier(request_headers)
             client_ip = get_client_ip(request_headers)
             
-            if not check_usage_limit(session_id, 'videos'):
+            # Extract override code from request body if provided
+            override_code = body.get('override_code')
+            
+            if not check_usage_limit(session_id, 'videos', override_code):
                 remaining = get_remaining_usage(session_id)
                 return create_error_response(
-                    f"Video generation limit reached for your session. You have {remaining['cards']} cards and {remaining['videos']} videos remaining.", 
+                    f"Video generation limit reached for your session. You have {remaining['cards']} cards and {remaining['videos']} videos remaining. Visit the SnapMagic Booth for an override code if you believe this is an error.", 
                     429
                 )
             
