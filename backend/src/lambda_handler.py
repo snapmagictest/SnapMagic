@@ -779,11 +779,24 @@ def lambda_handler(event, context):
                     # Get updated remaining usage
                     remaining = get_remaining_usage_simplified(client_ip)
                     
+                    # Extract print number from filename for display
+                    filename = result.get('filename', 'unknown')
+                    print_number = 'unknown'
+                    
+                    # Extract card number from filename like: IP_override1_card_2_timestamp.png
+                    try:
+                        if '_card_' in filename:
+                            parts = filename.split('_card_')[1]
+                            print_number = parts.split('_')[0]  # Get the card number
+                    except Exception as e:
+                        logger.warning(f"⚠️ Could not extract print number from {filename}: {e}")
+                    
                     logger.info("✅ Card print stored successfully")
                     return create_success_response({
                         'success': True,
                         'message': f'Card saved for printing',
-                        'print_filename': result.get('filename', 'unknown'),
+                        'print_filename': filename,
+                        'print_number': print_number,  # Add explicit print number
                         'remaining': remaining,
                         'session_id': session_id_for_files,
                         'client_ip': client_ip,
@@ -889,18 +902,21 @@ def lambda_handler(event, context):
                     429
                 )
             
-            card_image_base64 = body.get('card_image', '')
-            prompt = body.get('prompt', '')
+            # Video generation parameters
+            card_image_base64 = body.get('card_image', '')  # The generated card image
+            video_prompt = body.get('video_prompt', '')     # Video-specific prompt
             
             if not card_image_base64:
-                return create_error_response("Missing card_image parameter", 400)
+                return create_error_response("Missing card_image parameter - card image required for video generation", 400)
             
-            if not prompt:
-                return create_error_response("Missing prompt parameter", 400)
+            if not video_prompt:
+                return create_error_response("Missing video_prompt parameter - video prompt required", 400)
             
             try:
-                # Generate video using video generator
-                result = video_generator.generate_video_from_card(card_image_base64, prompt)
+                # Generate video using Nova Reel with card image + video prompt
+                logger.info(f"🎬 Generating video from card image with prompt: {video_prompt[:50]}...")
+                
+                result = video_generator.generate_video_from_card(card_image_base64, video_prompt)
                 
                 if result['success']:
                     # Store video using current override session
@@ -916,7 +932,7 @@ def lambda_handler(event, context):
                         video_result = store_file_with_standard_pattern(
                             session_id=session_id_for_files,
                             username=username,
-                            prompt=prompt,
+                            prompt=video_prompt,  # Use video prompt for metadata
                             file_data=video_bytes,
                             file_type='video',
                             extension='mp4',
@@ -936,7 +952,8 @@ def lambda_handler(event, context):
                                 'video_s3_key': video_result.get('s3_key'),
                                 'remaining': remaining,
                                 'session_id': session_id_for_files,
-                                'client_ip': client_ip
+                                'client_ip': client_ip,
+                                'video_prompt': video_prompt
                             })
                         else:
                             logger.error(f"❌ Failed to store video: {video_result.get('error')}")
