@@ -483,9 +483,9 @@ class SnapMagicApp {
                 
                 this.hideProcessing();
                 
-                // Show success message with print information using existing modal system
+                // Show success message with print number using existing modal system
                 console.log('✅ Card added to print successfully');
-                this.showPrintSuccessModal(data.print_filename);
+                this.showPrintSuccessModal(data.global_print_number);
                 
             } else {
                 console.error('❌ Print queue request failed:', data.error);
@@ -506,11 +506,11 @@ class SnapMagicApp {
     }
     
     // Show Print Success Modal (using existing modal system)
-    showPrintSuccessModal(filename) {
-        // Set the filename in the modal
-        const filenameElement = document.getElementById('printFilename');
-        if (filenameElement) {
-            filenameElement.textContent = filename;
+    showPrintSuccessModal(printNumber) {
+        // Set the print number in the modal
+        const printNumberElement = document.getElementById('printNumber');
+        if (printNumberElement) {
+            printNumberElement.textContent = `#${printNumber}`;
         }
         
         // Show the modal by removing hidden class

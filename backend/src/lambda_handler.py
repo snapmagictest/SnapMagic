@@ -34,7 +34,7 @@ def load_limits() -> Dict[str, int]:
 
 def store_print_record(session_id: str, username: str, card_prompt: str, card_image_base64: str) -> Dict[str, Any]:
     """
-    Store print image in print-queue folder with session-based naming - no JSON needed
+    Store print image in print-queue folder with global queue numbering
     
     Args:
         session_id: Session identifier (IP + browser hash)
@@ -59,27 +59,27 @@ def store_print_record(session_id: str, username: str, card_prompt: str, card_im
                 'error': 'S3 bucket not configured'
             }
         
-        # Count existing prints for this session to get next print number
-        # Look in print-queue folder for files with this session ID
-        existing_prints = s3_client.list_objects_v2(
+        # Count ALL files in print-queue folder to get next global print number
+        # This ensures printer knows the exact order to print
+        all_prints_response = s3_client.list_objects_v2(
             Bucket=bucket_name,
-            Prefix=f'print-queue/{session_id}_print_'
+            Prefix='print-queue/'
         )
-        print_count = len(existing_prints.get('Contents', [])) + 1  # Next print number for this session
+        global_print_number = len(all_prints_response.get('Contents', [])) + 1  # Next in global queue
         
         # Generate timestamp
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         
-        # Create session-based print filename: SESSION_print_COUNT_timestamp.png
-        # Same pattern as cards: SESSION_card_COUNT_timestamp.png but with _print_
-        print_filename = f"{session_id}_print_{print_count}_{timestamp}.png"
+        # Create filename with global print queue number: SESSION_print_GLOBAL_NUMBER_timestamp.png
+        # The GLOBAL_NUMBER tells printer the exact order (1, 2, 3, 4, 5...)
+        print_filename = f"{session_id}_print_{global_print_number}_{timestamp}.png"
         print_s3_key = f"print-queue/{print_filename}"
         
         # Decode base64 image
         image_data = base64.b64decode(card_image_base64)
         
         # Store print image directly in print-queue folder
-        logger.info(f"🖨️ Storing print in print-queue: {print_s3_key}")
+        logger.info(f"🖨️ Storing print #{global_print_number} in print-queue: {print_s3_key}")
         
         s3_client.put_object(
             Bucket=bucket_name,
@@ -90,19 +90,19 @@ def store_print_record(session_id: str, username: str, card_prompt: str, card_im
                 'session_id': session_id,
                 'username': username,
                 'card_prompt': card_prompt[:500],  # Truncate if too long
-                'print_number': str(print_count),
+                'global_print_number': str(global_print_number),
                 'printed_at': datetime.now().isoformat(),
                 'print_type': 'trading_card'
             }
         )
         
-        logger.info(f"✅ Print stored in queue: {print_filename} (Print #{print_count} for session {session_id})")
+        logger.info(f"✅ Print #{global_print_number} stored in queue: {print_filename} (Session: {session_id})")
         
         return {
             'success': True,
             'print_s3_key': print_s3_key,
             'print_filename': print_filename,
-            'print_number': print_count,
+            'global_print_number': global_print_number,
             'session_id': session_id
         }
         
@@ -550,7 +550,7 @@ def lambda_handler(event, context):
                     return create_success_response({
                         'success': True,
                         'message': f'Card saved for printing',
-                        'print_number': result['print_number'],
+                        'global_print_number': result['global_print_number'],
                         'print_filename': result['print_filename'],
                         'remaining': remaining,  # Updated usage counts
                         'session_id': session_id,  # For debugging
