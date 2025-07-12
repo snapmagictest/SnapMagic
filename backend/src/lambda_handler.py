@@ -399,7 +399,7 @@ def lambda_handler(event, context):
             if not check_usage_limit(session_id, 'cards', override_code):
                 remaining = get_remaining_usage(session_id)
                 return create_error_response(
-                    f"Card generation limit reached for your session. You have {remaining['cards']} cards and {remaining['videos']} videos remaining. Visit the SnapMagic Booth for an override code if you believe this is an error.", 
+                    f"You have reached your generation limit. Visit the SnapMagic Booth to share your experience with our staff!", 
                     429
                 )
             
@@ -537,7 +537,7 @@ def lambda_handler(event, context):
             if not check_usage_limit(session_id, 'prints', override_code):
                 remaining = get_remaining_usage(session_id)
                 return create_error_response(
-                    f"Print limit reached for your session. You have {remaining['prints']} prints remaining. Visit the SnapMagic Booth for an override code if you believe this is an error.", 
+                    f"You have reached your print limit. Visit the SnapMagic Booth to share your experience with our staff!", 
                     429
                 )
             
@@ -597,7 +597,7 @@ def lambda_handler(event, context):
             if not check_usage_limit(session_id, 'videos', override_code):
                 remaining = get_remaining_usage(session_id)
                 return create_error_response(
-                    f"Video generation limit reached for your session. You have {remaining['cards']} cards and {remaining['videos']} videos remaining. Visit the SnapMagic Booth for an override code if you believe this is an error.", 
+                    f"You have reached your generation limit. Visit the SnapMagic Booth to share your experience with our staff!", 
                     429
                 )
             
