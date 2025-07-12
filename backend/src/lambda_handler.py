@@ -47,11 +47,71 @@ def create_standard_session_id(client_ip: str, override_number: int = 1) -> str:
     logger.info(f"📝 Created standard session ID: {session_id}")
     return session_id
 
+def get_pending_override_number(client_ip: str) -> int:
+    """
+    Check if there's a pending override increment for this IP
+    This handles the gap between staff clicking override and first card being generated
+    """
+    try:
+        import boto3
+        s3_client = boto3.client('s3')
+        bucket_name = os.environ.get('S3_BUCKET_NAME')
+        
+        if not bucket_name:
+            return 0
+        
+        # Check for pending override marker
+        try:
+            response = s3_client.get_object(
+                Bucket=bucket_name,
+                Key=f'pending-overrides/{client_ip}_pending.txt'
+            )
+            
+            content = response['Body'].read().decode('utf-8')
+            pending_override = int(content.strip())
+            logger.info(f"🔍 Found pending override for IP {client_ip}: override{pending_override}")
+            return pending_override
+            
+        except s3_client.exceptions.NoSuchKey:
+            # No pending override
+            return 0
+        except Exception as e:
+            logger.warning(f"⚠️ Error checking pending override: {str(e)}")
+            return 0
+            
+    except Exception as e:
+        logger.error(f"❌ Failed to check pending override: {str(e)}")
+        return 0
+
+def clear_pending_override(client_ip: str):
+    """Clear pending override marker after first card is generated"""
+    try:
+        import boto3
+        s3_client = boto3.client('s3')
+        bucket_name = os.environ.get('S3_BUCKET_NAME')
+        
+        if bucket_name:
+            s3_client.delete_object(
+                Bucket=bucket_name,
+                Key=f'pending-overrides/{client_ip}_pending.txt'
+            )
+            logger.info(f"🗑️ Cleared pending override for IP {client_ip}")
+            
+    except Exception as e:
+        logger.warning(f"⚠️ Failed to clear pending override: {str(e)}")
+
 def get_current_override_number(client_ip: str) -> int:
     """
-    Get current override number for IP by finding the HIGHEST override number in S3
-    Only checks actual files - no placeholder folders needed
+    Get current override number for IP
+    First checks for pending override, then existing files
     """
+    # Check if there's a pending override first
+    pending = get_pending_override_number(client_ip)
+    if pending > 0:
+        logger.info(f"🎯 Using pending override for IP {client_ip}: override{pending}")
+        return pending
+    
+    # Otherwise check existing files
     try:
         import boto3
         s3_client = boto3.client('s3')
@@ -611,7 +671,7 @@ def lambda_handler(event, context):
                 return create_error_response(f"Card generation failed: {str(e)}", 500)
         
         # ========================================
-        # STORE FINAL CARD - ALWAYS USE CURRENT OVERRIDE SESSION
+        # STORE FINAL CARD - USE CURRENT OVERRIDE AND CLEAR PENDING
         # ========================================
         elif action == 'store_final_card':
             username = token_payload.get('username', 'unknown')
@@ -628,12 +688,14 @@ def lambda_handler(event, context):
                 request_headers = event.get('headers', {})
                 client_ip = get_client_ip(request_headers)
                 
-                # ALWAYS use current highest override number - no override code needed
-                # This ensures cards are stored in the correct current override session
+                # Get current override number (includes pending override check)
                 current_override = get_current_override_number(client_ip)
                 session_id_for_files = create_standard_session_id(client_ip, current_override)
                 
-                logger.info(f"📁 Storing card in current override session: {session_id_for_files}")
+                logger.info(f"📁 Storing card in override session: {session_id_for_files}")
+                
+                # Clear pending override marker since we're now using it
+                clear_pending_override(client_ip)
                 
                 # Decode and store using current override session
                 import base64
@@ -729,7 +791,7 @@ def lambda_handler(event, context):
                 return create_error_response(f"Print queue request failed: {str(e)}", 500)
         
         # ========================================
-        # APPLY OVERRIDE - INCREMENT TO NEXT OVERRIDE SESSION
+        # APPLY OVERRIDE - CREATE PENDING OVERRIDE MARKER
         # ========================================
         elif action == 'apply_override':
             username = token_payload.get('username', 'unknown')
@@ -752,7 +814,31 @@ def lambda_handler(event, context):
             new_session_id = create_standard_session_id(client_ip, new_override_number)
             
             logger.info(f"🎁 Staff override applied for IP {client_ip}: override{current_base} → override{new_override_number}")
-            logger.info(f"📝 Next cards will automatically use: {new_session_id}")
+            
+            # Create pending override marker so next card uses new override number
+            try:
+                import boto3
+                s3_client = boto3.client('s3')
+                bucket_name = os.environ.get('S3_BUCKET_NAME')
+                
+                if bucket_name:
+                    # Create pending override marker
+                    s3_client.put_object(
+                        Bucket=bucket_name,
+                        Key=f'pending-overrides/{client_ip}_pending.txt',
+                        Body=str(new_override_number).encode('utf-8'),
+                        ContentType='text/plain',
+                        Metadata={
+                            'client_ip': client_ip,
+                            'override_number': str(new_override_number),
+                            'created_by': 'staff_override'
+                        }
+                    )
+                    
+                    logger.info(f"📝 Created pending override marker: override{new_override_number}")
+                
+            except Exception as e:
+                logger.warning(f"⚠️ Failed to create pending override marker: {str(e)}")
             
             # Return success with new session info
             return create_success_response({
