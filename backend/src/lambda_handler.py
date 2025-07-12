@@ -50,7 +50,7 @@ def create_standard_session_id(client_ip: str, override_number: int = 1) -> str:
 def get_current_override_number(client_ip: str) -> int:
     """
     Get current override number for IP by finding the HIGHEST override number in S3
-    This establishes the correct BASE for the user session
+    Checks both actual card files AND override session placeholders
     """
     try:
         import boto3
@@ -65,6 +65,7 @@ def get_current_override_number(client_ip: str) -> int:
         
         logger.info(f"🔍 Establishing base override for IP {client_ip}")
         
+        # Check actual files in cards, videos, print-queue folders
         for prefix in ['cards', 'videos', 'print-queue']:
             response = s3_client.list_objects_v2(
                 Bucket=bucket_name,
@@ -76,7 +77,6 @@ def get_current_override_number(client_ip: str) -> int:
                 logger.info(f"📁 Found file: {filename}")
                 
                 if '_override' in filename:
-                    # Extract override number from filename like: IP_override2_card_1_timestamp.png
                     try:
                         parts = filename.split('_override')[1]
                         override_num = int(parts.split('_')[0])
@@ -85,6 +85,26 @@ def get_current_override_number(client_ip: str) -> int:
                     except (ValueError, IndexError) as e:
                         logger.warning(f"⚠️ Could not parse override number from {filename}: {e}")
                         continue
+        
+        # Also check override session placeholders
+        session_response = s3_client.list_objects_v2(
+            Bucket=bucket_name,
+            Prefix=f'override-sessions/{client_ip}_override'
+        )
+        
+        for obj in session_response.get('Contents', []):
+            filename = obj['Key']
+            logger.info(f"📁 Found session placeholder: {filename}")
+            
+            if '_override' in filename:
+                try:
+                    parts = filename.split('_override')[1]
+                    override_num = int(parts.split('_')[0])
+                    max_override = max(max_override, override_num)
+                    logger.info(f"📊 Session placeholder override: {override_num}, current max: {max_override}")
+                except (ValueError, IndexError) as e:
+                    logger.warning(f"⚠️ Could not parse session override from {filename}: {e}")
+                    continue
         
         # The current base is the highest override found, or 1 if none exist
         current_base = max(1, max_override)
@@ -545,12 +565,12 @@ def lambda_handler(event, context):
         logger.info(f"✅ Authenticated user: {token_payload.get('username')}")
         
         # ========================================
-        # TRADING CARD GENERATION WITH STANDARD PATTERN
+        # TRADING CARD GENERATION WITH AUTOMATIC OVERRIDE DETECTION
         # ========================================
         if action == 'transform_card':
             username = token_payload.get('username', 'unknown')
             
-            # Get client IP for standard pattern
+            # Get client IP
             request_headers = event.get('headers', {})
             client_ip = get_client_ip(request_headers)
             
@@ -559,16 +579,21 @@ def lambda_handler(event, context):
             # Extract override code from request body if provided
             override_code = body.get('override_code')
             
-            # Check usage limits and get session_id using standard pattern
-            allowed, session_id_for_files = check_usage_limit_simplified(client_ip, 'cards', override_code)
+            # ALWAYS use the current highest override number for this IP
+            # This ensures after staff override, cards automatically use new override session
+            current_override = get_current_override_number(client_ip)
+            session_id_for_files = create_standard_session_id(client_ip, current_override)
+            
+            logger.info(f"🎯 Using current override session: {session_id_for_files}")
+            
+            # Check usage limits for the current override session
+            allowed, _ = check_usage_limit_simplified(client_ip, 'cards', override_code)
             
             if not allowed:
                 return create_error_response(
                     f"Limit reached. Please visit the event staff at SnapMagic to assist.", 
                     429
                 )
-            
-            logger.info(f"📝 Using standard session ID: {session_id_for_files}")
             
             prompt = body.get('prompt', '')
             if not prompt:
@@ -595,7 +620,7 @@ def lambda_handler(event, context):
                         'imageSrc': result.get('imageSrc'),  # Data URL for frontend
                         'metadata': result.get('metadata', {}),
                         'remaining': remaining,  # Current remaining counts
-                        'session_id': session_id_for_files,  # For debugging
+                        'session_id': session_id_for_files,  # Current override session
                         'client_ip': client_ip  # For debugging
                     })
                 else:
@@ -606,7 +631,7 @@ def lambda_handler(event, context):
                 return create_error_response(f"Card generation failed: {str(e)}", 500)
         
         # ========================================
-        # STORE FINAL CARD IN S3 WITH CORRECT OVERRIDE SESSION
+        # STORE FINAL CARD - ALWAYS USE CURRENT OVERRIDE SESSION
         # ========================================
         elif action == 'store_final_card':
             username = token_payload.get('username', 'unknown')
@@ -614,7 +639,6 @@ def lambda_handler(event, context):
             final_card_base64 = body.get('final_card_base64', '')
             prompt = body.get('prompt', '')
             user_name = body.get('user_name', '')
-            override_code = body.get('override_code')  # Check for override code
             
             if not final_card_base64:
                 return create_error_response("Missing final_card_base64 parameter", 400)
@@ -624,20 +648,14 @@ def lambda_handler(event, context):
                 request_headers = event.get('headers', {})
                 client_ip = get_client_ip(request_headers)
                 
-                # Determine correct session ID to use
-                if override_code and override_code == os.environ.get('OVERRIDE_CODE', 'snap'):
-                    # Use override session - increment from current base
-                    current_base = get_current_override_number(client_ip)
-                    new_override_number = current_base + 1
-                    session_id_for_files = create_standard_session_id(client_ip, new_override_number)
-                    logger.info(f"🎁 Storing card with override session: {session_id_for_files}")
-                else:
-                    # Use current established base
-                    current_base = get_current_override_number(client_ip)
-                    session_id_for_files = create_standard_session_id(client_ip, current_base)
-                    logger.info(f"📁 Storing card with current base: {session_id_for_files}")
+                # ALWAYS use current highest override number - no override code needed
+                # This ensures cards are stored in the correct current override session
+                current_override = get_current_override_number(client_ip)
+                session_id_for_files = create_standard_session_id(client_ip, current_override)
                 
-                # Decode and store using correct session
+                logger.info(f"📁 Storing card in current override session: {session_id_for_files}")
+                
+                # Decode and store using current override session
                 import base64
                 image_data = base64.b64decode(final_card_base64)
                 
@@ -731,7 +749,7 @@ def lambda_handler(event, context):
                 return create_error_response(f"Print queue request failed: {str(e)}", 500)
         
         # ========================================
-        # APPLY OVERRIDE - SIMPLIFIED
+        # APPLY OVERRIDE - INCREMENT TO NEXT OVERRIDE SESSION
         # ========================================
         elif action == 'apply_override':
             username = token_payload.get('username', 'unknown')
@@ -746,15 +764,54 @@ def lambda_handler(event, context):
             if not override_code or override_code != 'snap':
                 return create_error_response("Invalid override code", 400)
             
-            logger.info(f"🔓 Override request from IP {client_ip}")
+            logger.info(f"🔓 Staff override request from IP {client_ip}")
             
-            # Increment to next override number using established base
+            # Get current highest override and increment
             current_base = get_current_override_number(client_ip)
             new_override_number = current_base + 1
             new_session_id = create_standard_session_id(client_ip, new_override_number)
             
-            logger.info(f"🎁 Override applied for IP {client_ip}: override{current_base} → override{new_override_number}")
-            logger.info(f"📝 New session ID: {new_session_id}")
+            logger.info(f"🎁 Staff override applied for IP {client_ip}: override{current_base} → override{new_override_number}")
+            logger.info(f"📝 Next cards will use: {new_session_id}")
+            
+            # Create a placeholder file to establish the new override session in S3
+            # This ensures get_current_override_number() will find the new override
+            try:
+                import boto3
+                import json as json_module
+                from datetime import datetime
+                
+                s3_client = boto3.client('s3')
+                bucket_name = os.environ.get('S3_BUCKET_NAME')
+                
+                if bucket_name:
+                    # Create a small metadata file to establish the new override session
+                    placeholder_content = json_module.dumps({
+                        'override_session': new_override_number,
+                        'client_ip': client_ip,
+                        'created_by': 'staff_override',
+                        'created_at': datetime.now().isoformat(),
+                        'message': f'Override session {new_override_number} established by staff'
+                    })
+                    
+                    placeholder_key = f"override-sessions/{client_ip}_override{new_override_number}_session.json"
+                    
+                    s3_client.put_object(
+                        Bucket=bucket_name,
+                        Key=placeholder_key,
+                        Body=placeholder_content.encode('utf-8'),
+                        ContentType='application/json',
+                        Metadata={
+                            'client_ip': client_ip,
+                            'override_number': str(new_override_number),
+                            'created_by': 'staff_override'
+                        }
+                    )
+                    
+                    logger.info(f"📁 Created override session placeholder: {placeholder_key}")
+                
+            except Exception as e:
+                logger.warning(f"⚠️ Failed to create override placeholder: {str(e)}")
             
             # Return success with new session info
             return create_success_response({
