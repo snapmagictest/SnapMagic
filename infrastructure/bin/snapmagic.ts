@@ -30,7 +30,7 @@ function loadSecretsConfig(): DeploymentInputs | null {
         enableBasicAuth: secrets.app.passwordProtection.enabled,
         basicAuthUsername: secrets.app.passwordProtection.username,
         basicAuthPassword: secrets.app.passwordProtection.password,
-        overrideCode: secrets.app.overrideCode || 'SNAPMAGIC2024',  // Staff override code
+        overrideCode: secrets.app.overrideCode || 'snap',  // Staff override code
         novaCanvasModel: secrets.models.novaCanvas,
         novaReelModel: secrets.models.novaReel,
         cardTemplate: secrets.cardTemplate || undefined,  // Include cardTemplate section

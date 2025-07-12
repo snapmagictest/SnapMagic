@@ -210,7 +210,7 @@ def check_usage_limit(session_id: str, generation_type: str, override_code: str 
     """Check if session has exceeded usage limits by counting S3 files"""
     
     # Check if override code is provided and valid
-    valid_override_code = os.environ.get('OVERRIDE_CODE', 'SNAPMAGIC2024')
+    valid_override_code = os.environ.get('OVERRIDE_CODE', 'snap')
     if override_code and override_code == valid_override_code:
         logger.info(f"🔓 Override code used for session {session_id}, type: {generation_type}")
         return True

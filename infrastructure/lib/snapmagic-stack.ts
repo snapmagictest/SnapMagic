@@ -218,7 +218,7 @@ frontend:
         S3_BUCKET_NAME: videoStorageBucket.bucketName,  // Use same bucket for cards storage
         NOVA_CANVAS_MODEL: inputs.novaCanvasModel,
         NOVA_REEL_MODEL: inputs.novaReelModel,
-        OVERRIDE_CODE: inputs.overrideCode || 'SNAPMAGIC2024',
+        OVERRIDE_CODE: inputs.overrideCode || 'snap',
         // Template configuration from secrets.json
         TEMPLATE_EVENT_NAME: inputs.cardTemplate?.eventName || 'AWS Event',
         TEMPLATE_LOGOS_JSON: JSON.stringify(inputs.cardTemplate?.logos || []),
