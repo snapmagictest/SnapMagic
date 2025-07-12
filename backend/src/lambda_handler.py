@@ -50,7 +50,7 @@ def create_standard_session_id(client_ip: str, override_number: int = 1) -> str:
 def get_current_override_number(client_ip: str) -> int:
     """
     Get current override number for IP by finding the HIGHEST override number in S3
-    Checks both actual card files AND override session placeholders
+    Only checks actual files - no placeholder folders needed
     """
     try:
         import boto3
@@ -85,26 +85,6 @@ def get_current_override_number(client_ip: str) -> int:
                     except (ValueError, IndexError) as e:
                         logger.warning(f"⚠️ Could not parse override number from {filename}: {e}")
                         continue
-        
-        # Also check override session placeholders
-        session_response = s3_client.list_objects_v2(
-            Bucket=bucket_name,
-            Prefix=f'override-sessions/{client_ip}_override'
-        )
-        
-        for obj in session_response.get('Contents', []):
-            filename = obj['Key']
-            logger.info(f"📁 Found session placeholder: {filename}")
-            
-            if '_override' in filename:
-                try:
-                    parts = filename.split('_override')[1]
-                    override_num = int(parts.split('_')[0])
-                    max_override = max(max_override, override_num)
-                    logger.info(f"📊 Session placeholder override: {override_num}, current max: {max_override}")
-                except (ValueError, IndexError) as e:
-                    logger.warning(f"⚠️ Could not parse session override from {filename}: {e}")
-                    continue
         
         # The current base is the highest override found, or 1 if none exist
         current_base = max(1, max_override)
@@ -772,46 +752,7 @@ def lambda_handler(event, context):
             new_session_id = create_standard_session_id(client_ip, new_override_number)
             
             logger.info(f"🎁 Staff override applied for IP {client_ip}: override{current_base} → override{new_override_number}")
-            logger.info(f"📝 Next cards will use: {new_session_id}")
-            
-            # Create a placeholder file to establish the new override session in S3
-            # This ensures get_current_override_number() will find the new override
-            try:
-                import boto3
-                import json as json_module
-                from datetime import datetime
-                
-                s3_client = boto3.client('s3')
-                bucket_name = os.environ.get('S3_BUCKET_NAME')
-                
-                if bucket_name:
-                    # Create a small metadata file to establish the new override session
-                    placeholder_content = json_module.dumps({
-                        'override_session': new_override_number,
-                        'client_ip': client_ip,
-                        'created_by': 'staff_override',
-                        'created_at': datetime.now().isoformat(),
-                        'message': f'Override session {new_override_number} established by staff'
-                    })
-                    
-                    placeholder_key = f"override-sessions/{client_ip}_override{new_override_number}_session.json"
-                    
-                    s3_client.put_object(
-                        Bucket=bucket_name,
-                        Key=placeholder_key,
-                        Body=placeholder_content.encode('utf-8'),
-                        ContentType='application/json',
-                        Metadata={
-                            'client_ip': client_ip,
-                            'override_number': str(new_override_number),
-                            'created_by': 'staff_override'
-                        }
-                    )
-                    
-                    logger.info(f"📁 Created override session placeholder: {placeholder_key}")
-                
-            except Exception as e:
-                logger.warning(f"⚠️ Failed to create override placeholder: {str(e)}")
+            logger.info(f"📝 Next cards will automatically use: {new_session_id}")
             
             # Return success with new session info
             return create_success_response({
