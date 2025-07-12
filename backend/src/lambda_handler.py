@@ -153,7 +153,7 @@ def get_session_identifier(request_headers: Dict[str, str]) -> str:
     return f"{client_ip}_{session_hash}"
 
 def get_usage_from_s3(session_id: str) -> Dict[str, int]:
-    """Count existing cards, videos, and prints for session ID by checking S3 files"""
+    """Count existing cards, videos, and prints for IP ADDRESS by checking S3 files"""
     try:
         import boto3
         s3_client = boto3.client('s3')
@@ -166,19 +166,19 @@ def get_usage_from_s3(session_id: str) -> Dict[str, int]:
         # Extract IP address from session_id (format: IP_HASH)
         client_ip = session_id.split('_')[0] if '_' in session_id else session_id
         
-        # Count cards for this session
-        logger.info(f"🔍 Counting cards for session {session_id} in bucket {bucket_name}")
+        # Count cards for this IP ADDRESS (not full session) - check all files with same IP
+        logger.info(f"🔍 Counting cards for IP {client_ip} in bucket {bucket_name}")
         cards_response = s3_client.list_objects_v2(
             Bucket=bucket_name,
-            Prefix=f'cards/{session_id}_card_'
+            Prefix=f'cards/{client_ip}_'
         )
         cards_count = len(cards_response.get('Contents', []))
         
-        # Count videos for this session  
-        logger.info(f"🔍 Counting videos for session {session_id} in bucket {bucket_name}")
+        # Count videos for this IP ADDRESS (not full session) - check all files with same IP
+        logger.info(f"🔍 Counting videos for IP {client_ip} in bucket {bucket_name}")
         videos_response = s3_client.list_objects_v2(
             Bucket=bucket_name,
-            Prefix=f'videos/{session_id}_video_'
+            Prefix=f'videos/{client_ip}_'
         )
         videos_count = len(videos_response.get('Contents', []))
         
@@ -194,9 +194,9 @@ def get_usage_from_s3(session_id: str) -> Dict[str, int]:
         
         # Log the actual files found for debugging
         if cards_response.get('Contents'):
-            logger.info(f"📁 Found card files: {[obj['Key'] for obj in cards_response['Contents']]}")
+            logger.info(f"📁 Found card files for IP {client_ip}: {[obj['Key'] for obj in cards_response['Contents']]}")
         if videos_response.get('Contents'):
-            logger.info(f"📁 Found video files: {[obj['Key'] for obj in videos_response['Contents']]}")
+            logger.info(f"📁 Found video files for IP {client_ip}: {[obj['Key'] for obj in videos_response['Contents']]}")
         if prints_response.get('Contents'):
             logger.info(f"📁 Found print files for IP {client_ip}: {[obj['Key'] for obj in prints_response['Contents']]}")
         
