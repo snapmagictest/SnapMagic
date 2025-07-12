@@ -321,6 +321,7 @@ class SnapMagicApp {
                 },
                 body: JSON.stringify({
                     action: 'apply_override',
+                    prompt: 'Override system reset',
                     override_code: 'snap'
                 })
             });
