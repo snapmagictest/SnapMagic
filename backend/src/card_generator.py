@@ -226,14 +226,14 @@ class TradingCardGenerator:
     
     def store_final_card_in_s3(self, final_card_base64: str, prompt: str, user_name: str, username: str, session_id: str) -> Dict[str, Any]:
         """
-        Store the final composited trading card in S3 cards/ folder with session-based filename
+        Store the final composited trading card in S3 cards/ folder with standard pattern
         
         Args:
             final_card_base64: Base64 encoded final composited card
             prompt: Original user prompt
             user_name: Name on the card (or empty for AWS logo)
             username: Authenticated username
-            session_id: Session identifier (IP + browser hash for shared IP handling)
+            session_id: Standard session identifier (IP_override1, IP_override2, etc.)
             
         Returns:
             Dictionary containing success status and S3 key/URL
@@ -251,18 +251,9 @@ class TradingCardGenerator:
             # Decode base64 image data
             image_data = base64.b64decode(final_card_base64)
             
-            # Count existing cards for this session to get next number
-            existing_cards = self.s3_client.list_objects_v2(
-                Bucket=self.s3_bucket,
-                Prefix=f'cards/{session_id}_card_'
-            )
-            card_count = len(existing_cards.get('Contents', [])) + 1  # Next card number
-            
-            # Generate timestamp
+            # Create standard filename with timestamp
             timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-            
-            # Create session-based filename: SESSION_card_COUNT_timestamp.png
-            filename = f"{session_id}_card_{card_count}_{timestamp}.png"
+            filename = f"{session_id}_card_1_{timestamp}.png"
             s3_key = f"cards/{filename}"
             
             # Upload to S3
@@ -275,9 +266,9 @@ class TradingCardGenerator:
                 ContentType='image/png',
                 Metadata={
                     'session_id': session_id,
-                    'card_number': str(card_count),
                     'user_name': user_name or 'AWS_Logo',
                     'username': username,
+                    'prompt': prompt[:100],
                     'generated_at': datetime.now().isoformat(),
                     'card_type': 'final_composited'
                 }
@@ -286,14 +277,13 @@ class TradingCardGenerator:
             # Generate S3 URL
             s3_url = f"https://{self.s3_bucket}.s3.amazonaws.com/{s3_key}"
             
-            logger.info(f"✅ Final card stored successfully: {s3_key} (Card #{card_count} for session {session_id})")
+            logger.info(f"✅ Final card stored with standard pattern: {s3_key}")
             
             return {
                 'success': True,
                 's3_key': s3_key,
                 's3_url': s3_url,
                 'filename': filename,
-                'card_number': card_count,
                 'session_id': session_id
             }
             

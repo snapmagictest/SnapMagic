@@ -287,6 +287,12 @@ frontend:
       authorizationType: apigateway.AuthorizationType.NONE
     });
     
+    // Override endpoint (for staff override functionality)
+    const overrideResource = apiResource.addResource('override');
+    overrideResource.addMethod('POST', lambdaIntegration, {
+      authorizationType: apigateway.AuthorizationType.NONE
+    });
+    
     // Transform image endpoint (keep for compatibility)
     const transformImageResource = apiResource.addResource('transform-image');
     transformImageResource.addMethod('POST', lambdaIntegration, {

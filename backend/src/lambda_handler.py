@@ -1,6 +1,6 @@
 """
-SnapMagic Lambda Handler - Trading Card Generation
-PRESERVES existing authentication system, REPLACES FunkoPop with card generation
+SnapMagic Lambda Handler - Trading Card Generation with Simplified Override System
+STANDARD PATTERN: Always use IP_override1, IP_override2, etc. with timestamps
 """
 
 import json
@@ -32,86 +32,276 @@ def load_limits() -> Dict[str, int]:
         logger.error(f"Failed to load limits: {str(e)}")
         return {'cards': 5, 'videos': 3, 'prints': 1}  # Safe defaults
 
-def store_print_record(session_id: str, username: str, card_prompt: str, card_image_base64: str) -> Dict[str, Any]:
+def create_standard_session_id(client_ip: str, override_number: int = 1) -> str:
     """
-    Store print image in print-queue folder with global queue numbering
+    Create standard session ID - ALWAYS uses override pattern starting from 1
     
     Args:
-        session_id: Session identifier (IP + browser hash)
-        username: Authenticated username
-        card_prompt: Original card prompt that was printed
-        card_image_base64: Base64 encoded card image to store
+        client_ip: Client IP address
+        override_number: Override number (starts at 1, increments when staff presses button)
         
     Returns:
-        Dictionary containing success status and print information
+        Standard session ID: IP_override1, IP_override2, etc.
+    """
+    session_id = f"{client_ip}_override{override_number}"
+    logger.info(f"📝 Created standard session ID: {session_id}")
+    return session_id
+
+def get_current_override_number(client_ip: str) -> int:
+    """
+    Get current override number for IP by checking S3 files
+    Returns the highest override number found, or 1 if none exist
     """
     try:
         import boto3
-        import base64
+        s3_client = boto3.client('s3')
+        bucket_name = os.environ.get('S3_BUCKET_NAME')
+        
+        if not bucket_name:
+            return 1
+        
+        # Check all folders for this IP to find highest override number
+        max_override = 0
+        
+        for prefix in ['cards', 'videos', 'print-queue']:
+            response = s3_client.list_objects_v2(
+                Bucket=bucket_name,
+                Prefix=f'{prefix}/{client_ip}_override'
+            )
+            for obj in response.get('Contents', []):
+                filename = obj['Key']
+                if '_override' in filename:
+                    # Extract override number from filename like: IP_override1_card_1_timestamp.png
+                    try:
+                        parts = filename.split('_override')[1]
+                        override_num = int(parts.split('_')[0])
+                        max_override = max(max_override, override_num)
+                    except (ValueError, IndexError):
+                        continue
+        
+        # Return current override number (starts at 1 if none found)
+        current_override = max(1, max_override)
+        logger.info(f"📊 IP {client_ip} current override number: {current_override}")
+        return current_override
+        
+    except Exception as e:
+        logger.error(f"❌ Failed to get override number for IP {client_ip}: {str(e)}")
+        return 1
+
+def increment_override_number(client_ip: str) -> int:
+    """
+    Increment override number when staff presses override button
+    Returns the NEW override number to use
+    """
+    current = get_current_override_number(client_ip)
+    new_override = current + 1
+    logger.info(f"🔓 Staff override pressed - IP {client_ip}: override{current} → override{new_override}")
+    return new_override
+
+def create_standard_filename(session_id: str, file_type: str, extension: str) -> tuple[str, str]:
+    """
+    Create standardized filename with timestamp for ALL files
+    
+    Args:
+        session_id: IP_override1, IP_override2, etc.
+        file_type: 'card', 'print', 'video'  
+        extension: 'png', 'mp4', etc.
+        
+    Returns:
+        tuple: (filename, s3_key)
+    """
+    from datetime import datetime
+    
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    filename = f"{session_id}_card_1_{timestamp}.{extension}"
+    
+    # Determine folder based on file type
+    folder_map = {
+        'card': 'cards',
+        'print': 'print-queue', 
+        'video': 'videos'
+    }
+    folder = folder_map.get(file_type, 'cards')
+    
+    s3_key = f"{folder}/{filename}"
+    return filename, s3_key
+
+def check_usage_limit_simplified(client_ip: str, generation_type: str, override_code: str = None) -> tuple[bool, str]:
+    """
+    Simplified usage check - ALWAYS uses standard override pattern
+    
+    Args:
+        client_ip: Client IP address
+        generation_type: 'cards', 'videos', 'prints'
+        override_code: If provided, increment override number
+        
+    Returns:
+        tuple: (allowed: bool, session_id_to_use: str)
+    """
+    
+    # Check if staff override button was pressed
+    valid_override_code = os.environ.get('OVERRIDE_CODE', 'snap')
+    if override_code and override_code == valid_override_code:
+        # Staff pressed override - increment to next override number
+        new_override_number = increment_override_number(client_ip)
+        session_id = create_standard_session_id(client_ip, new_override_number)
+        logger.info(f"🎁 Staff override applied - using {session_id}")
+        return True, session_id
+    
+    # Normal usage - use current override number (starts at 1)
+    current_override = get_current_override_number(client_ip)
+    session_id = create_standard_session_id(client_ip, current_override)
+    
+    # Check normal usage limits (simplified - just check total files for this override)
+    limits = load_limits()
+    current_usage = get_usage_for_override_session(client_ip, current_override)
+    current_count = current_usage.get(generation_type, 0)
+    limit = limits.get(generation_type, 5)
+    
+    logger.info(f"Usage check - IP: {client_ip}, Override: {current_override}, Type: {generation_type}, Count: {current_count}, Limit: {limit}")
+    
+    return current_count < limit, session_id
+
+def get_usage_for_override_session(client_ip: str, override_number: int) -> Dict[str, int]:
+    """Count files for specific override session"""
+    try:
+        import boto3
+        s3_client = boto3.client('s3')
+        bucket_name = os.environ.get('S3_BUCKET_NAME')
+        
+        if not bucket_name:
+            return {'cards': 0, 'videos': 0, 'prints': 0}
+        
+        session_prefix = f"{client_ip}_override{override_number}_"
+        usage = {'cards': 0, 'videos': 0, 'prints': 0}
+        
+        # Count cards
+        cards_response = s3_client.list_objects_v2(
+            Bucket=bucket_name,
+            Prefix=f'cards/{session_prefix}'
+        )
+        usage['cards'] = len(cards_response.get('Contents', []))
+        
+        # Count videos
+        videos_response = s3_client.list_objects_v2(
+            Bucket=bucket_name,
+            Prefix=f'videos/{session_prefix}'
+        )
+        usage['videos'] = len(videos_response.get('Contents', []))
+        
+        # Count prints
+        prints_response = s3_client.list_objects_v2(
+            Bucket=bucket_name,
+            Prefix=f'print-queue/{session_prefix}'
+        )
+        usage['prints'] = len(prints_response.get('Contents', []))
+        
+        logger.info(f"📊 IP {client_ip} override{override_number} usage: {usage}")
+        return usage
+        
+    except Exception as e:
+        logger.error(f"❌ Failed to get usage for IP {client_ip} override{override_number}: {str(e)}")
+        return {'cards': 0, 'videos': 0, 'prints': 0}
+
+def get_remaining_usage_simplified(client_ip: str) -> Dict[str, int]:
+    """Get remaining usage for current override session"""
+    limits = load_limits()
+    current_override = get_current_override_number(client_ip)
+    current_usage = get_usage_for_override_session(client_ip, current_override)
+    
+    # Calculate remaining: max_limit - used_count
+    cards_used = current_usage.get('cards', 0)
+    videos_used = current_usage.get('videos', 0)
+    prints_used = current_usage.get('prints', 0)
+    
+    cards_remaining = max(0, limits['cards'] - cards_used)
+    videos_remaining = max(0, limits['videos'] - videos_used)
+    prints_remaining = max(0, limits['prints'] - prints_used)
+    
+    remaining = {
+        'cards': cards_remaining,
+        'videos': videos_remaining,
+        'prints': prints_remaining
+    }
+    
+    logger.info(f"📊 IP {client_ip} override{current_override} remaining: {remaining}")
+    return remaining
+
+def store_file_with_standard_pattern(session_id: str, username: str, prompt: str, file_data: bytes, file_type: str, extension: str, content_type: str) -> Dict[str, Any]:
+    """
+    Universal file storage method using standard override pattern for ALL files
+    
+    Args:
+        session_id: IP_override1, IP_override2, etc.
+        username: Authenticated username
+        prompt: User prompt
+        file_data: Binary file data
+        file_type: 'card', 'print', 'video'
+        extension: 'png', 'mp4', etc.
+        content_type: 'image/png', 'video/mp4', etc.
+        
+    Returns:
+        Dictionary with success status and file info
+    """
+    try:
+        import boto3
         from datetime import datetime
         
         s3_client = boto3.client('s3')
         bucket_name = os.environ.get('S3_BUCKET_NAME')
         
         if not bucket_name:
-            return {
-                'success': False,
-                'error': 'S3 bucket not configured'
-            }
+            return {'success': False, 'error': 'S3 bucket not configured'}
         
-        # Count ALL files in print-queue folder to get next global print number
-        # This ensures printer knows the exact order to print
-        all_prints_response = s3_client.list_objects_v2(
-            Bucket=bucket_name,
-            Prefix='print-queue/'
-        )
-        global_print_number = len(all_prints_response.get('Contents', [])) + 1  # Next in global queue
+        # Create standardized filename with timestamp
+        filename, s3_key = create_standard_filename(session_id, file_type, extension)
         
-        # Generate timestamp
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        
-        # Create filename with global print queue number: SESSION_print_GLOBAL_NUMBER_timestamp.png
-        # The GLOBAL_NUMBER tells printer the exact order (1, 2, 3, 4, 5...)
-        print_filename = f"{session_id}_print_{global_print_number}_{timestamp}.png"
-        print_s3_key = f"print-queue/{print_filename}"
-        
-        # Decode base64 image
-        image_data = base64.b64decode(card_image_base64)
-        
-        # Store print image directly in print-queue folder
-        logger.info(f"🖨️ Storing print #{global_print_number} in print-queue: {print_s3_key}")
-        
+        # Store in S3
         s3_client.put_object(
             Bucket=bucket_name,
-            Key=print_s3_key,
-            Body=image_data,
-            ContentType='image/png',
+            Key=s3_key,
+            Body=file_data,
+            ContentType=content_type,
             Metadata={
-                'session_id': session_id,
                 'username': username,
-                'card_prompt': card_prompt[:500],  # Truncate if too long
-                'global_print_number': str(global_print_number),
-                'printed_at': datetime.now().isoformat(),
-                'print_type': 'trading_card'
+                'prompt': prompt[:100],
+                'session_id': session_id,
+                'file_type': file_type,
+                'created_at': datetime.now().isoformat()
             }
         )
         
-        logger.info(f"✅ Print #{global_print_number} stored in queue: {print_filename} (Session: {session_id})")
-        
-        return {
-            'success': True,
-            'print_s3_key': print_s3_key,
-            'print_filename': print_filename,
-            'global_print_number': global_print_number,
-            'session_id': session_id
-        }
+        logger.info(f"📁 {file_type.title()} stored with standard pattern: {s3_key}")
+        return {'success': True, 's3_key': s3_key, 'filename': filename}
         
     except Exception as e:
-        logger.error(f"❌ Failed to store print: {str(e)}")
-        return {
-            'success': False,
-            'error': f"Print storage failed: {str(e)}"
-        }
+        logger.error(f"❌ Failed to store {file_type}: {str(e)}")
+        return {'success': False, 'error': str(e)}
+
+def store_print_record_simple(session_id: str, username: str, prompt: str, image_base64: str) -> Dict[str, Any]:
+    """Store print record using standard pattern"""
+    try:
+        import base64
+        
+        # Decode base64 image
+        image_data = base64.b64decode(image_base64)
+        
+        # Use universal storage method with standard pattern
+        result = store_file_with_standard_pattern(
+            session_id=session_id,
+            username=username, 
+            prompt=prompt,
+            file_data=image_data,
+            file_type='print',
+            extension='png',
+            content_type='image/png'
+        )
+        
+        return result
+        
+    except Exception as e:
+        logger.error(f"❌ Failed to store print record: {str(e)}")
+        return {'success': False, 'error': str(e)}
 
 def get_client_ip(request_headers: Dict[str, str]) -> str:
     """Extract client IP address from request headers"""
@@ -130,393 +320,6 @@ def get_client_ip(request_headers: Dict[str, str]) -> str:
     
     # Last resort - use a default
     return 'unknown'
-
-def get_session_identifier(request_headers: Dict[str, str]) -> str:
-    """
-    Generate a more robust session identifier for shared IP scenarios
-    Combines IP with basic browser info to handle incognito/shared IPs better
-    """
-    import hashlib
-    
-    # Get base IP
-    client_ip = get_client_ip(request_headers)
-    
-    # Add minimal browser fingerprinting for shared IP disambiguation
-    user_agent = request_headers.get('User-Agent', request_headers.get('user-agent', ''))[:100]  # Truncate
-    accept_lang = request_headers.get('Accept-Language', request_headers.get('accept-language', ''))[:50]  # Truncate
-    
-    # Create a session hash (not for security, just for disambiguation)
-    session_data = f"{client_ip}|{user_agent}|{accept_lang}"
-    session_hash = hashlib.md5(session_data.encode()).hexdigest()[:8]  # Short hash
-    
-    # Return IP with session suffix for better shared IP handling
-    return f"{client_ip}_{session_hash}"
-
-def get_usage_from_s3(session_id: str) -> Dict[str, int]:
-    """Count existing cards, videos, and prints for IP ADDRESS by checking S3 files"""
-    try:
-        import boto3
-        s3_client = boto3.client('s3')
-        bucket_name = os.environ.get('S3_BUCKET_NAME')
-        
-        if not bucket_name:
-            logger.warning("S3_BUCKET_NAME not configured")
-            return {'cards': 0, 'videos': 0, 'prints': 0}
-        
-        # Extract IP address from session_id (format: IP_HASH)
-        client_ip = session_id.split('_')[0] if '_' in session_id else session_id
-        
-        # Count cards for this IP ADDRESS (not full session) - check all files with same IP
-        logger.info(f"🔍 Counting cards for IP {client_ip} in bucket {bucket_name}")
-        cards_response = s3_client.list_objects_v2(
-            Bucket=bucket_name,
-            Prefix=f'cards/{client_ip}_'
-        )
-        cards_count = len(cards_response.get('Contents', []))
-        
-        # Count videos for this IP ADDRESS (not full session) - check all files with same IP
-        logger.info(f"🔍 Counting videos for IP {client_ip} in bucket {bucket_name}")
-        videos_response = s3_client.list_objects_v2(
-            Bucket=bucket_name,
-            Prefix=f'videos/{client_ip}_'
-        )
-        videos_count = len(videos_response.get('Contents', []))
-        
-        # Count prints for this IP ADDRESS (not full session) - check all files with same IP
-        logger.info(f"🔍 Counting prints for IP {client_ip} in bucket {bucket_name}")
-        prints_response = s3_client.list_objects_v2(
-            Bucket=bucket_name,
-            Prefix=f'print-queue/{client_ip}_'
-        )
-        prints_count = len(prints_response.get('Contents', []))
-        
-        logger.info(f"📊 Session {session_id} (IP: {client_ip}) current usage: {cards_count} cards, {videos_count} videos, {prints_count} prints")
-        
-        # Log the actual files found for debugging
-        if cards_response.get('Contents'):
-            logger.info(f"📁 Found card files for IP {client_ip}: {[obj['Key'] for obj in cards_response['Contents']]}")
-        if videos_response.get('Contents'):
-            logger.info(f"📁 Found video files for IP {client_ip}: {[obj['Key'] for obj in videos_response['Contents']]}")
-        if prints_response.get('Contents'):
-            logger.info(f"📁 Found print files for IP {client_ip}: {[obj['Key'] for obj in prints_response['Contents']]}")
-        
-        return {'cards': cards_count, 'videos': videos_count, 'prints': prints_count}
-        
-    except Exception as e:
-        logger.error(f"❌ Failed to get S3 usage for session {session_id}: {str(e)}")
-        return {'cards': 0, 'videos': 0, 'prints': 0}
-
-def get_next_override_number_for_ip(client_ip: str) -> int:
-    """Get the next override number for an IP address by checking S3 filenames (SIMPLE IP-ONLY)"""
-    try:
-        import boto3
-        s3_client = boto3.client('s3')
-        bucket_name = os.environ.get('S3_BUCKET_NAME')
-        
-        if not bucket_name:
-            return 1
-        
-        # Check all files for this IP to find highest override number
-        max_override = 0
-        
-        # Check all prefixes for this IP
-        for prefix in ['cards', 'videos', 'print-queue']:
-            response = s3_client.list_objects_v2(
-                Bucket=bucket_name,
-                Prefix=f'{prefix}/{client_ip}_'
-            )
-            for obj in response.get('Contents', []):
-                filename = obj['Key']
-                if 'override' in filename:
-                    # Extract override number from filename like: IP_override1_card_1.png
-                    parts = filename.split('override')
-                    if len(parts) > 1:
-                        try:
-                            override_num = int(''.join(filter(str.isdigit, parts[1].split('_')[0])))
-                            max_override = max(max_override, override_num)
-                        except ValueError:
-                            continue
-        
-        # Return next override number
-        next_override = max_override + 1
-        logger.info(f"📊 IP {client_ip} next override number: {next_override}")
-        return next_override
-        
-    except Exception as e:
-        logger.error(f"❌ Failed to get override count for IP {client_ip}: {str(e)}")
-        return 1
-
-def create_simple_session_id(client_ip: str, override_number: int = None) -> str:
-    """Create simple session ID for file naming - IP only or IP_override#"""
-    if override_number:
-        session_id = f"{client_ip}_override{override_number}"
-        logger.info(f"📝 Created override session ID: {session_id}")
-        return session_id
-    else:
-        logger.info(f"📝 Created normal session ID: {client_ip}")
-        return client_ip
-
-def get_usage_from_s3_simple(client_ip: str) -> Dict[str, int]:
-    """Count usage files for IP address (SIMPLIFIED)"""
-    try:
-        import boto3
-        s3_client = boto3.client('s3')
-        bucket_name = os.environ.get('S3_BUCKET_NAME')
-        
-        if not bucket_name:
-            return {'cards': 0, 'videos': 0, 'prints': 0}
-        
-        usage = {'cards': 0, 'videos': 0, 'prints': 0}
-        
-        # Count cards
-        cards_response = s3_client.list_objects_v2(
-            Bucket=bucket_name,
-            Prefix=f'cards/{client_ip}_'
-        )
-        usage['cards'] = len(cards_response.get('Contents', []))
-        
-        # Count videos
-        videos_response = s3_client.list_objects_v2(
-            Bucket=bucket_name,
-            Prefix=f'videos/{client_ip}_'
-        )
-        usage['videos'] = len(videos_response.get('Contents', []))
-        
-        # Count prints
-        prints_response = s3_client.list_objects_v2(
-            Bucket=bucket_name,
-            Prefix=f'print-queue/{client_ip}_'
-        )
-        usage['prints'] = len(prints_response.get('Contents', []))
-        
-        logger.info(f"📊 IP {client_ip} usage: {usage}")
-        return usage
-        
-    except Exception as e:
-        logger.error(f"❌ Failed to get usage for IP {client_ip}: {str(e)}")
-        return {'cards': 0, 'videos': 0, 'prints': 0}
-
-def store_print_record_simple(session_id: str, username: str, prompt: str, image_base64: str) -> Dict[str, Any]:
-    """Store print record using simplified session ID"""
-    try:
-        import boto3
-        import base64
-        from datetime import datetime
-        
-        s3_client = boto3.client('s3')
-        bucket_name = os.environ.get('S3_BUCKET_NAME')
-        
-        if not bucket_name:
-            return {'success': False, 'error': 'S3 bucket not configured'}
-        
-        # Generate filename with simplified session ID
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        filename = f"{session_id}_print_{timestamp}.png"
-        s3_key = f"print-queue/{filename}"
-        
-        # Decode base64 image
-        image_data = base64.b64decode(image_base64)
-        
-        # Store in S3
-        s3_client.put_object(
-            Bucket=bucket_name,
-            Key=s3_key,
-            Body=image_data,
-            ContentType='image/png',
-            Metadata={
-                'username': username,
-                'prompt': prompt[:100],  # Truncate long prompts
-                'session_id': session_id
-            }
-        )
-        
-        logger.info(f"📁 Print record stored: {s3_key}")
-        return {'success': True, 's3_key': s3_key}
-        
-    except Exception as e:
-        logger.error(f"❌ Failed to store print record: {str(e)}")
-        return {'success': False, 'error': str(e)}
-
-def get_remaining_usage_simple(client_ip: str) -> Dict[str, int]:
-    """Get remaining usage for IP address (SIMPLIFIED)"""
-    limits = load_limits()
-    current_usage = get_usage_from_s3_simple(client_ip)
-    
-    # Calculate remaining: max_limit - used_count
-    cards_used = current_usage.get('cards', 0)
-    videos_used = current_usage.get('videos', 0)
-    prints_used = current_usage.get('prints', 0)
-    
-    cards_remaining = max(0, limits['cards'] - cards_used)
-    videos_remaining = max(0, limits['videos'] - videos_used)
-    prints_remaining = max(0, limits['prints'] - prints_used)
-    
-    remaining = {
-        'cards': cards_remaining,
-        'videos': videos_remaining,
-        'prints': prints_remaining
-    }
-    
-    logger.info(f"📊 IP {client_ip} remaining usage: {remaining}")
-    return remaining
-
-def store_override_session(client_ip: str, override_number: int) -> bool:
-    """Store override session info in S3 for persistence across requests"""
-    try:
-        import boto3
-        s3_client = boto3.client('s3')
-        bucket_name = os.environ.get('S3_BUCKET_NAME')
-        
-        if not bucket_name:
-            return False
-        
-        # Store override session info as a small file
-        override_key = f'override-sessions/{client_ip}_override{override_number}.txt'
-        s3_client.put_object(
-            Bucket=bucket_name,
-            Key=override_key,
-            Body=f'Override {override_number} active for IP {client_ip}',
-            ContentType='text/plain'
-        )
-        
-        logger.info(f"📝 Stored override session: {override_key}")
-        return True
-        
-    except Exception as e:
-        logger.error(f"❌ Failed to store override session: {str(e)}")
-        return False
-
-def get_active_override_session(client_ip: str) -> int:
-    """Get the active override session number for an IP, or 0 if none"""
-    try:
-        import boto3
-        s3_client = boto3.client('s3')
-        bucket_name = os.environ.get('S3_BUCKET_NAME')
-        
-        if not bucket_name:
-            return 0
-        
-        # Check for override session files
-        response = s3_client.list_objects_v2(
-            Bucket=bucket_name,
-            Prefix=f'override-sessions/{client_ip}_override'
-        )
-        
-        max_override = 0
-        for obj in response.get('Contents', []):
-            filename = obj['Key']
-            if 'override' in filename:
-                try:
-                    override_num = int(''.join(filter(str.isdigit, filename.split('override')[1].split('.')[0])))
-                    max_override = max(max_override, override_num)
-                except ValueError:
-                    continue
-        
-        if max_override > 0:
-            logger.info(f"🔓 Found active override session #{max_override} for IP {client_ip}")
-        
-        return max_override
-        
-    except Exception as e:
-        logger.error(f"❌ Failed to get active override session: {str(e)}")
-        return 0
-
-def get_session_id_for_storage(client_ip: str) -> str:
-    """Get the correct session ID for file storage (handles override persistence)"""
-    active_override = get_active_override_session(client_ip)
-    
-    if active_override > 0:
-        session_id = create_simple_session_id(client_ip, active_override)
-        logger.info(f"📁 Using active override session for storage: {session_id}")
-        return session_id
-    else:
-        logger.info(f"📁 Using normal session for storage: {client_ip}")
-        return client_ip
-    """Get remaining usage for IP address (SIMPLIFIED)"""
-    limits = load_limits()
-    current_usage = get_usage_from_s3_simple(client_ip)
-    
-    # Calculate remaining: max_limit - used_count
-    cards_used = current_usage.get('cards', 0)
-    videos_used = current_usage.get('videos', 0)
-    prints_used = current_usage.get('prints', 0)
-    
-    cards_remaining = max(0, limits['cards'] - cards_used)
-    videos_remaining = max(0, limits['videos'] - videos_used)
-    prints_remaining = max(0, limits['prints'] - prints_used)
-    
-    remaining = {
-        'cards': cards_remaining,
-        'videos': videos_remaining,
-        'prints': prints_remaining
-    }
-    
-    logger.info(f"📊 IP {client_ip} remaining usage: {remaining}")
-    return remaining
-
-def check_usage_limit_simple(client_ip: str, generation_type: str, override_code: str = None) -> tuple[bool, str]:
-    """Check usage limits for IP address (SIMPLIFIED)
-    
-    Returns:
-        tuple: (allowed: bool, session_id_to_use: str)
-    """
-    
-    # Check if override code is provided and valid
-    valid_override_code = os.environ.get('OVERRIDE_CODE', 'snap')
-    if override_code and override_code == valid_override_code:
-        logger.info(f"🔓 Override code used for IP {client_ip}, type: {generation_type}")
-        
-        # Get next override number (NO DELETION - just tracking)
-        next_override = get_next_override_number_for_ip(client_ip)
-        
-        # Create override session ID for file naming
-        override_session_id = create_simple_session_id(client_ip, next_override)
-        
-        logger.info(f"🎁 Override #{next_override} applied for IP {client_ip} - NO FILES DELETED")
-        logger.info(f"📝 Override session ID for new files: {override_session_id}")
-        
-        return True, override_session_id
-    
-    # Normal usage checking
-    limits = load_limits()
-    current_usage = get_usage_from_s3_simple(client_ip)
-    
-    current_count = current_usage.get(generation_type, 0)
-    limit = limits.get(generation_type, 5)
-    
-    logger.info(f"Usage check - IP: {client_ip}, Type: {generation_type}, Count: {current_count}, Limit: {limit}")
-    
-    # Use simple IP-only session ID for normal usage
-    normal_session_id = create_simple_session_id(client_ip)
-    
-    return current_count < limit, normal_session_id
-
-def get_remaining_usage(session_id: str) -> Dict[str, int]:
-    """Get remaining usage for session by counting S3 files and subtracting from limits"""
-    limits = load_limits()
-    current_usage = get_usage_from_s3(session_id)
-    
-    # Calculate remaining: max_limit - used_count
-    cards_used = current_usage.get('cards', 0)
-    videos_used = current_usage.get('videos', 0)
-    prints_used = current_usage.get('prints', 0)
-    
-    cards_remaining = max(0, limits['cards'] - cards_used)
-    videos_remaining = max(0, limits['videos'] - videos_used)
-    prints_remaining = max(0, limits['prints'] - prints_used)
-    
-    remaining = {
-        'cards': cards_remaining,
-        'videos': videos_remaining,
-        'prints': prints_remaining
-    }
-    
-    logger.info(f"📊 Session {session_id} calculation:")
-    logger.info(f"   Cards: {cards_used} used / {limits['cards']} max = {cards_remaining} remaining")
-    logger.info(f"   Videos: {videos_used} used / {limits['videos']} max = {videos_remaining} remaining")
-    logger.info(f"   Prints: {prints_used} used / {limits['prints']} max = {prints_remaining} remaining")
-    
-    return remaining
 
 def load_event_credentials() -> Dict[str, str]:
     """Load event credentials from environment variables (set by CDK from secrets.json)"""
@@ -544,8 +347,8 @@ video_generator = VideoGenerator()
 
 def lambda_handler(event, context):
     """
-    SnapMagic Lambda Handler with Trading Card Generation
-    MAINTAINS EXACT SAME AUTHENTICATION SYSTEM - DO NOT CHANGE
+    SnapMagic Lambda Handler with Simplified Override System
+    STANDARD PATTERN: Always IP_override1, IP_override2, etc. with timestamps
     """
     try:
         logger.info(f"Received event: {json.dumps(event, default=str)}")
@@ -570,20 +373,20 @@ def lambda_handler(event, context):
         if '/api/login' in request_path:
             action = 'login'
         elif '/api/transform-card' in request_path:
-            # Check body for specific action (card generation vs video generation vs video status)
+            # Check body for specific action (card generation vs video generation vs video status vs override)
             body_action = body.get('action', '').lower()
             if body_action == 'generate_video':
                 action = 'generate_video'
             elif body_action == 'get_video_status':
                 action = 'get_video_status'
+            elif body_action == 'apply_override':
+                action = 'apply_override'
             else:
                 action = 'transform_card'  # Default to card generation
         elif '/api/store-card' in request_path:
             action = 'store_final_card'
         elif '/api/print-card' in request_path:
             action = 'print_card'
-        elif '/api/transform-image' in request_path:  # Keep old endpoint for compatibility
-            action = 'transform_card'
         elif '/health' in request_path:
             action = 'health'
         else:
@@ -593,7 +396,6 @@ def lambda_handler(event, context):
         
         # ========================================
         # LOGIN ENDPOINT (NO AUTHENTICATION REQUIRED)
-        # EXACT SAME AS BEFORE - DO NOT CHANGE
         # ========================================
         if action == 'login':
             username = body.get('username', '')
@@ -612,7 +414,7 @@ def lambda_handler(event, context):
                 # Get client IP for simplified tracking
                 request_headers = event.get('headers', {})
                 client_ip = get_client_ip(request_headers)
-                remaining_usage = get_remaining_usage_simple(client_ip)
+                remaining_usage = get_remaining_usage_simplified(client_ip)
                 
                 logger.info(f"Login successful for IP: {client_ip}, remaining usage: {remaining_usage}")
                 
@@ -631,7 +433,6 @@ def lambda_handler(event, context):
         
         # ========================================
         # ALL OTHER ENDPOINTS REQUIRE AUTHENTICATION
-        # EXACT SAME PATTERN AS BEFORE - DO NOT CHANGE
         # ========================================
         auth_header = event.get('headers', {}).get('Authorization', '')
         if not auth_header.startswith('Bearer '):
@@ -647,13 +448,12 @@ def lambda_handler(event, context):
         logger.info(f"✅ Authenticated user: {token_payload.get('username')}")
         
         # ========================================
-        # NEW: TRADING CARD GENERATION
-        # REPLACES OLD FUNKOPOP FUNCTIONALITY
+        # TRADING CARD GENERATION WITH STANDARD PATTERN
         # ========================================
         if action == 'transform_card':
             username = token_payload.get('username', 'unknown')
             
-            # Get client IP for simplified tracking
+            # Get client IP for standard pattern
             request_headers = event.get('headers', {})
             client_ip = get_client_ip(request_headers)
             
@@ -662,8 +462,8 @@ def lambda_handler(event, context):
             # Extract override code from request body if provided
             override_code = body.get('override_code')
             
-            # Check usage limits and get session_id for file naming (SIMPLIFIED)
-            allowed, session_id_for_files = check_usage_limit_simple(client_ip, 'cards', override_code)
+            # Check usage limits and get session_id using standard pattern
+            allowed, session_id_for_files = check_usage_limit_simplified(client_ip, 'cards', override_code)
             
             if not allowed:
                 return create_error_response(
@@ -671,7 +471,7 @@ def lambda_handler(event, context):
                     429
                 )
             
-            logger.info(f"📝 Using session ID for files: {session_id_for_files}")
+            logger.info(f"📝 Using standard session ID: {session_id_for_files}")
             
             prompt = body.get('prompt', '')
             if not prompt:
@@ -687,11 +487,8 @@ def lambda_handler(event, context):
                 result = card_generator.generate_trading_card(prompt)
                 
                 if result['success']:
-                    # Don't store here - let frontend store the final composited card
-                    # This ensures we store what the user actually downloads
-                    
-                    # Get current remaining usage (before increment) - SIMPLIFIED
-                    remaining = get_remaining_usage_simple(client_ip)
+                    # Get current remaining usage
+                    remaining = get_remaining_usage_simplified(client_ip)
                     
                     # Return in format frontend expects
                     return create_success_response({
@@ -701,7 +498,7 @@ def lambda_handler(event, context):
                         'imageSrc': result.get('imageSrc'),  # Data URL for frontend
                         'metadata': result.get('metadata', {}),
                         'remaining': remaining,  # Current remaining counts
-                        'session_id': session_id_for_files,  # For debugging (simplified)
+                        'session_id': session_id_for_files,  # For debugging
                         'client_ip': client_ip  # For debugging
                     })
                 else:
@@ -712,85 +509,59 @@ def lambda_handler(event, context):
                 return create_error_response(f"Card generation failed: {str(e)}", 500)
         
         # ========================================
-        # NEW: VIDEO STATUS CHECK
-        # CHECK S3 FOR COMPLETED VIDEOS
+        # STORE FINAL CARD IN S3 WITH STANDARD PATTERN
         # ========================================
-        elif action == 'get_video_status':
+        elif action == 'store_final_card':
             username = token_payload.get('username', 'unknown')
-            invocation_arn = body.get('invocation_arn', '')
-            animation_prompt = body.get('animation_prompt', '')  # Store prompt for session filename
             
-            if not invocation_arn:
-                logger.error("❌ Missing invocation_arn parameter")
-                return create_error_response("Missing invocation_arn parameter", 400)
+            final_card_base64 = body.get('final_card_base64', '')
+            prompt = body.get('prompt', '')
+            user_name = body.get('user_name', '')
+            
+            if not final_card_base64:
+                return create_error_response("Missing final_card_base64 parameter", 400)
             
             try:
-                # Get client IP for simplified tracking
+                # Get client IP and current override number
                 request_headers = event.get('headers', {})
                 client_ip = get_client_ip(request_headers)
+                current_override = get_current_override_number(client_ip)
+                session_id_for_files = create_standard_session_id(client_ip, current_override)
                 
-                # Check video status using Bedrock API
-                logger.info(f"🔍 Checking video status for ARN: {invocation_arn}, Session: {session_id}")
-                result = video_generator.get_video_status(invocation_arn)
+                logger.info(f"📁 Storing final card with standard session ID: {session_id_for_files}")
                 
-                if result['success'] and result.get('status') == 'completed':
-                    # Video is completed - store it with session-based filename
-                    logger.info("✅ Video completed - storing with session-based filename...")
-                    
-                    storage_result = video_generator.store_video_with_session_filename(
-                        invocation_arn, 
-                        session_id, 
-                        animation_prompt, 
-                        username
-                    )
-                    
-                    if storage_result['success']:
-                        logger.info(f"✅ Video stored with session filename: {storage_result['session_s3_key']}")
-                    else:
-                        logger.warning(f"⚠️ Failed to store video with session filename: {storage_result['error']}")
-                    
-                    # Get updated remaining usage after video storage
-                    remaining = get_remaining_usage(session_id)
-                    
-                    logger.info(f"✅ Video status check successful: {result.get('status')}")
+                # Decode and store using standard pattern
+                import base64
+                image_data = base64.b64decode(final_card_base64)
+                
+                result = store_file_with_standard_pattern(
+                    session_id=session_id_for_files,
+                    username=username,
+                    prompt=prompt,
+                    file_data=image_data,
+                    file_type='card',
+                    extension='png',
+                    content_type='image/png'
+                )
+                
+                if result['success']:
+                    logger.info(f"✅ Final card stored in S3: {result['s3_key']}")
                     return create_success_response({
                         'success': True,
-                        'status': result.get('status'),
-                        'video_base64': result.get('video_base64'),
-                        'video_url': result.get('video_url'),
-                        'message': result.get('message'),
-                        'invocation_arn': invocation_arn,
-                        'remaining': remaining,  # Updated usage counts
-                        'session_stored': storage_result['success'],  # Indicate if session storage worked
-                        'session_id': session_id,  # For debugging
-                        'client_ip': client_ip  # For debugging
-                    })
-                elif result['success']:
-                    # Video still processing
-                    logger.info(f"⏳ Video still processing: {result.get('message')}")
-                    return create_success_response({
-                        'success': True,
-                        'status': result.get('status', 'processing'),
-                        'message': result.get('message', 'Video is still processing'),
-                        'invocation_arn': invocation_arn
+                        'message': 'Final card stored successfully',
+                        's3_key': result['s3_key'],
+                        'filename': result['filename']
                     })
                 else:
-                    # Video failed or other error
-                    logger.info(f"❌ Video status error: {result.get('message')}")
-                    return create_success_response({
-                        'success': True,
-                        'status': 'failed',
-                        'message': result.get('message', 'Video generation failed'),
-                        'invocation_arn': invocation_arn
-                    })
+                    logger.error(f"❌ Failed to store final card: {result.get('error')}")
+                    return create_error_response(f"Failed to store card: {result.get('error')}", 500)
                     
             except Exception as e:
-                logger.error(f"❌ Video status check exception: {str(e)}")
-                return create_error_response(f"Video status check failed: {str(e)}", 500)
+                logger.error(f"❌ Store final card exception: {str(e)}")
+                return create_error_response(f"Failed to store card: {str(e)}", 500)
         
         # ========================================
-        # NEW: NOVA REEL VIDEO GENERATION
-        # PRINT TRADING CARDS WITH USAGE TRACKING
+        # PRINT CARD WITH STANDARD PATTERN
         # ========================================
         elif action == 'print_card':
             username = token_payload.get('username', 'unknown')
@@ -802,8 +573,8 @@ def lambda_handler(event, context):
             # Extract override code from request body if provided
             override_code = body.get('override_code')
             
-            # Check usage limits and get session_id for file naming (SIMPLIFIED)
-            allowed, session_id_for_files = check_usage_limit_simple(client_ip, 'prints', override_code)
+            # Check usage limits and get session_id using standard pattern
+            allowed, session_id_for_files = check_usage_limit_simplified(client_ip, 'prints', override_code)
             
             if not allowed:
                 return create_error_response(
@@ -811,8 +582,7 @@ def lambda_handler(event, context):
                     429
                 )
             
-            # Use session_id_for_files for file naming
-            logger.info(f"📝 Using session ID for print files: {session_id_for_files}")
+            logger.info(f"📝 Using standard session ID for print: {session_id_for_files}")
             
             card_prompt = body.get('card_prompt', '')
             card_image_base64 = body.get('card_image', '')
@@ -826,23 +596,22 @@ def lambda_handler(event, context):
                 return create_error_response("Missing card_image parameter - card image required for print queue", 400)
             
             try:
-                # Add card to print queue and store print record
+                # Store print record using standard pattern
                 logger.info(f"🖨️ Print queue request - session: {session_id_for_files}, prompt: {card_prompt[:50]}...")
                 
                 result = store_print_record_simple(session_id_for_files, username, card_prompt, card_image_base64)
                 
                 if result['success']:
-                    # Get updated remaining usage after print storage
-                    remaining = get_remaining_usage_simple(client_ip)
+                    # Get updated remaining usage
+                    remaining = get_remaining_usage_simplified(client_ip)
                     
                     logger.info("✅ Card print stored successfully")
                     return create_success_response({
                         'success': True,
                         'message': f'Card saved for printing',
-                        'global_print_number': result.get('global_print_number', 1),
-                        'print_filename': result.get('print_filename', 'unknown'),
+                        'print_filename': result.get('filename', 'unknown'),
                         'remaining': remaining,  # Updated usage counts
-                        'session_id': session_id_for_files,  # For debugging - simplified
+                        'session_id': session_id_for_files,  # For debugging
                         'client_ip': client_ip,  # For debugging
                         'print_s3_key': result.get('s3_key', 'unknown')
                     })
@@ -853,147 +622,14 @@ def lambda_handler(event, context):
             except Exception as e:
                 logger.error(f"❌ Print queue request exception: {str(e)}")
                 return create_error_response(f"Print queue request failed: {str(e)}", 500)
-
-        # ANIMATE TRADING CARDS WITH S3 STORAGE
-        # ========================================
-        elif action == 'generate_video':
-            username = token_payload.get('username', 'unknown')
-            
-            # Get client IP and check usage limits
-            request_headers = event.get('headers', {})
-            client_ip = get_client_ip(request_headers)
-            
-            # Extract override code from request body if provided
-            override_code = body.get('override_code')
-            
-            # Check usage limits and get session_id for file naming (SIMPLIFIED)
-            allowed, session_id_for_files = check_usage_limit_simple(client_ip, 'videos', override_code)
-            
-            if not allowed:
-                return create_error_response(
-                    f"Limit reached. Please visit the event staff at SnapMagic to assist.", 
-                    429
-                )
-            
-            # Use session_id_for_files for file naming
-            logger.info(f"📝 Using session ID for video files: {session_id_for_files}")
-            
-            card_image = body.get('card_image', '')
-            animation_prompt = body.get('animation_prompt', '')
-            
-            logger.info(f"🎬 Video generation request - session: {session_id_for_files}, card_image length: {len(card_image)}, prompt: {animation_prompt[:50]}...")
-            
-            if not card_image:
-                logger.error("❌ Missing card_image parameter")
-                return create_error_response("Missing card_image parameter", 400)
-            
-            # Simple validation - frontend already validates
-            if not animation_prompt or len(animation_prompt.strip()) < 5:
-                logger.error("❌ Animation prompt too short")
-                return create_error_response("Animation prompt must be at least 5 characters", 400)
-            
-            # Validate base64 image
-            try:
-                import base64
-                base64.b64decode(card_image)
-                logger.info("✅ Card image base64 validation passed")
-            except Exception as e:
-                logger.error(f"❌ Invalid base64 image data: {str(e)}")
-                return create_error_response("Invalid card image data - must be valid base64", 400)
-            
-            try:
-                # Generate video using video generator
-                logger.info("🎬 Starting video generation with VideoGenerator...")
-                result = video_generator.generate_video_from_card(card_image, animation_prompt)
-                logger.info(f"🎬 Video generation result: {result.get('success', False)}")
-                
-                if result['success']:
-                    # Get updated remaining usage (will be recalculated from S3 after video storage)
-                    remaining = get_remaining_usage(session_id)
-                    
-                    logger.info("✅ Video generation successful")
-                    return create_success_response({
-                        'success': True,
-                        'message': 'Video generation started successfully',
-                        'result': result.get('video_base64'),
-                        'video_url': result.get('video_url'),
-                        'remaining': remaining,  # Add remaining counts
-                        'session_id': session_id,  # For debugging
-                        'client_ip': client_ip,  # For debugging
-                        'metadata': {
-                            'video_id': result.get('video_id'),
-                            'invocation_arn': result.get('invocation_arn'),
-                            'animation_prompt': animation_prompt,
-                            'status': result.get('status'),
-                            'estimated_time': result.get('estimated_time'),
-                            'timestamp': result.get('timestamp')
-                        }
-                    })
-                else:
-                    error_msg = result.get('error', 'Video generation failed')
-                    logger.error(f"❌ Video generation failed: {error_msg}")
-                    return create_error_response(error_msg, 500)
-                    
-            except Exception as e:
-                logger.error(f"❌ Video generation exception: {str(e)}")
-                return create_error_response(f"Video generation failed: {str(e)}", 500)
         
         # ========================================
-        # NEW: STORE FINAL CARD IN S3
-        # STORE COMPOSITED CARDS IN cards/ FOLDER
+        # APPLY OVERRIDE - SIMPLIFIED
         # ========================================
-        elif action == 'store_final_card':
-            username = token_payload.get('username', 'unknown')
-            
-            final_card_base64 = body.get('final_card_base64', '')
-            prompt = body.get('prompt', '')
-            user_name = body.get('user_name', '')
-            
-            if not final_card_base64:
-                return create_error_response("Missing final_card_base64 parameter", 400)
-            
-            try:
-                # Get client IP and determine correct session ID for storage
-                request_headers = event.get('headers', {})
-                client_ip = get_client_ip(request_headers)
-                
-                # Get the correct session ID (handles override persistence)
-                session_id_for_files = get_session_id_for_storage(client_ip)
-                
-                logger.info(f"📁 Storing final card with session ID: {session_id_for_files}")
-                
-                # Store final card in S3 cards/ folder with correct filename
-                result = card_generator.store_final_card_in_s3(
-                    final_card_base64, 
-                    prompt, 
-                    user_name, 
-                    username,
-                    session_id_for_files  # Use persistent session ID
-                )
-                
-                if result['success']:
-                    logger.info(f"✅ Final card stored in S3: {result['s3_key']}")
-                    return create_success_response({
-                        'success': True,
-                        'message': 'Final card stored successfully',
-                        's3_key': result['s3_key'],
-                        's3_url': result.get('s3_url')
-                    })
-                else:
-                    logger.error(f"❌ Failed to store final card: {result.get('error')}")
-                    return create_error_response(f"Failed to store card: {result.get('error')}", 500)
-                    
-            except Exception as e:
-                logger.error(f"❌ Store final card exception: {str(e)}")
-                return create_error_response(f"Failed to store card: {str(e)}", 500)
-        
-        # ========================================
-        # OVERRIDE SYSTEM - RESET LIMITS WITH TRACKING (SIMPLIFIED)
-        # ============================================
         elif action == 'apply_override':
             username = token_payload.get('username', 'unknown')
             
-            # Get client IP for simplified tracking
+            # Get client IP
             request_headers = event.get('headers', {})
             client_ip = get_client_ip(request_headers)
             
@@ -1005,47 +641,35 @@ def lambda_handler(event, context):
             
             logger.info(f"🔓 Override request from IP {client_ip}")
             
-            # Get next override number for this IP
-            next_override = get_next_override_number_for_ip(client_ip)
+            # Increment to next override number
+            new_override_number = increment_override_number(client_ip)
+            new_session_id = create_standard_session_id(client_ip, new_override_number)
             
-            # Create override session ID for file naming
-            override_session_id = create_simple_session_id(client_ip, next_override)
+            logger.info(f"🎁 Override #{new_override_number} applied for IP {client_ip}")
+            logger.info(f"📝 New session ID: {new_session_id}")
             
-            # Store override session for persistence across requests
-            store_override_session(client_ip, next_override)
-            
-            logger.info(f"🎁 Override #{next_override} applied for IP {client_ip}")
-            logger.info(f"📝 Override session ID: {override_session_id}")
-            logger.info(f"💾 Override session stored for persistence")
-            
-            # Return success with new session tracking info
-            return {
-                'statusCode': 200,
-                'headers': get_cors_headers(),
-                'body': json.dumps({
-                    'success': True,
-                    'message': f'Override #{next_override} applied successfully',
-                    'override_number': next_override,
-                    'session_id': override_session_id,
-                    'client_ip': client_ip,
-                    'remaining': {
-                        'cards': 5,
-                        'videos': 3,
-                        'prints': 1
-                    }
-                })
-            }
-
+            # Return success with new session info
+            return create_success_response({
+                'success': True,
+                'message': f'Override #{new_override_number} applied successfully',
+                'override_number': new_override_number,
+                'session_id': new_session_id,
+                'client_ip': client_ip,
+                'remaining': {
+                    'cards': 5,
+                    'videos': 3,
+                    'prints': 1
+                }
+            })
+        
         # HEALTH CHECK ENDPOINT
-        # UPDATED FOR CARD GENERATION
-        # ========================================
         elif action == 'health':
             return create_success_response({
                 'status': 'healthy',
                 'service': 'SnapMagic AI - Trading Cards & Videos',
-                'version': '4.0',
-                'features': ['trading_cards', 'video_generation', 'exact_coordinate_masking', 'nova_reel'],
-                'timestamp': '2025-06-26T09:00:00Z'
+                'version': '5.0',
+                'features': ['standard_override_pattern', 'timestamp_filenames', 'simplified_logic'],
+                'timestamp': '2025-07-12T18:30:00Z'
             })
         
         else:
@@ -1056,12 +680,11 @@ def lambda_handler(event, context):
         return create_error_response(f"Internal server error: {str(e)}", 500)
 
 # ========================================
-# RESPONSE HELPERS - EXACT SAME AS BEFORE
-# DO NOT CHANGE - AUTHENTICATION DEPENDS ON THESE
+# RESPONSE HELPERS
 # ========================================
 
 def create_success_response(data):
-    """Create standardized success response - EXACT SAME AS BEFORE"""
+    """Create standardized success response"""
     return {
         'statusCode': 200,
         'headers': {
@@ -1074,7 +697,7 @@ def create_success_response(data):
     }
 
 def create_error_response(message, status_code):
-    """Create standardized error response - EXACT SAME AS BEFORE"""
+    """Create standardized error response"""
     return {
         'statusCode': status_code,
         'headers': {
@@ -1086,12 +709,12 @@ def create_error_response(message, status_code):
         'body': json.dumps({
             'success': False,
             'error': message,
-            'timestamp': '2025-06-25T21:00:00Z'
+            'timestamp': '2025-07-12T18:30:00Z'
         })
     }
 
 def create_cors_response():
-    """Handle CORS preflight requests - EXACT SAME AS BEFORE"""
+    """Handle CORS preflight requests"""
     return {
         'statusCode': 200,
         'headers': {
