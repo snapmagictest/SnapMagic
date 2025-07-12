@@ -260,14 +260,11 @@ class SnapMagicApp {
                 this.authToken = data.token;
                 this.currentUser = { 
                     username, 
-                    token: data.token,
-                    isAdmin: username === 'admin' // Show override button for admin
+                    token: data.token
                 };
                 
-                // Show staff override button for admin users
-                if (this.currentUser.isAdmin) {
-                    this.elements.staffOverrideBtn.style.display = 'block';
-                }
+                // Show staff override button for all users
+                this.elements.staffOverrideBtn.style.display = 'block';
                 
                 // Update usage limits from login response
                 if (data.remaining) {
@@ -302,16 +299,18 @@ class SnapMagicApp {
 
     // Staff Override Functionality
     async handleStaffOverride() {
-        if (!this.currentUser || !this.currentUser.isAdmin) {
-            alert('Access denied. Staff only.');
+        // Simple password prompt
+        const password = prompt('🔓 Override Password:');
+        if (!password) return;
+        
+        // Check password (using the override code as password)
+        if (password !== 'snap') {
+            alert('❌ Incorrect password');
             return;
         }
         
-        const confirmed = confirm('🔓 Staff Override\n\nThis will reset ALL limits for the current user session.\n\nProceed?');
-        if (!confirmed) return;
-        
         try {
-            this.showProcessing('Applying staff override...');
+            this.showProcessing('Applying override...');
             
             const apiBaseUrl = window.SNAPMAGIC_CONFIG.API_URL;
             const response = await fetch(`${apiBaseUrl}api/transform-card`, {
@@ -322,7 +321,7 @@ class SnapMagicApp {
                 },
                 body: JSON.stringify({
                     action: 'transform_card',
-                    prompt: 'Staff override test',
+                    prompt: 'Override reset',
                     override_code: 'snap'
                 })
             });
@@ -330,14 +329,14 @@ class SnapMagicApp {
             const data = await response.json();
             
             if (data.success || response.status === 200) {
-                alert('✅ Staff Override Applied!\n\nUser limits have been reset.\nThey can now generate new content.');
-                console.log('✅ Staff override applied successfully');
+                alert('✅ Override Applied!\n\nYour limits have been reset.\nYou can now generate new content.');
+                console.log('✅ Override applied successfully');
             } else {
                 alert('❌ Override failed: ' + (data.error || 'Unknown error'));
             }
             
         } catch (error) {
-            console.error('❌ Staff override error:', error);
+            console.error('❌ Override error:', error);
             alert('❌ Override failed: Connection error');
         } finally {
             this.hideProcessing();
