@@ -485,7 +485,9 @@ class SnapMagicApp {
                 
                 // Show success message with print number using existing modal system
                 console.log('✅ Card added to print successfully');
-                this.showPrintSuccessModal(data.global_print_number);
+                // Handle both old and new field names during deployment transition
+                const printNumber = data.global_print_number || data.print_number;
+                this.showPrintSuccessModal(printNumber);
                 
             } else {
                 console.error('❌ Print queue request failed:', data.error);
@@ -507,16 +509,24 @@ class SnapMagicApp {
     
     // Show Print Success Modal (using existing modal system)
     showPrintSuccessModal(printNumber) {
+        console.log('🔍 showPrintSuccessModal called with:', printNumber);
+        
         // Set the print number in the modal
         const printNumberElement = document.getElementById('printNumber');
         if (printNumberElement) {
             printNumberElement.textContent = `#${printNumber}`;
+            console.log('✅ Set print number element to:', `#${printNumber}`);
+        } else {
+            console.error('❌ printNumber element not found');
         }
         
         // Show the modal by removing hidden class
         const modal = document.getElementById('printSuccessModal');
         if (modal) {
             modal.classList.remove('hidden');
+            console.log('✅ Modal shown');
+        } else {
+            console.error('❌ printSuccessModal not found');
         }
         
         // Set up close button event listener
