@@ -163,6 +163,9 @@ def get_usage_from_s3(session_id: str) -> Dict[str, int]:
             logger.warning("S3_BUCKET_NAME not configured")
             return {'cards': 0, 'videos': 0, 'prints': 0}
         
+        # Extract IP address from session_id (format: IP_HASH)
+        client_ip = session_id.split('_')[0] if '_' in session_id else session_id
+        
         # Count cards for this session
         logger.info(f"🔍 Counting cards for session {session_id} in bucket {bucket_name}")
         cards_response = s3_client.list_objects_v2(
@@ -179,15 +182,15 @@ def get_usage_from_s3(session_id: str) -> Dict[str, int]:
         )
         videos_count = len(videos_response.get('Contents', []))
         
-        # Count prints for this session (now in print-queue folder)
-        logger.info(f"🔍 Counting prints for session {session_id} in bucket {bucket_name}")
+        # Count prints for this IP ADDRESS (not full session) - check all files with same IP
+        logger.info(f"🔍 Counting prints for IP {client_ip} in bucket {bucket_name}")
         prints_response = s3_client.list_objects_v2(
             Bucket=bucket_name,
-            Prefix=f'print-queue/{session_id}_print_'
+            Prefix=f'print-queue/{client_ip}_'
         )
         prints_count = len(prints_response.get('Contents', []))
         
-        logger.info(f"📊 Session {session_id} current usage: {cards_count} cards, {videos_count} videos, {prints_count} prints")
+        logger.info(f"📊 Session {session_id} (IP: {client_ip}) current usage: {cards_count} cards, {videos_count} videos, {prints_count} prints")
         
         # Log the actual files found for debugging
         if cards_response.get('Contents'):
@@ -195,7 +198,7 @@ def get_usage_from_s3(session_id: str) -> Dict[str, int]:
         if videos_response.get('Contents'):
             logger.info(f"📁 Found video files: {[obj['Key'] for obj in videos_response['Contents']]}")
         if prints_response.get('Contents'):
-            logger.info(f"📁 Found print files: {[obj['Key'] for obj in prints_response['Contents']]}")
+            logger.info(f"📁 Found print files for IP {client_ip}: {[obj['Key'] for obj in prints_response['Contents']]}")
         
         return {'cards': cards_count, 'videos': videos_count, 'prints': prints_count}
         
