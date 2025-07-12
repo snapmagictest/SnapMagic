@@ -728,28 +728,32 @@ def lambda_handler(event, context):
                 return create_error_response(f"Failed to store card: {str(e)}", 500)
         
         # ========================================
-        # PRINT CARD WITH STANDARD PATTERN
+        # PRINT CARD WITH AUTOMATIC OVERRIDE DETECTION
         # ========================================
         elif action == 'print_card':
             username = token_payload.get('username', 'unknown')
             
-            # Get client IP and check print limits
+            # Get client IP
             request_headers = event.get('headers', {})
             client_ip = get_client_ip(request_headers)
             
-            # Extract override code from request body if provided
-            override_code = body.get('override_code')
+            # Get current override number (includes pending override check)
+            current_override = get_current_override_number(client_ip)
+            session_id_for_files = create_standard_session_id(client_ip, current_override)
             
-            # Check usage limits and get session_id using standard pattern
-            allowed, session_id_for_files = check_usage_limit_simplified(client_ip, 'prints', override_code)
+            logger.info(f"🖨️ Print request - using override session: {session_id_for_files}")
             
-            if not allowed:
+            # Check usage limits for current override session
+            limits = load_limits()
+            current_usage = get_usage_for_override_session(client_ip, current_override)
+            current_count = current_usage.get('prints', 0)
+            limit = limits.get('prints', 1)
+            
+            if current_count >= limit:
                 return create_error_response(
-                    f"Limit reached. Please visit the event staff at SnapMagic to assist.", 
+                    f"Print limit reached. Please visit the event staff at SnapMagic to assist.", 
                     429
                 )
-            
-            logger.info(f"📝 Using standard session ID for print: {session_id_for_files}")
             
             card_prompt = body.get('card_prompt', '')
             card_image_base64 = body.get('card_image', '')
@@ -763,8 +767,11 @@ def lambda_handler(event, context):
                 return create_error_response("Missing card_image parameter - card image required for print queue", 400)
             
             try:
-                # Store print record using standard pattern
+                # Store print record using current override session
                 logger.info(f"🖨️ Print queue request - session: {session_id_for_files}, prompt: {card_prompt[:50]}...")
+                
+                # Clear pending override marker since we're now using it
+                clear_pending_override(client_ip)
                 
                 result = store_print_record_simple(session_id_for_files, username, card_prompt, card_image_base64)
                 
@@ -777,9 +784,9 @@ def lambda_handler(event, context):
                         'success': True,
                         'message': f'Card saved for printing',
                         'print_filename': result.get('filename', 'unknown'),
-                        'remaining': remaining,  # Updated usage counts
-                        'session_id': session_id_for_files,  # For debugging
-                        'client_ip': client_ip,  # For debugging
+                        'remaining': remaining,
+                        'session_id': session_id_for_files,
+                        'client_ip': client_ip,
                         'print_s3_key': result.get('s3_key', 'unknown')
                     })
                 else:
@@ -854,13 +861,102 @@ def lambda_handler(event, context):
                 }
             })
         
+        # ========================================
+        # VIDEO GENERATION WITH AUTOMATIC OVERRIDE DETECTION
+        # ========================================
+        elif action == 'generate_video':
+            username = token_payload.get('username', 'unknown')
+            
+            # Get client IP
+            request_headers = event.get('headers', {})
+            client_ip = get_client_ip(request_headers)
+            
+            # Get current override number (includes pending override check)
+            current_override = get_current_override_number(client_ip)
+            session_id_for_files = create_standard_session_id(client_ip, current_override)
+            
+            logger.info(f"🎬 Video generation request - using override session: {session_id_for_files}")
+            
+            # Check usage limits for current override session
+            limits = load_limits()
+            current_usage = get_usage_for_override_session(client_ip, current_override)
+            current_count = current_usage.get('videos', 0)
+            limit = limits.get('videos', 3)
+            
+            if current_count >= limit:
+                return create_error_response(
+                    f"Video limit reached. Please visit the event staff at SnapMagic to assist.", 
+                    429
+                )
+            
+            card_image_base64 = body.get('card_image', '')
+            prompt = body.get('prompt', '')
+            
+            if not card_image_base64:
+                return create_error_response("Missing card_image parameter", 400)
+            
+            if not prompt:
+                return create_error_response("Missing prompt parameter", 400)
+            
+            try:
+                # Generate video using video generator
+                result = video_generator.generate_video_from_card(card_image_base64, prompt)
+                
+                if result['success']:
+                    # Store video using current override session
+                    video_data = result.get('video_data')
+                    if video_data:
+                        # Clear pending override marker since we're now using it
+                        clear_pending_override(client_ip)
+                        
+                        # Store video file
+                        import base64
+                        video_bytes = base64.b64decode(video_data)
+                        
+                        video_result = store_file_with_standard_pattern(
+                            session_id=session_id_for_files,
+                            username=username,
+                            prompt=prompt,
+                            file_data=video_bytes,
+                            file_type='video',
+                            extension='mp4',
+                            content_type='video/mp4'
+                        )
+                        
+                        if video_result['success']:
+                            # Get updated remaining usage
+                            remaining = get_remaining_usage_simplified(client_ip)
+                            
+                            logger.info("✅ Video generated and stored successfully")
+                            return create_success_response({
+                                'success': True,
+                                'message': 'Video generated successfully',
+                                'video_data': video_data,
+                                'video_filename': video_result.get('filename'),
+                                'video_s3_key': video_result.get('s3_key'),
+                                'remaining': remaining,
+                                'session_id': session_id_for_files,
+                                'client_ip': client_ip
+                            })
+                        else:
+                            logger.error(f"❌ Failed to store video: {video_result.get('error')}")
+                            return create_error_response(f"Video storage failed: {video_result.get('error')}", 500)
+                    else:
+                        return create_error_response("Video generation succeeded but no video data returned", 500)
+                else:
+                    return create_error_response(f"Video generation failed: {result.get('error', 'Unknown error')}", 500)
+                    
+            except Exception as e:
+                logger.error(f"❌ Video generation exception: {str(e)}")
+                return create_error_response(f"Video generation failed: {str(e)}", 500)
+        
         # HEALTH CHECK ENDPOINT
         elif action == 'health':
             return create_success_response({
                 'status': 'healthy',
                 'service': 'SnapMagic AI - Trading Cards & Videos',
                 'version': '5.0',
-                'features': ['standard_override_pattern', 'timestamp_filenames', 'simplified_logic'],
+                'features': ['automatic_override_detection', 'dynamic_card_numbering', 'unified_logic'],
                 'timestamp': '2025-07-12T18:30:00Z'
             })
         
