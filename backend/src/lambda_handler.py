@@ -304,8 +304,12 @@ def modify_session_id_for_override(session_id: str, override_number: int) -> str
     else:
         return f"{session_id}_override{override_number}"
 
-def check_usage_limit(session_id: str, generation_type: str, override_code: str = None) -> bool:
-    """Check if session has exceeded usage limits by counting S3 files"""
+def check_usage_limit(session_id: str, generation_type: str, override_code: str = None) -> tuple[bool, str]:
+    """Check if session has exceeded usage limits by counting S3 files
+    
+    Returns:
+        tuple: (allowed: bool, modified_session_id: str)
+    """
     
     # Check if override code is provided and valid
     valid_override_code = os.environ.get('OVERRIDE_CODE', 'snap')
@@ -316,12 +320,16 @@ def check_usage_limit(session_id: str, generation_type: str, override_code: str 
         success, override_number = clear_ip_usage_and_track_override(session_id)
         
         if success:
+            # Modify session ID to include override tracking for persistent filename tracking
+            modified_session_id = modify_session_id_for_override(session_id, override_number)
             logger.info(f"🎁 Full reset granted - Override #{override_number} for session {session_id}")
-            return True
+            logger.info(f"📝 New session ID for persistent tracking: {modified_session_id}")
+            return True, modified_session_id
         else:
             logger.error(f"❌ Failed to clear usage for override, allowing anyway")
-            return True
+            return True, session_id
     
+    # Normal usage checking
     limits = load_limits()
     current_usage = get_usage_from_s3(session_id)
     
@@ -329,7 +337,7 @@ def check_usage_limit(session_id: str, generation_type: str, override_code: str 
     limit = limits.get(generation_type, 5)
     
     logger.info(f"Usage check - Session: {session_id}, Type: {generation_type}, Count: {current_count}, Limit: {limit}")
-    return current_count < limit
+    return current_count < limit, session_id
 
 def get_remaining_usage(session_id: str) -> Dict[str, int]:
     """Get remaining usage for session by counting S3 files and subtracting from limits"""
@@ -503,11 +511,17 @@ def lambda_handler(event, context):
             # Extract override code from request body if provided
             override_code = body.get('override_code')
             
-            if not check_usage_limit(session_id, 'cards', override_code):
+            # Check usage limits and get potentially modified session_id for override tracking
+            allowed, modified_session_id = check_usage_limit(session_id, 'cards', override_code)
+            
+            if not allowed:
                 return create_error_response(
                     f"Limit reached. Please visit the event staff at SnapMagic to assist.", 
                     429
                 )
+            
+            # Use modified session_id for file naming (includes override tracking)
+            session_id = modified_session_id
             
             prompt = body.get('prompt', '')
             if not prompt:
@@ -640,11 +654,17 @@ def lambda_handler(event, context):
             # Extract override code from request body if provided
             override_code = body.get('override_code')
             
-            if not check_usage_limit(session_id, 'prints', override_code):
+            # Check usage limits and get potentially modified session_id for override tracking
+            allowed, modified_session_id = check_usage_limit(session_id, 'prints', override_code)
+            
+            if not allowed:
                 return create_error_response(
                     f"Limit reached. Please visit the event staff at SnapMagic to assist.", 
                     429
                 )
+            
+            # Use modified session_id for file naming (includes override tracking)
+            session_id = modified_session_id
             
             card_prompt = body.get('card_prompt', '')
             card_image_base64 = body.get('card_image', '')
@@ -699,11 +719,17 @@ def lambda_handler(event, context):
             # Extract override code from request body if provided
             override_code = body.get('override_code')
             
-            if not check_usage_limit(session_id, 'videos', override_code):
+            # Check usage limits and get potentially modified session_id for override tracking
+            allowed, modified_session_id = check_usage_limit(session_id, 'videos', override_code)
+            
+            if not allowed:
                 return create_error_response(
                     f"Limit reached. Please visit the event staff at SnapMagic to assist.", 
                     429
                 )
+            
+            # Use modified session_id for file naming (includes override tracking)
+            session_id = modified_session_id
             
             card_image = body.get('card_image', '')
             animation_prompt = body.get('animation_prompt', '')
