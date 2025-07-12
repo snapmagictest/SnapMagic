@@ -296,6 +296,47 @@ def get_usage_from_s3_simple(client_ip: str) -> Dict[str, int]:
         logger.error(f"❌ Failed to get usage for IP {client_ip}: {str(e)}")
         return {'cards': 0, 'videos': 0, 'prints': 0}
 
+def store_print_record_simple(session_id: str, username: str, prompt: str, image_base64: str) -> Dict[str, Any]:
+    """Store print record using simplified session ID"""
+    try:
+        import boto3
+        import base64
+        from datetime import datetime
+        
+        s3_client = boto3.client('s3')
+        bucket_name = os.environ.get('S3_BUCKET_NAME')
+        
+        if not bucket_name:
+            return {'success': False, 'error': 'S3 bucket not configured'}
+        
+        # Generate filename with simplified session ID
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        filename = f"{session_id}_print_{timestamp}.png"
+        s3_key = f"print-queue/{filename}"
+        
+        # Decode base64 image
+        image_data = base64.b64decode(image_base64)
+        
+        # Store in S3
+        s3_client.put_object(
+            Bucket=bucket_name,
+            Key=s3_key,
+            Body=image_data,
+            ContentType='image/png',
+            Metadata={
+                'username': username,
+                'prompt': prompt[:100],  # Truncate long prompts
+                'session_id': session_id
+            }
+        )
+        
+        logger.info(f"📁 Print record stored: {s3_key}")
+        return {'success': True, 's3_key': s3_key}
+        
+    except Exception as e:
+        logger.error(f"❌ Failed to store print record: {str(e)}")
+        return {'success': False, 'error': str(e)}
+
 def get_remaining_usage_simple(client_ip: str) -> Dict[str, int]:
     """Get remaining usage for IP address (SIMPLIFIED)"""
     limits = load_limits()
@@ -568,13 +609,12 @@ def lambda_handler(event, context):
                 auth_handler = SnapMagicAuthSimple()
                 token = auth_handler.generate_token(username)
                 
-                # Get session identifier and check usage limits
+                # Get client IP for simplified tracking
                 request_headers = event.get('headers', {})
-                session_id = get_session_identifier(request_headers)
                 client_ip = get_client_ip(request_headers)
-                remaining_usage = get_remaining_usage(session_id)
+                remaining_usage = get_remaining_usage_simple(client_ip)
                 
-                logger.info(f"Login successful for session {session_id} (IP: {client_ip}), remaining usage: {remaining_usage}")
+                logger.info(f"Login successful for IP: {client_ip}, remaining usage: {remaining_usage}")
                 
                 return create_success_response({
                     'success': True,  # Frontend expects this field
@@ -583,8 +623,7 @@ def lambda_handler(event, context):
                     'expires_in': 86400,  # 24 hours
                     'user': {'username': username},
                     'remaining': remaining_usage,  # Include usage info at login
-                    'session_id': session_id,  # For debugging
-                    'client_ip': client_ip  # For debugging
+                    'client_ip': client_ip  # For debugging - IP only, no session ID
                 })
             else:
                 logger.warning(f"Invalid login attempt: {username}")
@@ -686,9 +725,8 @@ def lambda_handler(event, context):
                 return create_error_response("Missing invocation_arn parameter", 400)
             
             try:
-                # Get session identifier for video storage
+                # Get client IP for simplified tracking
                 request_headers = event.get('headers', {})
-                session_id = get_session_identifier(request_headers)
                 client_ip = get_client_ip(request_headers)
                 
                 # Check video status using Bedrock API
@@ -757,16 +795,15 @@ def lambda_handler(event, context):
         elif action == 'print_card':
             username = token_payload.get('username', 'unknown')
             
-            # Get session identifier and check print limits
+            # Get client IP and check print limits
             request_headers = event.get('headers', {})
-            session_id = get_session_identifier(request_headers)
             client_ip = get_client_ip(request_headers)
             
             # Extract override code from request body if provided
             override_code = body.get('override_code')
             
-            # Check usage limits and get potentially modified session_id for override tracking
-            allowed, modified_session_id = check_usage_limit(session_id, 'prints', override_code)
+            # Check usage limits and get session_id for file naming (SIMPLIFIED)
+            allowed, session_id_for_files = check_usage_limit_simple(client_ip, 'prints', override_code)
             
             if not allowed:
                 return create_error_response(
@@ -774,8 +811,8 @@ def lambda_handler(event, context):
                     429
                 )
             
-            # Use modified session_id for file naming (includes override tracking)
-            session_id = modified_session_id
+            # Use session_id_for_files for file naming
+            logger.info(f"📝 Using session ID for print files: {session_id_for_files}")
             
             card_prompt = body.get('card_prompt', '')
             card_image_base64 = body.get('card_image', '')
@@ -790,24 +827,24 @@ def lambda_handler(event, context):
             
             try:
                 # Add card to print queue and store print record
-                logger.info(f"🖨️ Print queue request - session: {session_id}, prompt: {card_prompt[:50]}...")
+                logger.info(f"🖨️ Print queue request - session: {session_id_for_files}, prompt: {card_prompt[:50]}...")
                 
-                result = store_print_record(session_id, username, card_prompt, card_image_base64)
+                result = store_print_record_simple(session_id_for_files, username, card_prompt, card_image_base64)
                 
                 if result['success']:
                     # Get updated remaining usage after print storage
-                    remaining = get_remaining_usage(session_id)
+                    remaining = get_remaining_usage_simple(client_ip)
                     
                     logger.info("✅ Card print stored successfully")
                     return create_success_response({
                         'success': True,
                         'message': f'Card saved for printing',
-                        'global_print_number': result['global_print_number'],
-                        'print_filename': result['print_filename'],
+                        'global_print_number': result.get('global_print_number', 1),
+                        'print_filename': result.get('print_filename', 'unknown'),
                         'remaining': remaining,  # Updated usage counts
-                        'session_id': session_id,  # For debugging
+                        'session_id': session_id_for_files,  # For debugging - simplified
                         'client_ip': client_ip,  # For debugging
-                        'print_s3_key': result['print_s3_key']
+                        'print_s3_key': result.get('s3_key', 'unknown')
                     })
                 else:
                     logger.error(f"❌ Failed to add card to print queue: {result.get('error')}")
@@ -822,16 +859,15 @@ def lambda_handler(event, context):
         elif action == 'generate_video':
             username = token_payload.get('username', 'unknown')
             
-            # Get session identifier and check usage limits
+            # Get client IP and check usage limits
             request_headers = event.get('headers', {})
-            session_id = get_session_identifier(request_headers)
             client_ip = get_client_ip(request_headers)
             
             # Extract override code from request body if provided
             override_code = body.get('override_code')
             
-            # Check usage limits and get potentially modified session_id for override tracking
-            allowed, modified_session_id = check_usage_limit(session_id, 'videos', override_code)
+            # Check usage limits and get session_id for file naming (SIMPLIFIED)
+            allowed, session_id_for_files = check_usage_limit_simple(client_ip, 'videos', override_code)
             
             if not allowed:
                 return create_error_response(
@@ -839,13 +875,13 @@ def lambda_handler(event, context):
                     429
                 )
             
-            # Use modified session_id for file naming (includes override tracking)
-            session_id = modified_session_id
+            # Use session_id_for_files for file naming
+            logger.info(f"📝 Using session ID for video files: {session_id_for_files}")
             
             card_image = body.get('card_image', '')
             animation_prompt = body.get('animation_prompt', '')
             
-            logger.info(f"🎬 Video generation request - session: {session_id}, card_image length: {len(card_image)}, prompt: {animation_prompt[:50]}...")
+            logger.info(f"🎬 Video generation request - session: {session_id_for_files}, card_image length: {len(card_image)}, prompt: {animation_prompt[:50]}...")
             
             if not card_image:
                 logger.error("❌ Missing card_image parameter")
