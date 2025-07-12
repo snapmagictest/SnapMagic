@@ -313,7 +313,7 @@ class SnapMagicApp {
             this.showProcessing('Applying override...');
             
             const apiBaseUrl = window.SNAPMAGIC_CONFIG.API_URL;
-            const response = await fetch(`${apiBaseUrl}api/apply-override`, {
+            const response = await fetch(`${apiBaseUrl}api/transform-card`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
