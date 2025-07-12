@@ -206,38 +206,21 @@ def get_usage_from_s3(session_id: str) -> Dict[str, int]:
         logger.error(f"❌ Failed to get S3 usage for session {session_id}: {str(e)}")
         return {'cards': 0, 'videos': 0, 'prints': 0}
 
-def get_override_count_for_ip(session_id: str) -> int:
-    """Get the current override count for an IP address by checking S3 filenames"""
+def get_next_override_number_for_ip(client_ip: str) -> int:
+    """Get the next override number for an IP address by checking S3 filenames (NO DELETION)"""
     try:
         import boto3
         s3_client = boto3.client('s3')
         bucket_name = os.environ.get('S3_BUCKET_NAME')
         
         if not bucket_name:
-            return 0
-        
-        # Extract IP address from session_id
-        client_ip = session_id.split('_')[0] if '_' in session_id else session_id
+            return 1
         
         # Check all files for this IP to find highest override number
         max_override = 0
         
-        # Check cards
-        cards_response = s3_client.list_objects_v2(
-            Bucket=bucket_name,
-            Prefix=f'cards/{client_ip}_'
-        )
-        for obj in cards_response.get('Contents', []):
-            filename = obj['Key']
-            if 'override' in filename:
-                # Extract override number from filename like: IP_hash_override1_card_1.png
-                parts = filename.split('override')
-                if len(parts) > 1:
-                    override_num = int(''.join(filter(str.isdigit, parts[1].split('_')[0])))
-                    max_override = max(max_override, override_num)
-        
-        # Check videos and prints similarly
-        for prefix in ['videos', 'print-queue']:
+        # Check all prefixes for this IP
+        for prefix in ['cards', 'videos', 'print-queue']:
             response = s3_client.list_objects_v2(
                 Bucket=bucket_name,
                 Prefix=f'{prefix}/{client_ip}_'
@@ -245,56 +228,23 @@ def get_override_count_for_ip(session_id: str) -> int:
             for obj in response.get('Contents', []):
                 filename = obj['Key']
                 if 'override' in filename:
+                    # Extract override number from filename like: IP_override1_hash_card_1.png
                     parts = filename.split('override')
                     if len(parts) > 1:
-                        override_num = int(''.join(filter(str.isdigit, parts[1].split('_')[0])))
-                        max_override = max(max_override, override_num)
+                        try:
+                            override_num = int(''.join(filter(str.isdigit, parts[1].split('_')[0])))
+                            max_override = max(max_override, override_num)
+                        except ValueError:
+                            continue
         
-        return max_override
-        
-    except Exception as e:
-        logger.error(f"❌ Failed to get override count for {session_id}: {str(e)}")
-        return 0
-
-def clear_ip_usage_and_track_override(session_id: str) -> tuple[bool, int]:
-    """Clear all usage for IP and return success status and new override number"""
-    try:
-        import boto3
-        s3_client = boto3.client('s3')
-        bucket_name = os.environ.get('S3_BUCKET_NAME')
-        
-        if not bucket_name:
-            return False, 0
-        
-        # Get current override count and increment
-        current_override = get_override_count_for_ip(session_id)
-        new_override = current_override + 1
-        
-        # Extract IP address
-        client_ip = session_id.split('_')[0] if '_' in session_id else session_id
-        
-        logger.info(f"🔄 Staff override #{new_override} for IP {client_ip} - clearing all usage")
-        
-        # Delete all existing files for this IP
-        for prefix in ['cards', 'videos', 'print-queue']:
-            response = s3_client.list_objects_v2(
-                Bucket=bucket_name,
-                Prefix=f'{prefix}/{client_ip}_'
-            )
-            if response.get('Contents'):
-                files_to_delete = [{'Key': obj['Key']} for obj in response['Contents']]
-                s3_client.delete_objects(
-                    Bucket=bucket_name,
-                    Delete={'Objects': files_to_delete}
-                )
-                logger.info(f"🗑️ Deleted {len(files_to_delete)} {prefix} files for IP {client_ip}")
-        
-        logger.info(f"✅ Full reset completed for IP {client_ip} - Override #{new_override}")
-        return True, new_override
+        # Return next override number
+        next_override = max_override + 1
+        logger.info(f"📊 IP {client_ip} next override number: {next_override}")
+        return next_override
         
     except Exception as e:
-        logger.error(f"❌ Failed to clear IP usage: {str(e)}")
-        return False, 0
+        logger.error(f"❌ Failed to get override count for IP {client_ip}: {str(e)}")
+        return 1
 
 def modify_session_id_for_override(session_id: str, override_number: int) -> str:
     """Modify session ID to include override tracking"""
@@ -314,20 +264,22 @@ def check_usage_limit(session_id: str, generation_type: str, override_code: str 
     # Check if override code is provided and valid
     valid_override_code = os.environ.get('OVERRIDE_CODE', 'snap')
     if override_code and override_code == valid_override_code:
-        logger.info(f"🔓 Staff override code used for session {session_id}, type: {generation_type}")
+        logger.info(f"🔓 Override code used for session {session_id}, type: {generation_type}")
         
-        # Clear all usage for this IP and get new override number
-        success, override_number = clear_ip_usage_and_track_override(session_id)
+        # Extract IP from session_id
+        client_ip = session_id.split('_')[0] if '_' in session_id else session_id
         
-        if success:
-            # Modify session ID to include override tracking for persistent filename tracking
-            modified_session_id = modify_session_id_for_override(session_id, override_number)
-            logger.info(f"🎁 Full reset granted - Override #{override_number} for session {session_id}")
-            logger.info(f"📝 New session ID for persistent tracking: {modified_session_id}")
-            return True, modified_session_id
-        else:
-            logger.error(f"❌ Failed to clear usage for override, allowing anyway")
-            return True, session_id
+        # Get next override number (NO DELETION - just tracking)
+        next_override = get_next_override_number_for_ip(client_ip)
+        
+        # Modify session ID to include override tracking for new files
+        modified_session_id = modify_session_id_for_override(session_id, next_override)
+        
+        logger.info(f"🎁 Override #{next_override} applied for IP {client_ip} - NO FILES DELETED")
+        logger.info(f"📝 New session ID for new files: {modified_session_id}")
+        logger.info(f"📁 Old files remain untouched in S3")
+        
+        return True, modified_session_id
     
     # Normal usage checking
     limits = load_limits()
