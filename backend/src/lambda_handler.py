@@ -207,7 +207,7 @@ def get_usage_from_s3(session_id: str) -> Dict[str, int]:
         return {'cards': 0, 'videos': 0, 'prints': 0}
 
 def get_next_override_number_for_ip(client_ip: str) -> int:
-    """Get the next override number for an IP address by checking S3 filenames (NO DELETION)"""
+    """Get the next override number for an IP address by checking S3 filenames (SIMPLE IP-ONLY)"""
     try:
         import boto3
         s3_client = boto3.client('s3')
@@ -228,7 +228,7 @@ def get_next_override_number_for_ip(client_ip: str) -> int:
             for obj in response.get('Contents', []):
                 filename = obj['Key']
                 if 'override' in filename:
-                    # Extract override number from filename like: IP_override1_hash_card_1.png
+                    # Extract override number from filename like: IP_override1_card_1.png
                     parts = filename.split('override')
                     if len(parts) > 1:
                         try:
@@ -246,50 +246,115 @@ def get_next_override_number_for_ip(client_ip: str) -> int:
         logger.error(f"❌ Failed to get override count for IP {client_ip}: {str(e)}")
         return 1
 
-def modify_session_id_for_override(session_id: str, override_number: int) -> str:
-    """Modify session ID to include override tracking"""
-    if '_' in session_id:
-        ip, hash_part = session_id.split('_', 1)
-        return f"{ip}_override{override_number}_{hash_part}"
+def create_simple_session_id(client_ip: str, override_number: int = None) -> str:
+    """Create simple session ID for file naming - IP only or IP_override#"""
+    if override_number:
+        session_id = f"{client_ip}_override{override_number}"
+        logger.info(f"📝 Created override session ID: {session_id}")
+        return session_id
     else:
-        return f"{session_id}_override{override_number}"
+        logger.info(f"📝 Created normal session ID: {client_ip}")
+        return client_ip
 
-def check_usage_limit(session_id: str, generation_type: str, override_code: str = None) -> tuple[bool, str]:
-    """Check if session has exceeded usage limits by counting S3 files
+def get_usage_from_s3_simple(client_ip: str) -> Dict[str, int]:
+    """Count usage files for IP address (SIMPLIFIED)"""
+    try:
+        import boto3
+        s3_client = boto3.client('s3')
+        bucket_name = os.environ.get('S3_BUCKET_NAME')
+        
+        if not bucket_name:
+            return {'cards': 0, 'videos': 0, 'prints': 0}
+        
+        usage = {'cards': 0, 'videos': 0, 'prints': 0}
+        
+        # Count cards
+        cards_response = s3_client.list_objects_v2(
+            Bucket=bucket_name,
+            Prefix=f'cards/{client_ip}_'
+        )
+        usage['cards'] = len(cards_response.get('Contents', []))
+        
+        # Count videos
+        videos_response = s3_client.list_objects_v2(
+            Bucket=bucket_name,
+            Prefix=f'videos/{client_ip}_'
+        )
+        usage['videos'] = len(videos_response.get('Contents', []))
+        
+        # Count prints
+        prints_response = s3_client.list_objects_v2(
+            Bucket=bucket_name,
+            Prefix=f'print-queue/{client_ip}_'
+        )
+        usage['prints'] = len(prints_response.get('Contents', []))
+        
+        logger.info(f"📊 IP {client_ip} usage: {usage}")
+        return usage
+        
+    except Exception as e:
+        logger.error(f"❌ Failed to get usage for IP {client_ip}: {str(e)}")
+        return {'cards': 0, 'videos': 0, 'prints': 0}
+
+def get_remaining_usage_simple(client_ip: str) -> Dict[str, int]:
+    """Get remaining usage for IP address (SIMPLIFIED)"""
+    limits = load_limits()
+    current_usage = get_usage_from_s3_simple(client_ip)
+    
+    # Calculate remaining: max_limit - used_count
+    cards_used = current_usage.get('cards', 0)
+    videos_used = current_usage.get('videos', 0)
+    prints_used = current_usage.get('prints', 0)
+    
+    cards_remaining = max(0, limits['cards'] - cards_used)
+    videos_remaining = max(0, limits['videos'] - videos_used)
+    prints_remaining = max(0, limits['prints'] - prints_used)
+    
+    remaining = {
+        'cards': cards_remaining,
+        'videos': videos_remaining,
+        'prints': prints_remaining
+    }
+    
+    logger.info(f"📊 IP {client_ip} remaining usage: {remaining}")
+    return remaining
+
+def check_usage_limit_simple(client_ip: str, generation_type: str, override_code: str = None) -> tuple[bool, str]:
+    """Check usage limits for IP address (SIMPLIFIED)
     
     Returns:
-        tuple: (allowed: bool, modified_session_id: str)
+        tuple: (allowed: bool, session_id_to_use: str)
     """
     
     # Check if override code is provided and valid
     valid_override_code = os.environ.get('OVERRIDE_CODE', 'snap')
     if override_code and override_code == valid_override_code:
-        logger.info(f"🔓 Override code used for session {session_id}, type: {generation_type}")
-        
-        # Extract IP from session_id
-        client_ip = session_id.split('_')[0] if '_' in session_id else session_id
+        logger.info(f"🔓 Override code used for IP {client_ip}, type: {generation_type}")
         
         # Get next override number (NO DELETION - just tracking)
         next_override = get_next_override_number_for_ip(client_ip)
         
-        # Modify session ID to include override tracking for new files
-        modified_session_id = modify_session_id_for_override(session_id, next_override)
+        # Create override session ID for file naming
+        override_session_id = create_simple_session_id(client_ip, next_override)
         
         logger.info(f"🎁 Override #{next_override} applied for IP {client_ip} - NO FILES DELETED")
-        logger.info(f"📝 New session ID for new files: {modified_session_id}")
-        logger.info(f"📁 Old files remain untouched in S3")
+        logger.info(f"📝 Override session ID for new files: {override_session_id}")
         
-        return True, modified_session_id
+        return True, override_session_id
     
     # Normal usage checking
     limits = load_limits()
-    current_usage = get_usage_from_s3(session_id)
+    current_usage = get_usage_from_s3_simple(client_ip)
     
     current_count = current_usage.get(generation_type, 0)
     limit = limits.get(generation_type, 5)
     
-    logger.info(f"Usage check - Session: {session_id}, Type: {generation_type}, Count: {current_count}, Limit: {limit}")
-    return current_count < limit, session_id
+    logger.info(f"Usage check - IP: {client_ip}, Type: {generation_type}, Count: {current_count}, Limit: {limit}")
+    
+    # Use simple IP-only session ID for normal usage
+    normal_session_id = create_simple_session_id(client_ip)
+    
+    return current_count < limit, normal_session_id
 
 def get_remaining_usage(session_id: str) -> Dict[str, int]:
     """Get remaining usage for session by counting S3 files and subtracting from limits"""
@@ -455,25 +520,17 @@ def lambda_handler(event, context):
         if action == 'transform_card':
             username = token_payload.get('username', 'unknown')
             
-            # Get session identifier (use override session if provided)
+            # Get client IP for simplified tracking
             request_headers = event.get('headers', {})
-            base_session_id = get_session_identifier(request_headers)
-            override_session_id = body.get('override_session_id')
-            
-            # Use override session ID if provided, otherwise use base session ID
-            session_id = override_session_id if override_session_id else base_session_id
-            
             client_ip = get_client_ip(request_headers)
             
-            logger.info(f"🎴 Card generation request - session: {session_id}, client_ip: {client_ip}")
-            if override_session_id:
-                logger.info(f"🔓 Using override session ID: {override_session_id}")
+            logger.info(f"🎴 Card generation request - IP: {client_ip}")
             
             # Extract override code from request body if provided
             override_code = body.get('override_code')
             
-            # Check usage limits and get potentially modified session_id for override tracking
-            allowed, modified_session_id = check_usage_limit(session_id, 'cards', override_code)
+            # Check usage limits and get session_id for file naming (SIMPLIFIED)
+            allowed, session_id_for_files = check_usage_limit_simple(client_ip, 'cards', override_code)
             
             if not allowed:
                 return create_error_response(
@@ -481,8 +538,7 @@ def lambda_handler(event, context):
                     429
                 )
             
-            # Use modified session_id for file naming (includes override tracking)
-            session_id = modified_session_id
+            logger.info(f"📝 Using session ID for files: {session_id_for_files}")
             
             prompt = body.get('prompt', '')
             if not prompt:
@@ -501,8 +557,8 @@ def lambda_handler(event, context):
                     # Don't store here - let frontend store the final composited card
                     # This ensures we store what the user actually downloads
                     
-                    # Get current remaining usage (before increment)
-                    remaining = get_remaining_usage(session_id)
+                    # Get current remaining usage (before increment) - SIMPLIFIED
+                    remaining = get_remaining_usage_simple(client_ip)
                     
                     # Return in format frontend expects
                     return create_success_response({
@@ -512,7 +568,7 @@ def lambda_handler(event, context):
                         'imageSrc': result.get('imageSrc'),  # Data URL for frontend
                         'metadata': result.get('metadata', {}),
                         'remaining': remaining,  # Current remaining counts
-                        'session_id': session_id,  # For debugging
+                        'session_id': session_id_for_files,  # For debugging (simplified)
                         'client_ip': client_ip  # For debugging
                     })
                 else:
@@ -798,14 +854,13 @@ def lambda_handler(event, context):
                 return create_error_response(f"Failed to store card: {str(e)}", 500)
         
         # ========================================
-        # OVERRIDE SYSTEM - RESET LIMITS WITH TRACKING
+        # OVERRIDE SYSTEM - RESET LIMITS WITH TRACKING (SIMPLIFIED)
         # ============================================
         elif action == 'apply_override':
             username = token_payload.get('username', 'unknown')
             
-            # Get session identifier
+            # Get client IP for simplified tracking
             request_headers = event.get('headers', {})
-            session_id = get_session_identifier(request_headers)
             client_ip = get_client_ip(request_headers)
             
             # Extract override code from request body
@@ -814,16 +869,16 @@ def lambda_handler(event, context):
             if not override_code or override_code != 'snap':
                 return create_error_response("Invalid override code", 400)
             
-            logger.info(f"🔓 Override request from session {session_id}")
+            logger.info(f"🔓 Override request from IP {client_ip}")
             
             # Get next override number for this IP
             next_override = get_next_override_number_for_ip(client_ip)
             
-            # Create modified session_id with override tracking
-            modified_session_id = modify_session_id_for_override(session_id, next_override)
+            # Create override session ID for file naming
+            override_session_id = create_simple_session_id(client_ip, next_override)
             
             logger.info(f"🎁 Override #{next_override} applied for IP {client_ip}")
-            logger.info(f"📝 New session ID: {modified_session_id}")
+            logger.info(f"📝 Override session ID: {override_session_id}")
             
             # Return success with new session tracking info
             return {
@@ -833,7 +888,8 @@ def lambda_handler(event, context):
                     'success': True,
                     'message': f'Override #{next_override} applied successfully',
                     'override_number': next_override,
-                    'session_id': modified_session_id,
+                    'session_id': override_session_id,
+                    'client_ip': client_ip,
                     'remaining': {
                         'cards': 5,
                         'videos': 3,

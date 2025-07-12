@@ -329,19 +329,23 @@ class SnapMagicApp {
             const data = await response.json();
             
             if (data.success) {
-                // Update usage limits in frontend
-                if (data.remaining) {
-                    this.updateUsageLimits(data.remaining);
-                    this.displayUsageLimits();
-                }
+                // Reset usage limits structure for display
+                this.usageLimits = {
+                    cards: { total: 5, used: 0 },
+                    videos: { total: 3, used: 0 },
+                    prints: { total: 1, used: 0 }
+                };
                 
-                // Store override session info
+                // Update display immediately
+                this.displayUsageLimits();
+                
+                // Store override info (simplified)
                 this.overrideNumber = data.override_number;
-                this.modifiedSessionId = data.session_id;
+                this.clientIP = data.client_ip;
                 
                 alert(`✅ Override #${data.override_number} Applied!\n\nYour limits have been reset:\n• Cards: 5\n• Videos: 3\n• Prints: 1\n\nYou can now generate new content.`);
                 console.log(`✅ Override #${data.override_number} applied successfully`);
-                console.log(`📝 Modified session ID: ${data.session_id}`);
+                console.log(`📝 Client IP: ${data.client_ip}`);
             } else {
                 alert('❌ Override failed: ' + (data.error || 'Unknown error'));
             }
@@ -1224,8 +1228,7 @@ class SnapMagicApp {
             const requestBody = {
                 action: 'transform_card',
                 prompt: userPrompt,
-                user_name: userName || '', // Send empty string if no name
-                override_session_id: this.modifiedSessionId || undefined // Use override session if available
+                user_name: userName || '' // Send empty string if no name
             };
             
             const response = await fetch(endpoint, {
