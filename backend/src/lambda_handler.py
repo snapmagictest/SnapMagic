@@ -206,14 +206,121 @@ def get_usage_from_s3(session_id: str) -> Dict[str, int]:
         logger.error(f"❌ Failed to get S3 usage for session {session_id}: {str(e)}")
         return {'cards': 0, 'videos': 0, 'prints': 0}
 
+def get_override_count_for_ip(session_id: str) -> int:
+    """Get the current override count for an IP address by checking S3 filenames"""
+    try:
+        import boto3
+        s3_client = boto3.client('s3')
+        bucket_name = os.environ.get('S3_BUCKET_NAME')
+        
+        if not bucket_name:
+            return 0
+        
+        # Extract IP address from session_id
+        client_ip = session_id.split('_')[0] if '_' in session_id else session_id
+        
+        # Check all files for this IP to find highest override number
+        max_override = 0
+        
+        # Check cards
+        cards_response = s3_client.list_objects_v2(
+            Bucket=bucket_name,
+            Prefix=f'cards/{client_ip}_'
+        )
+        for obj in cards_response.get('Contents', []):
+            filename = obj['Key']
+            if 'override' in filename:
+                # Extract override number from filename like: IP_hash_override1_card_1.png
+                parts = filename.split('override')
+                if len(parts) > 1:
+                    override_num = int(''.join(filter(str.isdigit, parts[1].split('_')[0])))
+                    max_override = max(max_override, override_num)
+        
+        # Check videos and prints similarly
+        for prefix in ['videos', 'print-queue']:
+            response = s3_client.list_objects_v2(
+                Bucket=bucket_name,
+                Prefix=f'{prefix}/{client_ip}_'
+            )
+            for obj in response.get('Contents', []):
+                filename = obj['Key']
+                if 'override' in filename:
+                    parts = filename.split('override')
+                    if len(parts) > 1:
+                        override_num = int(''.join(filter(str.isdigit, parts[1].split('_')[0])))
+                        max_override = max(max_override, override_num)
+        
+        return max_override
+        
+    except Exception as e:
+        logger.error(f"❌ Failed to get override count for {session_id}: {str(e)}")
+        return 0
+
+def clear_ip_usage_and_track_override(session_id: str) -> tuple[bool, int]:
+    """Clear all usage for IP and return success status and new override number"""
+    try:
+        import boto3
+        s3_client = boto3.client('s3')
+        bucket_name = os.environ.get('S3_BUCKET_NAME')
+        
+        if not bucket_name:
+            return False, 0
+        
+        # Get current override count and increment
+        current_override = get_override_count_for_ip(session_id)
+        new_override = current_override + 1
+        
+        # Extract IP address
+        client_ip = session_id.split('_')[0] if '_' in session_id else session_id
+        
+        logger.info(f"🔄 Staff override #{new_override} for IP {client_ip} - clearing all usage")
+        
+        # Delete all existing files for this IP
+        for prefix in ['cards', 'videos', 'print-queue']:
+            response = s3_client.list_objects_v2(
+                Bucket=bucket_name,
+                Prefix=f'{prefix}/{client_ip}_'
+            )
+            if response.get('Contents'):
+                files_to_delete = [{'Key': obj['Key']} for obj in response['Contents']]
+                s3_client.delete_objects(
+                    Bucket=bucket_name,
+                    Delete={'Objects': files_to_delete}
+                )
+                logger.info(f"🗑️ Deleted {len(files_to_delete)} {prefix} files for IP {client_ip}")
+        
+        logger.info(f"✅ Full reset completed for IP {client_ip} - Override #{new_override}")
+        return True, new_override
+        
+    except Exception as e:
+        logger.error(f"❌ Failed to clear IP usage: {str(e)}")
+        return False, 0
+
+def modify_session_id_for_override(session_id: str, override_number: int) -> str:
+    """Modify session ID to include override tracking"""
+    if '_' in session_id:
+        ip, hash_part = session_id.split('_', 1)
+        return f"{ip}_override{override_number}_{hash_part}"
+    else:
+        return f"{session_id}_override{override_number}"
+
 def check_usage_limit(session_id: str, generation_type: str, override_code: str = None) -> bool:
     """Check if session has exceeded usage limits by counting S3 files"""
     
     # Check if override code is provided and valid
     valid_override_code = os.environ.get('OVERRIDE_CODE', 'snap')
     if override_code and override_code == valid_override_code:
-        logger.info(f"🔓 Override code used for session {session_id}, type: {generation_type}")
-        return True
+        logger.info(f"🔓 Staff override code used for session {session_id}, type: {generation_type}")
+        
+        # Clear all usage for this IP and get new override number
+        success, override_number = clear_ip_usage_and_track_override(session_id)
+        
+        if success:
+            logger.info(f"🎁 Full reset granted - Override #{override_number} for session {session_id}")
+            return True
+        else:
+            logger.error(f"❌ Failed to clear usage for override, allowing anyway")
+            return True
     
     limits = load_limits()
     current_usage = get_usage_from_s3(session_id)
@@ -397,9 +504,8 @@ def lambda_handler(event, context):
             override_code = body.get('override_code')
             
             if not check_usage_limit(session_id, 'cards', override_code):
-                remaining = get_remaining_usage(session_id)
                 return create_error_response(
-                    f"You have reached your generation limit. Visit the SnapMagic Booth to share your experience with our staff!", 
+                    f"Limit reached. Please visit the event staff at SnapMagic to assist.", 
                     429
                 )
             
@@ -535,9 +641,8 @@ def lambda_handler(event, context):
             override_code = body.get('override_code')
             
             if not check_usage_limit(session_id, 'prints', override_code):
-                remaining = get_remaining_usage(session_id)
                 return create_error_response(
-                    f"You have reached your print limit. Visit the SnapMagic Booth to share your experience with our staff!", 
+                    f"Limit reached. Please visit the event staff at SnapMagic to assist.", 
                     429
                 )
             
@@ -595,9 +700,8 @@ def lambda_handler(event, context):
             override_code = body.get('override_code')
             
             if not check_usage_limit(session_id, 'videos', override_code):
-                remaining = get_remaining_usage(session_id)
                 return create_error_response(
-                    f"You have reached your generation limit. Visit the SnapMagic Booth to share your experience with our staff!", 
+                    f"Limit reached. Please visit the event staff at SnapMagic to assist.", 
                     429
                 )
             

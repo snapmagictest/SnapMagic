@@ -55,6 +55,9 @@ class SnapMagicApp {
             usernameInput: document.getElementById('username'),
             passwordInput: document.getElementById('password'),
             
+            // Staff override
+            staffOverrideBtn: document.getElementById('staffOverrideBtn'),
+            
             // Header (removed user elements for events)
             // usernameDisplay: document.getElementById('usernameDisplay'),
             // signOutBtn: document.getElementById('signOutBtn'),
@@ -108,6 +111,9 @@ class SnapMagicApp {
     setupEventListeners() {
         // Login form
         this.elements.loginForm.addEventListener('submit', (e) => this.handleLogin(e));
+        
+        // Staff override button
+        this.elements.staffOverrideBtn.addEventListener('click', () => this.handleStaffOverride());
         
         // Sign out (removed for events)
         // this.elements.signOutBtn.addEventListener('click', () => this.handleSignOut());
@@ -252,7 +258,16 @@ class SnapMagicApp {
                 console.log('✅ Login successful');
                 this.isAuthenticated = true;
                 this.authToken = data.token;
-                this.currentUser = { username, token: data.token };
+                this.currentUser = { 
+                    username, 
+                    token: data.token,
+                    isAdmin: username === 'admin' // Show override button for admin
+                };
+                
+                // Show staff override button for admin users
+                if (this.currentUser.isAdmin) {
+                    this.elements.staffOverrideBtn.style.display = 'block';
+                }
                 
                 // Update usage limits from login response
                 if (data.remaining) {
@@ -282,6 +297,50 @@ class SnapMagicApp {
             console.error('❌ Login error:', error);
             this.hideProcessing();
             this.showError('Login failed. Please check your connection and try again.');
+        }
+    }
+
+    // Staff Override Functionality
+    async handleStaffOverride() {
+        if (!this.currentUser || !this.currentUser.isAdmin) {
+            alert('Access denied. Staff only.');
+            return;
+        }
+        
+        const confirmed = confirm('🔓 Staff Override\n\nThis will reset ALL limits for the current user session.\n\nProceed?');
+        if (!confirmed) return;
+        
+        try {
+            this.showProcessing('Applying staff override...');
+            
+            const apiBaseUrl = window.SNAPMAGIC_CONFIG.API_URL;
+            const response = await fetch(`${apiBaseUrl}api/transform-card`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.currentUser.token}`
+                },
+                body: JSON.stringify({
+                    action: 'transform_card',
+                    prompt: 'Staff override test',
+                    override_code: 'snap'
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success || response.status === 200) {
+                alert('✅ Staff Override Applied!\n\nUser limits have been reset.\nThey can now generate new content.');
+                console.log('✅ Staff override applied successfully');
+            } else {
+                alert('❌ Override failed: ' + (data.error || 'Unknown error'));
+            }
+            
+        } catch (error) {
+            console.error('❌ Staff override error:', error);
+            alert('❌ Override failed: Connection error');
+        } finally {
+            this.hideProcessing();
         }
     }
 
@@ -454,12 +513,8 @@ class SnapMagicApp {
             
             console.log('✅ Card image data prepared, length:', cardImageBase64.length);
             
-            // Add card to print queue
             const apiBaseUrl = window.SNAPMAGIC_CONFIG.API_URL;
             const endpoint = `${apiBaseUrl}api/print-card`;
-            
-            // Get override code from input field
-            const overrideCode = document.getElementById('overrideCode').value.trim();
             
             const response = await fetch(endpoint, {
                 method: 'POST',
@@ -470,8 +525,7 @@ class SnapMagicApp {
                 body: JSON.stringify({
                     action: 'print_card',
                     card_prompt: this.lastUsedPrompt || 'Generated card',
-                    card_image: cardImageBase64,
-                    override_code: overrideCode || undefined  // Only send if provided
+                    card_image: cardImageBase64
                 })
             });
 
@@ -707,14 +761,10 @@ class SnapMagicApp {
             // Convert card image to letterboxed JPEG format for video generation
             const letterboxedImage = await this.letterboxCardForVideo(this.generatedCardData.result);
             
-            // Get override code from input field
-            const overrideCode = document.getElementById('overrideCode').value.trim();
-            
             const requestBody = {
                 action: 'generate_video',
                 card_image: letterboxedImage,  // Send JPEG letterboxed 1280x720 image (no transparency)
-                animation_prompt: animationPrompt,
-                override_code: overrideCode || undefined  // Only send if provided
+                animation_prompt: animationPrompt
             };
             
             const response = await fetch(endpoint, {
@@ -1161,17 +1211,11 @@ class SnapMagicApp {
             console.log('🎯 API call to:', endpoint);
             console.log('👤 User name:', userName || 'No name (AWS logo)');
             
-            // Get override code from input field
-            const overrideCode = document.getElementById('overrideCode').value.trim();
-            
             const requestBody = {
                 action: 'transform_card',
                 prompt: userPrompt,
-                user_name: userName || '', // Send empty string if no name
-                override_code: overrideCode || undefined  // Only send if provided
+                user_name: userName || '' // Send empty string if no name
             };
-            
-            console.log('🔓 Override code:', overrideCode ? 'Provided' : 'Not provided');
             
             const response = await fetch(endpoint, {
                 method: 'POST',

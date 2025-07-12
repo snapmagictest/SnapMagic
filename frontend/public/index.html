@@ -791,6 +791,31 @@
             color: rgba(255, 255, 255, 0.5);
         }
 
+        /* Staff Override Button */
+        .staff-override-btn {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-right: 1rem;
+            box-shadow: 0 2px 8px rgba(255, 107, 107, 0.3);
+        }
+
+        .staff-override-btn:hover {
+            background: linear-gradient(135deg, #ff5252, #d63031);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 107, 107, 0.4);
+        }
+
+        .staff-override-btn:active {
+            transform: translateY(0);
+        }
+
         /* Example Prompts Styling */
         .example-prompts {
             margin-bottom: 2rem;
@@ -1301,6 +1326,11 @@
                 <h1 class="app-title">SnapMagic</h1>
             </div>
             <div class="header-right">
+                <!-- Staff Override Button -->
+                <button id="staffOverrideBtn" class="staff-override-btn" style="display: none;">
+                    🔓 Staff Override
+                </button>
+                
                 <a href="https://aws.amazon.com/what-is-cloud-computing" target="_blank" rel="noopener noreferrer">
                     <img src="https://d0.awsstatic.com/logos/powered-by-aws-white.png" alt="Powered by AWS Cloud Computing" class="powered-by-aws">
                 </a>
@@ -1392,14 +1422,6 @@
                         <h2 class="section-title">Create Your Trading Card</h2>
                         
                         <textarea id="promptInput" class="prompt-input" placeholder="Describe your trading card... (e.g., 'A magical wizard casting spells in an enchanted forest')"></textarea>
-                        
-                        <!-- Override Code Input -->
-                        <div class="override-code-container" style="margin-top: 1rem;">
-                            <input type="text" id="overrideCode" class="override-code-input" placeholder="Override code (if provided by SnapMagic Booth staff)" maxlength="50">
-                            <small style="color: rgba(255, 255, 255, 0.6); font-size: 0.8rem; display: block; margin-top: 0.5rem;">
-                                💡 Leave blank unless you received an override code from event staff
-                            </small>
-                        </div>
                         
                         <!-- Example Prompts for Cards - After user input -->
                         <div class="example-prompts">
