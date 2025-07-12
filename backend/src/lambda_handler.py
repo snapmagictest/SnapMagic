@@ -319,6 +319,100 @@ def get_remaining_usage_simple(client_ip: str) -> Dict[str, int]:
     logger.info(f"📊 IP {client_ip} remaining usage: {remaining}")
     return remaining
 
+def store_override_session(client_ip: str, override_number: int) -> bool:
+    """Store override session info in S3 for persistence across requests"""
+    try:
+        import boto3
+        s3_client = boto3.client('s3')
+        bucket_name = os.environ.get('S3_BUCKET_NAME')
+        
+        if not bucket_name:
+            return False
+        
+        # Store override session info as a small file
+        override_key = f'override-sessions/{client_ip}_override{override_number}.txt'
+        s3_client.put_object(
+            Bucket=bucket_name,
+            Key=override_key,
+            Body=f'Override {override_number} active for IP {client_ip}',
+            ContentType='text/plain'
+        )
+        
+        logger.info(f"📝 Stored override session: {override_key}")
+        return True
+        
+    except Exception as e:
+        logger.error(f"❌ Failed to store override session: {str(e)}")
+        return False
+
+def get_active_override_session(client_ip: str) -> int:
+    """Get the active override session number for an IP, or 0 if none"""
+    try:
+        import boto3
+        s3_client = boto3.client('s3')
+        bucket_name = os.environ.get('S3_BUCKET_NAME')
+        
+        if not bucket_name:
+            return 0
+        
+        # Check for override session files
+        response = s3_client.list_objects_v2(
+            Bucket=bucket_name,
+            Prefix=f'override-sessions/{client_ip}_override'
+        )
+        
+        max_override = 0
+        for obj in response.get('Contents', []):
+            filename = obj['Key']
+            if 'override' in filename:
+                try:
+                    override_num = int(''.join(filter(str.isdigit, filename.split('override')[1].split('.')[0])))
+                    max_override = max(max_override, override_num)
+                except ValueError:
+                    continue
+        
+        if max_override > 0:
+            logger.info(f"🔓 Found active override session #{max_override} for IP {client_ip}")
+        
+        return max_override
+        
+    except Exception as e:
+        logger.error(f"❌ Failed to get active override session: {str(e)}")
+        return 0
+
+def get_session_id_for_storage(client_ip: str) -> str:
+    """Get the correct session ID for file storage (handles override persistence)"""
+    active_override = get_active_override_session(client_ip)
+    
+    if active_override > 0:
+        session_id = create_simple_session_id(client_ip, active_override)
+        logger.info(f"📁 Using active override session for storage: {session_id}")
+        return session_id
+    else:
+        logger.info(f"📁 Using normal session for storage: {client_ip}")
+        return client_ip
+    """Get remaining usage for IP address (SIMPLIFIED)"""
+    limits = load_limits()
+    current_usage = get_usage_from_s3_simple(client_ip)
+    
+    # Calculate remaining: max_limit - used_count
+    cards_used = current_usage.get('cards', 0)
+    videos_used = current_usage.get('videos', 0)
+    prints_used = current_usage.get('prints', 0)
+    
+    cards_remaining = max(0, limits['cards'] - cards_used)
+    videos_remaining = max(0, limits['videos'] - videos_used)
+    prints_remaining = max(0, limits['prints'] - prints_used)
+    
+    remaining = {
+        'cards': cards_remaining,
+        'videos': videos_remaining,
+        'prints': prints_remaining
+    }
+    
+    logger.info(f"📊 IP {client_ip} remaining usage: {remaining}")
+    return remaining
+
 def check_usage_limit_simple(client_ip: str, generation_type: str, override_code: str = None) -> tuple[bool, str]:
     """Check usage limits for IP address (SIMPLIFIED)
     
@@ -823,18 +917,22 @@ def lambda_handler(event, context):
                 return create_error_response("Missing final_card_base64 parameter", 400)
             
             try:
-                # Get session identifier for filename
+                # Get client IP and determine correct session ID for storage
                 request_headers = event.get('headers', {})
-                session_id = get_session_identifier(request_headers)
                 client_ip = get_client_ip(request_headers)
                 
-                # Store final card in S3 cards/ folder with session-based filename
+                # Get the correct session ID (handles override persistence)
+                session_id_for_files = get_session_id_for_storage(client_ip)
+                
+                logger.info(f"📁 Storing final card with session ID: {session_id_for_files}")
+                
+                # Store final card in S3 cards/ folder with correct filename
                 result = card_generator.store_final_card_in_s3(
                     final_card_base64, 
                     prompt, 
                     user_name, 
                     username,
-                    session_id  # Pass session ID for filename generation
+                    session_id_for_files  # Use persistent session ID
                 )
                 
                 if result['success']:
@@ -877,8 +975,12 @@ def lambda_handler(event, context):
             # Create override session ID for file naming
             override_session_id = create_simple_session_id(client_ip, next_override)
             
+            # Store override session for persistence across requests
+            store_override_session(client_ip, next_override)
+            
             logger.info(f"🎁 Override #{next_override} applied for IP {client_ip}")
             logger.info(f"📝 Override session ID: {override_session_id}")
+            logger.info(f"💾 Override session stored for persistence")
             
             # Return success with new session tracking info
             return {
