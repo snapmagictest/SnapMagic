@@ -158,7 +158,77 @@ def get_current_override_number(client_ip: str) -> int:
 
 
 
-def get_next_card_number_for_session(client_ip: str, override_number: int, file_type: str) -> int:
+def get_next_print_number_for_session(client_ip: str, override_number: int) -> int:
+    """
+    Get the next print queue number for a specific override session
+    This is separate from card numbering - tracks print queue position
+    """
+    try:
+        import boto3
+        s3_client = boto3.client('s3')
+        bucket_name = os.environ.get('S3_BUCKET_NAME')
+        
+        if not bucket_name:
+            return 1
+        
+        # Count existing print files for this override session
+        session_prefix = f"{client_ip}_override{override_number}_card_"
+        
+        response = s3_client.list_objects_v2(
+            Bucket=bucket_name,
+            Prefix=f'print-queue/{session_prefix}'
+        )
+        
+        # Count files that contain "_print_" to get print queue number
+        print_count = 0
+        for obj in response.get('Contents', []):
+            if '_print_' in obj['Key']:
+                print_count += 1
+        
+        next_print_number = print_count + 1
+        
+        logger.info(f"🖨️ IP {client_ip} override{override_number}: {print_count} prints in queue, next print #{next_print_number}")
+        
+        return next_print_number
+        
+    except Exception as e:
+        logger.error(f"❌ Failed to get next print number: {str(e)}")
+        return 1
+
+def create_print_filename(session_id: str, card_number: int, extension: str) -> tuple[str, str, int]:
+    """
+    Create print filename: IP_override1_card_#_print_3_TIMESTAMP.png
+    
+    Args:
+        session_id: IP_override1, IP_override2, etc.
+        card_number: The card number being printed
+        extension: 'png', etc.
+        
+    Returns:
+        tuple: (filename, s3_key, print_number)
+    """
+    from datetime import datetime
+    
+    # Extract IP and override number from session_id
+    parts = session_id.split('_override')
+    if len(parts) != 2:
+        logger.error(f"❌ Invalid session_id format: {session_id}")
+        return f"error_{session_id}.{extension}", f"error/error_{session_id}.{extension}", 1
+    
+    client_ip = parts[0]
+    override_number = int(parts[1])
+    
+    # Get next print queue number
+    print_number = get_next_print_number_for_session(client_ip, override_number)
+    
+    # Create filename: IP_override1_card_#_print_3_TIMESTAMP.png
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    filename = f"{session_id}_card_{card_number}_print_{print_number}_{timestamp}.{extension}"
+    s3_key = f"print-queue/{filename}"
+    
+    logger.info(f"🖨️ Created print filename: {filename} (print #{print_number})")
+    
+    return filename, s3_key, print_number
     """
     Get the next card number for a specific override session by counting existing files
     NO HARDCODING - Always count actual files in S3
@@ -187,8 +257,11 @@ def get_next_card_number_for_session(client_ip: str, override_number: int, file_
         }
         folder = folder_map.get(file_type, 'cards')
         
-        # Count existing files for this specific override session
-        session_prefix = f"{client_ip}_override{override_number}_card_"
+        # For prints, count print files specifically (not card files)
+        if file_type == 'print':
+            session_prefix = f"{client_ip}_override{override_number}_print_"
+        else:
+            session_prefix = f"{client_ip}_override{override_number}_card_"
         
         response = s3_client.list_objects_v2(
             Bucket=bucket_name,
@@ -196,24 +269,24 @@ def get_next_card_number_for_session(client_ip: str, override_number: int, file_
         )
         
         existing_count = len(response.get('Contents', []))
-        next_card_number = existing_count + 1
+        next_number = existing_count + 1
         
-        logger.info(f"📊 IP {client_ip} override{override_number} {file_type}: {existing_count} existing, next card #{next_card_number}")
+        logger.info(f"📊 IP {client_ip} override{override_number} {file_type}: {existing_count} existing, next #{next_number}")
         
         # Log existing files for debugging
         if response.get('Contents'):
             existing_files = [obj['Key'] for obj in response['Contents']]
-            logger.info(f"📁 Existing files: {existing_files}")
+            logger.info(f"📁 Existing {file_type} files: {existing_files}")
         
-        return next_card_number
+        return next_number
         
     except Exception as e:
-        logger.error(f"❌ Failed to get next card number: {str(e)}")
+        logger.error(f"❌ Failed to get next {file_type} number: {str(e)}")
         return 1
 
 def create_standard_filename(session_id: str, file_type: str, extension: str) -> tuple[str, str]:
     """
-    Create standardized filename with DYNAMIC card numbering - NO HARDCODING
+    Create standardized filename with DYNAMIC numbering - NO HARDCODING
     
     Args:
         session_id: IP_override1, IP_override2, etc.
@@ -234,12 +307,16 @@ def create_standard_filename(session_id: str, file_type: str, extension: str) ->
     client_ip = parts[0]
     override_number = int(parts[1])
     
-    # Get next card number dynamically - NO HARDCODING
-    next_card_number = get_next_card_number_for_session(client_ip, override_number, file_type)
+    # Get next number dynamically - NO HARDCODING
+    next_number = get_next_card_number_for_session(client_ip, override_number, file_type)
     
-    # Create filename with dynamic card number
+    # Create filename with dynamic numbering and correct type
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-    filename = f"{session_id}_card_{next_card_number}_{timestamp}.{extension}"
+    
+    if file_type == 'print':
+        filename = f"{session_id}_print_{next_number}_{timestamp}.{extension}"
+    else:
+        filename = f"{session_id}_card_{next_number}_{timestamp}.{extension}"
     
     # Determine folder based on file type
     folder_map = {
@@ -251,7 +328,7 @@ def create_standard_filename(session_id: str, file_type: str, extension: str) ->
     
     s3_key = f"{folder}/{filename}"
     
-    logger.info(f"📝 Created filename: {filename} (card #{next_card_number})")
+    logger.info(f"📝 Created {file_type} filename: {filename} (#{next_number})")
     
     return filename, s3_key
 
@@ -757,6 +834,7 @@ def lambda_handler(event, context):
             
             card_prompt = body.get('card_prompt', '')
             card_image_base64 = body.get('card_image', '')
+            card_number = body.get('card_number', 1)  # Which card is being printed
             
             if not card_prompt:
                 logger.error("❌ Missing card_prompt parameter")
@@ -767,44 +845,58 @@ def lambda_handler(event, context):
                 return create_error_response("Missing card_image parameter - card image required for print queue", 400)
             
             try:
-                # Store print record using current override session
-                logger.info(f"🖨️ Print queue request - session: {session_id_for_files}, prompt: {card_prompt[:50]}...")
+                # Store print record with special print naming
+                logger.info(f"🖨️ Print queue request - session: {session_id_for_files}, card #{card_number}")
                 
                 # Clear pending override marker since we're now using it
                 clear_pending_override(client_ip)
                 
-                result = store_print_record_simple(session_id_for_files, username, card_prompt, card_image_base64)
+                # Create print filename with card number and print queue number
+                import base64
+                image_data = base64.b64decode(card_image_base64)
                 
-                if result['success']:
+                filename, s3_key, print_number = create_print_filename(session_id_for_files, card_number, 'png')
+                
+                # Store in S3
+                import boto3
+                s3_client = boto3.client('s3')
+                bucket_name = os.environ.get('S3_BUCKET_NAME')
+                
+                if bucket_name:
+                    s3_client.put_object(
+                        Bucket=bucket_name,
+                        Key=s3_key,
+                        Body=image_data,
+                        ContentType='image/png',
+                        Metadata={
+                            'session_id': session_id_for_files,
+                            'username': username,
+                            'prompt': card_prompt[:100],
+                            'card_number': str(card_number),
+                            'print_number': str(print_number),
+                            'file_type': 'print'
+                        }
+                    )
+                    
                     # Get updated remaining usage
                     remaining = get_remaining_usage_simplified(client_ip)
-                    
-                    # Extract print number from filename for display
-                    filename = result.get('filename', 'unknown')
-                    print_number = 'unknown'
-                    
-                    # Extract card number from filename like: IP_override1_card_2_timestamp.png
-                    try:
-                        if '_card_' in filename:
-                            parts = filename.split('_card_')[1]
-                            print_number = parts.split('_')[0]  # Get the card number
-                    except Exception as e:
-                        logger.warning(f"⚠️ Could not extract print number from {filename}: {e}")
                     
                     logger.info("✅ Card print stored successfully")
                     return create_success_response({
                         'success': True,
                         'message': f'Card saved for printing',
                         'print_filename': filename,
-                        'print_number': print_number,  # Add explicit print number
+                        'print_number': str(print_number),  # Unique print queue number
+                        'card_number': str(card_number),    # Which card was printed
                         'remaining': remaining,
                         'session_id': session_id_for_files,
                         'client_ip': client_ip,
-                        'print_s3_key': result.get('s3_key', 'unknown')
+                        'print_s3_key': s3_key
                     })
                 else:
-                    logger.error(f"❌ Failed to add card to print queue: {result.get('error')}")
-                    return create_error_response(f"Print queue failed: {result.get('error')}", 500)
+                    return create_error_response("S3 bucket not configured", 500)
+                else:
+                    return create_error_response("S3 bucket not configured", 500)
                     
             except Exception as e:
                 logger.error(f"❌ Print queue request exception: {str(e)}")
