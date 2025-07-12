@@ -47,6 +47,36 @@ def create_standard_session_id(client_ip: str, override_number: int = 1) -> str:
     logger.info(f"📝 Created standard session ID: {session_id}")
     return session_id
 
+def get_next_print_queue_number() -> int:
+    """
+    Simple: Count all files in print-queue folder + 1
+    No complex logic - just total print queue position
+    """
+    try:
+        import boto3
+        s3_client = boto3.client('s3')
+        bucket_name = os.environ.get('S3_BUCKET_NAME')
+        
+        if not bucket_name:
+            return 1
+        
+        # Count ALL files in print-queue folder
+        response = s3_client.list_objects_v2(
+            Bucket=bucket_name,
+            Prefix='print-queue/'
+        )
+        
+        total_prints = len(response.get('Contents', []))
+        next_print_number = total_prints + 1
+        
+        logger.info(f"🖨️ Total prints in queue: {total_prints}, next print number: #{next_print_number}")
+        
+        return next_print_number
+        
+    except Exception as e:
+        logger.error(f"❌ Failed to get print queue number: {str(e)}")
+        return 1
+
 def get_pending_override_number(client_ip: str) -> int:
     """
     Check if there's a pending override increment for this IP
@@ -776,27 +806,18 @@ def lambda_handler(event, context):
                 result = store_print_record_simple(session_id_for_files, username, card_prompt, card_image_base64)
                 
                 if result['success']:
+                    # Get simple print queue number - count all files in print-queue + 1
+                    print_queue_number = get_next_print_queue_number()
+                    
                     # Get updated remaining usage
                     remaining = get_remaining_usage_simplified(client_ip)
-                    
-                    # Extract print number from filename for display
-                    filename = result.get('filename', 'unknown')
-                    print_number = 'unknown'
-                    
-                    # Extract card number from filename like: IP_override1_card_2_timestamp.png
-                    try:
-                        if '_card_' in filename:
-                            parts = filename.split('_card_')[1]
-                            print_number = parts.split('_')[0]  # Get the card number
-                    except Exception as e:
-                        logger.warning(f"⚠️ Could not extract print number from {filename}: {e}")
                     
                     logger.info("✅ Card print stored successfully")
                     return create_success_response({
                         'success': True,
                         'message': f'Card saved for printing',
-                        'print_filename': filename,
-                        'print_number': print_number,  # Add explicit print number
+                        'print_filename': result.get('filename', 'unknown'),
+                        'print_number': str(print_queue_number),  # Simple queue position
                         'remaining': remaining,
                         'session_id': session_id_for_files,
                         'client_ip': client_ip,
