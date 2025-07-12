@@ -972,19 +972,19 @@ def lambda_handler(event, context):
             
             # Video generation parameters
             card_image_base64 = body.get('card_image', '')  # The generated card image
-            video_prompt = body.get('video_prompt', '')     # Video-specific prompt
+            prompt = body.get('prompt', '')                  # Video prompt (keep original parameter name)
             
             if not card_image_base64:
                 return create_error_response("Missing card_image parameter - card image required for video generation", 400)
             
-            if not video_prompt:
-                return create_error_response("Missing video_prompt parameter - video prompt required", 400)
+            if not prompt:
+                return create_error_response("Missing prompt parameter - video prompt required", 400)
             
             try:
                 # Generate video using Nova Reel with card image + video prompt
-                logger.info(f"🎬 Generating video from card image with prompt: {video_prompt[:50]}...")
+                logger.info(f"🎬 Generating video from card image with prompt: {prompt[:50]}...")
                 
-                result = video_generator.generate_video_from_card(card_image_base64, video_prompt)
+                result = video_generator.generate_video_from_card(card_image_base64, prompt)
                 
                 if result['success']:
                     # Store video using current override session
@@ -1000,7 +1000,7 @@ def lambda_handler(event, context):
                         video_result = store_file_with_standard_pattern(
                             session_id=session_id_for_files,
                             username=username,
-                            prompt=video_prompt,  # Use video prompt for metadata
+                            prompt=prompt,  # Use video prompt for metadata
                             file_data=video_bytes,
                             file_type='video',
                             extension='mp4',
@@ -1021,7 +1021,7 @@ def lambda_handler(event, context):
                                 'remaining': remaining,
                                 'session_id': session_id_for_files,
                                 'client_ip': client_ip,
-                                'video_prompt': video_prompt
+                                'video_prompt': prompt
                             })
                         else:
                             logger.error(f"❌ Failed to store video: {video_result.get('error')}")
