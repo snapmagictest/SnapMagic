@@ -1264,13 +1264,40 @@ def lambda_handler(event, context):
                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
                 
                 # Extract the actual card image from card_data
-                card_image_data = None
-                if card_data and 'result' in card_data and 'image_data' in card_data['result']:
-                    card_image_data = card_data['result']['image_data']
-                elif card_data and 'image_data' in card_data:
-                    card_image_data = card_data['image_data']
+                card_image_base64 = None
                 
-                if not card_image_data:
+                # Try different possible locations for the card image data
+                if card_data:
+                    # Check for finalImageSrc (composed card with template)
+                    if 'finalImageSrc' in card_data and card_data['finalImageSrc']:
+                        image_src = card_data['finalImageSrc']
+                        if image_src.startswith('data:image/png;base64,'):
+                            card_image_base64 = image_src.split(',')[1]
+                            logger.info("✅ Using finalImageSrc (composed card)")
+                    
+                    # Check for imageSrc (regular card image)
+                    elif 'imageSrc' in card_data and card_data['imageSrc']:
+                        image_src = card_data['imageSrc']
+                        if image_src.startswith('data:image/png;base64,'):
+                            card_image_base64 = image_src.split(',')[1]
+                            logger.info("✅ Using imageSrc (regular card)")
+                    
+                    # Check for raw result (Nova Canvas output)
+                    elif 'result' in card_data and card_data['result']:
+                        card_image_base64 = card_data['result']
+                        logger.info("✅ Using result (Nova Canvas output)")
+                    
+                    # Check nested result structure
+                    elif 'result' in card_data and isinstance(card_data['result'], dict):
+                        if 'image_data' in card_data['result']:
+                            card_image_base64 = card_data['result']['image_data']
+                            logger.info("✅ Using nested result.image_data")
+                        elif 'result' in card_data['result']:
+                            card_image_base64 = card_data['result']['result']
+                            logger.info("✅ Using nested result.result")
+                
+                if not card_image_base64:
+                    logger.error(f"❌ No card image found. Card data keys: {list(card_data.keys()) if card_data else 'None'}")
                     return create_error_response("No card image found to submit", 400)
                 
                 # Create competition filename: IP_override1_card_1_phone_1234567890_20250713_140000.png
@@ -1279,7 +1306,7 @@ def lambda_handler(event, context):
                 
                 # Store ONLY the card image in S3 competition folder
                 import base64
-                image_bytes = base64.b64decode(card_image_data)
+                image_bytes = base64.b64decode(card_image_base64)
                 
                 s3_client.put_object(
                     Bucket=bucket_name,
