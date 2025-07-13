@@ -1240,7 +1240,7 @@ def lambda_handler(event, context):
                             if f"_phone_{phone_number}_" in key:
                                 logger.info(f"❌ Duplicate phone number found: {phone_number}")
                                 return create_error_response(
-                                    "This phone number has already been entered in the competition. Please visit SnapMagic staff to assist.", 
+                                    "This phone number has already been entered in the competition. Please visit SnapMagic staff to re-enter.", 
                                     409
                                 )
                 except Exception as e:

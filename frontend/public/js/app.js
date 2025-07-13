@@ -1414,7 +1414,7 @@ class SnapMagicApp {
             console.log('🏆 Submitting competition entry...');
             this.showProcessing('Submitting competition entry...');
 
-            const response = await fetch(`${window.SNAPMAGIC_CONFIG.API_URL}/api/transform-card`, {
+            const response = await fetch(`${window.SNAPMAGIC_CONFIG.API_URL}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -1445,7 +1445,7 @@ class SnapMagicApp {
             } else {
                 // Handle duplicate phone number error specifically
                 if (response.status === 409) {
-                    this.showError('This phone number has already been entered in the competition. Please visit SnapMagic staff to assist.');
+                    this.showError('This phone number has already been entered in the competition. Please visit SnapMagic staff to re-enter.');
                 } else {
                     this.showError(data.error || 'Failed to submit competition entry');
                 }
