@@ -721,6 +721,66 @@
             max-width: 150px;
         }
 
+        /* LinkedIn Sharing Popup Styles */
+        .linkedin-steps {
+            margin: 1.5rem 0;
+        }
+
+        .step-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding: 0.8rem;
+            background: rgba(0, 212, 255, 0.1);
+            border-radius: 8px;
+            border-left: 3px solid #00d4ff;
+        }
+
+        .step-number {
+            background: #00d4ff;
+            color: #1a1a2e;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9rem;
+            margin-right: 1rem;
+            flex-shrink: 0;
+        }
+
+        .step-text {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 0.95rem;
+        }
+
+        .linkedin-buttons {
+            display: flex;
+            gap: 1rem;
+            margin: 1.5rem 0;
+            justify-content: center;
+        }
+
+        .linkedin-buttons .btn {
+            flex: 1;
+            max-width: 200px;
+            min-height: 50px;
+            font-size: 1rem;
+        }
+
+        .btn.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: #666 !important;
+        }
+
+        .btn.disabled:hover {
+            background: #666 !important;
+            transform: none !important;
+        }
+
         /* Video Prompt with Prefix */
         .video-prompt-container {
             position: relative;

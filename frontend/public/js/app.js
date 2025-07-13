@@ -1536,36 +1536,141 @@ class SnapMagicApp {
 
     // LinkedIn Share Feature Handler
     handleShareLinkedIn() {
-        console.log('📱 Sharing on LinkedIn');
+        console.log('📱 LinkedIn sharing with download + share approach');
         
         if (!this.generatedCardData) {
             this.showError('Please generate a card first before sharing!');
             return;
         }
 
-        try {
-            // Get the card image URL from the current result
-            const cardImage = this.elements.resultContainer.querySelector('img');
-            if (!cardImage) {
-                this.showError('No card image available to share');
-                return;
-            }
+        // Show the LinkedIn sharing popup
+        this.showLinkedInSharingPopup();
+    }
 
-            // Create LinkedIn share URL
-            const shareText = encodeURIComponent('Placeholder for post message - Check out my AI-generated trading card created with SnapMagic! 🎴✨ #SnapMagic #AI #TradingCards');
-            const shareUrl = encodeURIComponent(window.location.href);
-            
-            // LinkedIn sharing URL format
-            const linkedInUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${shareUrl}&text=${shareText}`;
-            
-            console.log('🔗 Opening LinkedIn share:', linkedInUrl);
-            
-            // Open LinkedIn in new window/tab
-            window.open(linkedInUrl, '_blank', 'width=600,height=600,scrollbars=yes,resizable=yes');
-            
-        } catch (error) {
-            console.error('❌ LinkedIn share error:', error);
-            this.showError('Failed to open LinkedIn share. Please try again.');
+    /**
+     * Show LinkedIn sharing popup with download + share buttons
+     */
+    showLinkedInSharingPopup() {
+        const modalHtml = `
+            <div id="linkedinSharingPopup" class="modal">
+                <div class="modal-content">
+                    <h3>📱 Share on LinkedIn</h3>
+                    <p>To share your trading card on LinkedIn, follow these simple steps:</p>
+                    
+                    <div class="linkedin-steps">
+                        <div class="step-item">
+                            <span class="step-number">1</span>
+                            <span class="step-text">Download your card image first</span>
+                        </div>
+                        <div class="step-item">
+                            <span class="step-number">2</span>
+                            <span class="step-text">Click "Share on LinkedIn" (will be enabled after download)</span>
+                        </div>
+                        <div class="step-item">
+                            <span class="step-number">3</span>
+                            <span class="step-text">In LinkedIn, click "Add media" and select your downloaded image</span>
+                        </div>
+                    </div>
+
+                    <div class="linkedin-buttons">
+                        <button id="downloadForLinkedIn" class="btn btn-primary">📥 Download Card</button>
+                        <button id="shareToLinkedIn" class="btn btn-linkedin disabled" disabled>📱 Share on LinkedIn</button>
+                    </div>
+                    
+                    <div class="modal-buttons">
+                        <button id="cancelLinkedInSharing" class="btn btn-secondary">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Add modal to page
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        
+        // Setup event listeners
+        document.getElementById('downloadForLinkedIn').addEventListener('click', () => {
+            this.downloadCardForLinkedIn();
+        });
+        
+        document.getElementById('shareToLinkedIn').addEventListener('click', () => {
+            this.openLinkedInForSharing();
+        });
+        
+        document.getElementById('cancelLinkedInSharing').addEventListener('click', () => {
+            this.closeLinkedInSharingPopup();
+        });
+    }
+
+    /**
+     * Download card and enable LinkedIn share button
+     */
+    downloadCardForLinkedIn() {
+        if (!this.generatedCardData) return;
+        
+        // Get the final composed card image
+        const imageSrc = this.generatedCardData.finalImageSrc || 
+                         this.generatedCardData.imageSrc || 
+                         `data:image/png;base64,${this.generatedCardData.result}`;
+        
+        // Create filename with date
+        const today = new Date().toISOString().slice(0, 10);
+        const time = new Date().toTimeString().slice(0, 5).replace(':', '');
+        const filename = `SnapMagic-Card-${today}-${time}.png`;
+        
+        // Download the card
+        const link = document.createElement('a');
+        link.href = imageSrc;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        console.log(`📥 Card downloaded: ${filename}`);
+        
+        // Enable the LinkedIn share button
+        const shareButton = document.getElementById('shareToLinkedIn');
+        const downloadButton = document.getElementById('downloadForLinkedIn');
+        
+        if (shareButton && downloadButton) {
+            shareButton.disabled = false;
+            shareButton.classList.remove('disabled');
+            downloadButton.textContent = '✅ Downloaded';
+            downloadButton.disabled = true;
+            downloadButton.classList.add('disabled');
+        }
+    }
+
+    /**
+     * Open LinkedIn with clean post text (no URL)
+     */
+    openLinkedInForSharing() {
+        // Generate clean share text without URL
+        const userPrompt = this.elements.promptInput.value.trim();
+        let shareText = '';
+        
+        if (userPrompt && userPrompt.length > 0) {
+            shareText = `🎴✨ Just created my AI-powered trading card with SnapMagic! "${userPrompt}" - Generated using Amazon Bedrock Nova Canvas at AWS events. #SnapMagic #AI #TradingCards #AWS #Innovation`;
+        } else {
+            shareText = '🎴✨ Just created my AI-powered trading card with SnapMagic! Check out this awesome card generated using Amazon Bedrock Nova Canvas at AWS events. #SnapMagic #AI #TradingCards #AWS #Innovation';
+        }
+        
+        // LinkedIn sharing URL with text only (no URL parameter)
+        const linkedInUrl = `https://www.linkedin.com/sharing/share-offsite/?text=${encodeURIComponent(shareText)}`;
+        
+        console.log('🔗 Opening LinkedIn with clean text (no URL)');
+        window.open(linkedInUrl, '_blank', 'width=600,height=600,scrollbars=yes,resizable=yes');
+        
+        // Close the popup
+        this.closeLinkedInSharingPopup();
+    }
+
+    /**
+     * Close LinkedIn sharing popup
+     */
+    closeLinkedInSharingPopup() {
+        const popup = document.getElementById('linkedinSharingPopup');
+        if (popup) {
+            popup.remove();
         }
     }
 
