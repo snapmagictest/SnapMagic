@@ -1247,8 +1247,10 @@ def lambda_handler(event, context):
                     logger.warning(f"⚠️ Could not check for duplicates: {str(e)}")
                 
                 # Get current card number and IP override for filename matching
-                current_card_number = get_current_card_number_for_session(username)
-                ip_override = get_current_ip_override(username)
+                client_ip = event.get('requestContext', {}).get('identity', {}).get('sourceIp', 'unknown')
+                current_override = get_current_override_number(client_ip)
+                current_card_number = get_current_card_number_for_session(client_ip, current_override)
+                ip_override = f"IP_override{current_override}"
                 
                 # Create timestamp for filename
                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
