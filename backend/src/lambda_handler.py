@@ -1214,7 +1214,6 @@ def lambda_handler(event, context):
             username = token_payload.get('username', 'unknown')
             phone_number = body.get('phone_number', '').strip()
             card_data = body.get('card_data', {})
-            session_id = body.get('session_id', '')
             
             # Validation
             if not phone_number:
@@ -1223,25 +1222,55 @@ def lambda_handler(event, context):
             if not card_data:
                 return create_error_response("Card data is required", 400)
             
-            if not session_id:
-                return create_error_response("Session ID is required", 400)
-            
             try:
+                # Check for duplicate phone number entries
+                logger.info(f"🔍 Checking for duplicate phone number: {phone_number}")
+                
+                # List all competition entries to check for duplicates
+                try:
+                    response = s3_client.list_objects_v2(
+                        Bucket=S3_BUCKET,
+                        Prefix='competition/'
+                    )
+                    
+                    if 'Contents' in response:
+                        for obj in response['Contents']:
+                            key = obj['Key']
+                            # Check if phone number is in filename
+                            if f"_phone_{phone_number}_" in key:
+                                logger.info(f"❌ Duplicate phone number found: {phone_number}")
+                                return create_error_response(
+                                    "This phone number has already been entered in the competition. Please visit SnapMagic staff to assist.", 
+                                    409
+                                )
+                except Exception as e:
+                    logger.warning(f"⚠️ Could not check for duplicates: {str(e)}")
+                
+                # Get current card number and IP override for filename matching
+                current_card_number = get_current_card_number_for_session(username)
+                ip_override = get_current_ip_override(username)
+                
+                # Create timestamp for filename
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                
+                # Create competition filename matching card pattern: IP_override1_card_1_phone_1234567890_20250713_140000.json
+                competition_filename = f"{ip_override}_card_{current_card_number}_phone_{phone_number}_{timestamp}.json"
+                competition_key = f"competition/{competition_filename}"
+                
                 # Create competition entry data
-                timestamp = datetime.now().isoformat()
                 competition_entry = {
-                    'timestamp': timestamp,
+                    'timestamp': datetime.now().isoformat(),
                     'username': username,
                     'phone_number': phone_number,
-                    'session_id': session_id,
+                    'ip_override': ip_override,
+                    'card_number': current_card_number,
                     'card_data': card_data,
                     'entry_type': 'competition',
-                    'status': 'submitted'
+                    'status': 'submitted',
+                    'filename': competition_filename
                 }
                 
                 # Store in S3 competition folder
-                competition_key = f"competition/{session_id}_entry_{timestamp.replace(':', '-').replace('.', '-')}.json"
-                
                 s3_client.put_object(
                     Bucket=S3_BUCKET,
                     Key=competition_key,
@@ -1253,9 +1282,11 @@ def lambda_handler(event, context):
                 
                 return create_success_response({
                     'message': 'Competition entry submitted successfully!',
-                    'entry_id': competition_key,
+                    'entry_filename': competition_filename,
                     'timestamp': timestamp,
-                    'phone_number': phone_number[:3] + '***' + phone_number[-2:] if len(phone_number) > 5 else '***'
+                    'phone_number': phone_number[:3] + '***' + phone_number[-2:] if len(phone_number) > 5 else '***',
+                    'card_number': current_card_number,
+                    'ip_override': ip_override
                 })
                 
             except Exception as e:

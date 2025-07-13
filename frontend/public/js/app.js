@@ -1435,15 +1435,20 @@ class SnapMagicApp {
                 this.elements.competitionModal.classList.add('hidden');
                 this.elements.phoneInput.value = '';
                 
-                // Show success details
+                // Show success details with new IP-based filename
                 this.elements.competitionDetails.innerHTML = `
-                    <p><strong>Phone:</strong> ${phoneNumber}</p>
-                    <p><strong>Card:</strong> ${data.card_filename || 'Generated Card'}</p>
-                    <p><strong>Entry ID:</strong> ${data.entry_id || 'Submitted'}</p>
+                    <p><strong>Phone:</strong> ${data.phone_number || phoneNumber}</p>
+                    <p><strong>Card:</strong> ${data.ip_override}_card_${data.card_number}</p>
+                    <p><strong>Entry File:</strong> ${data.entry_filename || 'Submitted'}</p>
                 `;
                 this.elements.competitionSuccessModal.classList.remove('hidden');
             } else {
-                this.showError(data.error || 'Failed to submit competition entry');
+                // Handle duplicate phone number error specifically
+                if (response.status === 409) {
+                    this.showError('This phone number has already been entered in the competition. Please visit SnapMagic staff to assist.');
+                } else {
+                    this.showError(data.error || 'Failed to submit competition entry');
+                }
             }
         } catch (error) {
             console.error('❌ Competition submission error:', error);
