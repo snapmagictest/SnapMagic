@@ -781,6 +781,95 @@
             transform: none !important;
         }
 
+        /* Gallery Navigation Styles */
+        .gallery-navigation {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: rgba(0, 212, 255, 0.1);
+            border-radius: 12px;
+            border: 1px solid rgba(0, 212, 255, 0.3);
+        }
+
+        .gallery-controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .gallery-btn {
+            min-width: 50px;
+            height: 40px;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .gallery-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: #666 !important;
+        }
+
+        .gallery-info {
+            color: #00d4ff;
+            font-weight: 600;
+            font-size: 1rem;
+            min-width: 120px;
+            text-align: center;
+        }
+
+        .gallery-numbers {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .gallery-num {
+            background: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.8);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            padding: 0.5rem 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 40px;
+            text-align: center;
+        }
+
+        .gallery-num:hover {
+            background: rgba(0, 212, 255, 0.2);
+            border-color: #00d4ff;
+            color: #00d4ff;
+            transform: translateY(-2px);
+        }
+
+        .gallery-num.active {
+            background: #00d4ff;
+            color: #1a1a2e;
+            border-color: #00d4ff;
+            transform: translateY(-2px);
+        }
+
+        /* Mobile responsive for gallery */
+        @media (max-width: 768px) {
+            .gallery-controls {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            
+            .gallery-numbers {
+                gap: 0.3rem;
+            }
+            
+            .gallery-num {
+                padding: 0.4rem 0.6rem;
+                min-width: 35px;
+            }
+        }
+
         /* Video Prompt with Prefix */
         .video-prompt-container {
             position: relative;
@@ -1563,6 +1652,18 @@
                         <h2 class="section-title">Your Generated Card</h2>
                         <div id="resultContainer">
                             <p style="color: var(--text-secondary); text-align: center; padding: 2rem;">Your generated trading card will appear here</p>
+                        </div>
+                        
+                        <!-- Gallery Navigation -->
+                        <div id="galleryNavigation" class="gallery-navigation hidden">
+                            <div class="gallery-controls">
+                                <button id="galleryPrevBtn" class="btn btn-secondary gallery-btn">←</button>
+                                <span id="galleryInfo" class="gallery-info">Card 1 of 1</span>
+                                <button id="galleryNextBtn" class="btn btn-secondary gallery-btn">→</button>
+                            </div>
+                            <div id="galleryNumbers" class="gallery-numbers">
+                                <!-- Dynamic number buttons will be inserted here -->
+                            </div>
                         </div>
                         <div id="resultActions" class="result-actions hidden">
                             <button id="downloadBtn" class="btn btn-success">💾 Download Card</button>

@@ -15,6 +15,13 @@ class SnapMagicApp {
         this.generatedCardData = null;
         this.videoGenerationInProgress = false;
         
+        // Gallery system for user's cards
+        this.userGallery = {
+            cards: [], // Array of user's generated cards
+            currentIndex: 0, // Currently displayed card index
+            totalCards: 0 // Total cards in user's session
+        };
+        
         // Usage tracking
         this.usageLimits = {
             cards: { used: 0, total: 5 },
@@ -156,6 +163,9 @@ class SnapMagicApp {
         // Competition and sharing
         this.elements.enterCompetitionBtn.addEventListener('click', () => this.handleEnterCompetition());
         this.elements.shareLinkedInBtn.addEventListener('click', () => this.handleShareLinkedIn());
+        
+        // Gallery navigation
+        this.setupGalleryNavigation();
         
         // Video generation
         this.elements.generateVideoBtn.addEventListener('click', () => this.handleGenerateVideo());
@@ -401,6 +411,14 @@ class SnapMagicApp {
         this.authToken = null;
         this.currentUser = null;
         this.generatedCardData = null;
+        
+        // Reset gallery
+        this.userGallery = {
+            cards: [],
+            currentIndex: 0,
+            totalCards: 0
+        };
+        this.hideGalleryNavigation();
         
         // Reset UI
         this.switchTab('instructions');
@@ -718,6 +736,9 @@ class SnapMagicApp {
                 finalCardBase64: finalCardBase64,
                 finalImageSrc: finalImageSrc
             };
+            
+            // Add to user's gallery
+            this.addCardToGallery(this.generatedCardData);
             
             // Store the final composited card in S3 (what user actually downloads)
             await this.storeFinalCardInS3(finalCardBase64, userPrompt, userName);
@@ -1534,7 +1555,142 @@ class SnapMagicApp {
         this.elements.limitReachedModal.classList.add('hidden');
     }
 
-    // LinkedIn Share Feature Handler
+    /**
+     * Setup gallery navigation event listeners
+     */
+    setupGalleryNavigation() {
+        // Gallery navigation buttons
+        const prevBtn = document.getElementById('galleryPrevBtn');
+        const nextBtn = document.getElementById('galleryNextBtn');
+        
+        if (prevBtn) {
+            prevBtn.addEventListener('click', () => this.navigateGallery(-1));
+        }
+        
+        if (nextBtn) {
+            nextBtn.addEventListener('click', () => this.navigateGallery(1));
+        }
+    }
+
+    /**
+     * Navigate gallery (previous/next)
+     */
+    navigateGallery(direction) {
+        if (this.userGallery.totalCards <= 1) return;
+        
+        const newIndex = this.userGallery.currentIndex + direction;
+        
+        // Check bounds
+        if (newIndex >= 0 && newIndex < this.userGallery.totalCards) {
+            this.showCardFromGallery(newIndex);
+        }
+    }
+
+    /**
+     * Show specific card from gallery
+     */
+    showCardFromGallery(cardIndex) {
+        if (cardIndex < 0 || cardIndex >= this.userGallery.totalCards) return;
+        
+        console.log(`🖼️ Showing card ${cardIndex + 1} of ${this.userGallery.totalCards}`);
+        
+        // Update current index
+        this.userGallery.currentIndex = cardIndex;
+        
+        // Load the selected card data
+        this.generatedCardData = this.userGallery.cards[cardIndex];
+        
+        // Update the display (same as current system)
+        const finalImageSrc = this.generatedCardData.finalImageSrc || 
+                              this.generatedCardData.imageSrc || 
+                              `data:image/png;base64,${this.generatedCardData.result}`;
+        
+        this.elements.resultContainer.innerHTML = `
+            <img src="${finalImageSrc}" alt="Generated Trading Card" class="result-image">
+        `;
+        
+        // Update gallery navigation display
+        this.updateGalleryDisplay();
+        
+        console.log('✅ Card switched - all buttons now act on this displayed card');
+    }
+
+    /**
+     * Jump directly to specific card number
+     */
+    jumpToCard(cardNumber) {
+        const cardIndex = cardNumber - 1; // Convert to 0-based index
+        this.showCardFromGallery(cardIndex);
+    }
+
+    /**
+     * Add new card to gallery
+     */
+    addCardToGallery(cardData) {
+        // Add to gallery
+        this.userGallery.cards.push(cardData);
+        this.userGallery.totalCards = this.userGallery.cards.length;
+        this.userGallery.currentIndex = this.userGallery.totalCards - 1; // Show newest card
+        
+        console.log(`📚 Gallery updated: ${this.userGallery.totalCards} cards total`);
+        
+        // Update gallery display
+        this.updateGalleryDisplay();
+        this.showGalleryNavigation();
+    }
+
+    /**
+     * Update gallery navigation display
+     */
+    updateGalleryDisplay() {
+        const galleryInfo = document.getElementById('galleryInfo');
+        const galleryNumbers = document.getElementById('galleryNumbers');
+        const prevBtn = document.getElementById('galleryPrevBtn');
+        const nextBtn = document.getElementById('galleryNextBtn');
+        
+        if (!galleryInfo || !galleryNumbers) return;
+        
+        // Update info text
+        galleryInfo.textContent = `Card ${this.userGallery.currentIndex + 1} of ${this.userGallery.totalCards}`;
+        
+        // Update number buttons
+        galleryNumbers.innerHTML = '';
+        for (let i = 0; i < this.userGallery.totalCards; i++) {
+            const btn = document.createElement('button');
+            btn.className = `gallery-num ${i === this.userGallery.currentIndex ? 'active' : ''}`;
+            btn.textContent = i + 1;
+            btn.addEventListener('click', () => this.jumpToCard(i + 1));
+            galleryNumbers.appendChild(btn);
+        }
+        
+        // Update prev/next button states
+        if (prevBtn) {
+            prevBtn.disabled = this.userGallery.currentIndex === 0;
+        }
+        if (nextBtn) {
+            nextBtn.disabled = this.userGallery.currentIndex === this.userGallery.totalCards - 1;
+        }
+    }
+
+    /**
+     * Show gallery navigation (when user has multiple cards)
+     */
+    showGalleryNavigation() {
+        const galleryNav = document.getElementById('galleryNavigation');
+        if (galleryNav && this.userGallery.totalCards > 1) {
+            galleryNav.classList.remove('hidden');
+        }
+    }
+
+    /**
+     * Hide gallery navigation
+     */
+    hideGalleryNavigation() {
+        const galleryNav = document.getElementById('galleryNavigation');
+        if (galleryNav) {
+            galleryNav.classList.add('hidden');
+        }
+    }
     handleShareLinkedIn() {
         console.log('📱 LinkedIn sharing with download + share approach');
         
