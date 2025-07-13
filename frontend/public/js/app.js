@@ -390,9 +390,25 @@ class SnapMagicApp {
                 this.overrideNumber = data.override_number;
                 this.clientIP = data.client_ip;
                 
+                // Reset gallery for new session
+                this.userGallery = {
+                    cards: [],
+                    currentIndex: 0,
+                    totalCards: 0
+                };
+                this.hideGalleryNavigation();
+                this.generatedCardData = null;
+                
+                // Clear result container
+                this.elements.resultContainer.innerHTML = `
+                    <p style="color: var(--text-secondary); text-align: center; padding: 2rem;">Your generated trading card will appear here</p>
+                `;
+                this.elements.resultActions.classList.add('hidden');
+                
                 alert(`✅ Override #${data.override_number} Applied!\n\nYour limits have been reset:\n• Cards: 5\n• Videos: 3\n• Prints: 1\n\nYou can now generate new content.`);
                 console.log(`✅ Override #${data.override_number} applied successfully`);
                 console.log(`📝 Client IP: ${data.client_ip}`);
+                console.log(`🔄 Gallery reset for new session`);
             } else {
                 alert('❌ Override failed: ' + (data.error || 'Unknown error'));
             }
