@@ -1124,51 +1124,25 @@ def lambda_handler(event, context):
                 logger.info(f"🔍 Checking video status for ARN: {invocation_arn}")
                 result = video_generator.get_video_status(invocation_arn)
                 
-                if result['success']:
-                    # Store video in S3 with proper override naming if completed and has video data
-                    video_base64 = result.get('video_base64')
-                    if result.get('status') == 'completed' and video_base64:
-                        try:
-                            # Get current override session for storage
-                            current_override = get_current_override_number(client_ip)
-                            session_id_for_files = create_standard_session_id(client_ip, current_override)
-                            
-                            # Get video number for this override session
-                            video_number = get_next_video_number_for_session(client_ip, current_override)
-                            
-                            # Create video filename: IP_override1_card_1_video_2_TIMESTAMP.mp4
-                            from datetime import datetime
-                            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-                            video_filename = f"{session_id_for_files}_card_1_video_{video_number}_{timestamp}.mp4"
-                            s3_key = f"videos/{video_filename}"
-                            
-                            # Store video file directly in S3
-                            import base64, boto3
-                            video_bytes = base64.b64decode(video_base64)
-                            s3_client = boto3.client('s3')
-                            bucket_name = os.environ.get('S3_BUCKET_NAME')
-                            
-                            if bucket_name:
-                                s3_client.put_object(
-                                    Bucket=bucket_name,
-                                    Key=s3_key,
-                                    Body=video_bytes,
-                                    ContentType='video/mp4',
-                                    Metadata={
-                                        'session_id': session_id_for_files,
-                                        'username': username,
-                                        'video_number': str(video_number),
-                                        'file_type': 'video'
-                                    }
-                                )
-                                
-                                video_result = {'success': True, 's3_key': s3_key}
-                                logger.info(f"✅ Completed video stored in S3: {s3_key}")
-                            else:
-                                video_result = {'success': False, 'error': 'S3 bucket not configured'}
-                        except Exception as e:
-                            logger.warning(f"⚠️ Video storage exception in status check: {str(e)}")
-                            video_result = {'success': False, 'error': str(e)}
+                if result['success'] and result.get('status') == 'completed':
+                    # Video is completed - store it with session-based filename
+                    logger.info("✅ Video completed - storing with session-based filename...")
+                    
+                    # Get current override session for storage
+                    current_override = get_current_override_number(client_ip)
+                    session_id_for_files = create_standard_session_id(client_ip, current_override)
+                    
+                    storage_result = video_generator.store_video_with_session_filename(
+                        invocation_arn, 
+                        session_id_for_files, 
+                        "Video generation", 
+                        username
+                    )
+                    
+                    if storage_result['success']:
+                        logger.info(f"✅ Video stored with session filename: {storage_result.get('session_s3_key')}")
+                    else:
+                        logger.warning(f"⚠️ Failed to store video with session filename: {storage_result.get('error')}")
                     
                     logger.info(f"✅ Video status check successful: {result.get('status')}")
                     return create_success_response({
@@ -1179,9 +1153,10 @@ def lambda_handler(event, context):
                         'message': result.get('message'),
                         'invocation_arn': invocation_arn,
                         'client_ip': client_ip,
-                        'video_stored': video_result.get('success', False) if video_base64 and result.get('status') == 'completed' else False
+                        'session_stored': storage_result.get('success', False),
+                        'session_s3_key': storage_result.get('session_s3_key')
                     })
-                else:
+                elif result['success']:
                     return create_error_response(f"Video status check failed: {result.get('error', 'Unknown error')}", 500)
                     
             except Exception as e:

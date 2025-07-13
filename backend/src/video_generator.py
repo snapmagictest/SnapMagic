@@ -173,17 +173,42 @@ class TradingCardVideoGenerator:
             original_s3_key = f"{self.VIDEO_FOLDER_PREFIX}{invocation_id}/{self.OUTPUT_VIDEO_FILENAME}"
             
             # Count existing videos for this session to get next number
-            existing_videos = self.s3_client.list_objects_v2(
-                Bucket=self.video_storage_bucket,
-                Prefix=f'videos/{session_id}_video_'
-            )
-            video_count = len(existing_videos.get('Contents', [])) + 1  # Next video number
-            
-            # Generate timestamp
-            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-            
-            # Create session-based filename: SESSION_video_COUNT_timestamp.mp4
-            session_filename = f"{session_id}_video_{video_count}_{timestamp}.mp4"
+            # Parse session_id to get IP and override number: IP_override1
+            if '_override' in session_id:
+                parts = session_id.split('_override')
+                client_ip = parts[0]
+                override_number = int(parts[1])
+                
+                # Count existing videos for this specific override session
+                session_prefix = f"{client_ip}_override{override_number}_card_"
+                existing_videos = self.s3_client.list_objects_v2(
+                    Bucket=self.video_storage_bucket,
+                    Prefix=f'videos/{session_prefix}'
+                )
+                
+                # Count files that contain "_video_" to get video number
+                video_count = 0
+                for obj in existing_videos.get('Contents', []):
+                    if '_video_' in obj['Key']:
+                        video_count += 1
+                
+                video_number = video_count + 1
+                
+                # Generate timestamp
+                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                
+                # Create filename: IP_override1_card_1_video_2_TIMESTAMP.mp4
+                session_filename = f"{session_id}_card_1_video_{video_number}_{timestamp}.mp4"
+            else:
+                # Fallback for old session format
+                existing_videos = self.s3_client.list_objects_v2(
+                    Bucket=self.video_storage_bucket,
+                    Prefix=f'videos/{session_id}_video_'
+                )
+                video_count = len(existing_videos.get('Contents', [])) + 1
+                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                session_filename = f"{session_id}_video_{video_count}_{timestamp}.mp4"
+                session_filename = f"{session_id}_video_{video_count}_{timestamp}.mp4"
             session_s3_key = f"videos/{session_filename}"
             
             # Copy video from original Bedrock location to session-based location
