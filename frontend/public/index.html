@@ -385,6 +385,31 @@
             box-shadow: 0 4px 12px rgba(0, 119, 181, 0.3);
         }
 
+        /* Improved button styles for better theme consistency */
+        .btn-info {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            color: white;
+            border: none;
+        }
+
+        .btn-info:hover {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #dc2626, #b91c1c);
+            color: white;
+            border: none;
+        }
+
+        .btn-danger:hover {
+            background: linear-gradient(135deg, #b91c1c, #991b1b);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+        }
+
         .btn-sm {
             padding: 0.5rem 1rem;
             font-size: 0.875rem;
@@ -1618,6 +1643,18 @@
             <p>This phone number has already been entered in the competition. Please visit SnapMagic staff to re-enter.</p>
             <div class="modal-buttons">
                 <button id="competitionErrorOkBtn" class="btn btn-danger">OK, I'll Visit Staff</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Limit Reached Modal -->
+    <div id="limitReachedModal" class="modal hidden">
+        <div class="modal-content" style="border: 3px solid #f56500;">
+            <h3>🚫 Generation Limit Reached</h3>
+            <p>Limit reached. Please visit the event staff at SnapMagic to assist.</p>
+            <p style="font-size: 0.9em; color: #666; margin-top: 1rem;">Limits reset when the event system restarts. Contact event staff if you need assistance.</p>
+            <div class="modal-buttons">
+                <button id="limitReachedOkBtn" class="btn btn-warning">OK, I'll Visit Staff</button>
             </div>
         </div>
     </div>

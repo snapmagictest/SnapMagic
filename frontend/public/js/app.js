@@ -121,6 +121,10 @@ class SnapMagicApp {
             competitionErrorModal: document.getElementById('competitionErrorModal'),
             competitionErrorOkBtn: document.getElementById('competitionErrorOkBtn'),
             
+            // Limit Reached Modal
+            limitReachedModal: document.getElementById('limitReachedModal'),
+            limitReachedOkBtn: document.getElementById('limitReachedOkBtn'),
+            
             // Print success modal
             printSuccessModal: document.getElementById('printSuccessModal'),
             printSuccessOkBtn: document.getElementById('printSuccessOkBtn')
@@ -170,6 +174,7 @@ class SnapMagicApp {
         this.elements.competitionCancelBtn.addEventListener('click', () => this.handleCompetitionCancel());
         this.elements.competitionSuccessOkBtn.addEventListener('click', () => this.handleCompetitionSuccessOk());
         this.elements.competitionErrorOkBtn.addEventListener('click', () => this.handleCompetitionErrorOk());
+        this.elements.limitReachedOkBtn.addEventListener('click', () => this.handleLimitReachedOk());
         
         // Print success modal
         this.elements.printSuccessOkBtn.addEventListener('click', () => this.handlePrintSuccessOk());
@@ -517,7 +522,7 @@ class SnapMagicApp {
             // Check if print limit is reached
             const printRemaining = this.usageLimits.prints.total - this.usageLimits.prints.used;
             if (printRemaining <= 0) {
-                this.showError('🚫 Print Limit Reached\n\nYou have already used your print allowance for this session.\n\nLimits reset when the event system restarts.');
+                this.elements.limitReachedModal.classList.remove('hidden');
                 return;
             }
             
@@ -598,7 +603,7 @@ class SnapMagicApp {
                 this.hideProcessing();
                 
                 if (response.status === 429) {
-                    this.showError(`🚫 Print Limit Reached\n\n${data.error}\n\nLimits reset when the event system restarts.`);
+                    this.elements.limitReachedModal.classList.remove('hidden');
                 } else {
                     this.showError(`Print queue failed: ${data.error}`);
                 }
@@ -839,7 +844,7 @@ class SnapMagicApp {
                 
                 // Check for limit reached error
                 if (response.status === 429) {
-                    this.showError(`🚫 Video Generation Limit Reached\n\n${data.error}\n\nLimits reset when the event system restarts. Contact event staff if you need assistance.`);
+                    this.elements.limitReachedModal.classList.remove('hidden');
                 } else {
                     this.showError(data.error || 'Video generation failed. Please try again.');
                 }
@@ -1335,7 +1340,7 @@ class SnapMagicApp {
                 
                 // Check for limit reached error
                 if (response.status === 429) {
-                    this.showError(`🚫 Generation Limit Reached\n\n${data.error}\n\nLimits reset when the event system restarts. Contact event staff if you need assistance.`);
+                    this.elements.limitReachedModal.classList.remove('hidden');
                 } else if (data.error && data.error.includes('content filters')) {
                     this.showError(`🚫 Content Blocked by AI Safety Filters\n\n${data.error}\n\nPlease try a different prompt that doesn't include potentially sensitive content.`);
                 } else {
@@ -1522,6 +1527,11 @@ class SnapMagicApp {
     handleCompetitionErrorOk() {
         console.log('⚠️ Competition error acknowledged - user will visit staff');
         this.elements.competitionErrorModal.classList.add('hidden');
+    }
+
+    handleLimitReachedOk() {
+        console.log('🚫 Limit reached acknowledged - user will visit staff');
+        this.elements.limitReachedModal.classList.add('hidden');
     }
 
     // LinkedIn Share Feature Handler
