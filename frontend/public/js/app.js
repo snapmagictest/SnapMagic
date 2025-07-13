@@ -117,6 +117,10 @@ class SnapMagicApp {
             competitionDetails: document.getElementById('competitionDetails'),
             competitionSuccessOkBtn: document.getElementById('competitionSuccessOkBtn'),
             
+            // Competition Error Modal
+            competitionErrorModal: document.getElementById('competitionErrorModal'),
+            competitionErrorOkBtn: document.getElementById('competitionErrorOkBtn'),
+            
             // Print success modal
             printSuccessModal: document.getElementById('printSuccessModal'),
             printSuccessOkBtn: document.getElementById('printSuccessOkBtn')
@@ -165,6 +169,7 @@ class SnapMagicApp {
         this.elements.competitionSubmitBtn.addEventListener('click', () => this.handleCompetitionSubmit());
         this.elements.competitionCancelBtn.addEventListener('click', () => this.handleCompetitionCancel());
         this.elements.competitionSuccessOkBtn.addEventListener('click', () => this.handleCompetitionSuccessOk());
+        this.elements.competitionErrorOkBtn.addEventListener('click', () => this.handleCompetitionErrorOk());
         
         // Print success modal
         this.elements.printSuccessOkBtn.addEventListener('click', () => this.handlePrintSuccessOk());
@@ -1484,17 +1489,20 @@ class SnapMagicApp {
                 // Show green success message
                 this.showSuccess(data.message || 'Entry submitted successfully! Good luck in the competition!');
                 
-                // Show success details with clean, user-friendly information
+                // Show simplified success details
                 this.elements.competitionDetails.innerHTML = `
-                    <p><strong>Phone:</strong> ${data.phone_number || phoneNumber}</p>
-                    <p><strong>Card:</strong> ${data.ip_override}_card_${data.card_number}</p>
                     <p><strong>Status:</strong> Successfully submitted!</p>
                 `;
                 this.elements.competitionSuccessModal.classList.remove('hidden');
             } else {
                 // Handle duplicate phone number error specifically
                 if (response.status === 409) {
-                    this.showError('This phone number has already been entered in the competition. Please visit SnapMagic staff to re-enter.');
+                    // Close the competition entry modal first
+                    this.elements.competitionModal.classList.add('hidden');
+                    this.elements.phoneInput.value = '';
+                    
+                    // Show error modal instead of slide message
+                    this.elements.competitionErrorModal.classList.remove('hidden');
                 } else {
                     this.showError(data.error || 'Failed to submit competition entry');
                 }
@@ -1509,6 +1517,11 @@ class SnapMagicApp {
     handleCompetitionSuccessOk() {
         console.log('✅ Competition success acknowledged');
         this.elements.competitionSuccessModal.classList.add('hidden');
+    }
+
+    handleCompetitionErrorOk() {
+        console.log('⚠️ Competition error acknowledged - user will visit staff');
+        this.elements.competitionErrorModal.classList.add('hidden');
     }
 
     // LinkedIn Share Feature Handler
