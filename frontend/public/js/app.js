@@ -1666,18 +1666,11 @@ class SnapMagicApp {
         
         console.log('🎯 Using event name for LinkedIn:', eventName);
         
-        // Generate clean share text without URL
-        const userPrompt = this.elements.promptInput.value.trim();
-        let shareText = '';
-        
+        // Generate clean share text without URL and without prompt
         // Create hashtag version of event name (remove spaces and special characters)
         const eventHashtag = eventName.replace(/[^a-zA-Z0-9]/g, '');
         
-        if (userPrompt && userPrompt.length > 0) {
-            shareText = `🎴✨ Just created my AI-powered trading card with SnapMagic! "${userPrompt}" - Generated using Amazon Bedrock Nova Canvas at ${eventName}. #SnapMagic #AI #TradingCards #${eventHashtag} #AmazonBedrock #Nova #Innovation`;
-        } else {
-            shareText = `🎴✨ Just created my AI-powered trading card with SnapMagic! Check out this awesome card generated using Amazon Bedrock Nova Canvas at ${eventName}. #SnapMagic #AI #TradingCards #${eventHashtag} #AmazonBedrock #Nova #Innovation`;
-        }
+        const shareText = `🎴✨ Just created my AI-powered trading card with SnapMagic - Powered by AWS! Generated using Amazon Bedrock Nova Canvas at ${eventName}. #SnapMagic #AI #TradingCards #${eventHashtag} #AmazonBedrock #Nova #Innovation`;
         
         // LinkedIn sharing URL with text only (no URL parameter)
         const linkedInUrl = `https://www.linkedin.com/sharing/share-offsite/?text=${encodeURIComponent(shareText)}`;
