@@ -75,6 +75,8 @@ class SnapMagicApp {
             printBtn: document.getElementById('printBtn'),
             createVideoBtn: document.getElementById('createVideoBtn'),
             createAnotherBtn: document.getElementById('createAnotherBtn'),
+            enterCompetitionBtn: document.getElementById('enterCompetitionBtn'),
+            shareLinkedInBtn: document.getElementById('shareLinkedInBtn'),
             
             // Usage limits display
             cardUsage: document.getElementById('cardUsage'),
@@ -104,7 +106,20 @@ class SnapMagicApp {
             nameConfirmModal: document.getElementById('nameConfirmModal'),
             namePreview: document.getElementById('namePreview'),
             nameYesBtn: document.getElementById('nameYesBtn'),
-            nameEditBtn: document.getElementById('nameEditBtn')
+            nameEditBtn: document.getElementById('nameEditBtn'),
+            
+            // Competition modals
+            competitionModal: document.getElementById('competitionModal'),
+            phoneInput: document.getElementById('phoneInput'),
+            competitionSubmitBtn: document.getElementById('competitionSubmitBtn'),
+            competitionCancelBtn: document.getElementById('competitionCancelBtn'),
+            competitionSuccessModal: document.getElementById('competitionSuccessModal'),
+            competitionDetails: document.getElementById('competitionDetails'),
+            competitionSuccessOkBtn: document.getElementById('competitionSuccessOkBtn'),
+            
+            // Print success modal
+            printSuccessModal: document.getElementById('printSuccessModal'),
+            printSuccessOkBtn: document.getElementById('printSuccessOkBtn')
         };
     }
 
@@ -130,6 +145,10 @@ class SnapMagicApp {
         this.elements.createVideoBtn.addEventListener('click', () => this.handleCreateVideo());
         this.elements.createAnotherBtn.addEventListener('click', () => this.handleCreateAnother());
         
+        // Competition and sharing
+        this.elements.enterCompetitionBtn.addEventListener('click', () => this.handleEnterCompetition());
+        this.elements.shareLinkedInBtn.addEventListener('click', () => this.handleShareLinkedIn());
+        
         // Video generation
         this.elements.generateVideoBtn.addEventListener('click', () => this.handleGenerateVideo());
         this.elements.downloadVideoBtn.addEventListener('click', () => this.handleDownloadVideo());
@@ -141,6 +160,14 @@ class SnapMagicApp {
         this.elements.nameCancelBtn.addEventListener('click', () => this.handleNameCancel());
         this.elements.nameYesBtn.addEventListener('click', () => this.handleNameYes());
         this.elements.nameEditBtn.addEventListener('click', () => this.handleNameEdit());
+        
+        // Competition modal event listeners
+        this.elements.competitionSubmitBtn.addEventListener('click', () => this.handleCompetitionSubmit());
+        this.elements.competitionCancelBtn.addEventListener('click', () => this.handleCompetitionCancel());
+        this.elements.competitionSuccessOkBtn.addEventListener('click', () => this.handleCompetitionSuccessOk());
+        
+        // Print success modal
+        this.elements.printSuccessOkBtn.addEventListener('click', () => this.handlePrintSuccessOk());
         
         // Enter key support for name input
         this.elements.nameInput.addEventListener('keypress', (e) => {
@@ -1350,6 +1377,125 @@ class SnapMagicApp {
         } catch (error) {
             console.warn('⚠️ Error refreshing usage limits:', error);
         }
+    }
+
+    // Competition Feature Handlers
+    handleEnterCompetition() {
+        console.log('🏆 Opening competition entry modal');
+        if (!this.generatedCardData) {
+            this.showError('Please generate a card first before entering the competition!');
+            return;
+        }
+        
+        this.elements.competitionModal.classList.remove('hidden');
+        this.elements.phoneInput.focus();
+    }
+
+    handleCompetitionCancel() {
+        console.log('❌ Competition entry cancelled');
+        this.elements.competitionModal.classList.add('hidden');
+        this.elements.phoneInput.value = '';
+    }
+
+    async handleCompetitionSubmit() {
+        const phoneNumber = this.elements.phoneInput.value.trim();
+        
+        if (!phoneNumber) {
+            this.showError('Please enter your phone number');
+            return;
+        }
+
+        if (!this.generatedCardData) {
+            this.showError('No card data available for competition entry');
+            return;
+        }
+
+        try {
+            console.log('🏆 Submitting competition entry...');
+            this.showProcessing('Submitting competition entry...');
+
+            const response = await fetch(`${window.SNAPMAGIC_CONFIG.API_URL}/api/transform-card`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.authToken}`
+                },
+                body: JSON.stringify({
+                    action: 'enter_competition',
+                    phone_number: phoneNumber,
+                    card_data: this.generatedCardData
+                })
+            });
+
+            const data = await response.json();
+            this.hideProcessing();
+
+            if (data.success) {
+                console.log('✅ Competition entry submitted successfully');
+                this.elements.competitionModal.classList.add('hidden');
+                this.elements.phoneInput.value = '';
+                
+                // Show success details
+                this.elements.competitionDetails.innerHTML = `
+                    <p><strong>Phone:</strong> ${phoneNumber}</p>
+                    <p><strong>Card:</strong> ${data.card_filename || 'Generated Card'}</p>
+                    <p><strong>Entry ID:</strong> ${data.entry_id || 'Submitted'}</p>
+                `;
+                this.elements.competitionSuccessModal.classList.remove('hidden');
+            } else {
+                this.showError(data.error || 'Failed to submit competition entry');
+            }
+        } catch (error) {
+            console.error('❌ Competition submission error:', error);
+            this.hideProcessing();
+            this.showError('Failed to submit competition entry. Please try again.');
+        }
+    }
+
+    handleCompetitionSuccessOk() {
+        console.log('✅ Competition success acknowledged');
+        this.elements.competitionSuccessModal.classList.add('hidden');
+    }
+
+    // LinkedIn Share Feature Handler
+    handleShareLinkedIn() {
+        console.log('📱 Sharing on LinkedIn');
+        
+        if (!this.generatedCardData) {
+            this.showError('Please generate a card first before sharing!');
+            return;
+        }
+
+        try {
+            // Get the card image URL from the current result
+            const cardImage = this.elements.resultContainer.querySelector('img');
+            if (!cardImage) {
+                this.showError('No card image available to share');
+                return;
+            }
+
+            // Create LinkedIn share URL
+            const shareText = encodeURIComponent('Placeholder for post message - Check out my AI-generated trading card created with SnapMagic! 🎴✨ #SnapMagic #AI #TradingCards');
+            const shareUrl = encodeURIComponent(window.location.href);
+            
+            // LinkedIn sharing URL format
+            const linkedInUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${shareUrl}&text=${shareText}`;
+            
+            console.log('🔗 Opening LinkedIn share:', linkedInUrl);
+            
+            // Open LinkedIn in new window/tab
+            window.open(linkedInUrl, '_blank', 'width=600,height=600,scrollbars=yes,resizable=yes');
+            
+        } catch (error) {
+            console.error('❌ LinkedIn share error:', error);
+            this.showError('Failed to open LinkedIn share. Please try again.');
+        }
+    }
+
+    // Print Success Modal Handler
+    handlePrintSuccessOk() {
+        console.log('✅ Print success acknowledged');
+        this.elements.printSuccessModal.classList.add('hidden');
     }
 }
 

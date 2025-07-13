@@ -363,6 +363,28 @@
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
         }
 
+        .btn-warning {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+        }
+
+        .btn-warning:hover {
+            background: linear-gradient(135deg, #d97706, #b45309);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+        }
+
+        .btn-linkedin {
+            background: linear-gradient(135deg, #0077b5, #005885);
+            color: white;
+        }
+
+        .btn-linkedin:hover {
+            background: linear-gradient(135deg, #005885, #004066);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 119, 181, 0.3);
+        }
+
         .btn-sm {
             padding: 0.5rem 1rem;
             font-size: 0.875rem;
@@ -1461,6 +1483,8 @@
                             <button id="downloadBtn" class="btn btn-success">💾 Download Card</button>
                             <button id="printBtn" class="btn btn-info">🖨️ Save for Print</button>
                             <button id="createVideoBtn" class="btn btn-primary">🎬 Create Video</button>
+                            <button id="enterCompetitionBtn" class="btn btn-warning">🏆 Enter Competition</button>
+                            <button id="shareLinkedInBtn" class="btn btn-linkedin">📱 Share on LinkedIn</button>
                             <button id="createAnotherBtn" class="btn btn-secondary">🔄 Create Another</button>
                         </div>
                     </div>
@@ -1558,6 +1582,31 @@
             </div>
             <div class="modal-buttons">
                 <button id="printSuccessOkBtn" class="btn btn-primary">Got it!</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Competition Entry Modal -->
+    <div id="competitionModal" class="modal hidden">
+        <div class="modal-content">
+            <h3>🏆 Enter Competition</h3>
+            <p>Enter your phone number to participate in our trading card competition! Winners will be contacted directly.</p>
+            <input type="tel" id="phoneInput" class="name-input" placeholder="Enter your phone number" maxlength="20">
+            <div class="modal-buttons">
+                <button id="competitionSubmitBtn" class="btn btn-primary">Submit Entry</button>
+                <button id="competitionCancelBtn" class="btn btn-secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Competition Success Modal -->
+    <div id="competitionSuccessModal" class="modal hidden">
+        <div class="modal-content">
+            <h3>🎉 Competition Entry Submitted!</h3>
+            <p>Thank you for entering the competition! Your card has been submitted and you'll be contacted if you win.</p>
+            <div id="competitionDetails" class="name-preview"></div>
+            <div class="modal-buttons">
+                <button id="competitionSuccessOkBtn" class="btn btn-primary">Awesome!</button>
             </div>
         </div>
     </div>

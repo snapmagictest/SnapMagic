@@ -6,6 +6,7 @@ STANDARD PATTERN: Always use IP_override1, IP_override2, etc. with timestamps
 import json
 import logging
 import os
+from datetime import datetime
 from typing import Dict, Any
 from auth_simple import SnapMagicAuthSimple
 from card_generator import CardGenerator
@@ -1207,14 +1208,68 @@ def lambda_handler(event, context):
                 logger.error(f"❌ Video status check exception: {str(e)}")
                 return create_error_response(f"Video status check failed: {str(e)}", 500)
         
+        # ENTER COMPETITION ENDPOINT
+        # ========================================
+        elif action == 'enter_competition':
+            username = token_payload.get('username', 'unknown')
+            phone_number = body.get('phone_number', '').strip()
+            card_data = body.get('card_data', {})
+            session_id = body.get('session_id', '')
+            
+            # Validation
+            if not phone_number:
+                return create_error_response("Phone number is required", 400)
+            
+            if not card_data:
+                return create_error_response("Card data is required", 400)
+            
+            if not session_id:
+                return create_error_response("Session ID is required", 400)
+            
+            try:
+                # Create competition entry data
+                timestamp = datetime.now().isoformat()
+                competition_entry = {
+                    'timestamp': timestamp,
+                    'username': username,
+                    'phone_number': phone_number,
+                    'session_id': session_id,
+                    'card_data': card_data,
+                    'entry_type': 'competition',
+                    'status': 'submitted'
+                }
+                
+                # Store in S3 competition folder
+                competition_key = f"competition/{session_id}_entry_{timestamp.replace(':', '-').replace('.', '-')}.json"
+                
+                s3_client.put_object(
+                    Bucket=S3_BUCKET,
+                    Key=competition_key,
+                    Body=json.dumps(competition_entry, indent=2),
+                    ContentType='application/json'
+                )
+                
+                logger.info(f"✅ Competition entry stored: {competition_key}")
+                
+                return create_success_response({
+                    'message': 'Competition entry submitted successfully!',
+                    'entry_id': competition_key,
+                    'timestamp': timestamp,
+                    'phone_number': phone_number[:3] + '***' + phone_number[-2:] if len(phone_number) > 5 else '***'
+                })
+                
+            except Exception as e:
+                logger.error(f"❌ Competition entry failed: {str(e)}")
+                return create_error_response(f"Failed to submit competition entry: {str(e)}", 500)
+
         # HEALTH CHECK ENDPOINT
         elif action == 'health':
             return create_success_response({
                 'status': 'healthy',
                 'service': 'SnapMagic AI - Trading Cards & Videos',
                 'version': '5.0',
-                'features': ['automatic_override_detection', 'dynamic_card_numbering', 'unified_logic'],
-                'timestamp': '2025-07-12T18:30:00Z'
+                'features': ['automatic_override_detection', 'dynamic_card_numbering', 'unified_logic', 'competition_entry', 'linkedin_sharing'],
+                'timestamp': '2025-07-13T13:00:00Z'
             })
         
         else:
