@@ -1644,20 +1644,46 @@ class SnapMagicApp {
      * Open LinkedIn with clean post text (no URL)
      */
     openLinkedInForSharing() {
+        // Get event name from template configuration
+        let eventName = 'AWS events'; // Default fallback
+        
+        try {
+            if (window.SNAPMAGIC_CONFIG && window.SNAPMAGIC_CONFIG.TEMPLATE_CONFIG) {
+                let templateConfig;
+                if (typeof window.SNAPMAGIC_CONFIG.TEMPLATE_CONFIG === 'string') {
+                    templateConfig = JSON.parse(window.SNAPMAGIC_CONFIG.TEMPLATE_CONFIG);
+                } else {
+                    templateConfig = window.SNAPMAGIC_CONFIG.TEMPLATE_CONFIG;
+                }
+                
+                if (templateConfig && templateConfig.eventName) {
+                    eventName = templateConfig.eventName;
+                }
+            }
+        } catch (error) {
+            console.warn('Could not parse template config for event name:', error);
+        }
+        
+        console.log('🎯 Using event name for LinkedIn:', eventName);
+        
         // Generate clean share text without URL
         const userPrompt = this.elements.promptInput.value.trim();
         let shareText = '';
         
+        // Create hashtag version of event name (remove spaces and special characters)
+        const eventHashtag = eventName.replace(/[^a-zA-Z0-9]/g, '');
+        
         if (userPrompt && userPrompt.length > 0) {
-            shareText = `🎴✨ Just created my AI-powered trading card with SnapMagic! "${userPrompt}" - Generated using Amazon Bedrock Nova Canvas at AWS events. #SnapMagic #AI #TradingCards #AWS #Innovation`;
+            shareText = `🎴✨ Just created my AI-powered trading card with SnapMagic! "${userPrompt}" - Generated using Amazon Bedrock Nova Canvas at ${eventName}. #SnapMagic #AI #TradingCards #${eventHashtag} #AmazonBedrock #Nova #Innovation`;
         } else {
-            shareText = '🎴✨ Just created my AI-powered trading card with SnapMagic! Check out this awesome card generated using Amazon Bedrock Nova Canvas at AWS events. #SnapMagic #AI #TradingCards #AWS #Innovation';
+            shareText = `🎴✨ Just created my AI-powered trading card with SnapMagic! Check out this awesome card generated using Amazon Bedrock Nova Canvas at ${eventName}. #SnapMagic #AI #TradingCards #${eventHashtag} #AmazonBedrock #Nova #Innovation`;
         }
         
         // LinkedIn sharing URL with text only (no URL parameter)
         const linkedInUrl = `https://www.linkedin.com/sharing/share-offsite/?text=${encodeURIComponent(shareText)}`;
         
         console.log('🔗 Opening LinkedIn with clean text (no URL)');
+        console.log('📝 Share text:', shareText);
         window.open(linkedInUrl, '_blank', 'width=600,height=600,scrollbars=yes,resizable=yes');
         
         // Close the popup
