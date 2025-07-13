@@ -648,6 +648,8 @@ def lambda_handler(event, context):
                 action = 'get_video_status'
             elif body_action == 'apply_override':
                 action = 'apply_override'
+            elif body_action == 'enter_competition':
+                action = 'enter_competition'
             else:
                 action = 'transform_card'  # Default to card generation
         elif '/api/store-card' in request_path:
@@ -1226,10 +1228,15 @@ def lambda_handler(event, context):
                 # Check for duplicate phone number entries
                 logger.info(f"🔍 Checking for duplicate phone number: {phone_number}")
                 
+                # Import boto3 and create S3 client
+                import boto3
+                s3_client = boto3.client('s3')
+                bucket_name = os.environ.get('S3_BUCKET_NAME')
+                
                 # List all competition entries to check for duplicates
                 try:
                     response = s3_client.list_objects_v2(
-                        Bucket=S3_BUCKET,
+                        Bucket=bucket_name,
                         Prefix='competition/'
                     )
                     
@@ -1253,34 +1260,35 @@ def lambda_handler(event, context):
                 ip_override = f"IP_override{current_override}"
                 
                 # Create timestamp for filename
+                from datetime import datetime
                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
                 
-                # Create competition filename matching card pattern: IP_override1_card_1_phone_1234567890_20250713_140000.json
-                competition_filename = f"{ip_override}_card_{current_card_number}_phone_{phone_number}_{timestamp}.json"
+                # Extract the actual card image from card_data
+                card_image_data = None
+                if card_data and 'result' in card_data and 'image_data' in card_data['result']:
+                    card_image_data = card_data['result']['image_data']
+                elif card_data and 'image_data' in card_data:
+                    card_image_data = card_data['image_data']
+                
+                if not card_image_data:
+                    return create_error_response("No card image found to submit", 400)
+                
+                # Create competition filename: IP_override1_card_1_phone_1234567890_20250713_140000.png
+                competition_filename = f"{ip_override}_card_{current_card_number}_phone_{phone_number}_{timestamp}.png"
                 competition_key = f"competition/{competition_filename}"
                 
-                # Create competition entry data
-                competition_entry = {
-                    'timestamp': datetime.now().isoformat(),
-                    'username': username,
-                    'phone_number': phone_number,
-                    'ip_override': ip_override,
-                    'card_number': current_card_number,
-                    'card_data': card_data,
-                    'entry_type': 'competition',
-                    'status': 'submitted',
-                    'filename': competition_filename
-                }
+                # Store ONLY the card image in S3 competition folder
+                import base64
+                image_bytes = base64.b64decode(card_image_data)
                 
-                # Store in S3 competition folder
                 s3_client.put_object(
-                    Bucket=S3_BUCKET,
+                    Bucket=bucket_name,
                     Key=competition_key,
-                    Body=json.dumps(competition_entry, indent=2),
-                    ContentType='application/json'
+                    Body=image_bytes,
+                    ContentType='image/png'
                 )
                 
-                logger.info(f"✅ Competition entry stored: {competition_key}")
+                logger.info(f"✅ Competition card stored: {competition_key}")
                 
                 return create_success_response({
                     'message': 'Competition entry submitted successfully!',
