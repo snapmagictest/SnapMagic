@@ -1318,7 +1318,8 @@ def lambda_handler(event, context):
                 logger.info(f"✅ Competition card stored: {competition_key}")
                 
                 return create_success_response({
-                    'message': 'Competition entry submitted successfully!',
+                    'success': True,
+                    'message': 'Entry submitted successfully! Good luck in the competition!',
                     'entry_filename': competition_filename,
                     'timestamp': timestamp,
                     'phone_number': phone_number[:3] + '***' + phone_number[-2:] if len(phone_number) > 5 else '***',

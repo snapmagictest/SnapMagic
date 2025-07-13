@@ -1195,6 +1195,52 @@ class SnapMagicApp {
             document.head.appendChild(style);
         }
     }
+
+    showSuccess(message) {
+        // Create modern success notification
+        const successDiv = document.createElement('div');
+        successDiv.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(45deg, #38a169, #2f855a);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            z-index: 3000;
+            max-width: 450px;
+            font-weight: 500;
+            animation: slideIn 0.3s ease;
+            line-height: 1.5;
+        `;
+        
+        // Handle multi-line messages by converting \n to <br>
+        const formattedMessage = message.replace(/\n/g, '<br>');
+        
+        successDiv.innerHTML = `
+            <div style="display: flex; align-items: flex-start; gap: 0.8rem;">
+                <span style="font-size: 1.2rem; margin-top: 0.1rem;">🎉</span>
+                <div style="flex: 1;">
+                    ${formattedMessage}
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(successDiv);
+        
+        // Auto remove after 5 seconds
+        setTimeout(() => {
+            if (successDiv.parentNode) {
+                successDiv.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => {
+                    if (successDiv.parentNode) {
+                        document.body.removeChild(successDiv);
+                    }
+                }, 300);
+            }
+        }, 5000);
+    }
     
     // Name Input Modal Functions
     showNameInputModal() {
@@ -1434,6 +1480,9 @@ class SnapMagicApp {
                 console.log('✅ Competition entry submitted successfully');
                 this.elements.competitionModal.classList.add('hidden');
                 this.elements.phoneInput.value = '';
+                
+                // Show green success message
+                this.showSuccess(data.message || 'Entry submitted successfully! Good luck in the competition!');
                 
                 // Show success details with new IP-based filename
                 this.elements.competitionDetails.innerHTML = `
