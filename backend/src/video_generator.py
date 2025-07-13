@@ -152,7 +152,7 @@ class TradingCardVideoGenerator:
             logger.error(f"❌ Error checking video status via Bedrock API: {str(e)}")
             return self._create_error_response(f'Error checking video status: {str(e)}')
     
-    def store_video_with_session_filename(self, invocation_arn: str, session_id: str, prompt: str, username: str) -> Dict[str, Any]:
+    def store_video_with_session_filename(self, invocation_arn: str, session_id: str, prompt: str, username: str, card_number: int = 1) -> Dict[str, Any]:
         """
         Store completed video with session-based filename for usage tracking
         
@@ -161,6 +161,7 @@ class TradingCardVideoGenerator:
             session_id: Session identifier (IP + browser hash)
             prompt: Animation prompt used
             username: Authenticated username
+            card_number: The card number this video corresponds to
             
         Returns:
             Dictionary containing success status and session-based S3 key
@@ -197,8 +198,8 @@ class TradingCardVideoGenerator:
                 # Generate timestamp
                 timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
                 
-                # Create filename: IP_override1_card_1_video_2_TIMESTAMP.mp4
-                session_filename = f"{session_id}_card_1_video_{video_number}_{timestamp}.mp4"
+                # Create filename: IP_override1_card_2_video_2_TIMESTAMP.mp4 (using correct card number)
+                session_filename = f"{session_id}_card_{card_number}_video_{video_number}_{timestamp}.mp4"
             else:
                 # Fallback for old session format
                 existing_videos = self.s3_client.list_objects_v2(
@@ -207,8 +208,7 @@ class TradingCardVideoGenerator:
                 )
                 video_count = len(existing_videos.get('Contents', [])) + 1
                 timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-                session_filename = f"{session_id}_video_{video_count}_{timestamp}.mp4"
-                session_filename = f"{session_id}_video_{video_count}_{timestamp}.mp4"
+                session_filename = f"{session_id}_card_{card_number}_video_{video_count}_{timestamp}.mp4"
             session_s3_key = f"videos/{session_filename}"
             
             # Copy video from original Bedrock location to session-based location

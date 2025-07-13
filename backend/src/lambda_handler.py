@@ -278,6 +278,46 @@ def get_next_card_number_for_session(client_ip: str, override_number: int, file_
         logger.error(f"❌ Failed to get next card number: {str(e)}")
         return 1
 
+
+def get_current_card_number_for_session(client_ip: str, override_number: int) -> int:
+    """
+    Get the current (latest) card number for a specific override session
+    This is used when creating videos to match the card that was just generated
+    
+    Args:
+        client_ip: Client IP address
+        override_number: Override session number (1, 2, 3, etc.)
+        
+    Returns:
+        Current card number (the latest card that exists)
+    """
+    try:
+        import boto3
+        s3_client = boto3.client('s3')
+        bucket_name = os.environ.get('S3_BUCKET_NAME')
+        
+        if not bucket_name:
+            return 1
+        
+        # Count existing cards for this specific override session
+        session_prefix = f"{client_ip}_override{override_number}_card_"
+        
+        response = s3_client.list_objects_v2(
+            Bucket=bucket_name,
+            Prefix=f'cards/{session_prefix}'
+        )
+        
+        existing_count = len(response.get('Contents', []))
+        current_card_number = existing_count if existing_count > 0 else 1
+        
+        logger.info(f"📊 Current card number for IP {client_ip} override{override_number}: {current_card_number}")
+        
+        return current_card_number
+        
+    except Exception as e:
+        logger.error(f"❌ Failed to get current card number: {str(e)}")
+        return 1
+
 def create_standard_filename(session_id: str, file_type: str, extension: str) -> tuple[str, str]:
     """
     Create standardized filename with DYNAMIC card numbering - NO HARDCODING
@@ -1132,11 +1172,15 @@ def lambda_handler(event, context):
                     current_override = get_current_override_number(client_ip)
                     session_id_for_files = create_standard_session_id(client_ip, current_override)
                     
+                    # Get the current card number to match video to card
+                    current_card_number = get_current_card_number_for_session(client_ip, current_override)
+                    
                     storage_result = video_generator.store_video_with_session_filename(
                         invocation_arn, 
                         session_id_for_files, 
                         "Video generation", 
-                        username
+                        username,
+                        current_card_number
                     )
                     
                     if storage_result['success']:
