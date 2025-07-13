@@ -1414,7 +1414,7 @@ class SnapMagicApp {
             console.log('🏆 Submitting competition entry...');
             this.showProcessing('Submitting competition entry...');
 
-            const response = await fetch(`${window.SNAPMAGIC_CONFIG.API_URL}`, {
+            const response = await fetch(`${window.SNAPMAGIC_CONFIG.API_URL}api/transform-card`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
