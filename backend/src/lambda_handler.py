@@ -1373,10 +1373,21 @@ def lambda_handler(event, context):
                     sorted_objects = sorted(response['Contents'], key=lambda x: x['LastModified'], reverse=True)
                     
                     for obj in sorted_objects:
+                        # Generate presigned URL for secure access (1 hour expiration)
+                        try:
+                            presigned_url = s3_client.generate_presigned_url(
+                                'get_object',
+                                Params={'Bucket': bucket_name, 'Key': obj['Key']},
+                                ExpiresIn=3600  # 1 hour
+                            )
+                        except Exception as e:
+                            logger.error(f"❌ Failed to generate presigned URL for {obj['Key']}: {str(e)}")
+                            continue
+                        
                         # Create card data compatible with frontend gallery
                         card_data = {
-                            'finalImageSrc': f"https://s3.amazonaws.com/{bucket_name}/{obj['Key']}",
-                            'imageSrc': f"https://s3.amazonaws.com/{bucket_name}/{obj['Key']}",
+                            'finalImageSrc': presigned_url,
+                            'imageSrc': presigned_url,
                             's3_key': obj['Key'],
                             'filename': obj['Key'].split('/')[-1],
                             'timestamp': obj['LastModified'].isoformat(),
