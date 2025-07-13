@@ -327,6 +327,10 @@ class SnapMagicApp {
                 
                 // Username display removed for events
                 // this.elements.usernameDisplay.textContent = username;
+                
+                // Load existing cards from previous sessions
+                await this.loadExistingCards();
+                
                 this.hideProcessing();
                 this.showMainApp();
                 
@@ -1637,6 +1641,57 @@ class SnapMagicApp {
     jumpToCard(cardNumber) {
         const cardIndex = cardNumber - 1; // Convert to 0-based index
         this.showCardFromGallery(cardIndex);
+    }
+
+    /**
+     * Load existing cards from S3 for current session
+     */
+    async loadExistingCards() {
+        try {
+            console.log('📚 Loading existing cards from session...');
+            
+            const response = await fetch(`${this.apiUrl}/api/transform-card`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.authToken}`
+                },
+                body: JSON.stringify({ action: 'load_session_cards' })
+            });
+
+            const data = await response.json();
+            
+            if (data.success && data.cards && data.cards.length > 0) {
+                console.log(`✅ Found ${data.cards.length} existing cards`);
+                
+                // Load cards into gallery (newest first, so reverse to show oldest first in gallery)
+                this.userGallery.cards = data.cards.reverse();
+                this.userGallery.totalCards = data.cards.length;
+                this.userGallery.currentIndex = this.userGallery.totalCards - 1; // Show newest card
+                
+                // Show the most recent card
+                if (this.userGallery.totalCards > 0) {
+                    this.generatedCardData = this.userGallery.cards[this.userGallery.currentIndex];
+                    
+                    // Update the display
+                    const finalImageSrc = this.generatedCardData.finalImageSrc || this.generatedCardData.imageSrc;
+                    this.elements.resultContainer.innerHTML = `
+                        <img src="${finalImageSrc}" alt="Generated Trading Card" class="result-image">
+                    `;
+                    
+                    // Show gallery navigation
+                    this.updateGalleryDisplay();
+                    this.showGalleryNavigation();
+                    
+                    console.log(`🖼️ Displaying most recent card (${this.userGallery.currentIndex + 1} of ${this.userGallery.totalCards})`);
+                }
+            } else {
+                console.log('📭 No existing cards found for this session');
+            }
+        } catch (error) {
+            console.error('❌ Error loading existing cards:', error);
+            // Don't show error to user - just continue without loading cards
+        }
     }
 
     /**

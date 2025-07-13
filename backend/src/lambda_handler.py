@@ -650,6 +650,8 @@ def lambda_handler(event, context):
                 action = 'apply_override'
             elif body_action == 'enter_competition':
                 action = 'enter_competition'
+            elif body_action == 'load_session_cards':
+                action = 'load_session_cards'
             else:
                 action = 'transform_card'  # Default to card generation
         elif '/api/store-card' in request_path:
@@ -1330,6 +1332,70 @@ def lambda_handler(event, context):
             except Exception as e:
                 logger.error(f"❌ Competition entry failed: {str(e)}")
                 return create_error_response(f"Failed to submit competition entry: {str(e)}", 500)
+
+        # LOAD SESSION CARDS ENDPOINT
+        # ========================================
+        elif action == 'load_session_cards':
+            username = token_payload.get('username', 'unknown')
+            
+            # Get client IP
+            request_headers = event.get('headers', {})
+            client_ip = get_client_ip(request_headers)
+            
+            # Get current override number
+            current_override = get_current_override_number(client_ip)
+            session_id_for_files = create_standard_session_id(client_ip, current_override)
+            
+            logger.info(f"📚 Loading session cards for: {session_id_for_files}")
+            
+            try:
+                # Import boto3 and create S3 client
+                import boto3
+                s3_client = boto3.client('s3')
+                bucket_name = os.environ.get('S3_BUCKET_NAME')
+                
+                if not bucket_name:
+                    logger.error("❌ S3_BUCKET_NAME environment variable not set")
+                    return create_error_response("S3 bucket not configured", 500)
+                
+                # List all cards for this session: cards/{IP}_override{N}_*
+                cards_prefix = f"cards/{client_ip}_override{current_override}_"
+                logger.info(f"🔍 Searching for cards with prefix: {cards_prefix}")
+                
+                response = s3_client.list_objects_v2(
+                    Bucket=bucket_name,
+                    Prefix=cards_prefix
+                )
+                
+                cards = []
+                if 'Contents' in response:
+                    # Sort by last modified (newest first)
+                    sorted_objects = sorted(response['Contents'], key=lambda x: x['LastModified'], reverse=True)
+                    
+                    for obj in sorted_objects:
+                        # Create card data compatible with frontend gallery
+                        card_data = {
+                            'finalImageSrc': f"https://s3.amazonaws.com/{bucket_name}/{obj['Key']}",
+                            'imageSrc': f"https://s3.amazonaws.com/{bucket_name}/{obj['Key']}",
+                            's3_key': obj['Key'],
+                            'filename': obj['Key'].split('/')[-1],
+                            'timestamp': obj['LastModified'].isoformat(),
+                            'size': obj['Size']
+                        }
+                        cards.append(card_data)
+                
+                logger.info(f"✅ Found {len(cards)} cards for session")
+                
+                return create_success_response({
+                    'success': True,
+                    'cards': cards,
+                    'session_id': session_id_for_files,
+                    'total_cards': len(cards)
+                })
+                
+            except Exception as e:
+                logger.error(f"❌ Error loading session cards: {str(e)}")
+                return create_error_response('Failed to load session cards', 500)
 
         # HEALTH CHECK ENDPOINT
         elif action == 'health':
