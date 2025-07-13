@@ -1484,11 +1484,11 @@ class SnapMagicApp {
                 // Show green success message
                 this.showSuccess(data.message || 'Entry submitted successfully! Good luck in the competition!');
                 
-                // Show success details with new IP-based filename
+                // Show success details with clean, user-friendly information
                 this.elements.competitionDetails.innerHTML = `
                     <p><strong>Phone:</strong> ${data.phone_number || phoneNumber}</p>
                     <p><strong>Card:</strong> ${data.ip_override}_card_${data.card_number}</p>
-                    <p><strong>Entry File:</strong> ${data.entry_filename || 'Submitted'}</p>
+                    <p><strong>Status:</strong> Successfully submitted!</p>
                 `;
                 this.elements.competitionSuccessModal.classList.remove('hidden');
             } else {
