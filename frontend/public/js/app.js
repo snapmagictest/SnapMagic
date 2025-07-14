@@ -758,27 +758,33 @@ class SnapMagicApp {
         }
     }
 
-    handleDownloadCard() {
+    async handleDownloadCard() {
         if (!this.generatedCardData) return;
         
-        // Download the final composed card (with template) if available, otherwise raw Nova image
-        const imageSrc = this.generatedCardData.finalImageSrc || 
-                         this.generatedCardData.imageSrc || 
-                         `data:image/png;base64,${this.generatedCardData.result}`;
-        
-        const link = document.createElement('a');
-        link.href = imageSrc;
-        
-        // Generate filename with event name if available
-        const eventName = this.templateSystem?.templateConfig?.eventName || 'Event';
-        const sanitizedEventName = eventName.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
-        link.download = `snapmagic-${sanitizedEventName}-card-${Date.now()}.png`;
-        
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        
-        console.log('💾 Trading card downloaded');
+        try {
+            // Ensure we have the card data in the right format (works for both new and gallery cards)
+            const cardData = await this.ensureCardDataForActions();
+            
+            // Use base64 data for direct download (not presigned URL)
+            const imageSrc = `data:image/png;base64,${cardData.result}`;
+            
+            const link = document.createElement('a');
+            link.href = imageSrc;
+            
+            // Generate filename with event name if available
+            const eventName = this.templateSystem?.templateConfig?.eventName || 'Event';
+            const sanitizedEventName = eventName.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
+            link.download = `snapmagic-${sanitizedEventName}-card-${Date.now()}.png`;
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            console.log('💾 Trading card downloaded');
+        } catch (error) {
+            console.error('❌ Download failed:', error);
+            this.showError('Download failed. Please try again.');
+        }
     }
 
     handleCreateVideo() {
@@ -822,8 +828,20 @@ class SnapMagicApp {
             // Ensure we have the card data in the right format (works for both new and gallery cards)
             const cardData = await this.ensureCardDataForActions();
             
+            // For video generation, prefer raw Nova image over final composed card
+            let imageForVideo;
+            if (cardData.novaImageBase64) {
+                // Use raw Nova Canvas image for better video quality (newly generated cards)
+                imageForVideo = cardData.novaImageBase64;
+                console.log('🎬 Using raw Nova Canvas image for video generation');
+            } else {
+                // Use final card image for gallery cards (only option available)
+                imageForVideo = cardData.result;
+                console.log('🎬 Using final card image for video generation');
+            }
+            
             // Convert card image to letterboxed JPEG format for video generation
-            const letterboxedImage = await this.letterboxCardForVideo(cardData.result);
+            const letterboxedImage = await this.letterboxCardForVideo(imageForVideo);
             
             const requestBody = {
                 action: 'generate_video',
@@ -1655,8 +1673,12 @@ class SnapMagicApp {
             throw new Error('No card data available');
         }
 
+        console.log('🔍 Card data keys:', Object.keys(this.generatedCardData));
+        console.log('🔍 Has result field:', !!this.generatedCardData.result);
+        console.log('🔍 Result field length:', this.generatedCardData.result ? this.generatedCardData.result.length : 'N/A');
+
         // If this is a newly generated card, it already has .result (base64)
-        if (this.generatedCardData.result) {
+        if (this.generatedCardData.result && this.generatedCardData.result.length > 100) {
             console.log('✅ Using newly generated card data (has base64)');
             return this.generatedCardData;
         }
