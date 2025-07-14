@@ -566,41 +566,10 @@ class SnapMagicApp {
             
             this.showProcessing('Adding card to print queue...');
             
-            // Extract card image base64 from the generatedCardData object
-            // Use the same logic as the download function
-            let cardImageBase64 = '';
-            let imageSrc = '';
+            // Ensure we have the card data in the right format (works for both new and gallery cards)
+            const cardData = await this.ensureCardDataForActions();
             
-            if (this.generatedCardData.finalImageSrc) {
-                // Use final composed card (with template) if available
-                imageSrc = this.generatedCardData.finalImageSrc;
-                console.log('✅ Using final composed card image');
-            } else if (this.generatedCardData.imageSrc) {
-                // Use regular image source
-                imageSrc = this.generatedCardData.imageSrc;
-                console.log('✅ Using regular card image');
-            } else if (this.generatedCardData.result) {
-                // Use raw Nova Canvas result
-                imageSrc = `data:image/png;base64,${this.generatedCardData.result}`;
-                console.log('✅ Using raw Nova Canvas result');
-            } else {
-                throw new Error('No valid card image data found in generatedCardData object');
-            }
-            
-            // Extract base64 data from data URL
-            if (imageSrc.startsWith('data:image/')) {
-                cardImageBase64 = imageSrc.split(',')[1];
-            } else {
-                // If it's already base64, use it directly
-                cardImageBase64 = imageSrc;
-            }
-            
-            // Validate we have base64 data
-            if (!cardImageBase64 || cardImageBase64.length < 100) {
-                throw new Error('Invalid card image data. Please generate a new card and try again.');
-            }
-            
-            console.log('✅ Card image data prepared, length:', cardImageBase64.length);
+            console.log('✅ Card image data prepared, length:', cardData.result.length);
             
             const apiBaseUrl = window.SNAPMAGIC_CONFIG.API_URL;
             const endpoint = `${apiBaseUrl}api/print-card`;
@@ -614,7 +583,7 @@ class SnapMagicApp {
                 body: JSON.stringify({
                     action: 'print_card',
                     card_prompt: this.lastUsedPrompt || 'Generated card',
-                    card_image: cardImageBase64
+                    card_image: cardData.result
                 })
             });
 
@@ -850,8 +819,11 @@ class SnapMagicApp {
             const apiBaseUrl = window.SNAPMAGIC_CONFIG.API_URL;
             const endpoint = `${apiBaseUrl}api/transform-card`;
             
+            // Ensure we have the card data in the right format (works for both new and gallery cards)
+            const cardData = await this.ensureCardDataForActions();
+            
             // Convert card image to letterboxed JPEG format for video generation
-            const letterboxedImage = await this.letterboxCardForVideo(this.generatedCardData.result);
+            const letterboxedImage = await this.letterboxCardForVideo(cardData.result);
             
             const requestBody = {
                 action: 'generate_video',
@@ -1511,6 +1483,9 @@ class SnapMagicApp {
             console.log('🏆 Submitting competition entry...');
             this.showProcessing('Submitting competition entry...');
 
+            // Ensure we have the card data in the right format (works for both new and gallery cards)
+            const cardData = await this.ensureCardDataForActions();
+
             const response = await fetch(`${window.SNAPMAGIC_CONFIG.API_URL}api/transform-card`, {
                 method: 'POST',
                 headers: {
@@ -1520,7 +1495,7 @@ class SnapMagicApp {
                 body: JSON.stringify({
                     action: 'enter_competition',
                     phone_number: phoneNumber,
-                    card_data: this.generatedCardData
+                    card_data: cardData
                 })
             });
 
@@ -1644,6 +1619,64 @@ class SnapMagicApp {
     jumpToCard(cardNumber) {
         const cardIndex = cardNumber - 1; // Convert to 0-based index
         this.showCardFromGallery(cardIndex);
+    }
+
+    /**
+     * Convert image URL to base64 (for gallery cards that only have URLs)
+     */
+    async convertImageUrlToBase64(imageUrl) {
+        try {
+            console.log('🔄 Converting image URL to base64 for processing...');
+            
+            const response = await fetch(imageUrl);
+            const blob = await response.blob();
+            
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => {
+                    // Remove the data:image/png;base64, prefix to get just the base64 data
+                    const base64 = reader.result.split(',')[1];
+                    resolve(base64);
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(blob);
+            });
+        } catch (error) {
+            console.error('❌ Failed to convert image URL to base64:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Ensure gallery card has the data needed for button functions
+     */
+    async ensureCardDataForActions() {
+        if (!this.generatedCardData) {
+            throw new Error('No card data available');
+        }
+
+        // If this is a newly generated card, it already has .result (base64)
+        if (this.generatedCardData.result) {
+            console.log('✅ Using newly generated card data (has base64)');
+            return this.generatedCardData;
+        }
+
+        // If this is a gallery card, it only has URLs - need to convert to base64
+        if (this.generatedCardData.finalImageSrc || this.generatedCardData.imageSrc) {
+            console.log('🔄 Converting gallery card URL to base64 for processing...');
+            
+            const imageUrl = this.generatedCardData.finalImageSrc || this.generatedCardData.imageSrc;
+            const base64Data = await this.convertImageUrlToBase64(imageUrl);
+            
+            // Create a complete card data object with base64
+            return {
+                ...this.generatedCardData,
+                result: base64Data,
+                finalImageBase64: base64Data
+            };
+        }
+
+        throw new Error('Card data missing required image information');
     }
 
     /**
