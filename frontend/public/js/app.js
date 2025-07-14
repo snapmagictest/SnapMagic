@@ -1629,6 +1629,9 @@ class SnapMagicApp {
             <img src="${finalImageSrc}" alt="Generated Trading Card" class="result-image">
         `;
         
+        // Show action buttons for gallery cards (same as newly generated cards)
+        this.elements.resultActions.classList.remove('hidden');
+        
         // Update gallery navigation display
         this.updateGalleryDisplay();
         
@@ -1679,6 +1682,9 @@ class SnapMagicApp {
                     this.elements.resultContainer.innerHTML = `
                         <img src="${finalImageSrc}" alt="Generated Trading Card" class="result-image">
                     `;
+                    
+                    // Show action buttons for loaded gallery cards
+                    this.elements.resultActions.classList.remove('hidden');
                     
                     // Show gallery navigation
                     this.updateGalleryDisplay();
