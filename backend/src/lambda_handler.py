@@ -610,7 +610,7 @@ def load_event_credentials() -> Dict[str, str]:
 card_generator = CardGenerator()
 video_generator = VideoGenerator()
 
-def handle_generate_prompt():
+def handle_generate_prompt(event):
     """Generate creative prompt using Nova Lite - exact GitHub implementation"""
     try:
         import boto3
@@ -693,7 +693,7 @@ def handle_generate_prompt():
             'fallback': True
         })
 
-def handle_optimize_prompt():
+def handle_optimize_prompt(event):
     """Optimize user's existing prompt using Nova Lite"""
     try:
         import boto3
@@ -752,6 +752,13 @@ def handle_optimize_prompt():
     except Exception as bedrock_error:
         logger.error(f"❌ Bedrock error: {str(bedrock_error)}")
         # Fallback to simple enhancement
+        try:
+            # Get user prompt for fallback
+            body = json.loads(event.get('body', '{}'))
+            user_prompt = body.get('user_prompt', '').strip()
+        except:
+            user_prompt = "unknown prompt"
+            
         fallback_prompt = f"{user_prompt}, highly detailed, professional quality, dramatic lighting, vibrant colors, masterpiece"
         
         return create_success_response({
@@ -1578,13 +1585,13 @@ def lambda_handler(event, context):
         # GENERATE PROMPT ENDPOINT
         # ========================================
         elif action == 'generate_prompt':
-            return handle_generate_prompt()
+            return handle_generate_prompt(event)
 
         # ========================================
         # OPTIMIZE PROMPT ENDPOINT
         # ========================================
         elif action == 'optimize_prompt':
-            return handle_optimize_prompt()
+            return handle_optimize_prompt(event)
 
         # HEALTH CHECK ENDPOINT
         elif action == 'health':
