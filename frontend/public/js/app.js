@@ -160,6 +160,10 @@ class SnapMagicApp {
         this.elements.createVideoBtn.addEventListener('click', () => this.handleCreateVideo());
         this.elements.createAnotherBtn.addEventListener('click', () => this.handleCreateAnother());
         
+        // Prompt flow buttons
+        document.getElementById('generatePromptBtn').addEventListener('click', () => this.handleGeneratePrompt());
+        document.getElementById('optimizePromptBtn').addEventListener('click', () => this.handleOptimizePrompt());
+        
         // Competition and sharing
         this.elements.enterCompetitionBtn.addEventListener('click', () => this.handleEnterCompetition());
         this.elements.shareLinkedInBtn.addEventListener('click', () => this.handleShareLinkedIn());
@@ -660,6 +664,124 @@ class SnapMagicApp {
             }
         };
     }
+
+    // ========================================
+    // PROMPT FLOW FUNCTIONS
+    // ========================================
+
+    async handleGeneratePrompt() {
+        const generateBtn = document.getElementById('generatePromptBtn');
+        const promptInput = this.elements.promptInput;
+        
+        try {
+            // Show loading state
+            generateBtn.disabled = true;
+            generateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+            
+            console.log('🎨 Generating creative prompt...');
+            
+            const response = await fetch(`${this.getApiUrl()}/api/transform-card`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.authToken}`
+                },
+                body: JSON.stringify({
+                    action: 'generate_prompt'
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                // Fill the prompt input with generated prompt
+                promptInput.value = data.prompt;
+                
+                // Show success feedback
+                this.showNotification('✨ Creative prompt generated!', 'success');
+                
+                // Optional: Show what seed was used (for debugging)
+                if (data.seed_used) {
+                    console.log('🎯 Seed concept used:', data.seed_used);
+                }
+                
+                // Show fallback indicator if needed
+                if (data.fallback) {
+                    this.showNotification('⚠️ Using fallback prompt generation', 'warning');
+                }
+            } else {
+                throw new Error(data.error || 'Failed to generate prompt');
+            }
+            
+        } catch (error) {
+            console.error('❌ Generate prompt error:', error);
+            this.showNotification('Failed to generate prompt. Please try again.', 'error');
+        } finally {
+            // Reset button state
+            generateBtn.disabled = false;
+            generateBtn.innerHTML = '<i class="fas fa-magic"></i> Generate Prompt';
+        }
+    }
+
+    async handleOptimizePrompt() {
+        const optimizeBtn = document.getElementById('optimizePromptBtn');
+        const promptInput = this.elements.promptInput;
+        const userPrompt = promptInput.value.trim();
+        
+        if (!userPrompt) {
+            this.showNotification('Please enter a prompt to optimize first', 'warning');
+            return;
+        }
+        
+        try {
+            // Show loading state
+            optimizeBtn.disabled = true;
+            optimizeBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Optimizing...';
+            
+            console.log('🔧 Optimizing prompt:', userPrompt);
+            
+            const response = await fetch(`${this.getApiUrl()}/api/transform-card`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.authToken}`
+                },
+                body: JSON.stringify({
+                    action: 'optimize_prompt',
+                    user_prompt: userPrompt
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                // Replace the prompt input with optimized version
+                promptInput.value = data.prompt;
+                
+                // Show success feedback
+                this.showNotification('✨ Prompt optimized and enhanced!', 'success');
+                
+                // Show fallback indicator if needed
+                if (data.fallback) {
+                    this.showNotification('⚠️ Using fallback prompt optimization', 'warning');
+                }
+            } else {
+                throw new Error(data.error || 'Failed to optimize prompt');
+            }
+            
+        } catch (error) {
+            console.error('❌ Optimize prompt error:', error);
+            this.showNotification('Failed to optimize prompt. Please try again.', 'error');
+        } finally {
+            // Reset button state
+            optimizeBtn.disabled = false;
+            optimizeBtn.innerHTML = '<i class="fas fa-wand-magic-sparkles"></i> Optimize Prompt';
+        }
+    }
+
+    // ========================================
+    // CARD GENERATION
+    // ========================================
 
     // Card Generation
     async handleGenerateCard() {

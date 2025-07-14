@@ -167,6 +167,7 @@ frontend:
               resources: [
                 `arn:aws:bedrock:${this.region}::foundation-model/${inputs.novaCanvasModel}`,
                 `arn:aws:bedrock:${this.region}::foundation-model/${inputs.novaReelModel}`,
+                `arn:aws:bedrock:${this.region}::foundation-model/${inputs.novaLiteModel}`,
                 `arn:aws:bedrock:${this.region}:${this.account}:async-invoke/*`  // Required for StartAsyncInvoke
               ]
             })
@@ -218,6 +219,7 @@ frontend:
         S3_BUCKET_NAME: videoStorageBucket.bucketName,  // Use same bucket for cards storage
         NOVA_CANVAS_MODEL: inputs.novaCanvasModel,
         NOVA_REEL_MODEL: inputs.novaReelModel,
+        NOVA_LITE_MODEL: inputs.novaLiteModel,
         OVERRIDE_CODE: inputs.overrideCode || 'snap',
         // Template configuration from secrets.json
         TEMPLATE_EVENT_NAME: inputs.cardTemplate?.eventName || 'AWS Event',

@@ -610,6 +610,157 @@ def load_event_credentials() -> Dict[str, str]:
 card_generator = CardGenerator()
 video_generator = VideoGenerator()
 
+def handle_generate_prompt():
+    """Generate creative prompt using Nova Lite - exact GitHub implementation"""
+    try:
+        import boto3
+        import json
+        import random
+        import os
+        
+        logger.info("🎨 Starting generate prompt")
+        
+        # Load seeds from file
+        seeds_path = os.path.join(os.path.dirname(__file__), 'seeds.json')
+        with open(seeds_path, 'r') as file:
+            data = json.load(file)
+        
+        if 'seeds' not in data or not isinstance(data['seeds'], list):
+            raise ValueError("Invalid seeds file format")
+        
+        # Pick random creative concept
+        random_concept = random.choice(data['seeds'])
+        logger.info(f"🎯 Selected concept: {random_concept[:50]}...")
+        
+        # Create enhancement prompt (exact GitHub template)
+        enhancement_prompt = f"""
+        Generate a creative image prompt that builds upon this concept: "{random_concept}"
+
+        Requirements:
+        - Create a new, expanded prompt without mentioning or repeating the original concept
+        - Focus on vivid visual details and artistic elements
+        - Keep the prompt under 1000 characters
+        - Do not include any meta-instructions or seed references
+        - Return only the new prompt text
+
+        Response Format:
+        [Just the new prompt text, nothing else]
+        """
+        
+        # Use Converse API (like GitHub repo)
+        bedrock_client = boto3.client('bedrock-runtime', region_name='us-east-1')
+        nova_lite_model = os.environ.get('NOVA_LITE_MODEL', 'amazon.nova-lite-v1:0')
+        
+        response = bedrock_client.converse(
+            modelId=nova_lite_model,
+            messages=[
+                {
+                    "role": "user",
+                    "content": [{"text": enhancement_prompt}]
+                }
+            ]
+        )
+        
+        # Extract generated prompt
+        generated_prompt = response['output']['message']['content'][0]['text'].strip()
+        
+        logger.info(f"✅ Generated prompt: {generated_prompt[:100]}...")
+        
+        return create_success_response({
+            'success': True,
+            'prompt': generated_prompt,
+            'seed_used': random_concept
+        })
+        
+    except Exception as bedrock_error:
+        logger.error(f"❌ Bedrock error: {str(bedrock_error)}")
+        # Fallback with simple enhancement
+        try:
+            # Still try to get a random concept for fallback
+            seeds_path = os.path.join(os.path.dirname(__file__), 'seeds.json')
+            with open(seeds_path, 'r') as file:
+                data = json.load(file)
+            random_concept = random.choice(data['seeds'])
+        except:
+            random_concept = "A surreal, artistic landscape"
+        
+        fallback_prompt = f"A detailed, artistic rendering of {random_concept}, with vivid colors, dramatic lighting, and intricate details"
+        
+        return create_success_response({
+            'success': True,
+            'prompt': fallback_prompt,
+            'seed_used': random_concept,
+            'fallback': True
+        })
+
+def handle_optimize_prompt():
+    """Optimize user's existing prompt using Nova Lite"""
+    try:
+        import boto3
+        import json
+        
+        # Get request body
+        body = json.loads(event.get('body', '{}'))
+        user_prompt = body.get('user_prompt', '').strip()
+        
+        if not user_prompt:
+            return create_error_response("Please provide a prompt to optimize", 400)
+        
+        logger.info(f"🔧 Optimizing prompt: {user_prompt[:50]}...")
+        
+        # Create optimization prompt template
+        optimization_prompt = f"""
+        Take this image prompt and enhance it to be more detailed, artistic, and visually compelling: "{user_prompt}"
+
+        Requirements:
+        - Keep the core concept and meaning intact
+        - Add vivid visual details, artistic elements, and atmospheric descriptions
+        - Enhance with lighting, color, texture, and composition details
+        - Make it more specific and evocative
+        - Keep under 1000 characters
+        - Return only the enhanced prompt text
+
+        Response Format:
+        [Just the enhanced prompt text, nothing else]
+        """
+        
+        # Use Converse API
+        bedrock_client = boto3.client('bedrock-runtime', region_name='us-east-1')
+        nova_lite_model = os.environ.get('NOVA_LITE_MODEL', 'amazon.nova-lite-v1:0')
+        
+        response = bedrock_client.converse(
+            modelId=nova_lite_model,
+            messages=[
+                {
+                    "role": "user",
+                    "content": [{"text": optimization_prompt}]
+                }
+            ]
+        )
+        
+        # Extract optimized prompt
+        optimized_prompt = response['output']['message']['content'][0]['text'].strip()
+        
+        logger.info(f"✅ Optimized prompt: {optimized_prompt[:100]}...")
+        
+        return create_success_response({
+            'success': True,
+            'prompt': optimized_prompt,
+            'original_prompt': user_prompt
+        })
+        
+    except Exception as bedrock_error:
+        logger.error(f"❌ Bedrock error: {str(bedrock_error)}")
+        # Fallback to simple enhancement
+        fallback_prompt = f"{user_prompt}, highly detailed, professional quality, dramatic lighting, vibrant colors, masterpiece"
+        
+        return create_success_response({
+            'success': True,
+            'prompt': fallback_prompt,
+            'original_prompt': user_prompt,
+            'fallback': True
+        })
+
 def lambda_handler(event, context):
     """
     SnapMagic Lambda Handler with Simplified Override System
@@ -652,6 +803,10 @@ def lambda_handler(event, context):
                 action = 'enter_competition'
             elif body_action == 'load_session_cards':
                 action = 'load_session_cards'
+            elif body_action == 'generate_prompt':
+                action = 'generate_prompt'
+            elif body_action == 'optimize_prompt':
+                action = 'optimize_prompt'
             else:
                 action = 'transform_card'  # Default to card generation
         elif '/api/store-card' in request_path:
@@ -1418,6 +1573,18 @@ def lambda_handler(event, context):
             except Exception as e:
                 logger.error(f"❌ Error loading session cards: {str(e)}")
                 return create_error_response('Failed to load session cards', 500)
+
+        # ========================================
+        # GENERATE PROMPT ENDPOINT
+        # ========================================
+        elif action == 'generate_prompt':
+            return handle_generate_prompt()
+
+        # ========================================
+        # OPTIMIZE PROMPT ENDPOINT
+        # ========================================
+        elif action == 'optimize_prompt':
+            return handle_optimize_prompt()
 
         # HEALTH CHECK ENDPOINT
         elif action == 'health':

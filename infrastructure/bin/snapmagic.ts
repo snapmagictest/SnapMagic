@@ -33,6 +33,7 @@ function loadSecretsConfig(): DeploymentInputs | null {
         overrideCode: secrets.app.overrideCode || 'snap',  // Staff override code
         novaCanvasModel: secrets.models.novaCanvas,
         novaReelModel: secrets.models.novaReel,
+        novaLiteModel: secrets.models.novaLite,
         cardTemplate: secrets.cardTemplate || undefined,  // Include cardTemplate section
         limits: secrets.limits || undefined  // Include limits section
       };
@@ -129,7 +130,8 @@ function collectInputsSync(): DeploymentInputs {
       basicAuthUsername,
       basicAuthPassword,
       novaCanvasModel: 'amazon.nova-canvas-v1:0',  // Default values for interactive mode
-      novaReelModel: 'amazon.nova-reel-v1:1'
+      novaReelModel: 'amazon.nova-reel-v1:1',
+      novaLiteModel: 'amazon.nova-lite-v1:0'
     };
   } catch (error) {
     console.log('\n❌ Input collection failed:', (error as Error).message);
@@ -158,7 +160,8 @@ if (isDestroy) {
     region: 'us-east-1',
     enableBasicAuth: false,
     novaCanvasModel: 'amazon.nova-canvas-v1:0',
-    novaReelModel: 'amazon.nova-reel-v1:1'
+    novaReelModel: 'amazon.nova-reel-v1:1',
+    novaLiteModel: 'amazon.nova-lite-v1:0'
   };
 } else {
   // For deploy operations, try secrets.json first, then fallback to interactive
@@ -178,7 +181,8 @@ if (isDestroy) {
       basicAuthUsername: process.env.SNAPMAGIC_AUTH_USERNAME || 'admin',
       basicAuthPassword: process.env.SNAPMAGIC_AUTH_PASSWORD,
       novaCanvasModel: process.env.NOVA_CANVAS_MODEL || 'amazon.nova-canvas-v1:0',
-      novaReelModel: process.env.NOVA_REEL_MODEL || 'amazon.nova-reel-v1:1'
+      novaReelModel: process.env.NOVA_REEL_MODEL || 'amazon.nova-reel-v1:1',
+      novaLiteModel: process.env.NOVA_LITE_MODEL || 'amazon.nova-lite-v1:0'
     };
   } else if (process.env.CI || process.env.GITHUB_ACTIONS || process.env.CDK_SKIP_INPUTS) {
     throw new Error('❌ Interactive input collection not supported in CI/CD. Please use secrets.json or environment variables.');

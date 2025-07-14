@@ -964,6 +964,78 @@
             color: var(--text-muted);
         }
 
+        /* Prompt Flow UI Styles */
+        .prompt-container {
+            width: 100%;
+        }
+
+        .prompt-flow-buttons {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+
+        .prompt-flow-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+        }
+
+        .prompt-flow-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .prompt-flow-btn:active {
+            transform: translateY(0);
+        }
+
+        .prompt-flow-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .prompt-flow-btn i {
+            font-size: 16px;
+        }
+
+        .prompt-flow-divider {
+            color: var(--text-muted);
+            font-size: 14px;
+            font-style: italic;
+            margin: 0 8px;
+        }
+
+        @media (max-width: 768px) {
+            .prompt-flow-buttons {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .prompt-flow-btn {
+                justify-content: center;
+            }
+            
+            .prompt-flow-divider {
+                text-align: center;
+                margin: 8px 0;
+            }
+        }
+
         /* Override Code Input */
         .override-code-input {
             width: 100%;
@@ -1617,7 +1689,19 @@
                     <div class="input-section">
                         <h2 class="section-title">Create Your Trading Card</h2>
                         
-                        <textarea id="promptInput" class="prompt-input" placeholder="Describe your trading card... (e.g., 'A magical wizard casting spells in an enchanted forest')"></textarea>
+                        <!-- Prompt Input with Three Flow Options -->
+                        <div class="prompt-container">
+                            <div class="prompt-flow-buttons">
+                                <button id="generatePromptBtn" class="prompt-flow-btn" title="Generate creative prompt using AI">
+                                    <i class="fas fa-magic"></i> Generate Prompt
+                                </button>
+                                <button id="optimizePromptBtn" class="prompt-flow-btn" title="Enhance your existing prompt with AI">
+                                    <i class="fas fa-wand-magic-sparkles"></i> Optimize Prompt
+                                </button>
+                                <div class="prompt-flow-divider">or type directly:</div>
+                            </div>
+                            <textarea id="promptInput" class="prompt-input" placeholder="Describe your trading card... (e.g., 'A magical wizard casting spells in an enchanted forest')"></textarea>
+                        </div>
                         
                         <!-- Example Prompts for Cards - After user input -->
                         <div class="example-prompts">
