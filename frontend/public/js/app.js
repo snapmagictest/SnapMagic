@@ -1650,7 +1650,8 @@ class SnapMagicApp {
         try {
             console.log('📚 Loading existing cards from session...');
             
-            const response = await fetch(`${this.apiUrl}/api/transform-card`, {
+            const apiBaseUrl = window.SNAPMAGIC_CONFIG.API_URL;
+            const response = await fetch(`${apiBaseUrl}api/transform-card`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
