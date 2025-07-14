@@ -1508,12 +1508,12 @@ class SnapMagicApp {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${this.authToken}`
+                    'Authorization': `Bearer ${this.currentUser.token}`
                 },
                 body: JSON.stringify({
                     action: 'enter_competition',
                     phone_number: phoneNumber,
-                    card_data: cardData
+                    card_data: cardData.result
                 })
             });
 
