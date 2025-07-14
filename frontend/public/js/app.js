@@ -680,7 +680,8 @@ class SnapMagicApp {
             
             console.log('🎨 Generating creative prompt...');
             
-            const response = await fetch(`${this.getApiUrl()}/api/transform-card`, {
+            const apiBaseUrl = window.SNAPMAGIC_CONFIG.API_URL;
+            const response = await fetch(`${apiBaseUrl}api/transform-card`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -740,7 +741,8 @@ class SnapMagicApp {
             
             console.log('🔧 Optimizing prompt:', userPrompt);
             
-            const response = await fetch(`${this.getApiUrl()}/api/transform-card`, {
+            const apiBaseUrl = window.SNAPMAGIC_CONFIG.API_URL;
+            const response = await fetch(`${apiBaseUrl}api/transform-card`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -1293,6 +1295,57 @@ class SnapMagicApp {
 
     hideProcessing() {
         this.elements.processingOverlay.style.display = 'none';
+    }
+
+    showNotification(message, type = 'info') {
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            z-index: 3000;
+            max-width: 400px;
+            animation: slideIn 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        `;
+        
+        // Set background color based on type
+        switch (type) {
+            case 'success':
+                notification.style.background = 'linear-gradient(45deg, #38a169, #2f855a)';
+                notification.innerHTML = `✅ ${message}`;
+                break;
+            case 'warning':
+                notification.style.background = 'linear-gradient(45deg, #d69e2e, #b7791f)';
+                notification.innerHTML = `⚠️ ${message}`;
+                break;
+            case 'error':
+                notification.style.background = 'linear-gradient(45deg, #e53e3e, #c53030)';
+                notification.innerHTML = `❌ ${message}`;
+                break;
+            default:
+                notification.style.background = 'linear-gradient(45deg, #3182ce, #2c5aa0)';
+                notification.innerHTML = `ℹ️ ${message}`;
+        }
+        
+        document.body.appendChild(notification);
+        
+        // Auto remove after 4 seconds
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        document.body.removeChild(notification);
+                    }
+                }, 300);
+            }
+        }, 4000);
     }
 
     showError(message) {
