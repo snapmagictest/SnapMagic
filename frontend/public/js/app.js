@@ -1513,7 +1513,7 @@ class SnapMagicApp {
                 body: JSON.stringify({
                     action: 'enter_competition',
                     phone_number: phoneNumber,
-                    card_data: cardData.result
+                    card_data: { result: cardData.result }  // Send as object with result field
                 })
             });
 
