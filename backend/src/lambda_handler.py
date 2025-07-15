@@ -813,9 +813,19 @@ def handle_generate_animation_prompt(event):
         [Just the animation prompt text, nothing else]
         """
         
+        # Decode base64 image data for Nova Lite
+        try:
+            image_bytes = base64.b64decode(card_image_base64)
+            logger.info(f"🖼️ Image decoded successfully, size: {len(image_bytes)} bytes")
+        except Exception as decode_error:
+            logger.error(f"❌ Failed to decode base64 image: {str(decode_error)}")
+            raise ValueError("Invalid base64 image data")
+        
         # Use Converse API with image
         bedrock_client = boto3.client('bedrock-runtime', region_name='us-east-1')
         nova_lite_model = os.environ.get('NOVA_LITE_MODEL', 'amazon.nova-lite-v1:0')
+        
+        logger.info(f"🤖 Calling Nova Lite model: {nova_lite_model}")
         
         response = bedrock_client.converse(
             modelId=nova_lite_model,
@@ -827,7 +837,7 @@ def handle_generate_animation_prompt(event):
                         {
                             "image": {
                                 "format": "png",
-                                "source": {"bytes": card_image_base64}
+                                "source": {"bytes": image_bytes}
                             }
                         }
                     ]
@@ -865,49 +875,111 @@ def handle_generate_animation_prompt(event):
         })
 
 def handle_optimize_animation_prompt(event):
-    """Optimize user's existing animation prompt using Nova Lite"""
+    """Optimize user's existing animation prompt using Nova Lite with card analysis"""
     try:
         import boto3
         import json
+        import base64
         
         # Get request body
         body = json.loads(event.get('body', '{}'))
         user_prompt = body.get('user_prompt', '').strip()
+        card_image_base64 = body.get('card_image', '').strip()
+        original_prompt = body.get('original_prompt', '').strip()
         
         if not user_prompt:
             return create_error_response("Please provide an animation prompt to optimize", 400)
         
-        logger.info(f"🔧 Optimizing animation prompt: {user_prompt[:50]}...")
+        logger.info(f"🔧 Optimizing animation prompt with card analysis...")
+        logger.info(f"📝 User prompt: {user_prompt[:50]}...")
+        logger.info(f"📝 Original card prompt: {original_prompt[:50]}...")
         
-        # Create optimization prompt template for animation
-        optimization_prompt = f"""
-        Take this animation prompt and enhance it to be more dynamic, visually compelling, and suitable for video generation: "{user_prompt}"
+        # Create optimization prompt template that combines user prompt + card analysis
+        if card_image_base64:
+            # Decode base64 image data for Nova Lite
+            try:
+                image_bytes = base64.b64decode(card_image_base64)
+                logger.info(f"🖼️ Image decoded for optimization, size: {len(image_bytes)} bytes")
+            except Exception as decode_error:
+                logger.error(f"❌ Failed to decode base64 image: {str(decode_error)}")
+                raise ValueError("Invalid base64 image data")
+            
+            optimization_prompt = f"""
+            You are optimizing an animation prompt by analyzing the trading card image and the user's intent.
 
-        Requirements:
-        - Keep the core animation concept intact
-        - Add specific visual effects, lighting, and movement details
-        - Make it more cinematic and engaging
-        - Focus on dynamic actions that work well in video
-        - Keep under 500 characters for video generation
-        - Ensure it describes motion and transformation, not static scenes
+            Original card prompt: "{original_prompt}"
+            User's animation idea: "{user_prompt}"
 
-        Response Format:
-        [Just the enhanced animation prompt text, nothing else]
-        """
-        
-        # Use Converse API
-        bedrock_client = boto3.client('bedrock-runtime', region_name='us-east-1')
-        nova_lite_model = os.environ.get('NOVA_LITE_MODEL', 'amazon.nova-lite-v1:0')
-        
-        response = bedrock_client.converse(
-            modelId=nova_lite_model,
-            messages=[
-                {
-                    "role": "user",
-                    "content": [{"text": optimization_prompt}]
-                }
-            ]
-        )
+            Based on the trading card image and the user's animation concept, create an enhanced animation prompt that:
+
+            Requirements:
+            - Combines the user's animation idea with what you see in the card
+            - Keeps the character/subject consistent with the card image
+            - Enhances the user's concept with specific visual details from the card
+            - Adds dynamic visual effects, lighting, and movement details
+            - Makes it more cinematic and engaging for video generation
+            - Keeps under 500 characters for video generation
+            - Focuses on motion and transformation, not static descriptions
+
+            Response Format:
+            [Just the enhanced animation prompt text, nothing else]
+            """
+            
+            # Use Converse API with image
+            bedrock_client = boto3.client('bedrock-runtime', region_name='us-east-1')
+            nova_lite_model = os.environ.get('NOVA_LITE_MODEL', 'amazon.nova-lite-v1:0')
+            
+            logger.info(f"🤖 Calling Nova Lite for optimization with card analysis: {nova_lite_model}")
+            
+            response = bedrock_client.converse(
+                modelId=nova_lite_model,
+                messages=[
+                    {
+                        "role": "user",
+                        "content": [
+                            {"text": optimization_prompt},
+                            {
+                                "image": {
+                                    "format": "png",
+                                    "source": {"bytes": image_bytes}
+                                }
+                            }
+                        ]
+                    }
+                ]
+            )
+        else:
+            # Fallback to text-only optimization if no image
+            optimization_prompt = f"""
+            Take this animation prompt and enhance it to be more dynamic, visually compelling, and suitable for video generation: "{user_prompt}"
+
+            Requirements:
+            - Keep the core animation concept intact
+            - Add specific visual effects, lighting, and movement details
+            - Make it more cinematic and engaging
+            - Focus on dynamic actions that work well in video
+            - Keep under 500 characters for video generation
+            - Ensure it describes motion and transformation, not static scenes
+
+            Response Format:
+            [Just the enhanced animation prompt text, nothing else]
+            """
+            
+            # Use Converse API without image
+            bedrock_client = boto3.client('bedrock-runtime', region_name='us-east-1')
+            nova_lite_model = os.environ.get('NOVA_LITE_MODEL', 'amazon.nova-lite-v1:0')
+            
+            logger.info(f"🤖 Calling Nova Lite for text-only optimization: {nova_lite_model}")
+            
+            response = bedrock_client.converse(
+                modelId=nova_lite_model,
+                messages=[
+                    {
+                        "role": "user",
+                        "content": [{"text": optimization_prompt}]
+                    }
+                ]
+            )
         
         # Extract optimized animation prompt
         optimized_prompt = response['output']['message']['content'][0]['text'].strip()
@@ -921,7 +993,8 @@ def handle_optimize_animation_prompt(event):
         })
         
     except Exception as bedrock_error:
-        logger.error(f"❌ Bedrock error: {str(bedrock_error)}")
+        logger.error(f"❌ Bedrock optimization error: {str(bedrock_error)}")
+        logger.error(f"❌ Full error details: {repr(bedrock_error)}")
         # Fallback to simple enhancement
         try:
             body = json.loads(event.get('body', '{}'))

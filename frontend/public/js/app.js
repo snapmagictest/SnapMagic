@@ -2244,6 +2244,11 @@ class SnapMagicApp {
             return;
         }
 
+        if (!this.generatedCardData) {
+            this.showError('Please select a card first');
+            return;
+        }
+
         const optimizeBtn = document.getElementById('optimizeAnimationPromptBtn');
         
         try {
@@ -2251,7 +2256,10 @@ class SnapMagicApp {
             optimizeBtn.disabled = true;
             optimizeBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Optimizing...';
             
-            console.log('🔧 Optimizing animation prompt...');
+            console.log('🔧 Optimizing animation prompt with card analysis...');
+            
+            // Get card data for analysis
+            const cardData = await this.ensureCardDataForActions();
             
             const apiBaseUrl = window.SNAPMAGIC_CONFIG.API_URL;
             const response = await fetch(`${apiBaseUrl}api/transform-card`, {
@@ -2262,7 +2270,9 @@ class SnapMagicApp {
                 },
                 body: JSON.stringify({
                     action: 'optimize_animation_prompt',
-                    user_prompt: userPrompt
+                    user_prompt: userPrompt,
+                    card_image: cardData.result,
+                    original_prompt: this.generatedCardData.prompt || 'Trading card character'
                 })
             });
             
@@ -2273,7 +2283,7 @@ class SnapMagicApp {
                 animationPrompt.value = data.optimized_prompt;
                 
                 // Show success feedback
-                this.showNotification('✨ Animation prompt optimized!', 'success');
+                this.showNotification('✨ Animation prompt optimized with card analysis!', 'success');
                 
                 console.log('✅ Animation prompt optimized:', data.optimized_prompt);
                 
