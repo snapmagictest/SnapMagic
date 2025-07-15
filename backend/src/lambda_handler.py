@@ -788,31 +788,32 @@ def handle_generate_animation_prompt(event):
         logger.info(f"🔍 Analyzing card for animation prompt generation...")
         logger.info(f"📝 Original prompt: {original_prompt[:50]}...")
         
-        # Create animation prompt generation template
+        # Create animation prompt generation template - PURE IMAGE ANALYSIS
         animation_prompt_template = f"""
-        You are analyzing a trading card image to create an animation prompt for a 6-second video that starts immediately from frame 1.
+        Analyze this trading card image and create an animation prompt for a 6-second video that starts immediately from frame 1.
 
-        Original card prompt: "{original_prompt}"
-
-        Based on this trading card image, generate a fast-paced animation prompt that brings the card to life in exactly 6 seconds. 
+        Your task:
+        1. Look at the trading card image and describe what you see
+        2. Based ONLY on what you visually observe in the image, create an animation prompt
+        3. Do NOT use any external context - only what is visible in the card
 
         CRITICAL Requirements:
         - Animation must start IMMEDIATELY from frame 1 - no buildup or delay
         - Must be fast-paced to fit all action within 6 seconds
         - Use phrases like "immediately", "instantly", "from frame 1", "rapidly"
-        - Describe quick, dynamic movements and transformations
-        - Include fast visual effects that happen quickly
-        - Keep the character/subject consistent with the card
+        - Describe quick, dynamic movements based on what you see in the card
+        - Include fast visual effects that would bring this specific image to life
+        - Keep the character/subject/elements consistent with what's shown in the card
         - Keep under 400 characters for video generation
-        - Focus on rapid motion and immediate transformation
+        - Focus on rapid motion and immediate transformation of what you observe
 
         Examples of good 6-second animation prompts:
-        - "From frame 1, character immediately steps forward with eyes instantly glowing, magical energy rapidly swirling and expanding around them"
-        - "Instantly, figure emerges from the card frame in 3D with immediate dramatic lighting effects and fast particle bursts"
+        - "From frame 1, the character immediately steps forward with eyes instantly glowing, magical energy rapidly swirling around them"
+        - "Instantly, the figure emerges from the card frame in 3D with immediate dramatic lighting effects and fast particle bursts"
         - "Eyes immediately glow intensely while power aura rapidly expands outward with quick particle effects and fast energy waves"
 
         Response Format:
-        [Just the fast-paced animation prompt text starting with immediate action, nothing else]
+        [Just the fast-paced animation prompt text based purely on what you see in the image, starting with immediate action, nothing else]
         """
         
         # Decode base64 image data for Nova Lite
@@ -907,27 +908,29 @@ def handle_optimize_animation_prompt(event):
                 raise ValueError("Invalid base64 image data")
             
             optimization_prompt = f"""
-            You are optimizing an animation prompt for a 6-second video that must start immediately from frame 1.
+            Analyze this trading card image and optimize the user's animation idea for a 6-second video that starts immediately from frame 1.
 
-            Original card prompt: "{original_prompt}"
             User's animation idea: "{user_prompt}"
 
-            Based on the trading card image and the user's animation concept, create an enhanced fast-paced animation prompt that:
+            Your task:
+            1. Look at the trading card image and observe what you see
+            2. Take the user's animation concept and enhance it based ONLY on what is visible in the card
+            3. Do NOT use any external context - only combine the user's idea with what you observe in the image
 
             CRITICAL Requirements:
             - Animation must start IMMEDIATELY from frame 1 - no buildup or delay
             - Must be fast-paced to fit all action within 6 seconds
             - Use phrases like "immediately", "instantly", "from frame 1", "rapidly"
             - Combines the user's animation idea with what you see in the card
-            - Keeps the character/subject consistent with the card image
-            - Enhances the user's concept with specific visual details from the card
-            - Adds fast dynamic visual effects, lighting, and movement details
+            - Keeps the character/subject consistent with what's shown in the card image
+            - Enhances the user's concept with specific visual details from what you observe
+            - Adds fast dynamic visual effects, lighting, and movement details based on the card
             - Makes it more cinematic and engaging for 6-second video generation
             - Keeps under 400 characters for video generation
             - Focuses on rapid motion and immediate transformation
 
             Response Format:
-            [Just the enhanced fast-paced animation prompt starting with immediate action, nothing else]
+            [Just the enhanced fast-paced animation prompt based on card observation + user idea, starting with immediate action, nothing else]
             """
             
             # Use Converse API with image
