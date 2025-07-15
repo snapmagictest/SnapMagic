@@ -768,6 +768,176 @@ def handle_optimize_prompt(event):
             'fallback': True
         })
 
+def handle_generate_animation_prompt(event):
+    """Generate animation prompt from card image using Nova Lite"""
+    try:
+        import boto3
+        import json
+        import base64
+        
+        logger.info("🎬 Starting generate animation prompt from card")
+        
+        # Get request body
+        body = json.loads(event.get('body', '{}'))
+        card_image_base64 = body.get('card_image', '').strip()
+        original_prompt = body.get('original_prompt', '').strip()
+        
+        if not card_image_base64:
+            return create_error_response("Please provide a card image", 400)
+        
+        logger.info(f"🔍 Analyzing card for animation prompt generation...")
+        logger.info(f"📝 Original prompt: {original_prompt[:50]}...")
+        
+        # Create animation prompt generation template
+        animation_prompt_template = f"""
+        You are analyzing a trading card image to create an animation prompt for video generation.
+
+        Original card prompt: "{original_prompt}"
+
+        Based on this trading card image, generate a creative animation prompt that would bring the card to life as a video. Focus on:
+
+        Requirements:
+        - Describe specific movements, actions, or transformations
+        - Include dynamic visual effects that would work well in video
+        - Keep the character/subject consistent with the card
+        - Make it engaging and visually compelling
+        - Keep under 500 characters for video generation
+        - Focus on what should happen in the animation, not static descriptions
+
+        Examples of good animation prompts:
+        - "Character steps forward with glowing eyes, magical energy swirling around them"
+        - "Figure emerges from the card frame in 3D with dramatic lighting effects"
+        - "Eyes glow intensely while power aura expands outward with particle effects"
+
+        Response Format:
+        [Just the animation prompt text, nothing else]
+        """
+        
+        # Use Converse API with image
+        bedrock_client = boto3.client('bedrock-runtime', region_name='us-east-1')
+        nova_lite_model = os.environ.get('NOVA_LITE_MODEL', 'amazon.nova-lite-v1:0')
+        
+        response = bedrock_client.converse(
+            modelId=nova_lite_model,
+            messages=[
+                {
+                    "role": "user",
+                    "content": [
+                        {"text": animation_prompt_template},
+                        {
+                            "image": {
+                                "format": "png",
+                                "source": {"bytes": card_image_base64}
+                            }
+                        }
+                    ]
+                }
+            ]
+        )
+        
+        # Extract generated animation prompt
+        animation_prompt = response['output']['message']['content'][0]['text'].strip()
+        
+        logger.info(f"✅ Generated animation prompt: {animation_prompt[:100]}...")
+        
+        return create_success_response({
+            'success': True,
+            'animation_prompt': animation_prompt,
+            'original_prompt': original_prompt
+        })
+        
+    except Exception as bedrock_error:
+        logger.error(f"❌ Bedrock error: {str(bedrock_error)}")
+        # Fallback with generic animation prompt
+        try:
+            body = json.loads(event.get('body', '{}'))
+            original_prompt = body.get('original_prompt', '').strip()
+        except:
+            original_prompt = "character"
+            
+        fallback_animation = f"Character from the card comes to life with glowing effects, stepping forward with dramatic lighting and magical energy swirling around them"
+        
+        return create_success_response({
+            'success': True,
+            'animation_prompt': fallback_animation,
+            'original_prompt': original_prompt,
+            'fallback': True
+        })
+
+def handle_optimize_animation_prompt(event):
+    """Optimize user's existing animation prompt using Nova Lite"""
+    try:
+        import boto3
+        import json
+        
+        # Get request body
+        body = json.loads(event.get('body', '{}'))
+        user_prompt = body.get('user_prompt', '').strip()
+        
+        if not user_prompt:
+            return create_error_response("Please provide an animation prompt to optimize", 400)
+        
+        logger.info(f"🔧 Optimizing animation prompt: {user_prompt[:50]}...")
+        
+        # Create optimization prompt template for animation
+        optimization_prompt = f"""
+        Take this animation prompt and enhance it to be more dynamic, visually compelling, and suitable for video generation: "{user_prompt}"
+
+        Requirements:
+        - Keep the core animation concept intact
+        - Add specific visual effects, lighting, and movement details
+        - Make it more cinematic and engaging
+        - Focus on dynamic actions that work well in video
+        - Keep under 500 characters for video generation
+        - Ensure it describes motion and transformation, not static scenes
+
+        Response Format:
+        [Just the enhanced animation prompt text, nothing else]
+        """
+        
+        # Use Converse API
+        bedrock_client = boto3.client('bedrock-runtime', region_name='us-east-1')
+        nova_lite_model = os.environ.get('NOVA_LITE_MODEL', 'amazon.nova-lite-v1:0')
+        
+        response = bedrock_client.converse(
+            modelId=nova_lite_model,
+            messages=[
+                {
+                    "role": "user",
+                    "content": [{"text": optimization_prompt}]
+                }
+            ]
+        )
+        
+        # Extract optimized animation prompt
+        optimized_prompt = response['output']['message']['content'][0]['text'].strip()
+        
+        logger.info(f"✅ Optimized animation prompt: {optimized_prompt[:100]}...")
+        
+        return create_success_response({
+            'success': True,
+            'optimized_prompt': optimized_prompt,
+            'original_prompt': user_prompt
+        })
+        
+    except Exception as bedrock_error:
+        logger.error(f"❌ Bedrock error: {str(bedrock_error)}")
+        # Fallback to simple enhancement
+        try:
+            body = json.loads(event.get('body', '{}'))
+            user_prompt = body.get('user_prompt', '').strip()
+        except:
+            user_prompt = "character animation"
+            
+        fallback_prompt = f"{user_prompt} with dramatic lighting, dynamic movement, glowing effects, and cinematic visual impact"
+        
+        return create_success_response({
+            'success': True,
+            'optimized_prompt': fallback_prompt,
+            'original_prompt': user_prompt,
+            'fallback': True
+        })
+
 def lambda_handler(event, context):
     """
     SnapMagic Lambda Handler with Simplified Override System
@@ -814,6 +984,10 @@ def lambda_handler(event, context):
                 action = 'generate_prompt'
             elif body_action == 'optimize_prompt':
                 action = 'optimize_prompt'
+            elif body_action == 'generate_animation_prompt':
+                action = 'generate_animation_prompt'
+            elif body_action == 'optimize_animation_prompt':
+                action = 'optimize_animation_prompt'
             else:
                 action = 'transform_card'  # Default to card generation
         elif '/api/store-card' in request_path:
@@ -1592,6 +1766,16 @@ def lambda_handler(event, context):
         # ========================================
         elif action == 'optimize_prompt':
             return handle_optimize_prompt(event)
+        
+        # GENERATE ANIMATION PROMPT FROM CARD
+        # ========================================
+        elif action == 'generate_animation_prompt':
+            return handle_generate_animation_prompt(event)
+        
+        # OPTIMIZE ANIMATION PROMPT
+        # ========================================
+        elif action == 'optimize_animation_prompt':
+            return handle_optimize_animation_prompt(event)
 
         # HEALTH CHECK ENDPOINT
         elif action == 'health':

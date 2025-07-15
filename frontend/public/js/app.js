@@ -102,6 +102,16 @@ class SnapMagicApp {
             createAnotherVideoBtn: document.getElementById('createAnotherVideoBtn'),
             backToCardBtn: document.getElementById('backToCardBtn'),
             
+            // Video gallery elements
+            videoSelectedCard: document.getElementById('videoSelectedCard'),
+            videoGalleryNavigation: document.getElementById('videoGalleryNavigation'),
+            videoGalleryInfo: document.getElementById('videoGalleryInfo'),
+            videoGalleryNumbers: document.getElementById('videoGalleryNumbers'),
+            videoGalleryPrevBtn: document.getElementById('videoGalleryPrevBtn'),
+            videoGalleryNextBtn: document.getElementById('videoGalleryNextBtn'),
+            generateAnimationPromptBtn: document.getElementById('generateAnimationPromptBtn'),
+            optimizeAnimationPromptBtn: document.getElementById('optimizeAnimationPromptBtn'),
+            
             // Processing overlay
             processingOverlay: document.getElementById('processingOverlay'),
             
@@ -170,6 +180,9 @@ class SnapMagicApp {
         
         // Gallery navigation
         this.setupGalleryNavigation();
+        
+        // Video gallery navigation
+        this.setupVideoGalleryNavigation();
         
         // Video generation
         this.elements.generateVideoBtn.addEventListener('click', () => this.handleGenerateVideo());
@@ -267,10 +280,13 @@ class SnapMagicApp {
     }
 
     updateVideoTab() {
-        if (this.generatedCardData) {
+        if (this.userGallery.totalCards > 0) {
+            // User has cards - show video controls and initialize gallery
             this.elements.videoSection.classList.add('hidden');
             this.elements.videoControls.classList.remove('hidden');
+            this.initializeVideoGallery();
         } else {
+            // No cards available - show message to generate cards first
             this.elements.videoSection.classList.remove('hidden');
             this.elements.videoControls.classList.add('hidden');
             this.elements.videoResult.classList.add('hidden');
@@ -405,6 +421,7 @@ class SnapMagicApp {
                     totalCards: 0
                 };
                 this.hideGalleryNavigation();
+                this.hideVideoGalleryNavigation();
                 this.generatedCardData = null;
                 
                 // Clear result container
@@ -1997,6 +2014,281 @@ class SnapMagicApp {
         const galleryNav = document.getElementById('galleryNavigation');
         if (galleryNav) {
             galleryNav.classList.add('hidden');
+        }
+    }
+
+    // ========================================
+    // VIDEO GALLERY NAVIGATION FUNCTIONS
+    // ========================================
+
+    /**
+     * Setup video gallery navigation event listeners
+     */
+    setupVideoGalleryNavigation() {
+        // Video gallery navigation buttons
+        const prevBtn = document.getElementById('videoGalleryPrevBtn');
+        const nextBtn = document.getElementById('videoGalleryNextBtn');
+        
+        if (prevBtn) {
+            prevBtn.addEventListener('click', () => this.navigateVideoGallery(-1));
+        }
+        
+        if (nextBtn) {
+            nextBtn.addEventListener('click', () => this.navigateVideoGallery(1));
+        }
+
+        // AI prompt generation buttons
+        const generateAnimationPromptBtn = document.getElementById('generateAnimationPromptBtn');
+        const optimizeAnimationPromptBtn = document.getElementById('optimizeAnimationPromptBtn');
+        
+        if (generateAnimationPromptBtn) {
+            generateAnimationPromptBtn.addEventListener('click', () => this.handleGenerateAnimationPrompt());
+        }
+        
+        if (optimizeAnimationPromptBtn) {
+            optimizeAnimationPromptBtn.addEventListener('click', () => this.handleOptimizeAnimationPrompt());
+        }
+    }
+
+    /**
+     * Navigate video gallery (previous/next)
+     */
+    navigateVideoGallery(direction) {
+        if (this.userGallery.totalCards <= 1) return;
+        
+        const newIndex = this.userGallery.currentIndex + direction;
+        
+        // Check bounds
+        if (newIndex >= 0 && newIndex < this.userGallery.totalCards) {
+            this.showVideoCardFromGallery(newIndex);
+        }
+    }
+
+    /**
+     * Show specific card from video gallery
+     */
+    showVideoCardFromGallery(cardIndex) {
+        if (cardIndex < 0 || cardIndex >= this.userGallery.totalCards) return;
+        
+        console.log(`🎬 Showing video card ${cardIndex + 1} of ${this.userGallery.totalCards}`);
+        
+        // Update current index
+        this.userGallery.currentIndex = cardIndex;
+        
+        // Load the selected card data
+        this.generatedCardData = this.userGallery.cards[cardIndex];
+        
+        // Update the video card display
+        const videoSelectedCard = document.getElementById('videoSelectedCard');
+        if (videoSelectedCard) {
+            const finalImageSrc = this.generatedCardData.finalImageSrc || 
+                                  this.generatedCardData.imageSrc || 
+                                  `data:image/png;base64,${this.generatedCardData.result}`;
+            
+            videoSelectedCard.src = finalImageSrc;
+            videoSelectedCard.alt = `Trading Card ${cardIndex + 1}`;
+        }
+        
+        // Update video gallery navigation display
+        this.updateVideoGalleryDisplay();
+        
+        console.log('✅ Video card switched - ready for animation');
+    }
+
+    /**
+     * Jump directly to specific card number in video gallery
+     */
+    jumpToVideoCard(cardNumber) {
+        const cardIndex = cardNumber - 1; // Convert to 0-based index
+        this.showVideoCardFromGallery(cardIndex);
+    }
+
+    /**
+     * Update video gallery navigation display
+     */
+    updateVideoGalleryDisplay() {
+        const galleryInfo = document.getElementById('videoGalleryInfo');
+        const galleryNumbers = document.getElementById('videoGalleryNumbers');
+        const prevBtn = document.getElementById('videoGalleryPrevBtn');
+        const nextBtn = document.getElementById('videoGalleryNextBtn');
+        
+        if (!galleryInfo || !galleryNumbers) return;
+        
+        // Update info text
+        galleryInfo.textContent = `Card ${this.userGallery.currentIndex + 1} of ${this.userGallery.totalCards}`;
+        
+        // Update number buttons
+        galleryNumbers.innerHTML = '';
+        for (let i = 0; i < this.userGallery.totalCards; i++) {
+            const btn = document.createElement('button');
+            btn.className = `gallery-num ${i === this.userGallery.currentIndex ? 'active' : ''}`;
+            btn.textContent = i + 1;
+            btn.addEventListener('click', () => this.jumpToVideoCard(i + 1));
+            galleryNumbers.appendChild(btn);
+        }
+        
+        // Update prev/next button states
+        if (prevBtn) {
+            prevBtn.disabled = this.userGallery.currentIndex === 0;
+        }
+        if (nextBtn) {
+            nextBtn.disabled = this.userGallery.currentIndex === this.userGallery.totalCards - 1;
+        }
+    }
+
+    /**
+     * Show video gallery navigation (when user has multiple cards)
+     */
+    showVideoGalleryNavigation() {
+        const galleryNav = document.getElementById('videoGalleryNavigation');
+        if (galleryNav && this.userGallery.totalCards > 1) {
+            galleryNav.classList.remove('hidden');
+        }
+    }
+
+    /**
+     * Hide video gallery navigation
+     */
+    hideVideoGalleryNavigation() {
+        const galleryNav = document.getElementById('videoGalleryNavigation');
+        if (galleryNav) {
+            galleryNav.classList.add('hidden');
+        }
+    }
+
+    /**
+     * Initialize video tab with gallery
+     */
+    initializeVideoGallery() {
+        if (this.userGallery.totalCards > 0) {
+            // Show the most recent card by default
+            this.userGallery.currentIndex = this.userGallery.totalCards - 1;
+            this.showVideoCardFromGallery(this.userGallery.currentIndex);
+            this.showVideoGalleryNavigation();
+            
+            console.log(`🎬 Video gallery initialized with ${this.userGallery.totalCards} cards`);
+        }
+    }
+
+    /**
+     * Generate AI animation prompt based on selected card
+     */
+    async handleGenerateAnimationPrompt() {
+        if (!this.generatedCardData) {
+            this.showError('Please select a card first');
+            return;
+        }
+
+        const generateBtn = document.getElementById('generateAnimationPromptBtn');
+        const animationPrompt = document.getElementById('animationPrompt');
+        
+        try {
+            // Show loading state
+            generateBtn.disabled = true;
+            generateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analyzing Card...';
+            
+            console.log('🎨 Generating animation prompt from card...');
+            
+            // Get card data for analysis
+            const cardData = await this.ensureCardDataForActions();
+            
+            const apiBaseUrl = window.SNAPMAGIC_CONFIG.API_URL;
+            const response = await fetch(`${apiBaseUrl}api/transform-card`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.authToken}`
+                },
+                body: JSON.stringify({
+                    action: 'generate_animation_prompt',
+                    card_image: cardData.result,
+                    original_prompt: this.generatedCardData.prompt || 'Trading card character'
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                // Fill the animation prompt input with generated prompt
+                animationPrompt.value = data.animation_prompt;
+                
+                // Show success feedback
+                this.showNotification('✨ Animation prompt generated from your card!', 'success');
+                
+                console.log('✅ Animation prompt generated:', data.animation_prompt);
+                
+            } else {
+                console.error('❌ Animation prompt generation failed:', data.error);
+                this.showError(data.error || 'Failed to generate animation prompt');
+            }
+            
+        } catch (error) {
+            console.error('❌ Animation prompt generation error:', error);
+            this.showError('Failed to generate animation prompt. Please try again.');
+        } finally {
+            // Reset button state
+            generateBtn.disabled = false;
+            generateBtn.innerHTML = '<i class="fas fa-magic"></i> Generate AI Prompt';
+        }
+    }
+
+    /**
+     * Optimize existing animation prompt
+     */
+    async handleOptimizeAnimationPrompt() {
+        const animationPrompt = document.getElementById('animationPrompt');
+        const userPrompt = animationPrompt.value.trim();
+        
+        if (!userPrompt) {
+            this.showError('Please enter an animation prompt to optimize');
+            return;
+        }
+
+        const optimizeBtn = document.getElementById('optimizeAnimationPromptBtn');
+        
+        try {
+            // Show loading state
+            optimizeBtn.disabled = true;
+            optimizeBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Optimizing...';
+            
+            console.log('🔧 Optimizing animation prompt...');
+            
+            const apiBaseUrl = window.SNAPMAGIC_CONFIG.API_URL;
+            const response = await fetch(`${apiBaseUrl}api/transform-card`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.authToken}`
+                },
+                body: JSON.stringify({
+                    action: 'optimize_animation_prompt',
+                    user_prompt: userPrompt
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                // Replace with optimized prompt
+                animationPrompt.value = data.optimized_prompt;
+                
+                // Show success feedback
+                this.showNotification('✨ Animation prompt optimized!', 'success');
+                
+                console.log('✅ Animation prompt optimized:', data.optimized_prompt);
+                
+            } else {
+                console.error('❌ Animation prompt optimization failed:', data.error);
+                this.showError(data.error || 'Failed to optimize animation prompt');
+            }
+            
+        } catch (error) {
+            console.error('❌ Animation prompt optimization error:', error);
+            this.showError('Failed to optimize animation prompt. Please try again.');
+        } finally {
+            // Reset button state
+            optimizeBtn.disabled = false;
+            optimizeBtn.innerHTML = '<i class="fas fa-wand-magic-sparkles"></i> Optimize My Prompt';
         }
     }
     handleShareLinkedIn() {
