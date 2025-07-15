@@ -569,30 +569,20 @@ def store_print_record_simple(session_id: str, username: str, prompt: str, image
         return {'success': False, 'error': str(e)}
 
 def get_client_ip(request_headers: Dict[str, str]) -> str:
-    """Extract client IP with browser fingerprinting for shared networks"""
-    import hashlib
+    """Extract device ID from frontend for session identification"""
+    # Use device ID as session identifier
+    device_id = request_headers.get('X-Device-ID', request_headers.get('x-device-id', ''))
     
-    # Get base IP
-    x_forwarded = request_headers.get('X-Forwarded-For', request_headers.get('x-forwarded-for', ''))
-    if x_forwarded:
-        base_ip = x_forwarded.split(',')[0].strip()
-    else:
-        base_ip = request_headers.get('X-Real-IP', request_headers.get('x-real-ip', 'unknown'))
+    if device_id:
+        logger.info(f"📱 Using device ID: {device_id}")
+        return device_id
     
-    # Add browser fingerprinting for shared IP disambiguation
-    user_agent = request_headers.get('User-Agent', request_headers.get('user-agent', ''))[:100]
-    accept_lang = request_headers.get('Accept-Language', request_headers.get('accept-language', ''))[:50]
-    accept_encoding = request_headers.get('Accept-Encoding', request_headers.get('accept-encoding', ''))[:50]
-    
-    # Create unique session hash for same IP
-    fingerprint_data = f"{base_ip}|{user_agent}|{accept_lang}|{accept_encoding}"
-    session_hash = hashlib.md5(fingerprint_data.encode()).hexdigest()[:8]
-    
-    # Return IP with session suffix: 203.0.113.45_a1b2c3d4
-    unique_session_ip = f"{base_ip}_{session_hash}"
-    
-    logger.info(f"📱 Created unique session IP: {unique_session_ip} from base IP: {base_ip}")
-    return unique_session_ip
+    # If no device ID provided, generate a fallback
+    logger.warning(f"⚠️ No device ID provided, generating fallback")
+    import secrets
+    import time
+    fallback_id = f"fallback_{int(time.time())}_{secrets.token_hex(6)}"
+    return fallback_id
 
 def load_event_credentials() -> Dict[str, str]:
     """Load event credentials from environment variables (set by CDK from secrets.json)"""
@@ -1683,11 +1673,12 @@ def lambda_handler(event, context):
                 except Exception as e:
                     logger.warning(f"⚠️ Could not check for duplicates: {str(e)}")
                 
-                # Get current card number and IP override for filename matching
-                client_ip = event.get('requestContext', {}).get('identity', {}).get('sourceIp', 'unknown')
+                # Get client IP using device ID system (same as other functions)
+                request_headers = event.get('headers', {})
+                client_ip = get_client_ip(request_headers)
                 current_override = get_current_override_number(client_ip)
                 current_card_number = get_current_card_number_for_session(client_ip, current_override)
-                ip_override = f"IP_override{current_override}"
+                session_prefix = f"{client_ip}_override{current_override}"
                 
                 # Create timestamp for filename
                 from datetime import datetime
@@ -1730,8 +1721,8 @@ def lambda_handler(event, context):
                     logger.error(f"❌ No card image found. Card data keys: {list(card_data.keys()) if card_data else 'None'}")
                     return create_error_response("No card image found to submit", 400)
                 
-                # Create competition filename: IP_override1_card_1_phone_1234567890_20250713_140000.png
-                competition_filename = f"{ip_override}_card_{current_card_number}_phone_{phone_number}_{timestamp}.png"
+                # Create competition filename using device ID format: device_abc123_override1_card_1_phone_1234567890_20250713_140000.png
+                competition_filename = f"{session_prefix}_card_{current_card_number}_phone_{phone_number}_{timestamp}.png"
                 competition_key = f"competition/{competition_filename}"
                 
                 # Store ONLY the card image in S3 competition folder
@@ -1754,7 +1745,7 @@ def lambda_handler(event, context):
                     'timestamp': timestamp,
                     'phone_number': phone_number[:3] + '***' + phone_number[-2:] if len(phone_number) > 5 else '***',
                     'card_number': current_card_number,
-                    'ip_override': ip_override
+                    'session_prefix': session_prefix
                 })
                 
             except Exception as e:
