@@ -569,22 +569,30 @@ def store_print_record_simple(session_id: str, username: str, prompt: str, image
         return {'success': False, 'error': str(e)}
 
 def get_client_ip(request_headers: Dict[str, str]) -> str:
-    """Extract client IP address from request headers"""
-    # Try X-Forwarded-For first (from CloudFront/API Gateway)
+    """Extract client IP with browser fingerprinting for shared networks"""
+    import hashlib
+    
+    # Get base IP
     x_forwarded = request_headers.get('X-Forwarded-For', request_headers.get('x-forwarded-for', ''))
     if x_forwarded:
-        # X-Forwarded-For can contain multiple IPs, take the first one (original client)
-        client_ip = x_forwarded.split(',')[0].strip()
-        if client_ip:
-            return client_ip
+        base_ip = x_forwarded.split(',')[0].strip()
+    else:
+        base_ip = request_headers.get('X-Real-IP', request_headers.get('x-real-ip', 'unknown'))
     
-    # Fallback to other headers
-    real_ip = request_headers.get('X-Real-IP', request_headers.get('x-real-ip', ''))
-    if real_ip:
-        return real_ip
+    # Add browser fingerprinting for shared IP disambiguation
+    user_agent = request_headers.get('User-Agent', request_headers.get('user-agent', ''))[:100]
+    accept_lang = request_headers.get('Accept-Language', request_headers.get('accept-language', ''))[:50]
+    accept_encoding = request_headers.get('Accept-Encoding', request_headers.get('accept-encoding', ''))[:50]
     
-    # Last resort - use a default
-    return 'unknown'
+    # Create unique session hash for same IP
+    fingerprint_data = f"{base_ip}|{user_agent}|{accept_lang}|{accept_encoding}"
+    session_hash = hashlib.md5(fingerprint_data.encode()).hexdigest()[:8]
+    
+    # Return IP with session suffix: 203.0.113.45_a1b2c3d4
+    unique_session_ip = f"{base_ip}_{session_hash}"
+    
+    logger.info(f"📱 Created unique session IP: {unique_session_ip} from base IP: {base_ip}")
+    return unique_session_ip
 
 def load_event_credentials() -> Dict[str, str]:
     """Load event credentials from environment variables (set by CDK from secrets.json)"""
