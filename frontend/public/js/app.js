@@ -1101,23 +1101,113 @@ class SnapMagicApp {
     }
 
     /**
-     * Start polling for video completion with optimized timing
+     * Start polling for video completion with progress bar
      * Wait 30 seconds initially, then poll every 15 seconds (max 15 times)
      */
     startVideoPolling(invocationArn, metadata) {
-        console.log('⏰ Starting video polling - waiting 30 seconds before first check...');
+        console.log('⏰ Starting video polling with progress bar...');
         
-        // Update UI to show waiting status
-        this.updateVideoProcessingStatus('Video is being generated... Checking status in 30 seconds.');
+        // Initialize progress tracking
+        this.videoProgress = {
+            startTime: Date.now(),
+            currentProgress: 0,
+            invocationArn: invocationArn,
+            metadata: metadata
+        };
         
-        // Wait 30 seconds before first check (much shorter than 2 minutes)
+        // Start progress bar animation
+        this.startVideoProgressBar();
+        
+        // Wait 30 seconds before first check
         setTimeout(() => {
-            console.log('⏰ 30 seconds elapsed - starting polling every 15 seconds (max 15 attempts)');
-            this.updateVideoProcessingStatus('Checking video status...');
+            console.log('⏰ 30 seconds elapsed - starting polling every 15 seconds');
             
             // Start polling every 15 seconds with retry counter
             this.pollVideoStatus(invocationArn, metadata, 0);
         }, 30 * 1000); // 30 seconds in milliseconds
+    }
+
+    /**
+     * Start video progress bar animation
+     */
+    startVideoProgressBar() {
+        // Update processing overlay to show progress bar
+        this.showVideoProgress(0, 'Initializing video generation...');
+        
+        // Start progress animation
+        this.updateVideoProgressBar();
+    }
+
+    /**
+     * Update video progress bar based on elapsed time
+     */
+    updateVideoProgressBar() {
+        if (!this.videoProgress) return;
+        
+        const elapsed = Date.now() - this.videoProgress.startTime;
+        const elapsedSeconds = Math.floor(elapsed / 1000);
+        
+        let progress = 0;
+        let message = '';
+        
+        // Progress calculation based on time elapsed
+        if (elapsedSeconds <= 30) {
+            // 0-30 seconds: 0% → 30%
+            progress = (elapsedSeconds / 30) * 30;
+            message = 'Starting video generation...';
+        } else if (elapsedSeconds <= 90) {
+            // 30-90 seconds: 30% → 80%
+            progress = 30 + ((elapsedSeconds - 30) / 60) * 50;
+            message = 'Processing your animation...';
+        } else if (elapsedSeconds <= 150) {
+            // 90-150 seconds: 80% → 95%
+            progress = 80 + ((elapsedSeconds - 90) / 60) * 15;
+            message = 'Finalizing video...';
+        } else {
+            // 150+ seconds: Stay at 95%
+            progress = 95;
+            message = 'Almost ready...';
+        }
+        
+        // Update progress display
+        this.showVideoProgress(Math.min(progress, 95), message);
+        
+        // Continue updating if video generation is still in progress
+        if (this.videoGenerationInProgress && progress < 95) {
+            setTimeout(() => this.updateVideoProgressBar(), 1000); // Update every second
+        }
+    }
+
+    /**
+     * Show video progress with percentage and message
+     */
+    showVideoProgress(percentage, message) {
+        const processingText = document.querySelector('.processing-text');
+        const processingSubtext = document.querySelector('.processing-subtext');
+        
+        if (processingText) {
+            processingText.innerHTML = `
+                <div style="margin-bottom: 1rem;">${message}</div>
+                <div style="background: rgba(255,255,255,0.2); border-radius: 10px; height: 20px; overflow: hidden; margin-bottom: 0.5rem;">
+                    <div style="background: linear-gradient(90deg, #667eea, #764ba2); height: 100%; width: ${percentage}%; transition: width 0.5s ease;"></div>
+                </div>
+                <div style="font-size: 0.9rem; opacity: 0.8;">${Math.round(percentage)}% Complete</div>
+            `;
+        }
+        
+        if (processingSubtext) {
+            processingSubtext.textContent = `Estimated time: ${this.getEstimatedTimeRemaining(percentage)}`;
+        }
+    }
+
+    /**
+     * Get estimated time remaining based on progress
+     */
+    getEstimatedTimeRemaining(percentage) {
+        if (percentage < 30) return '60-90 seconds';
+        if (percentage < 80) return '30-60 seconds';
+        if (percentage < 95) return '10-30 seconds';
+        return 'Almost done!';
     }
 
     /**
@@ -1129,9 +1219,10 @@ class SnapMagicApp {
         // Check if we've exceeded max retries
         if (retryCount >= MAX_RETRIES) {
             console.error(`❌ Max retries (${MAX_RETRIES}) exceeded for video polling`);
-            this.hideProcessing();
-            this.showError(`Video generation timed out after ${MAX_RETRIES} attempts. Please try again.`);
             this.videoGenerationInProgress = false;
+            this.videoProgress = null; // Clean up progress tracking
+            this.hideProcessing();
+            this.showError(`Video generation timed out. Please try again.`);
             return;
         }
         
@@ -1172,6 +1263,9 @@ class SnapMagicApp {
             if (result.success && (result.status === 'SUCCEEDED' || result.status === 'completed') && result.video_url) {
                 console.log('✅ Video generation completed successfully!');
                 
+                // Complete progress bar
+                this.showVideoProgress(100, 'Video ready!');
+                
                 // Update usage limits after video completion (same as cards)
                 if (result.remaining) {
                     console.log('📊 Updating usage limits after video completion:', result.remaining);
@@ -1181,6 +1275,9 @@ class SnapMagicApp {
                     console.log('🔄 Refreshing usage limits after video completion...');
                     await this.refreshUsageLimits();
                 }
+                
+                // Clean up progress tracking
+                this.videoProgress = null;
                 
                 this.hideProcessing();
                 this.displayGeneratedVideo(result.video_url);
