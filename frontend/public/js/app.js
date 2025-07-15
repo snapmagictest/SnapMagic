@@ -1101,30 +1101,30 @@ class SnapMagicApp {
     }
 
     /**
-     * Start polling for video completion with specified timing
-     * Wait 2 minutes initially, then poll every 10 seconds (max 10 times)
+     * Start polling for video completion with optimized timing
+     * Wait 30 seconds initially, then poll every 15 seconds (max 15 times)
      */
     startVideoPolling(invocationArn, metadata) {
-        console.log('⏰ Starting video polling - waiting 2 minutes before first check...');
+        console.log('⏰ Starting video polling - waiting 30 seconds before first check...');
         
         // Update UI to show waiting status
-        this.updateVideoProcessingStatus('Video is being generated... Please wait 2 minutes for initial processing.');
+        this.updateVideoProcessingStatus('Video is being generated... Checking status in 30 seconds.');
         
-        // Wait 2 minutes (120 seconds) before first check
+        // Wait 30 seconds before first check (much shorter than 2 minutes)
         setTimeout(() => {
-            console.log('⏰ 2 minutes elapsed - starting polling every 10 seconds (max 10 attempts)');
+            console.log('⏰ 30 seconds elapsed - starting polling every 15 seconds (max 15 attempts)');
             this.updateVideoProcessingStatus('Checking video status...');
             
-            // Start polling every 10 seconds with retry counter
+            // Start polling every 15 seconds with retry counter
             this.pollVideoStatus(invocationArn, metadata, 0);
-        }, 2 * 60 * 1000); // 2 minutes in milliseconds
+        }, 30 * 1000); // 30 seconds in milliseconds
     }
 
     /**
-     * Poll video status every 10 seconds until ready (max 10 retries)
+     * Poll video status every 15 seconds until ready (max 15 retries)
      */
     async pollVideoStatus(invocationArn, metadata, retryCount = 0) {
-        const MAX_RETRIES = 10;
+        const MAX_RETRIES = 15;
         
         // Check if we've exceeded max retries
         if (retryCount >= MAX_RETRIES) {
@@ -1192,7 +1192,7 @@ class SnapMagicApp {
                 // Poll again in 10 seconds with incremented retry count
                 setTimeout(() => {
                     this.pollVideoStatus(invocationArn, metadata, retryCount + 1);
-                }, 10 * 1000); // 10 seconds
+                }, 15 * 1000); // 15 seconds
             } else {
                 // Failed, blocked, or unknown status
                 console.error('❌ Video generation failed or blocked:', result);
@@ -1229,7 +1229,7 @@ class SnapMagicApp {
             
             setTimeout(() => {
                 this.pollVideoStatus(invocationArn, metadata, nextRetryCount);
-            }, 10 * 1000); // 10 seconds
+            }, 15 * 1000); // 15 seconds
         }
     }
 
