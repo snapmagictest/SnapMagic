@@ -1320,9 +1320,8 @@ class SnapMagicApp {
                 return;
             }
             
-            // Continue polling on error (might be temporary)
-            console.log(`⚠️ Polling error, retrying in 10 seconds... (attempt ${nextRetryCount}/${MAX_RETRIES})`);
-            this.updateVideoProcessingStatus(`Error checking status (attempt ${nextRetryCount}/${MAX_RETRIES}), retrying...`);
+            // Continue polling on error (might be temporary) - don't show user error message
+            console.log(`⚠️ Polling error, retrying in 15 seconds... (attempt ${nextRetryCount}/${MAX_RETRIES})`);
             
             setTimeout(() => {
                 this.pollVideoStatus(invocationArn, metadata, nextRetryCount);
