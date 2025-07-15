@@ -1131,53 +1131,7 @@
             transform: translateY(0);
         }
 
-        /* Example Prompts Styling */
-        .example-prompts {
-            margin-bottom: 2rem;
-            padding: 1.5rem;
-            background: var(--dark-surface);
-            border-radius: var(--border-radius-md);
-            border: 1px solid var(--glass-border);
-        }
-
-        .example-title {
-            font-size: 1.1rem;
-            color: var(--text-primary);
-            margin-bottom: 1rem;
-            font-weight: 600;
-        }
-
-        .prompt-examples {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 0.8rem;
-        }
-
-        .example-btn {
-            background: var(--glass-bg);
-            border: 1px solid var(--glass-border);
-            border-radius: var(--border-radius-sm);
-            padding: 0.8rem 1rem;
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            text-align: left;
-            backdrop-filter: blur(8px);
-        }
-
-        .example-btn:hover {
-            background: var(--glass-hover);
-            color: var(--text-primary);
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-            border-color: rgba(102, 126, 234, 0.3);
-        }
-
-        .example-btn:active {
-            transform: translateY(0);
-        }
-
+        /* Generate Button Styling */
         .btn-generate {
             background: var(--secondary-gradient);
             color: white;
@@ -1750,15 +1704,6 @@
                             <textarea id="promptInput" class="prompt-input" placeholder="Describe your trading card... (e.g., 'A magical wizard casting spells in an enchanted forest')"></textarea>
                         </div>
                         
-                        <!-- Example Prompts for Cards - After user input -->
-                        <div class="example-prompts">
-                            <h3 class="example-title">💡 Quick Examples</h3>
-                            <div class="prompt-examples">
-                                <button class="example-btn" data-prompt="A cyberpunk samurai with glowing neon katana standing in rain-soaked Tokyo streets">⚡ Neon Samurai</button>
-                                <button class="example-btn" data-prompt="Majestic dragon emerging from swirling portal of cosmic energy and stardust">🌌 Cosmic Dragon</button>
-                                <button class="example-btn" data-prompt="Steampunk airship captain with mechanical arm and brass goggles in stormy skies">⚙️ Sky Captain</button>
-                            </div>
-                        </div>
                         
                         <!-- Usage Limits Display -->
                         <div id="usageLimits" class="usage-limits">
@@ -1858,15 +1803,6 @@
                                 </button>
                             </div>
                             
-                            <!-- Example Prompts for Videos -->
-                            <div class="example-prompts">
-                                <h3 class="example-title">🎬 Animation Examples</h3>
-                                <div class="prompt-examples">
-                                    <button class="example-btn video-example" data-prompt="Character steps forward breaking through the card frame with dramatic lighting">🚀 Break the Frame</button>
-                                    <button class="example-btn video-example" data-prompt="Eyes glow intensely while magical energy swirls around the character">⚡ Power Surge</button>
-                                    <button class="example-btn video-example" data-prompt="Character emerges from the card in 3D with magical aura and sparkles">✨ Card to Life</button>
-                                </div>
-                            </div>
                             
                             <button id="generateVideoBtn" class="btn btn-generate">🎬 Generate Video (2 min wait)</button>
                         </div>
