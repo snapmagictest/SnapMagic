@@ -10,6 +10,9 @@ class SnapMagicApp {
         this.authToken = null;
         this.currentUser = null;
         
+        // Device identification for session isolation
+        this.deviceId = this.getDeviceId();
+        
         // UI state
         this.currentTab = 'instructions';
         this.generatedCardData = null;
@@ -31,6 +34,22 @@ class SnapMagicApp {
         
         // Initialize app
         this.init();
+    }
+
+    /**
+     * Generate or retrieve device ID for session isolation
+     * @returns {string} Unique device identifier
+     */
+    getDeviceId() {
+        let deviceId = localStorage.getItem('snapmagic_device_id');
+        if (!deviceId) {
+            deviceId = 'device_' + Math.random().toString(36).substr(2, 12);
+            localStorage.setItem('snapmagic_device_id', deviceId);
+            console.log('📱 Generated new device ID:', deviceId);
+        } else {
+            console.log('📱 Using existing device ID:', deviceId);
+        }
+        return deviceId;
     }
 
     init() {
@@ -290,7 +309,8 @@ class SnapMagicApp {
             const response = await fetch(`${apiBaseUrl}api/login`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'X-Device-ID': this.deviceId
                 },
                 body: JSON.stringify({ username, password })
             });
@@ -364,7 +384,8 @@ class SnapMagicApp {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${this.currentUser.token}`
+                    'Authorization': `Bearer ${this.currentUser.token}`,
+                    'X-Device-ID': this.deviceId
                 },
                 body: JSON.stringify({
                     action: 'apply_override',
@@ -575,7 +596,8 @@ class SnapMagicApp {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${this.currentUser.token}`
+                    'Authorization': `Bearer ${this.currentUser.token}`,
+                    'X-Device-ID': this.deviceId
                 },
                 body: JSON.stringify({
                     action: 'print_card',
@@ -678,7 +700,8 @@ class SnapMagicApp {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${this.authToken}`
+                    'Authorization': `Bearer ${this.authToken}`,
+                    'X-Device-ID': this.deviceId
                 },
                 body: JSON.stringify({
                     action: 'generate_prompt'
@@ -739,7 +762,8 @@ class SnapMagicApp {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${this.authToken}`
+                    'Authorization': `Bearer ${this.authToken}`,
+                    'X-Device-ID': this.deviceId
                 },
                 body: JSON.stringify({
                     action: 'optimize_prompt',
@@ -970,7 +994,8 @@ class SnapMagicApp {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${this.currentUser.token}`
+                    'Authorization': `Bearer ${this.currentUser.token}`,
+                    'X-Device-ID': this.deviceId
                 },
                 body: JSON.stringify(requestBody)
             });
@@ -1220,7 +1245,8 @@ class SnapMagicApp {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${this.currentUser.token}`
+                    'Authorization': `Bearer ${this.currentUser.token}`,
+                    'X-Device-ID': this.deviceId
                 },
                 body: JSON.stringify(requestBody)
             });
@@ -1613,7 +1639,8 @@ class SnapMagicApp {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${this.currentUser.token}`
+                    'Authorization': `Bearer ${this.currentUser.token}`,
+                    'X-Device-ID': this.deviceId
                 },
                 body: JSON.stringify(requestBody)
             });
@@ -1672,7 +1699,8 @@ class SnapMagicApp {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${this.currentUser.token}`
+                    'Authorization': `Bearer ${this.currentUser.token}`,
+                    'X-Device-ID': this.deviceId
                 },
                 body: JSON.stringify(requestBody)
             });
@@ -1709,7 +1737,8 @@ class SnapMagicApp {
             const response = await fetch(endpoint, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'X-Device-ID': this.deviceId
                 },
                 body: JSON.stringify({
                     username: 'demo', // Use the current credentials
@@ -1772,7 +1801,8 @@ class SnapMagicApp {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${this.currentUser.token}`
+                    'Authorization': `Bearer ${this.currentUser.token}`,
+                    'X-Device-ID': this.deviceId
                 },
                 body: JSON.stringify({
                     action: 'enter_competition',
@@ -1977,7 +2007,8 @@ class SnapMagicApp {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${this.authToken}`
+                    'Authorization': `Bearer ${this.authToken}`,
+                    'X-Device-ID': this.deviceId
                 },
                 body: JSON.stringify({ action: 'load_session_cards' })
             });
@@ -2269,7 +2300,8 @@ class SnapMagicApp {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${this.authToken}`
+                    'Authorization': `Bearer ${this.authToken}`,
+                    'X-Device-ID': this.deviceId
                 },
                 body: JSON.stringify({
                     action: 'generate_animation_prompt',
@@ -2338,7 +2370,8 @@ class SnapMagicApp {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${this.authToken}`
+                    'Authorization': `Bearer ${this.authToken}`,
+                    'X-Device-ID': this.deviceId
                 },
                 body: JSON.stringify({
                     action: 'optimize_animation_prompt',
