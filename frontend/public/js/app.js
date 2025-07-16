@@ -37,24 +37,249 @@ class SnapMagicApp {
     }
 
     /**
-     * Generate or retrieve device ID for session isolation
+     * Generate or retrieve device ID for session isolation with comprehensive debugging
      * @returns {string} Unique device identifier
      */
     getDeviceId() {
-        let deviceId = localStorage.getItem('snapmagic_device_id');
-        if (!deviceId) {
-            deviceId = 'device_' + Math.random().toString(36).substr(2, 12);
-            localStorage.setItem('snapmagic_device_id', deviceId);
-            console.log('📱 Generated new device ID:', deviceId);
-        } else {
-            console.log('📱 Using existing device ID:', deviceId);
+        // Comprehensive localStorage debugging
+        console.log('🔍 localStorage Debug Analysis:', {
+            // Basic support check
+            supported: typeof(Storage) !== "undefined",
+            
+            // Environment info
+            domain: window.location.hostname,
+            protocol: window.location.protocol,
+            isSecure: window.location.protocol === 'https:',
+            userAgent: navigator.userAgent.substring(0, 100),
+            
+            // Browser mode detection
+            isIncognito: (() => {
+                try {
+                    // Test for incognito mode
+                    localStorage.setItem('incognito_test', '1');
+                    localStorage.removeItem('incognito_test');
+                    return false; // Not incognito if we can write/remove
+                } catch (e) {
+                    return true; // Likely incognito if localStorage throws error
+                }
+            })(),
+            
+            // Storage capabilities test
+            canWrite: (() => {
+                try {
+                    const testKey = 'snapmagic_capability_test';
+                    const testValue = 'test_' + Date.now();
+                    localStorage.setItem(testKey, testValue);
+                    const retrieved = localStorage.getItem(testKey);
+                    localStorage.removeItem(testKey);
+                    return retrieved === testValue;
+                } catch(e) {
+                    console.error('❌ localStorage write capability test failed:', e);
+                    return false;
+                }
+            })(),
+            
+            // Current storage info
+            currentKeys: (() => {
+                try {
+                    const keys = [];
+                    for (let i = 0; i < localStorage.length; i++) {
+                        keys.push(localStorage.key(i));
+                    }
+                    return keys;
+                } catch(e) {
+                    return ['Error accessing keys: ' + e.message];
+                }
+            })(),
+            
+            // Storage quota info (if available)
+            storageQuota: (() => {
+                try {
+                    if ('storage' in navigator && 'estimate' in navigator.storage) {
+                        navigator.storage.estimate().then(estimate => {
+                            console.log('📊 Storage Quota:', {
+                                quota: estimate.quota,
+                                usage: estimate.usage,
+                                available: estimate.quota - estimate.usage
+                            });
+                        });
+                        return 'Checking quota...';
+                    }
+                    return 'Quota API not available';
+                } catch(e) {
+                    return 'Error checking quota: ' + e.message;
+                }
+            })()
+        });
+
+        // Try to get existing device ID
+        let deviceId = null;
+        let retrievalError = null;
+        
+        try {
+            deviceId = localStorage.getItem('snapmagic_device_id');
+            console.log('📖 localStorage retrieval result:', {
+                found: deviceId !== null,
+                value: deviceId,
+                type: typeof deviceId
+            });
+        } catch (error) {
+            retrievalError = error;
+            console.error('❌ Failed to retrieve from localStorage:', error);
         }
+        
+        if (!deviceId) {
+            // Generate new device ID
+            deviceId = 'device_' + Math.random().toString(36).substr(2, 12);
+            console.log('🆕 Generated new device ID:', deviceId);
+            
+            // Attempt to store it
+            try {
+                localStorage.setItem('snapmagic_device_id', deviceId);
+                console.log('💾 Attempted to store device ID in localStorage');
+                
+                // Immediate verification
+                const immediateVerification = localStorage.getItem('snapmagic_device_id');
+                console.log('🔍 Immediate storage verification:', {
+                    stored: deviceId,
+                    retrieved: immediateVerification,
+                    match: immediateVerification === deviceId,
+                    success: immediateVerification === deviceId
+                });
+                
+                // Delayed verification (to test persistence)
+                setTimeout(() => {
+                    try {
+                        const delayedVerification = localStorage.getItem('snapmagic_device_id');
+                        console.log('⏰ Delayed storage verification (after 1 second):', {
+                            stored: deviceId,
+                            retrieved: delayedVerification,
+                            match: delayedVerification === deviceId,
+                            persistent: delayedVerification === deviceId
+                        });
+                    } catch (e) {
+                        console.error('❌ Delayed verification failed:', e);
+                    }
+                }, 1000);
+                
+            } catch (error) {
+                console.error('❌ Failed to store device ID in localStorage:', error);
+                console.log('🔧 Storage error details:', {
+                    name: error.name,
+                    message: error.message,
+                    code: error.code || 'No code'
+                });
+            }
+        } else {
+            console.log('✅ Using existing device ID from localStorage:', deviceId);
+            
+            // Test if we can still write (refresh the value)
+            try {
+                localStorage.setItem('snapmagic_device_id', deviceId);
+                console.log('🔄 Successfully refreshed device ID in localStorage');
+            } catch (error) {
+                console.error('❌ Failed to refresh device ID in localStorage:', error);
+            }
+        }
+        
+        // Final verification and summary
+        console.log('📋 Device ID Session Summary:', {
+            finalDeviceId: deviceId,
+            hadRetrievalError: retrievalError !== null,
+            retrievalError: retrievalError?.message,
+            timestamp: new Date().toISOString(),
+            sessionStart: true
+        });
+        
         return deviceId;
+    }
+
+    /**
+     * Monitor localStorage persistence over time
+     */
+    startLocalStorageMonitoring() {
+        const originalDeviceId = this.deviceId;
+        let checkCount = 0;
+        
+        console.log('🔍 Starting localStorage persistence monitoring for device ID:', originalDeviceId);
+        
+        // Check every 30 seconds for the first 5 minutes
+        const monitoringInterval = setInterval(() => {
+            checkCount++;
+            
+            try {
+                const currentDeviceId = localStorage.getItem('snapmagic_device_id');
+                const isConsistent = currentDeviceId === originalDeviceId;
+                
+                console.log(`📊 localStorage Check #${checkCount}:`, {
+                    timestamp: new Date().toISOString(),
+                    original: originalDeviceId,
+                    current: currentDeviceId,
+                    consistent: isConsistent,
+                    exists: currentDeviceId !== null,
+                    timeElapsed: `${checkCount * 30} seconds`
+                });
+                
+                if (!isConsistent) {
+                    console.error('🚨 localStorage INCONSISTENCY DETECTED!', {
+                        expected: originalDeviceId,
+                        found: currentDeviceId,
+                        checkNumber: checkCount,
+                        timeWhenLost: `${checkCount * 30} seconds after initialization`
+                    });
+                }
+                
+                // Stop monitoring after 10 checks (5 minutes)
+                if (checkCount >= 10) {
+                    clearInterval(monitoringInterval);
+                    console.log('✅ localStorage monitoring completed after 5 minutes');
+                }
+                
+            } catch (error) {
+                console.error(`❌ localStorage monitoring check #${checkCount} failed:`, error);
+            }
+        }, 30000); // Check every 30 seconds
+        
+        // Also add a check when the page becomes visible again (tab switching)
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) {
+                try {
+                    const currentDeviceId = localStorage.getItem('snapmagic_device_id');
+                    console.log('👁️ Page visibility change - localStorage check:', {
+                        timestamp: new Date().toISOString(),
+                        original: originalDeviceId,
+                        current: currentDeviceId,
+                        consistent: currentDeviceId === originalDeviceId,
+                        pageVisible: true
+                    });
+                } catch (error) {
+                    console.error('❌ Visibility change localStorage check failed:', error);
+                }
+            }
+        });
+        
+        // Check on page unload
+        window.addEventListener('beforeunload', () => {
+            try {
+                const currentDeviceId = localStorage.getItem('snapmagic_device_id');
+                console.log('🚪 Page unload - final localStorage check:', {
+                    timestamp: new Date().toISOString(),
+                    original: originalDeviceId,
+                    current: currentDeviceId,
+                    consistent: currentDeviceId === originalDeviceId
+                });
+            } catch (error) {
+                console.error('❌ Page unload localStorage check failed:', error);
+            }
+        });
     }
 
     init() {
         console.log('🎴 SnapMagic App Initializing...');
         console.log('🔧 Configuration:', window.SNAPMAGIC_CONFIG);
+        
+        // Start localStorage persistence monitoring
+        this.startLocalStorageMonitoring();
         
         // Get DOM elements
         this.getElements();
