@@ -2703,10 +2703,8 @@ class SnapMagicApp {
     downloadCardForLinkedIn() {
         if (!this.generatedCardData) return;
         
-        // Get the final composed card image
-        const imageSrc = this.generatedCardData.finalImageSrc || 
-                         this.generatedCardData.imageSrc || 
-                         `data:image/png;base64,${this.generatedCardData.result}`;
+        // Use base64 data for direct download (same as normal download button)
+        const imageSrc = `data:image/png;base64,${this.generatedCardData.result}`;
         
         // Create filename with date
         const today = new Date().toISOString().slice(0, 10);
