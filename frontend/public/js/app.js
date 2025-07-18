@@ -1874,9 +1874,7 @@ class SnapMagicApp {
             
             if (data.success) {
                 console.log('✅ Card generation successful');
-                
-                // Don't set generatedCardData here - wait for template composition
-                // this.generatedCardData = data; // ← REMOVED: This was causing the bug
+                this.generatedCardData = data;
                 
                 // Don't update usage limits here - wait until after S3 storage
                 // The actual usage count changes when the card is stored in S3
@@ -2195,18 +2193,13 @@ class SnapMagicApp {
         }
 
         console.log('🔍 Card data keys:', Object.keys(this.generatedCardData));
+        console.log('🔍 Has finalImageSrc:', !!this.generatedCardData.finalImageSrc);
         console.log('🔍 Has result field:', !!this.generatedCardData.result);
         console.log('🔍 Result field length:', this.generatedCardData.result ? this.generatedCardData.result.length : 'N/A');
 
-        // If this is a newly generated card, it already has .result (base64)
-        if (this.generatedCardData.result && this.generatedCardData.result.length > 100) {
-            console.log('✅ Using newly generated card data (has base64)');
-            return this.generatedCardData;
-        }
-
-        // If this is a gallery card, it only has URLs - need to convert to base64
+        // Priority 1: Use finalImageSrc (styled card) if available - same logic as display functions
         if (this.generatedCardData.finalImageSrc || this.generatedCardData.imageSrc) {
-            console.log('🔄 Converting gallery card URL to base64 for processing...');
+            console.log('✅ Using finalImageSrc (styled card) - same as working gallery method');
             
             const imageUrl = this.generatedCardData.finalImageSrc || this.generatedCardData.imageSrc;
             const base64Data = await this.convertImageUrlToBase64(imageUrl);
@@ -2217,6 +2210,12 @@ class SnapMagicApp {
                 result: base64Data,
                 finalImageBase64: base64Data
             };
+        }
+
+        // Priority 2: Fallback to raw result if no styled version available
+        if (this.generatedCardData.result && this.generatedCardData.result.length > 100) {
+            console.log('⚠️ Fallback: Using raw result (no styled version available)');
+            return this.generatedCardData;
         }
 
         throw new Error('Card data missing required image information');
