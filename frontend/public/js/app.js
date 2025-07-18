@@ -1874,7 +1874,9 @@ class SnapMagicApp {
             
             if (data.success) {
                 console.log('✅ Card generation successful');
-                this.generatedCardData = data;
+                
+                // Don't set generatedCardData here - wait for template composition
+                // this.generatedCardData = data; // ← REMOVED: This was causing the bug
                 
                 // Don't update usage limits here - wait until after S3 storage
                 // The actual usage count changes when the card is stored in S3
