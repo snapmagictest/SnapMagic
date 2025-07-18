@@ -2701,33 +2701,60 @@ class SnapMagicApp {
     /**
      * Download card and enable LinkedIn share button
      */
-    downloadCardForLinkedIn() {
+    async downloadCardForLinkedIn() {
         if (!this.generatedCardData) return;
         
-        // Use base64 data for direct download (same as normal download button)
-        const imageSrc = `data:image/png;base64,${this.generatedCardData.result}`;
-        
-        // Create filename with date
-        const today = new Date().toISOString().slice(0, 10);
-        const time = new Date().toTimeString().slice(0, 5).replace(':', '');
-        const filename = `SnapMagic-Card-${today}-${time}.png`;
-        
-        // Download the card
-        const link = document.createElement('a');
-        link.href = imageSrc;
-        link.download = filename;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        
-        console.log(`📥 Card downloaded: ${filename}`);
-        
-        // Enable the LinkedIn share button
-        const shareButton = document.getElementById('shareToLinkedIn');
-        const downloadButton = document.getElementById('downloadForLinkedIn');
-        
-        if (shareButton && downloadButton) {
-            shareButton.disabled = false;
+        try {
+            // Use the same working method as main download button
+            const cardData = await this.ensureCardDataForActions();
+            
+            // Use base64 data for direct download (same as normal download button)
+            const imageSrc = `data:image/png;base64,${cardData.result}`;
+            
+            // Create filename with date
+            const today = new Date().toISOString().slice(0, 10);
+            const time = new Date().toTimeString().slice(0, 5).replace(':', '');
+            const filename = `SnapMagic-Card-${today}-${time}.png`;
+            
+            // Download the card
+            const link = document.createElement('a');
+            link.href = imageSrc;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            console.log(`📥 LinkedIn card downloaded (styled): ${filename}`);
+            
+            // Enable the LinkedIn share button
+            const shareButton = document.getElementById('shareToLinkedIn');
+            const downloadButton = document.getElementById('downloadForLinkedIn');
+            
+            if (shareButton && downloadButton) {
+                shareButton.disabled = false;
+                shareButton.classList.remove('disabled');
+                downloadButton.textContent = '✅ Downloaded';
+                downloadButton.disabled = true;
+                downloadButton.classList.add('disabled');
+            }
+        } catch (error) {
+            console.error('❌ LinkedIn download failed:', error);
+            
+            // Fallback to direct download if ensureCardDataForActions fails
+            const imageSrc = `data:image/png;base64,${this.generatedCardData.result}`;
+            const today = new Date().toISOString().slice(0, 10);
+            const time = new Date().toTimeString().slice(0, 5).replace(':', '');
+            const filename = `SnapMagic-Card-${today}-${time}.png`;
+            
+            const link = document.createElement('a');
+            link.href = imageSrc;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            console.log(`📥 LinkedIn fallback download: ${filename}`);
+        }
             shareButton.classList.remove('disabled');
             downloadButton.textContent = '✅ Downloaded';
             downloadButton.disabled = true;
