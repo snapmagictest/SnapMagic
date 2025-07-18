@@ -2755,11 +2755,6 @@ class SnapMagicApp {
             
             console.log(`📥 LinkedIn fallback download: ${filename}`);
         }
-            shareButton.classList.remove('disabled');
-            downloadButton.textContent = '✅ Downloaded';
-            downloadButton.disabled = true;
-            downloadButton.classList.add('disabled');
-        }
     }
 
     /**
