@@ -275,13 +275,13 @@ class SnapMagicTemplateSystem {
     }
     
     /**
-     * Draw sleek footer with 3 sections
+     * Draw sleek footer with 3 sections - matching card background color
      */
     async drawSleekFooter() {
         const footerY = this.TEMPLATE_HEIGHT - this.FOOTER_HEIGHT;
         
-        // Footer background (slightly lighter black for contrast)
-        this.ctx.fillStyle = '#111111';
+        // Footer background - same black as card background for consistency
+        this.ctx.fillStyle = '#000000'; // Same as card background
         this.ctx.fillRect(0, footerY, this.TEMPLATE_WIDTH, this.FOOTER_HEIGHT);
         
         // Draw footer content in 3 sections
