@@ -1218,14 +1218,93 @@
         .result-image {
             width: 100%;
             max-width: 400px;
-            border-radius: var(--border-radius-lg);
-            box-shadow: var(--shadow-medium);
+            border-radius: 15px;
             margin-bottom: 1.5rem;
-            transition: transform 0.3s ease;
+            transition: all 0.4s ease;
+            position: relative;
+            
+            /* Holographic border effect */
+            border: 4px solid;
+            border-image: linear-gradient(45deg, 
+                #ff0080, #ff8c00, #40e0d0, #ff0080, 
+                #9400d3, #00ff00, #ff1493, #00bfff,
+                #ff0080, #ff8c00, #40e0d0
+            ) 1;
+            
+            /* Multiple layered shadows for depth */
+            box-shadow: 
+                0 0 20px rgba(255, 0, 128, 0.3),
+                0 0 40px rgba(64, 224, 208, 0.2),
+                0 8px 32px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            
+            /* Subtle background gradient for metallic effect */
+            background: linear-gradient(135deg, 
+                rgba(255, 255, 255, 0.1) 0%,
+                rgba(255, 255, 255, 0.05) 50%,
+                rgba(0, 0, 0, 0.05) 100%
+            );
         }
 
         .result-image:hover {
-            transform: scale(1.02);
+            transform: scale(1.03) rotateY(5deg);
+            
+            /* Enhanced holographic effect on hover */
+            border-image: linear-gradient(45deg, 
+                #ff1493, #00ff00, #ff0080, #40e0d0, 
+                #ff8c00, #9400d3, #00bfff, #ff1493,
+                #00ff00, #ff0080, #40e0d0
+            ) 1;
+            
+            box-shadow: 
+                0 0 30px rgba(255, 20, 147, 0.5),
+                0 0 60px rgba(64, 224, 208, 0.3),
+                0 12px 48px rgba(0, 0, 0, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        }
+
+        /* Add holographic shimmer animation */
+        @keyframes holographic-shimmer {
+            0% {
+                border-image: linear-gradient(45deg, 
+                    #ff0080, #ff8c00, #40e0d0, #ff0080, 
+                    #9400d3, #00ff00, #ff1493, #00bfff,
+                    #ff0080, #ff8c00, #40e0d0
+                ) 1;
+            }
+            25% {
+                border-image: linear-gradient(45deg, 
+                    #40e0d0, #ff0080, #9400d3, #ff8c00, 
+                    #00ff00, #ff1493, #00bfff, #ff0080,
+                    #40e0d0, #ff8c00, #9400d3
+                ) 1;
+            }
+            50% {
+                border-image: linear-gradient(45deg, 
+                    #9400d3, #40e0d0, #00ff00, #ff0080, 
+                    #ff1493, #ff8c00, #00bfff, #40e0d0,
+                    #9400d3, #00ff00, #ff0080
+                ) 1;
+            }
+            75% {
+                border-image: linear-gradient(45deg, 
+                    #00ff00, #9400d3, #ff1493, #40e0d0, 
+                    #ff8c00, #00bfff, #ff0080, #9400d3,
+                    #00ff00, #ff1493, #40e0d0
+                ) 1;
+            }
+            100% {
+                border-image: linear-gradient(45deg, 
+                    #ff0080, #ff8c00, #40e0d0, #ff0080, 
+                    #9400d3, #00ff00, #ff1493, #00bfff,
+                    #ff0080, #ff8c00, #40e0d0
+                ) 1;
+            }
+        }
+
+        /* Apply subtle animation to the card */
+        .result-image {
+            animation: holographic-shimmer 3s ease-in-out infinite;
         }
         
         .card-info {
