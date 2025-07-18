@@ -13,18 +13,18 @@ class SnapMagicTemplateSystem {
         this.TEMPLATE_WIDTH = 500;   // ~4.2cm at 300 DPI
         this.TEMPLATE_HEIGHT = 750;  // ~6.2cm at 300 DPI
         
-        // Nova Canvas - full area (logo will overlay)
+        // Nova Canvas - adjusted for top-integrated notch
         this.NOVA_WIDTH = 460;       // Wide for better image display
-        this.NOVA_HEIGHT = 620;      // Taller - no separate header needed
+        this.NOVA_HEIGHT = 620;      // Full height
         this.NOVA_X = 20;            // Centered with margins
-        this.NOVA_Y = 20;            // Start from top (no header space)
+        this.NOVA_Y = 20;            // Start from top (notch will overlay)
         
-        // Overlapping notched logo dimensions
-        this.LOGO_NOTCH_WIDTH = 280;  // Width of the notched area
-        this.LOGO_NOTCH_HEIGHT = 60;  // Height of the notched area
+        // Integrated top notched logo dimensions (slimmer, professional)
+        this.LOGO_NOTCH_WIDTH = 220;  // Slimmer width for sleek look
+        this.LOGO_NOTCH_HEIGHT = 40;  // Slimmer height, more professional
         this.LOGO_NOTCH_X = (this.TEMPLATE_WIDTH - this.LOGO_NOTCH_WIDTH) / 2; // Centered
-        this.LOGO_NOTCH_Y = 40;       // Position from top, overlapping image
-        this.NOTCH_ANGLE = 20;        // Angle for the sloped sides \____/
+        this.LOGO_NOTCH_Y = 0;        // Flush with top edge - part of border
+        this.NOTCH_ANGLE = 15;        // Sleeker angle for professional look
         
         // Footer dimensions
         this.FOOTER_HEIGHT = 110;     // Footer for 3 sections
@@ -80,7 +80,7 @@ class SnapMagicTemplateSystem {
     async createTradingCard(novaImageBase64, userPrompt = '') {
         return new Promise((resolve, reject) => {
             try {
-                console.log('🎴 Starting overlapping notched logo trading card creation...');
+                console.log('🎴 Starting integrated top notched logo trading card creation...');
                 console.log('Template config:', this.templateConfig);
                 
                 // Create canvas
@@ -109,9 +109,9 @@ class SnapMagicTemplateSystem {
                         this.ctx.drawImage(novaImg, this.NOVA_X, this.NOVA_Y, this.NOVA_WIDTH, this.NOVA_HEIGHT);
                         console.log('✅ Nova Canvas image drawn at', this.NOVA_X, this.NOVA_Y);
                         
-                        // Draw overlapping notched AWS logo (on top of image)
-                        await this.drawOverlappingNotchedLogo();
-                        console.log('✅ Overlapping notched AWS logo drawn');
+                        // Draw integrated top notched AWS logo (part of border design)
+                        await this.drawIntegratedTopNotchedLogo();
+                        console.log('✅ Integrated top notched AWS logo drawn');
                         
                         await this.drawSleekFooter();
                         console.log('✅ Sleek footer with event info drawn');
@@ -122,7 +122,7 @@ class SnapMagicTemplateSystem {
                         // Export final card
                         const finalCardDataUrl = this.canvas.toDataURL('image/png', 1.0);
                         const base64Data = finalCardDataUrl.split(',')[1];
-                        console.log('✅ Overlapping notched logo trading card created successfully');
+                        console.log('✅ Integrated top notched logo trading card created successfully');
                         resolve(base64Data);
                     } catch (error) {
                         console.error('❌ Error in template drawing:', error);
@@ -173,89 +173,90 @@ class SnapMagicTemplateSystem {
     }
     
     /**
-     * Draw overlapping notched AWS logo (sits on top of Nova Canvas image)
+     * Draw integrated top notched AWS logo (part of the border design)
      */
-    async drawOverlappingNotchedLogo() {
-        // Draw the notched background shape \____/
-        this.drawNotchedShape();
+    async drawIntegratedTopNotchedLogo() {
+        // Draw the sleek notched shape integrated into top border
+        this.drawIntegratedNotchedShape();
         
         // Draw the AWS logo inside the notched area
-        await this.drawAWSLogoInNotch();
+        await this.drawAWSLogoInIntegratedNotch();
     }
     
     /**
-     * Draw the notched shape \____/ that overlaps the image
+     * Draw the integrated notched shape that's part of the top border
      */
-    drawNotchedShape() {
+    drawIntegratedNotchedShape() {
         this.ctx.save();
         
-        // Create the notched path \____/
+        // Create the sleek integrated notched path
         this.ctx.beginPath();
         
-        // Start from top-left of notch
+        // Start from top edge - flush with border
         const startX = this.LOGO_NOTCH_X;
-        const startY = this.LOGO_NOTCH_Y;
+        const startY = this.LOGO_NOTCH_Y; // Flush with top (Y=0)
         const endX = this.LOGO_NOTCH_X + this.LOGO_NOTCH_WIDTH;
         const endY = this.LOGO_NOTCH_Y;
         const bottomY = this.LOGO_NOTCH_Y + this.LOGO_NOTCH_HEIGHT;
         
-        // Draw the notched shape: \____/
-        this.ctx.moveTo(startX - this.NOTCH_ANGLE, startY); // Top-left angled
+        // Draw the sleek integrated notched shape: \____/
+        // This creates a cutout that looks like part of the border design
+        this.ctx.moveTo(startX - this.NOTCH_ANGLE, startY); // Top-left angled (flush with top)
         this.ctx.lineTo(startX, bottomY); // Left slope down \
         this.ctx.lineTo(endX, bottomY); // Bottom line ____
         this.ctx.lineTo(endX + this.NOTCH_ANGLE, startY); // Right slope up /
         this.ctx.closePath();
         
-        // Fill with semi-transparent black background
-        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+        // Fill with professional semi-transparent background (keep the transparency you liked)
+        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.75)'; // Slightly more opaque for professional look
         this.ctx.fill();
         
-        // Add subtle border to the notch
-        this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+        // Add subtle professional border to integrate with card design
+        this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)'; // Very subtle highlight
         this.ctx.lineWidth = 1;
         this.ctx.stroke();
         
         this.ctx.restore();
-        console.log('✅ Notched shape drawn');
+        console.log('✅ Integrated notched shape drawn (flush with top border)');
     }
     
     /**
-     * Draw AWS logo inside the notched area
+     * Draw AWS logo inside the integrated notched area
      */
-    async drawAWSLogoInNotch() {
+    async drawAWSLogoInIntegratedNotch() {
         return new Promise((resolve) => {
             const awsLogo = new Image();
             
             awsLogo.onload = () => {
                 this.ctx.save();
                 
-                // Calculate logo size for the notched area
-                const maxLogoWidth = this.LOGO_NOTCH_WIDTH * 0.8; // 80% of notch width
-                const maxLogoHeight = this.LOGO_NOTCH_HEIGHT * 0.6; // 60% of notch height
+                // Calculate logo size for the slimmer notched area
+                const maxLogoWidth = this.LOGO_NOTCH_WIDTH * 0.75; // 75% of notch width (more refined)
+                const maxLogoHeight = this.LOGO_NOTCH_HEIGHT * 0.65; // 65% of notch height (professional spacing)
                 
                 // Calculate logo size maintaining aspect ratio
-                const logoSize = this.calculateLogoSize(awsLogo, maxLogoWidth, maxLogoHeight, 30);
+                const logoSize = this.calculateLogoSize(awsLogo, maxLogoWidth, maxLogoHeight, 25);
                 
-                // Center the logo in the notched area
+                // Center the logo in the integrated notched area
                 const logoX = this.LOGO_NOTCH_X + (this.LOGO_NOTCH_WIDTH - logoSize.width) / 2;
                 const logoY = this.LOGO_NOTCH_Y + (this.LOGO_NOTCH_HEIGHT - logoSize.height) / 2;
                 
-                // Draw the AWS logo
+                // Draw the AWS logo with professional quality
                 this.ctx.imageSmoothingEnabled = true;
                 this.ctx.imageSmoothingQuality = 'high';
                 this.ctx.drawImage(awsLogo, logoX, logoY, logoSize.width, logoSize.height);
                 
                 this.ctx.restore();
-                console.log('✅ AWS logo drawn in notched area');
+                console.log('✅ AWS logo drawn in integrated notched area (top-flush, professional)');
                 resolve();
             };
             
             awsLogo.onerror = () => {
-                console.error('❌ Failed to load AWS logo for notched area');
-                // Draw fallback text in notched area
+                console.error('❌ Failed to load AWS logo for integrated notched area');
+                // Draw fallback text in integrated notched area
                 this.ctx.save();
                 this.ctx.fillStyle = '#FF9900';
-                this.ctx.font = 'bold 16px Arial';
+                this.ctx.font = 'bold 14px Arial'; // Smaller font for slimmer design
                 this.ctx.textAlign = 'center';
                 this.ctx.textBaseline = 'middle';
                 this.ctx.fillText(
@@ -264,7 +265,7 @@ class SnapMagicTemplateSystem {
                     this.LOGO_NOTCH_Y + this.LOGO_NOTCH_HEIGHT / 2
                 );
                 this.ctx.restore();
-                console.log('✅ AWS fallback text drawn in notched area');
+                console.log('✅ AWS fallback text drawn in integrated notched area');
                 resolve();
             };
             
