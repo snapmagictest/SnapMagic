@@ -1,6 +1,6 @@
 /**
- * SnapMagic Template System - Sleek Black Design
- * Based on user's template design with AWS logo in header
+ * SnapMagic Template System - Overlapping Notched AWS Logo Design
+ * Based on user's updated template with overlapping notched logo
  */
 
 class SnapMagicTemplateSystem {
@@ -13,17 +13,23 @@ class SnapMagicTemplateSystem {
         this.TEMPLATE_WIDTH = 500;   // ~4.2cm at 300 DPI
         this.TEMPLATE_HEIGHT = 750;  // ~6.2cm at 300 DPI
         
-        // Nova Canvas - large area for AI image (matching user's design)
+        // Nova Canvas - full area (logo will overlay)
         this.NOVA_WIDTH = 460;       // Wide for better image display
-        this.NOVA_HEIGHT = 520;      // Tall for better proportions
+        this.NOVA_HEIGHT = 620;      // Taller - no separate header needed
         this.NOVA_X = 20;            // Centered with margins
-        this.NOVA_Y = 100;           // Below header
+        this.NOVA_Y = 20;            // Start from top (no header space)
         
-        // Sleek design dimensions (matching user's template)
-        this.BORDER_WIDTH = 3;       // Black border around entire card
-        this.HEADER_HEIGHT = 80;     // Header for AWS logo
-        this.FOOTER_HEIGHT = 130;    // Footer for 3 sections (event/logos/creator)
-        this.LOGO_SIZE = 35;         // Customer logo size
+        // Overlapping notched logo dimensions
+        this.LOGO_NOTCH_WIDTH = 280;  // Width of the notched area
+        this.LOGO_NOTCH_HEIGHT = 60;  // Height of the notched area
+        this.LOGO_NOTCH_X = (this.TEMPLATE_WIDTH - this.LOGO_NOTCH_WIDTH) / 2; // Centered
+        this.LOGO_NOTCH_Y = 40;       // Position from top, overlapping image
+        this.NOTCH_ANGLE = 20;        // Angle for the sloped sides \____/
+        
+        // Footer dimensions
+        this.FOOTER_HEIGHT = 110;     // Footer for 3 sections
+        this.LOGO_SIZE = 35;          // Customer logo size
+        this.BORDER_WIDTH = 3;        // Black border around entire card
         
         // Set template configuration
         this.setTemplateConfiguration();
@@ -74,7 +80,7 @@ class SnapMagicTemplateSystem {
     async createTradingCard(novaImageBase64, userPrompt = '') {
         return new Promise((resolve, reject) => {
             try {
-                console.log('🎴 Starting sleek black trading card creation...');
+                console.log('🎴 Starting overlapping notched logo trading card creation...');
                 console.log('Template config:', this.templateConfig);
                 
                 // Create canvas
@@ -99,13 +105,13 @@ class SnapMagicTemplateSystem {
                     try {
                         console.log('✅ Nova Canvas image loaded');
                         
-                        // Draw Nova Canvas image in center area
+                        // Draw Nova Canvas image (full area)
                         this.ctx.drawImage(novaImg, this.NOVA_X, this.NOVA_Y, this.NOVA_WIDTH, this.NOVA_HEIGHT);
                         console.log('✅ Nova Canvas image drawn at', this.NOVA_X, this.NOVA_Y);
                         
-                        // Add template elements with sleek design
-                        await this.drawSleekHeader();
-                        console.log('✅ Sleek header with AWS logo drawn');
+                        // Draw overlapping notched AWS logo (on top of image)
+                        await this.drawOverlappingNotchedLogo();
+                        console.log('✅ Overlapping notched AWS logo drawn');
                         
                         await this.drawSleekFooter();
                         console.log('✅ Sleek footer with event info drawn');
@@ -116,7 +122,7 @@ class SnapMagicTemplateSystem {
                         // Export final card
                         const finalCardDataUrl = this.canvas.toDataURL('image/png', 1.0);
                         const base64Data = finalCardDataUrl.split(',')[1];
-                        console.log('✅ Sleek trading card created successfully');
+                        console.log('✅ Overlapping notched logo trading card created successfully');
                         resolve(base64Data);
                     } catch (error) {
                         console.error('❌ Error in template drawing:', error);
@@ -140,7 +146,7 @@ class SnapMagicTemplateSystem {
     }
     
     /**
-     * Draw sleek black background (matching user's design)
+     * Draw sleek black background
      */
     drawSleekBackground() {
         // Fill entire canvas with deep black
@@ -151,7 +157,7 @@ class SnapMagicTemplateSystem {
     }
     
     /**
-     * Draw sleek black border around entire card (matching user's design)
+     * Draw sleek black border around entire card
      */
     async drawSleekBorder() {
         this.ctx.strokeStyle = '#333333';
@@ -167,59 +173,98 @@ class SnapMagicTemplateSystem {
     }
     
     /**
-     * Draw sleek header with centered AWS logo (exactly like user's design)
+     * Draw overlapping notched AWS logo (sits on top of Nova Canvas image)
      */
-    async drawSleekHeader() {
-        // Header background (slightly lighter black for contrast)
-        this.ctx.fillStyle = '#111111';
-        this.ctx.fillRect(0, 0, this.TEMPLATE_WIDTH, this.HEADER_HEIGHT);
+    async drawOverlappingNotchedLogo() {
+        // Draw the notched background shape \____/
+        this.drawNotchedShape();
         
-        // Draw centered AWS logo image (not text!)
-        await this.drawCenteredAWSLogo();
+        // Draw the AWS logo inside the notched area
+        await this.drawAWSLogoInNotch();
     }
     
     /**
-     * Draw centered AWS logo IMAGE in header (matching user's template)
+     * Draw the notched shape \____/ that overlaps the image
      */
-    async drawCenteredAWSLogo() {
+    drawNotchedShape() {
+        this.ctx.save();
+        
+        // Create the notched path \____/
+        this.ctx.beginPath();
+        
+        // Start from top-left of notch
+        const startX = this.LOGO_NOTCH_X;
+        const startY = this.LOGO_NOTCH_Y;
+        const endX = this.LOGO_NOTCH_X + this.LOGO_NOTCH_WIDTH;
+        const endY = this.LOGO_NOTCH_Y;
+        const bottomY = this.LOGO_NOTCH_Y + this.LOGO_NOTCH_HEIGHT;
+        
+        // Draw the notched shape: \____/
+        this.ctx.moveTo(startX - this.NOTCH_ANGLE, startY); // Top-left angled
+        this.ctx.lineTo(startX, bottomY); // Left slope down \
+        this.ctx.lineTo(endX, bottomY); // Bottom line ____
+        this.ctx.lineTo(endX + this.NOTCH_ANGLE, startY); // Right slope up /
+        this.ctx.closePath();
+        
+        // Fill with semi-transparent black background
+        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+        this.ctx.fill();
+        
+        // Add subtle border to the notch
+        this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+        this.ctx.lineWidth = 1;
+        this.ctx.stroke();
+        
+        this.ctx.restore();
+        console.log('✅ Notched shape drawn');
+    }
+    
+    /**
+     * Draw AWS logo inside the notched area
+     */
+    async drawAWSLogoInNotch() {
         return new Promise((resolve) => {
             const awsLogo = new Image();
             
             awsLogo.onload = () => {
                 this.ctx.save();
                 
-                // Calculate centered position for logo
-                const maxLogoWidth = this.TEMPLATE_WIDTH * 0.7; // 70% of card width
-                const maxLogoHeight = this.HEADER_HEIGHT * 0.6; // 60% of header height
+                // Calculate logo size for the notched area
+                const maxLogoWidth = this.LOGO_NOTCH_WIDTH * 0.8; // 80% of notch width
+                const maxLogoHeight = this.LOGO_NOTCH_HEIGHT * 0.6; // 60% of notch height
                 
                 // Calculate logo size maintaining aspect ratio
                 const logoSize = this.calculateLogoSize(awsLogo, maxLogoWidth, maxLogoHeight, 30);
                 
-                // Center the logo exactly like user's design
-                const logoX = (this.TEMPLATE_WIDTH - logoSize.width) / 2;
-                const logoY = (this.HEADER_HEIGHT - logoSize.height) / 2;
+                // Center the logo in the notched area
+                const logoX = this.LOGO_NOTCH_X + (this.LOGO_NOTCH_WIDTH - logoSize.width) / 2;
+                const logoY = this.LOGO_NOTCH_Y + (this.LOGO_NOTCH_HEIGHT - logoSize.height) / 2;
                 
-                // Draw the AWS logo image
+                // Draw the AWS logo
                 this.ctx.imageSmoothingEnabled = true;
                 this.ctx.imageSmoothingQuality = 'high';
                 this.ctx.drawImage(awsLogo, logoX, logoY, logoSize.width, logoSize.height);
                 
                 this.ctx.restore();
-                console.log('✅ Centered AWS logo image drawn in header');
+                console.log('✅ AWS logo drawn in notched area');
                 resolve();
             };
             
             awsLogo.onerror = () => {
-                console.error('❌ Failed to load AWS logo image for header');
-                // Draw fallback text if logo fails
+                console.error('❌ Failed to load AWS logo for notched area');
+                // Draw fallback text in notched area
                 this.ctx.save();
                 this.ctx.fillStyle = '#FF9900';
-                this.ctx.font = 'bold 20px Arial';
+                this.ctx.font = 'bold 16px Arial';
                 this.ctx.textAlign = 'center';
                 this.ctx.textBaseline = 'middle';
-                this.ctx.fillText('POWERED BY AWS', this.TEMPLATE_WIDTH / 2, this.HEADER_HEIGHT / 2);
+                this.ctx.fillText(
+                    'powered by aws', 
+                    this.LOGO_NOTCH_X + this.LOGO_NOTCH_WIDTH / 2, 
+                    this.LOGO_NOTCH_Y + this.LOGO_NOTCH_HEIGHT / 2
+                );
                 this.ctx.restore();
-                console.log('✅ AWS fallback text drawn in header');
+                console.log('✅ AWS fallback text drawn in notched area');
                 resolve();
             };
             
@@ -229,10 +274,7 @@ class SnapMagicTemplateSystem {
     }
     
     /**
-     * Draw sleek footer with 3 sections (matching user's design)
-     * Section 1: EVENT NAME
-     * Section 2: LOGOS (if enabled)
-     * Section 3: CREATOR - NAME
+     * Draw sleek footer with 3 sections
      */
     async drawSleekFooter() {
         const footerY = this.TEMPLATE_HEIGHT - this.FOOTER_HEIGHT;
@@ -246,7 +288,7 @@ class SnapMagicTemplateSystem {
     }
     
     /**
-     * Draw footer sections: EVENT NAME + LOGOS + CREATOR (matching user's design)
+     * Draw footer sections: EVENT NAME + LOGOS + CREATOR
      */
     async drawFooterSections(footerY) {
         const sectionHeight = this.FOOTER_HEIGHT / 3; // Divide footer into 3 equal sections
@@ -290,7 +332,7 @@ class SnapMagicTemplateSystem {
     }
     
     /**
-     * Draw customer logos in footer section 2 (dynamic based on logos: true/false)
+     * Draw customer logos in footer section 2
      */
     async drawFooterLogos(startY, sectionHeight) {
         console.log('🎨 Looking for customer logos in footer section 2...');
