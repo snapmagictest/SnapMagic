@@ -10,7 +10,7 @@ if (window.SnapMagicTemplateSystem) {
     Object.assign(SnapMagicTemplateSystem.prototype, {
         
         /**
-         * Create trading card with template selection
+         * Create trading card with template selection (with comprehensive error handling)
          * @param {string} novaImageBase64 - Base64 encoded Nova Canvas image
          * @param {string} userPrompt - Original user prompt
          * @param {string} templateStyle - Template style ('sleek' or 'cardtemplate')
@@ -18,25 +18,119 @@ if (window.SnapMagicTemplateSystem) {
          */
         async createTradingCardWithTemplate(novaImageBase64, userPrompt = '', templateStyle = 'sleek') {
             console.log(`🎴 Creating trading card with template style: ${templateStyle}`);
+            console.log('📊 Input validation:', {
+                hasNovaImage: !!novaImageBase64,
+                novaImageLength: novaImageBase64 ? novaImageBase64.length : 0,
+                userPrompt: userPrompt,
+                templateStyle: templateStyle
+            });
             
-            if (templateStyle === 'cardtemplate') {
-                // Use new CardTemplate system
-                if (window.SnapMagicCardTemplateSystem) {
-                    console.log('✅ Using CardTemplate system for premium Art Deco card');
-                    const cardTemplateSystem = new SnapMagicCardTemplateSystem();
+            // Always validate input first
+            if (!novaImageBase64) {
+                console.error('❌ No Nova image provided to template system');
+                throw new Error('Template composition failed: No Nova image provided');
+            }
+            
+            try {
+                if (templateStyle === 'cardtemplate') {
+                    console.log('🎨 Attempting to use CardTemplate system...');
                     
-                    // Transfer configuration from existing system
-                    cardTemplateSystem.updateTemplateConfig(this.getTemplateConfig());
+                    // Check if CardTemplate system is available
+                    if (!window.SnapMagicCardTemplateSystem) {
+                        console.error('❌ CardTemplate system not loaded');
+                        console.log('🔄 Falling back to sleek template');
+                        return await this.createTradingCard(novaImageBase64, userPrompt);
+                    }
                     
-                    return await cardTemplateSystem.createCardTemplate(novaImageBase64, userPrompt);
+                    console.log('✅ CardTemplate system found, creating instance...');
+                    
+                    try {
+                        const cardTemplateSystem = new window.SnapMagicCardTemplateSystem();
+                        console.log('✅ CardTemplate instance created successfully');
+                        
+                        // Validate system before proceeding
+                        const validation = cardTemplateSystem.validateSystem();
+                        console.log('🔍 CardTemplate system validation:', validation);
+                        
+                        if (!validation.isValid) {
+                            console.error('❌ CardTemplate system validation failed:', validation.issues);
+                            throw new Error('CardTemplate system validation failed: ' + validation.issues.join(', '));
+                        }
+                        
+                        if (validation.warnings.length > 0) {
+                            console.warn('⚠️ CardTemplate system warnings:', validation.warnings);
+                        }
+                        
+                        // Transfer configuration safely
+                        try {
+                            const currentConfig = this.getTemplateConfig ? this.getTemplateConfig() : {};
+                            console.log('🔄 Current config:', currentConfig);
+                            
+                            if (typeof cardTemplateSystem.updateTemplateConfig === 'function') {
+                                cardTemplateSystem.updateTemplateConfig(currentConfig);
+                                console.log('✅ Config transferred to CardTemplate');
+                            } else {
+                                console.log('⚠️ updateTemplateConfig not available, using defaults');
+                            }
+                        } catch (configError) {
+                            console.error('❌ Config transfer failed:', configError);
+                            console.log('⚠️ Continuing with default CardTemplate config');
+                        }
+                        
+                        console.log('🎨 Calling CardTemplate.createCardTemplate...');
+                        const startTime = Date.now();
+                        
+                        const result = await cardTemplateSystem.createCardTemplate(novaImageBase64, userPrompt);
+                        
+                        const endTime = Date.now();
+                        console.log(`✅ CardTemplate creation completed in ${endTime - startTime}ms`);
+                        console.log('📊 Result validation:', {
+                            hasResult: !!result,
+                            resultLength: result ? result.length : 0,
+                            resultType: typeof result
+                        });
+                        
+                        if (!result) {
+                            throw new Error('CardTemplate returned empty result');
+                        }
+                        
+                        return result;
+                        
+                    } catch (cardTemplateError) {
+                        console.error('❌ CardTemplate creation failed:', cardTemplateError);
+                        console.error('❌ CardTemplate error details:', {
+                            message: cardTemplateError.message,
+                            stack: cardTemplateError.stack,
+                            name: cardTemplateError.name
+                        });
+                        
+                        console.log('🔄 Falling back to sleek template due to CardTemplate error');
+                        return await this.createTradingCard(novaImageBase64, userPrompt);
+                    }
                 } else {
-                    console.error('❌ CardTemplate system not loaded, falling back to sleek template');
+                    // Use existing sleek template
+                    console.log('✅ Using existing sleek template system');
                     return await this.createTradingCard(novaImageBase64, userPrompt);
                 }
-            } else {
-                // Use existing sleek template
-                console.log('✅ Using existing sleek template system');
-                return await this.createTradingCard(novaImageBase64, userPrompt);
+            } catch (error) {
+                console.error('❌ Error in createTradingCardWithTemplate:', error);
+                console.error('❌ Error details:', {
+                    message: error.message,
+                    stack: error.stack,
+                    name: error.name
+                });
+                
+                console.log('🔄 Attempting final fallback to sleek template...');
+                
+                // Final fallback to original method
+                try {
+                    const fallbackResult = await this.createTradingCard(novaImageBase64, userPrompt);
+                    console.log('✅ Fallback to sleek template successful');
+                    return fallbackResult;
+                } catch (fallbackError) {
+                    console.error('❌ Even fallback failed:', fallbackError);
+                    throw new Error(`Template composition failed. CardTemplate error: ${error.message}. Fallback error: ${fallbackError.message}`);
+                }
             }
         }
     });

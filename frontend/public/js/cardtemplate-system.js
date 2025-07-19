@@ -58,10 +58,92 @@ class SnapMagicCardTemplateSystem {
     }
     
     /**
+     * Update template configuration from external system
+     * @param {Object} config - Configuration object from existing template system
+     */
+    updateTemplateConfig(config) {
+        try {
+            console.log('🔄 Updating CardTemplate configuration:', config);
+            
+            if (config && typeof config === 'object') {
+                // Merge with existing configuration
+                this.templateConfig = {
+                    ...this.templateConfig,
+                    ...config
+                };
+                
+                console.log('✅ CardTemplate configuration updated:', this.templateConfig);
+            } else {
+                console.log('⚠️ Invalid config provided, using existing configuration');
+            }
+        } catch (error) {
+            console.error('❌ Error updating CardTemplate configuration:', error);
+            // Continue with existing configuration
+        }
+    }
+    
+    /**
+     * Get current template configuration
+     * @returns {Object} Current template configuration
+     */
+    getTemplateConfig() {
+        return this.templateConfig;
+    }
+    
+    /**
+     * Validate CardTemplate system readiness
+     * @returns {Object} Validation result with status and issues
+     */
+    validateSystem() {
+        const issues = [];
+        const warnings = [];
+        
+        // Check canvas support
+        try {
+            const testCanvas = document.createElement('canvas');
+            const testCtx = testCanvas.getContext('2d');
+            if (!testCtx) {
+                issues.push('Canvas 2D context not available');
+            }
+        } catch (error) {
+            issues.push('Canvas creation failed: ' + error.message);
+        }
+        
+        // Check required methods
+        const requiredMethods = ['drawArtDecoBackground', 'drawHolographicArtDecoFrame', 'drawFloatingBlackPanel'];
+        requiredMethods.forEach(method => {
+            if (typeof this[method] !== 'function') {
+                issues.push(`Required method missing: ${method}`);
+            }
+        });
+        
+        // Check configuration
+        if (!this.templateConfig) {
+            warnings.push('Template configuration not set');
+        }
+        
+        // Check dimensions
+        if (!this.TEMPLATE_WIDTH || !this.TEMPLATE_HEIGHT) {
+            issues.push('Template dimensions not set');
+        }
+        
+        return {
+            isValid: issues.length === 0,
+            issues: issues,
+            warnings: warnings,
+            systemInfo: {
+                templateWidth: this.TEMPLATE_WIDTH,
+                templateHeight: this.TEMPLATE_HEIGHT,
+                hasConfig: !!this.templateConfig,
+                configKeys: this.templateConfig ? Object.keys(this.templateConfig) : []
+            }
+        };
+    }
+    
+    /**
      * Set template configuration from injected config
      */
     setTemplateConfiguration() {
-        try {
             if (window.SNAPMAGIC_CONFIG && window.SNAPMAGIC_CONFIG.TEMPLATE_CONFIG) {
                 if (typeof window.SNAPMAGIC_CONFIG.TEMPLATE_CONFIG === 'string') {
                     this.templateConfig = JSON.parse(window.SNAPMAGIC_CONFIG.TEMPLATE_CONFIG);
@@ -114,11 +196,26 @@ class SnapMagicCardTemplateSystem {
                     templateConfig: this.templateConfig
                 });
                 
+                // Validate input
+                if (!novaImageBase64) {
+                    const error = new Error('No Nova Canvas image provided to CardTemplate');
+                    console.error('❌ CardTemplate Error:', error.message);
+                    reject(error);
+                    return;
+                }
+                
                 // Create canvas with both 2D and WebGL contexts
                 this.canvas = document.createElement('canvas');
                 this.canvas.width = this.TEMPLATE_WIDTH;
                 this.canvas.height = this.TEMPLATE_HEIGHT;
                 this.ctx = this.canvas.getContext('2d');
+                
+                if (!this.ctx) {
+                    const error = new Error('Failed to get 2D canvas context');
+                    console.error('❌ CardTemplate Error:', error.message);
+                    reject(error);
+                    return;
+                }
                 
                 // Try to get WebGL context for 3D effects
                 this.gl = this.canvas.getContext('webgl2') || this.canvas.getContext('webgl');
@@ -150,6 +247,7 @@ class SnapMagicCardTemplateSystem {
                 novaImg.onload = async () => {
                     try {
                         console.log('✅ Nova Canvas image loaded for CardTemplate');
+                        console.log('📊 Nova image dimensions:', novaImg.width, 'x', novaImg.height);
                         
                         // Draw floating black panel with stencil effect
                         this.drawFloatingBlackPanel();
@@ -179,26 +277,30 @@ class SnapMagicCardTemplateSystem {
                         console.log('📊 Final card size:', base64Data.length, 'characters');
                         resolve(base64Data);
                     } catch (error) {
-                        console.error('❌ Error in CardTemplate drawing:', error);
+                        console.error('❌ Error in CardTemplate drawing process:', error);
+                        console.error('❌ Error stack:', error.stack);
                         reject(error);
                     }
                 };
                 
-                novaImg.onerror = () => {
-                    console.error('❌ Failed to load Nova Canvas image for CardTemplate');
-                    reject(new Error('Failed to load Nova Canvas image'));
+                novaImg.onerror = (error) => {
+                    const errorMsg = 'Failed to load Nova Canvas image for CardTemplate';
+                    console.error('❌ Nova image load error:', errorMsg, error);
+                    reject(new Error(errorMsg));
                 };
                 
                 // Load the Nova Canvas image
-                if (novaImageBase64) {
+                try {
                     novaImg.src = `data:image/png;base64,${novaImageBase64}`;
-                } else {
-                    console.error('❌ No Nova Canvas image provided to CardTemplate');
-                    reject(new Error('No Nova Canvas image provided'));
+                    console.log('🖼️ Nova image src set, waiting for load...');
+                } catch (error) {
+                    console.error('❌ Error setting Nova image src:', error);
+                    reject(error);
                 }
                 
             } catch (error) {
-                console.error('❌ Error in createCardTemplate:', error);
+                console.error('❌ Error in createCardTemplate initialization:', error);
+                console.error('❌ Error stack:', error.stack);
                 reject(error);
             }
         });
