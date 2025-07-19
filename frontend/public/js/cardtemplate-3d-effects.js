@@ -33,38 +33,51 @@ Object.assign(SnapMagicCardTemplateSystem.prototype, {
     },
     
     /**
-     * Draw sparkles that move based on viewing angle
+     * Draw sparkles that move based on viewing angle (REDUCED intensity)
      */
     drawViewDependentSparkles() {
         this.ctx.save();
         
-        // Create sparkle pattern based on view angle
-        const sparkleOffset = this.viewAngle.x * 50 + this.viewAngle.y * 30;
+        // Create sparkle pattern based on view angle (much more subtle)
+        const sparkleOffset = this.viewAngle.x * 30 + this.viewAngle.y * 20;
         const sparkleIntensity = Math.abs(Math.sin(this.animationTime * 0.02 + sparkleOffset * 0.1));
         
-        // Only draw sparkles when intensity is high enough
-        if (sparkleIntensity > 0.3) {
-            this.drawSparkleField(sparkleOffset, sparkleIntensity);
+        // Only draw sparkles when intensity is high enough AND only on frame areas
+        if (sparkleIntensity > 0.7) { // Higher threshold for less frequent sparkles
+            this.drawSubtleSparkleField(sparkleOffset, sparkleIntensity * 0.5); // Reduced intensity
         }
         
         this.ctx.restore();
     },
     
     /**
-     * Draw field of sparkles
+     * Draw field of subtle sparkles (only on frame, not on black background)
      */
-    drawSparkleField(offset, intensity) {
-        const sparkleCount = Math.floor(intensity * 50);
+    drawSubtleSparkleField(offset, intensity) {
+        const sparkleCount = Math.floor(intensity * 20); // Reduced count
         
         for (let i = 0; i < sparkleCount; i++) {
             const x = (Math.sin(i * 0.5 + offset * 0.01) * 0.5 + 0.5) * this.TEMPLATE_WIDTH;
             const y = (Math.cos(i * 0.7 + offset * 0.01) * 0.5 + 0.5) * this.TEMPLATE_HEIGHT;
             
-            // Skip sparkles in the Nova image area
-            if (this.isInNovaArea(x, y)) continue;
-            
-            this.drawIndividualSparkle(x, y, intensity, i);
+            // Only draw sparkles on frame areas, not on black background or Nova image
+            if (this.isInFrameArea(x, y)) {
+                this.drawIndividualSparkle(x, y, intensity * 0.6, i); // Reduced intensity
+            }
         }
+    },
+    
+    /**
+     * Check if coordinates are in frame area (not black background or Nova image)
+     */
+    isInFrameArea(x, y) {
+        // Check if in frame border areas
+        const inTopFrame = y < this.FRAME_BORDER;
+        const inBottomFrame = y > this.TEMPLATE_HEIGHT - this.FRAME_BORDER;
+        const inLeftFrame = x < this.FRAME_BORDER;
+        const inRightFrame = x > this.TEMPLATE_WIDTH - this.FRAME_BORDER;
+        
+        return inTopFrame || inBottomFrame || inLeftFrame || inRightFrame;
     },
     
     /**
@@ -273,24 +286,45 @@ Object.assign(SnapMagicCardTemplateSystem.prototype, {
     },
     
     /**
-     * Apply final holographic enhancement to the entire card
+     * Apply final holographic enhancement to the entire card (SUBTLE, not overpowering)
      */
     applyHolographicEnhancement() {
         this.ctx.save();
         
-        // Create overall holographic shimmer
-        const shimmerIntensity = Math.sin(this.animationTime * 0.02) * 0.1 + 0.1;
+        // Much more subtle holographic shimmer (reduced intensity)
+        const shimmerIntensity = Math.sin(this.animationTime * 0.02) * 0.03 + 0.03; // Very subtle
         
-        // Apply subtle color shift overlay
-        const colorIndex = Math.floor(this.animationTime * 0.01) % this.RAINBOW_COLORS.length;
-        const shimmerColor = this.RAINBOW_COLORS[colorIndex];
-        
-        this.ctx.globalAlpha = shimmerIntensity;
-        this.ctx.globalCompositeOperation = 'overlay';
-        this.ctx.fillStyle = shimmerColor;
-        this.ctx.fillRect(0, 0, this.TEMPLATE_WIDTH, this.TEMPLATE_HEIGHT);
+        // Only apply shimmer occasionally and very lightly
+        if (shimmerIntensity > 0.05) {
+            const colorIndex = Math.floor(this.animationTime * 0.005) % this.RAINBOW_COLORS.length;
+            const shimmerColor = this.RAINBOW_COLORS[colorIndex];
+            
+            this.ctx.globalAlpha = shimmerIntensity;
+            this.ctx.globalCompositeOperation = 'soft-light'; // Gentler blend mode
+            this.ctx.fillStyle = shimmerColor;
+            
+            // Only apply to frame areas, not the entire card
+            this.applyShimmerToFrameOnly();
+        }
         
         this.ctx.restore();
+    }
+    
+    /**
+     * Apply shimmer only to frame areas, not the black background or Nova image
+     */
+    applyShimmerToFrameOnly() {
+        // Top frame area
+        this.ctx.fillRect(0, 0, this.TEMPLATE_WIDTH, this.FRAME_BORDER);
+        
+        // Bottom frame area  
+        this.ctx.fillRect(0, this.TEMPLATE_HEIGHT - this.FRAME_BORDER, this.TEMPLATE_WIDTH, this.FRAME_BORDER);
+        
+        // Left frame area
+        this.ctx.fillRect(0, this.FRAME_BORDER, this.FRAME_BORDER, this.TEMPLATE_HEIGHT - this.FRAME_BORDER * 2);
+        
+        // Right frame area
+        this.ctx.fillRect(this.TEMPLATE_WIDTH - this.FRAME_BORDER, this.FRAME_BORDER, this.FRAME_BORDER, this.TEMPLATE_HEIGHT - this.FRAME_BORDER * 2);
     },
     
     /**

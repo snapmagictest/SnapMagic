@@ -14,22 +14,21 @@ class SnapMagicCardTemplateSystem {
         this.TEMPLATE_WIDTH = 500;
         this.TEMPLATE_HEIGHT = 750;
         
-        // Art Deco frame specifications
+        // Art Deco frame specifications (matching cardtemplate.jpg)
         this.FRAME_BORDER = 45;          // Golden frame border width
         this.INNER_SPACING = 15;         // Space between frame and black panel
         
-        // Floating black panel (overlaps the frame as requested)
+        // Floating black panel (centered, matching cardtemplate.jpg proportions)
         this.PANEL_WIDTH = 380;          // Black panel width
-        this.PANEL_HEIGHT = 570;         // Black panel height
-        this.PANEL_X = (this.TEMPLATE_WIDTH - this.PANEL_WIDTH) / 2;
-        this.PANEL_Y = 70;               // Top margin for AWS logo
-        this.PANEL_OVERLAP = 10;         // How much panel overlaps frame
+        this.PANEL_HEIGHT = 570;         // Black panel height  
+        this.PANEL_X = (this.TEMPLATE_WIDTH - this.PANEL_WIDTH) / 2;  // Centered horizontally
+        this.PANEL_Y = 70;               // Top margin for AWS logo space
         
-        // Nova Canvas area (inside floating panel)
-        this.NOVA_WIDTH = 340;           // AI image width
-        this.NOVA_HEIGHT = 510;          // AI image height
-        this.NOVA_X = (this.TEMPLATE_WIDTH - this.NOVA_WIDTH) / 2;
-        this.NOVA_Y = this.PANEL_Y + 30; // Centered in panel
+        // Nova Canvas area (PROPERLY CENTERED in black panel, matching cardtemplate.jpg)
+        this.NOVA_WIDTH = 320;           // AI image width (reduced to fit better)
+        this.NOVA_HEIGHT = 480;          // AI image height (reduced to fit better)
+        this.NOVA_X = (this.TEMPLATE_WIDTH - this.NOVA_WIDTH) / 2;  // Perfectly centered horizontally
+        this.NOVA_Y = this.PANEL_Y + 45; // Centered vertically in panel with proper spacing
         
         // Art Deco colors with holographic enhancement
         this.GOLD_PRIMARY = '#D4AF37';
@@ -206,109 +205,147 @@ class SnapMagicCardTemplateSystem {
     }
     
     /**
-     * Draw Art Deco background
+     * Draw Art Deco background - SOLID BLACK as per cardtemplate.jpg
      */
     drawArtDecoBackground() {
-        // Fill entire canvas with deep black base
-        this.ctx.fillStyle = '#0a0a0a';
+        // Fill entire canvas with solid black background (matching cardtemplate.jpg)
+        this.ctx.fillStyle = '#000000';
         this.ctx.fillRect(0, 0, this.TEMPLATE_WIDTH, this.TEMPLATE_HEIGHT);
         
-        console.log('✅ Art Deco background drawn');
+        console.log('✅ Art Deco solid black background drawn');
     }
     
     /**
-     * Draw holographic Art Deco frame with rainbow effects
+     * Draw Art Deco frame - GOLDEN with holographic accents (not full rainbow)
      */
     drawHolographicArtDecoFrame() {
         this.ctx.save();
         
-        // Create holographic gradient for frame
-        const gradient = this.createHolographicGradient();
+        // Draw golden Art Deco frame border (matching cardtemplate.jpg)
+        this.drawGoldenFrameBorder();
         
-        // Draw outer Art Deco frame
-        this.ctx.fillStyle = gradient;
-        this.ctx.fillRect(0, 0, this.TEMPLATE_WIDTH, this.TEMPLATE_HEIGHT);
+        // Add subtle holographic accents to frame elements
+        this.drawHolographicFrameAccents();
         
-        // Draw diamond pattern decorations with holographic effect
-        this.drawHolographicDiamondPattern();
+        // Draw diamond pattern decorations with golden base + holographic shimmer
+        this.drawGoldenDiamondPattern();
         
-        // Draw corner ornaments
-        this.drawArtDecoCornerOrnaments();
+        // Draw corner ornaments in gold
+        this.drawGoldenCornerOrnaments();
         
-        // Draw side decorative elements
-        this.drawArtDecoSideElements();
+        // Draw side decorative elements in gold
+        this.drawGoldenSideElements();
         
         this.ctx.restore();
     }
     
     /**
-     * Create holographic gradient with rainbow cycling
+     * Draw golden frame border (matching cardtemplate.jpg)
      */
-    createHolographicGradient() {
-        const gradient = this.ctx.createLinearGradient(0, 0, this.TEMPLATE_WIDTH, this.TEMPLATE_HEIGHT);
+    drawGoldenFrameBorder() {
+        // Draw the main golden frame border
+        this.ctx.strokeStyle = this.GOLD_PRIMARY;
+        this.ctx.lineWidth = this.FRAME_BORDER;
+        this.ctx.strokeRect(
+            this.FRAME_BORDER / 2, 
+            this.FRAME_BORDER / 2, 
+            this.TEMPLATE_WIDTH - this.FRAME_BORDER, 
+            this.TEMPLATE_HEIGHT - this.FRAME_BORDER
+        );
         
-        // Use your existing rainbow colors with animation
+        // Add inner golden accent line
+        this.ctx.strokeStyle = this.GOLD_ACCENT;
+        this.ctx.lineWidth = 2;
+        this.ctx.strokeRect(
+            this.FRAME_BORDER - 5, 
+            this.FRAME_BORDER - 5, 
+            this.TEMPLATE_WIDTH - (this.FRAME_BORDER - 5) * 2, 
+            this.TEMPLATE_HEIGHT - (this.FRAME_BORDER - 5) * 2
+        );
+    }
+    
+    /**
+     * Add subtle holographic accents to frame (not full rainbow background)
+     */
+    drawHolographicFrameAccents() {
+        // Only add holographic shimmer to frame elements, not background
+        const shimmerIntensity = Math.sin(this.animationTime * 0.02) * 0.3 + 0.7;
+        
+        // Create subtle holographic shimmer on frame edges
+        this.ctx.save();
+        this.ctx.globalAlpha = 0.3;
+        this.ctx.strokeStyle = this.createFrameShimmerGradient();
+        this.ctx.lineWidth = 3;
+        this.ctx.strokeRect(
+            this.FRAME_BORDER / 2 + 2, 
+            this.FRAME_BORDER / 2 + 2, 
+            this.TEMPLATE_WIDTH - this.FRAME_BORDER - 4, 
+            this.TEMPLATE_HEIGHT - this.FRAME_BORDER - 4
+        );
+        this.ctx.restore();
+    }
+    
+    /**
+     * Create shimmer gradient for frame accents only
+     */
+    createFrameShimmerGradient() {
+        const gradient = this.ctx.createLinearGradient(0, 0, this.TEMPLATE_WIDTH, 0);
+        
+        // Cycle through rainbow colors for shimmer effect
         const colorIndex = Math.floor(this.animationTime * 0.01) % this.RAINBOW_COLORS.length;
         const nextColorIndex = (colorIndex + 1) % this.RAINBOW_COLORS.length;
-        
         const t = (this.animationTime * 0.01) % 1;
+        
         const currentColor = this.interpolateColor(
             this.RAINBOW_COLORS[colorIndex], 
             this.RAINBOW_COLORS[nextColorIndex], 
             t
         );
         
-        gradient.addColorStop(0, currentColor);
-        gradient.addColorStop(0.3, this.GOLD_PRIMARY);
-        gradient.addColorStop(0.7, this.GOLD_ACCENT);
-        gradient.addColorStop(1, currentColor);
+        gradient.addColorStop(0, this.GOLD_PRIMARY);
+        gradient.addColorStop(0.5, currentColor);
+        gradient.addColorStop(1, this.GOLD_PRIMARY);
         
         return gradient;
     }
     
     /**
-     * Draw holographic diamond pattern
+     * Draw golden diamond pattern (base gold + holographic shimmer)
      */
-    drawHolographicDiamondPattern() {
+    drawGoldenDiamondPattern() {
         this.ctx.save();
         
-        // Apply holographic shimmer effect
-        this.ctx.globalAlpha = 0.8 + 0.2 * Math.sin(this.animationTime * 0.02);
+        // Base golden diamonds
+        this.ctx.strokeStyle = this.GOLD_PRIMARY;
+        this.ctx.lineWidth = 2;
         
-        // Draw diamond patterns around the frame
-        const diamondSize = 20;
-        const spacing = 40;
+        const diamondSize = 15;
+        const spacing = 35;
         
         // Top and bottom diamond rows
         for (let x = spacing; x < this.TEMPLATE_WIDTH - spacing; x += spacing) {
-            this.drawHolographicDiamond(x, this.FRAME_BORDER / 2, diamondSize);
-            this.drawHolographicDiamond(x, this.TEMPLATE_HEIGHT - this.FRAME_BORDER / 2, diamondSize);
+            this.drawGoldenDiamond(x, this.FRAME_BORDER / 2, diamondSize);
+            this.drawGoldenDiamond(x, this.TEMPLATE_HEIGHT - this.FRAME_BORDER / 2, diamondSize);
         }
         
-        // Left and right diamond columns
+        // Left and right diamond columns  
         for (let y = spacing * 2; y < this.TEMPLATE_HEIGHT - spacing * 2; y += spacing) {
-            this.drawHolographicDiamond(this.FRAME_BORDER / 2, y, diamondSize);
-            this.drawHolographicDiamond(this.TEMPLATE_WIDTH - this.FRAME_BORDER / 2, y, diamondSize);
+            this.drawGoldenDiamond(this.FRAME_BORDER / 2, y, diamondSize);
+            this.drawGoldenDiamond(this.TEMPLATE_WIDTH - this.FRAME_BORDER / 2, y, diamondSize);
         }
         
         this.ctx.restore();
     }
     
     /**
-     * Draw individual holographic diamond
+     * Draw individual golden diamond with subtle holographic shimmer
      */
-    drawHolographicDiamond(x, y, size) {
+    drawGoldenDiamond(x, y, size) {
         this.ctx.save();
         
-        // Create shimmering stroke
-        const shimmer = Math.sin(this.animationTime * 0.03 + x * 0.01 + y * 0.01);
-        const colorIndex = Math.floor((shimmer + 1) * 4) % this.RAINBOW_COLORS.length;
-        
-        this.ctx.strokeStyle = this.RAINBOW_COLORS[colorIndex];
+        // Base golden diamond
+        this.ctx.strokeStyle = this.GOLD_PRIMARY;
         this.ctx.lineWidth = 2;
-        this.ctx.globalAlpha = 0.6 + 0.4 * Math.abs(shimmer);
-        
-        // Draw diamond shape
         this.ctx.beginPath();
         this.ctx.moveTo(x, y - size);
         this.ctx.lineTo(x + size, y);
@@ -317,13 +354,23 @@ class SnapMagicCardTemplateSystem {
         this.ctx.closePath();
         this.ctx.stroke();
         
+        // Add subtle holographic shimmer (not full rainbow)
+        const shimmer = Math.sin(this.animationTime * 0.03 + x * 0.01 + y * 0.01);
+        if (shimmer > 0.5) {
+            this.ctx.globalAlpha = 0.4;
+            const colorIndex = Math.floor((shimmer + 1) * 2) % this.RAINBOW_COLORS.length;
+            this.ctx.strokeStyle = this.RAINBOW_COLORS[colorIndex];
+            this.ctx.lineWidth = 1;
+            this.ctx.stroke();
+        }
+        
         this.ctx.restore();
     }
     
     /**
-     * Draw Art Deco corner ornaments
+     * Draw golden corner ornaments
      */
-    drawArtDecoCornerOrnaments() {
+    drawGoldenCornerOrnaments() {
         const corners = [
             { x: this.FRAME_BORDER, y: this.FRAME_BORDER },
             { x: this.TEMPLATE_WIDTH - this.FRAME_BORDER, y: this.FRAME_BORDER },
@@ -332,107 +379,136 @@ class SnapMagicCardTemplateSystem {
         ];
         
         corners.forEach((corner, index) => {
-            this.drawCornerOrnament(corner.x, corner.y, index);
+            this.drawGoldenCornerOrnament(corner.x, corner.y, index);
         });
     }
     
     /**
-     * Draw individual corner ornament
+     * Draw individual golden corner ornament
      */
-    drawCornerOrnament(x, y, index) {
+    drawGoldenCornerOrnament(x, y, index) {
         this.ctx.save();
         
-        // Holographic color cycling
-        const colorIndex = (Math.floor(this.animationTime * 0.02) + index) % this.RAINBOW_COLORS.length;
-        this.ctx.strokeStyle = this.RAINBOW_COLORS[colorIndex];
+        // Base golden color
+        this.ctx.strokeStyle = this.GOLD_ACCENT;
         this.ctx.lineWidth = 3;
-        this.ctx.globalAlpha = 0.8;
         
         // Draw stepped corner design
-        const size = 25;
+        const size = 20;
         this.ctx.beginPath();
         
         // Create Art Deco stepped pattern
         for (let i = 0; i < 3; i++) {
-            const stepSize = size - (i * 6);
+            const stepSize = size - (i * 5);
             this.ctx.rect(x - stepSize/2, y - stepSize/2, stepSize, stepSize);
         }
         
         this.ctx.stroke();
+        
+        // Add subtle holographic accent
+        const shimmer = Math.sin(this.animationTime * 0.02 + index);
+        if (shimmer > 0.3) {
+            this.ctx.globalAlpha = 0.5;
+            const colorIndex = (Math.floor(this.animationTime * 0.02) + index) % this.RAINBOW_COLORS.length;
+            this.ctx.strokeStyle = this.RAINBOW_COLORS[colorIndex];
+            this.ctx.lineWidth = 1;
+            this.ctx.stroke();
+        }
+        
         this.ctx.restore();
     }
     
     /**
-     * Draw Art Deco side elements
+     * Draw golden side elements
      */
-    drawArtDecoSideElements() {
+    drawGoldenSideElements() {
         const centerY = this.TEMPLATE_HEIGHT / 2;
         const centerX = this.TEMPLATE_WIDTH / 2;
         
         // Left and right side elements
         [this.FRAME_BORDER / 2, this.TEMPLATE_WIDTH - this.FRAME_BORDER / 2].forEach((x, index) => {
-            this.drawSideElement(x, centerY, index);
+            this.drawGoldenSideElement(x, centerY, index);
         });
         
         // Top and bottom center elements
         [this.FRAME_BORDER / 2, this.TEMPLATE_HEIGHT - this.FRAME_BORDER / 2].forEach((y, index) => {
-            this.drawTopBottomElement(centerX, y, index + 2);
+            this.drawGoldenTopBottomElement(centerX, y, index + 2);
         });
     }
     
     /**
-     * Draw side decorative element
+     * Draw golden side decorative element
      */
-    drawSideElement(x, y, index) {
+    drawGoldenSideElement(x, y, index) {
         this.ctx.save();
         
-        const colorIndex = (Math.floor(this.animationTime * 0.015) + index) % this.RAINBOW_COLORS.length;
-        this.ctx.strokeStyle = this.RAINBOW_COLORS[colorIndex];
+        // Base golden color
+        this.ctx.strokeStyle = this.GOLD_PRIMARY;
         this.ctx.lineWidth = 2;
-        this.ctx.globalAlpha = 0.7;
         
         // Draw vertical Art Deco element
         this.ctx.beginPath();
-        this.ctx.moveTo(x, y - 40);
-        this.ctx.lineTo(x, y + 40);
+        this.ctx.moveTo(x, y - 30);
+        this.ctx.lineTo(x, y + 30);
         
         // Add decorative cross elements
-        this.ctx.moveTo(x - 15, y - 20);
-        this.ctx.lineTo(x + 15, y - 20);
-        this.ctx.moveTo(x - 10, y);
-        this.ctx.lineTo(x + 10, y);
-        this.ctx.moveTo(x - 15, y + 20);
-        this.ctx.lineTo(x + 15, y + 20);
+        this.ctx.moveTo(x - 10, y - 15);
+        this.ctx.lineTo(x + 10, y - 15);
+        this.ctx.moveTo(x - 8, y);
+        this.ctx.lineTo(x + 8, y);
+        this.ctx.moveTo(x - 10, y + 15);
+        this.ctx.lineTo(x + 10, y + 15);
         
         this.ctx.stroke();
+        
+        // Add subtle holographic accent
+        const shimmer = Math.sin(this.animationTime * 0.015 + index);
+        if (shimmer > 0.4) {
+            this.ctx.globalAlpha = 0.4;
+            const colorIndex = (Math.floor(this.animationTime * 0.015) + index) % this.RAINBOW_COLORS.length;
+            this.ctx.strokeStyle = this.RAINBOW_COLORS[colorIndex];
+            this.ctx.lineWidth = 1;
+            this.ctx.stroke();
+        }
+        
         this.ctx.restore();
     }
     
     /**
-     * Draw top/bottom decorative element
+     * Draw golden top/bottom decorative element
      */
-    drawTopBottomElement(x, y, index) {
+    drawGoldenTopBottomElement(x, y, index) {
         this.ctx.save();
         
-        const colorIndex = (Math.floor(this.animationTime * 0.015) + index) % this.RAINBOW_COLORS.length;
-        this.ctx.strokeStyle = this.RAINBOW_COLORS[colorIndex];
+        // Base golden color
+        this.ctx.strokeStyle = this.GOLD_PRIMARY;
         this.ctx.lineWidth = 2;
-        this.ctx.globalAlpha = 0.7;
         
         // Draw horizontal Art Deco element
         this.ctx.beginPath();
-        this.ctx.moveTo(x - 40, y);
-        this.ctx.lineTo(x + 40, y);
+        this.ctx.moveTo(x - 30, y);
+        this.ctx.lineTo(x + 30, y);
         
         // Add decorative vertical elements
-        this.ctx.moveTo(x - 20, y - 10);
-        this.ctx.lineTo(x - 20, y + 10);
-        this.ctx.moveTo(x, y - 15);
-        this.ctx.lineTo(x, y + 15);
-        this.ctx.moveTo(x + 20, y - 10);
-        this.ctx.lineTo(x + 20, y + 10);
+        this.ctx.moveTo(x - 15, y - 8);
+        this.ctx.lineTo(x - 15, y + 8);
+        this.ctx.moveTo(x, y - 10);
+        this.ctx.lineTo(x, y + 10);
+        this.ctx.moveTo(x + 15, y - 8);
+        this.ctx.lineTo(x + 15, y + 8);
         
         this.ctx.stroke();
+        
+        // Add subtle holographic accent
+        const shimmer = Math.sin(this.animationTime * 0.015 + index);
+        if (shimmer > 0.4) {
+            this.ctx.globalAlpha = 0.4;
+            const colorIndex = (Math.floor(this.animationTime * 0.015) + index) % this.RAINBOW_COLORS.length;
+            this.ctx.strokeStyle = this.RAINBOW_COLORS[colorIndex];
+            this.ctx.lineWidth = 1;
+            this.ctx.stroke();
+        }
+        
         this.ctx.restore();
     }
     
@@ -465,17 +541,26 @@ class SnapMagicCardTemplateSystem {
     }
     
     /**
-     * Draw holographic border around black panel
+     * Draw holographic border around black panel (subtle, not rainbow)
      */
     drawPanelHolographicBorder() {
         this.ctx.save();
         
-        const colorIndex = Math.floor(this.animationTime * 0.02) % this.RAINBOW_COLORS.length;
-        this.ctx.strokeStyle = this.RAINBOW_COLORS[colorIndex];
+        // Very subtle golden border with minimal holographic accent
+        this.ctx.strokeStyle = this.GOLD_SECONDARY;
         this.ctx.lineWidth = 1;
-        this.ctx.globalAlpha = 0.3;
+        this.ctx.globalAlpha = 0.6;
         
         this.ctx.strokeRect(this.PANEL_X - 1, this.PANEL_Y - 1, this.PANEL_WIDTH + 2, this.PANEL_HEIGHT + 2);
+        
+        // Add very subtle holographic shimmer only occasionally
+        const shimmer = Math.sin(this.animationTime * 0.01);
+        if (shimmer > 0.8) {
+            this.ctx.globalAlpha = 0.2;
+            const colorIndex = Math.floor(this.animationTime * 0.005) % this.RAINBOW_COLORS.length;
+            this.ctx.strokeStyle = this.RAINBOW_COLORS[colorIndex];
+            this.ctx.strokeRect(this.PANEL_X - 1, this.PANEL_Y - 1, this.PANEL_WIDTH + 2, this.PANEL_HEIGHT + 2);
+        }
         
         this.ctx.restore();
     }
