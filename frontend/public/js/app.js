@@ -1079,9 +1079,16 @@ class SnapMagicApp {
             this.templateSystem.templateConfig.userName = userName;
             console.log('👤 Template userName set to:', userName || 'No name (AWS logo)');
             
-            // Create final trading card with template
-            console.log('🎴 Compositing trading card with template...');
-            const finalCardBase64 = await this.templateSystem.createTradingCard(novaImageBase64, userPrompt);
+            // Get selected template from template selector
+            const selectedTemplate = window.snapMagicTemplateSelector ? 
+                window.snapMagicTemplateSelector.getCurrentTemplate() : 'sleek';
+            
+            console.log(`🎴 Compositing trading card with template: ${selectedTemplate}`);
+            
+            // Create final trading card with selected template
+            const finalCardBase64 = this.templateSystem.createTradingCardWithTemplate ? 
+                await this.templateSystem.createTradingCardWithTemplate(novaImageBase64, userPrompt, selectedTemplate) :
+                await this.templateSystem.createTradingCard(novaImageBase64, userPrompt);
             const finalImageSrc = `data:image/png;base64,${finalCardBase64}`;
             
             // Store both Nova image and final card

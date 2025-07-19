@@ -109,6 +109,11 @@ class SnapMagicCardTemplateSystem {
         return new Promise((resolve, reject) => {
             try {
                 console.log('🎨 Creating premium CardTemplate with 3D effects...');
+                console.log('📊 CardTemplate Debug Info:', {
+                    novaImageSize: novaImageBase64 ? novaImageBase64.length : 0,
+                    userPrompt: userPrompt,
+                    templateConfig: this.templateConfig
+                });
                 
                 // Create canvas with both 2D and WebGL contexts
                 this.canvas = document.createElement('canvas');
@@ -172,6 +177,7 @@ class SnapMagicCardTemplateSystem {
                         const finalCardDataUrl = this.canvas.toDataURL('image/png', 1.0);
                         const base64Data = finalCardDataUrl.split(',')[1];
                         console.log('✅ Premium CardTemplate created successfully');
+                        console.log('📊 Final card size:', base64Data.length, 'characters');
                         resolve(base64Data);
                     } catch (error) {
                         console.error('❌ Error in CardTemplate drawing:', error);
@@ -185,7 +191,12 @@ class SnapMagicCardTemplateSystem {
                 };
                 
                 // Load the Nova Canvas image
-                novaImg.src = `data:image/png;base64,${novaImageBase64}`;
+                if (novaImageBase64) {
+                    novaImg.src = `data:image/png;base64,${novaImageBase64}`;
+                } else {
+                    console.error('❌ No Nova Canvas image provided to CardTemplate');
+                    reject(new Error('No Nova Canvas image provided'));
+                }
                 
             } catch (error) {
                 console.error('❌ Error in createCardTemplate:', error);

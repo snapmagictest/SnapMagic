@@ -10,17 +10,26 @@ Object.assign(SnapMagicCardTemplateSystem.prototype, {
      * Draw 3D sparkle effects across the card
      */
     async draw3DSparkleEffects() {
-        // Draw view-dependent sparkles
-        this.drawViewDependentSparkles();
-        
-        // Draw surface pattern effects
-        this.drawSurfacePatternEffects();
-        
-        // Draw glare effects
-        this.drawGlareEffects();
-        
-        // Draw holographic bands
-        this.drawHolographicBands();
+        try {
+            console.log('✨ Drawing 3D sparkle effects...');
+            
+            // Draw view-dependent sparkles
+            this.drawViewDependentSparkles();
+            
+            // Draw surface pattern effects
+            this.drawSurfacePatternEffects();
+            
+            // Draw glare effects
+            this.drawGlareEffects();
+            
+            // Draw holographic bands
+            this.drawHolographicBands();
+            
+            console.log('✅ 3D sparkle effects completed');
+        } catch (error) {
+            console.error('❌ Error in 3D sparkle effects:', error);
+            // Continue without 3D effects
+        }
     },
     
     /**

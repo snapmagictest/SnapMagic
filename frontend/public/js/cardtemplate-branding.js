@@ -11,58 +11,64 @@ Object.assign(SnapMagicCardTemplateSystem.prototype, {
      */
     async drawCardTemplateLogo() {
         return new Promise((resolve) => {
-            const awsLogo = new Image();
-            
-            awsLogo.onload = () => {
-                this.ctx.save();
+            try {
+                console.log('🏢 Drawing CardTemplate AWS logo...');
+                const awsLogo = new Image();
                 
-                // Logo area at top center (above the floating panel)
-                const logoX = this.TEMPLATE_WIDTH / 2;
-                const logoY = 25;
-                const maxLogoWidth = 180;
-                const maxLogoHeight = 35;
+                awsLogo.onload = () => {
+                    this.ctx.save();
+                    
+                    // Logo area at top center (above the floating panel)
+                    const logoX = this.TEMPLATE_WIDTH / 2;
+                    const logoY = 25;
+                    const maxLogoWidth = 180;
+                    const maxLogoHeight = 35;
+                    
+                    // Calculate logo size maintaining aspect ratio
+                    const logoSize = this.calculateLogoSize(awsLogo, maxLogoWidth, maxLogoHeight, 25);
+                    
+                    // Center the logo
+                    const finalLogoX = logoX - logoSize.width / 2;
+                    const finalLogoY = logoY;
+                    
+                    // Add holographic glow effect to logo
+                    this.addHolographicGlow(finalLogoX, finalLogoY, logoSize.width, logoSize.height);
+                    
+                    // Draw the AWS logo
+                    this.ctx.drawImage(awsLogo, finalLogoX, finalLogoY, logoSize.width, logoSize.height);
+                    
+                    this.ctx.restore();
+                    console.log('✅ CardTemplate AWS logo drawn with holographic effects');
+                    resolve();
+                };
                 
-                // Calculate logo size maintaining aspect ratio
-                const logoSize = this.calculateLogoSize(awsLogo, maxLogoWidth, maxLogoHeight, 25);
+                awsLogo.onerror = () => {
+                    // Fallback text with holographic effect
+                    this.ctx.save();
+                    
+                    const colorIndex = Math.floor(this.animationTime * 0.02) % this.RAINBOW_COLORS.length;
+                    this.ctx.fillStyle = this.RAINBOW_COLORS[colorIndex];
+                    this.ctx.font = 'bold 18px serif';
+                    this.ctx.textAlign = 'center';
+                    this.ctx.textBaseline = 'middle';
+                    
+                    // Add glow effect
+                    this.ctx.shadowColor = this.RAINBOW_COLORS[colorIndex];
+                    this.ctx.shadowBlur = 10;
+                    
+                    this.ctx.fillText('POWERED BY AWS', this.TEMPLATE_WIDTH / 2, 35);
+                    
+                    this.ctx.restore();
+                    console.log('✅ CardTemplate AWS fallback text drawn');
+                    resolve();
+                };
                 
-                // Center the logo
-                const finalLogoX = logoX - logoSize.width / 2;
-                const finalLogoY = logoY;
-                
-                // Add holographic glow effect to logo
-                this.addHolographicGlow(finalLogoX, finalLogoY, logoSize.width, logoSize.height);
-                
-                // Draw the AWS logo
-                this.ctx.drawImage(awsLogo, finalLogoX, finalLogoY, logoSize.width, logoSize.height);
-                
-                this.ctx.restore();
-                console.log('✅ CardTemplate AWS logo drawn with holographic effects');
-                resolve();
-            };
-            
-            awsLogo.onerror = () => {
-                // Fallback text with holographic effect
-                this.ctx.save();
-                
-                const colorIndex = Math.floor(this.animationTime * 0.02) % this.RAINBOW_COLORS.length;
-                this.ctx.fillStyle = this.RAINBOW_COLORS[colorIndex];
-                this.ctx.font = 'bold 18px serif';
-                this.ctx.textAlign = 'center';
-                this.ctx.textBaseline = 'middle';
-                
-                // Add glow effect
-                this.ctx.shadowColor = this.RAINBOW_COLORS[colorIndex];
-                this.ctx.shadowBlur = 10;
-                
-                this.ctx.fillText('POWERED BY AWS', this.TEMPLATE_WIDTH / 2, 35);
-                
-                this.ctx.restore();
-                console.log('✅ CardTemplate AWS fallback text drawn');
-                resolve();
-            };
-            
-            // Load the AWS logo
-            awsLogo.src = 'powered-by-aws-white-horizontal.png';
+                // Load the AWS logo
+                awsLogo.src = 'powered-by-aws-white-horizontal.png';
+            } catch (error) {
+                console.error('❌ Error drawing CardTemplate logo:', error);
+                resolve(); // Continue without logo
+            }
         });
     },
     
@@ -92,13 +98,21 @@ Object.assign(SnapMagicCardTemplateSystem.prototype, {
      * Draw CardTemplate footer with all branding elements
      */
     async drawCardTemplateFooter() {
-        const footerY = this.TEMPLATE_HEIGHT - this.FOOTER_HEIGHT;
-        
-        // Draw footer background with holographic accent
-        this.drawFooterBackground(footerY);
-        
-        // Draw footer content in 3 sections (same as existing system)
-        await this.drawCardTemplateFooterSections(footerY);
+        try {
+            console.log('📄 Drawing CardTemplate footer...');
+            const footerY = this.TEMPLATE_HEIGHT - this.FOOTER_HEIGHT;
+            
+            // Draw footer background with holographic accent
+            this.drawFooterBackground(footerY);
+            
+            // Draw footer content in 3 sections (same as existing system)
+            await this.drawCardTemplateFooterSections(footerY);
+            
+            console.log('✅ CardTemplate footer completed');
+        } catch (error) {
+            console.error('❌ Error drawing CardTemplate footer:', error);
+            // Continue without footer
+        }
     },
     
     /**
