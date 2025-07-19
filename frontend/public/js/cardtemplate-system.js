@@ -92,6 +92,31 @@ class SnapMagicCardTemplateSystem {
     }
     
     /**
+     * Update template configuration from external system
+     * @param {Object} config - Configuration object from existing template system
+     */
+    updateTemplateConfig(config) {
+        try {
+            console.log('🔄 Updating CardTemplate configuration:', config);
+            
+            if (config && typeof config === 'object') {
+                // Merge with existing configuration
+                this.templateConfig = {
+                    ...this.templateConfig,
+                    ...config
+                };
+                
+                console.log('✅ CardTemplate configuration updated:', this.templateConfig);
+            } else {
+                console.log('⚠️ Invalid config provided, using existing configuration');
+            }
+        } catch (error) {
+            console.error('❌ Error updating CardTemplate configuration:', error);
+            // Continue with existing configuration
+        }
+    }
+    
+    /**
      * Initialize mouse tracking for 3D effects
      */
     initializeEventListeners() {
