@@ -10,26 +10,26 @@ class SnapMagicCardTemplateSystem {
         this.ctx = null;
         this.gl = null; // WebGL context for 3D effects
         
-        // Template dimensions (same as existing system)
+        // Template dimensions (matching cardtemplate.jpg exactly)
         this.TEMPLATE_WIDTH = 500;
         this.TEMPLATE_HEIGHT = 750;
         
-        // Art Deco frame specifications
+        // Art Deco frame specifications (from cardtemplate.jpg analysis)
         this.FRAME_BORDER = 45;          // Golden frame border width
         this.INNER_SPACING = 15;         // Space between frame and black panel
         
-        // Floating black panel (overlaps the frame as requested)
+        // Black panel area (the central black rectangle in cardtemplate.jpg)
         this.PANEL_WIDTH = 380;          // Black panel width
         this.PANEL_HEIGHT = 570;         // Black panel height
-        this.PANEL_X = (this.TEMPLATE_WIDTH - this.PANEL_WIDTH) / 2;
-        this.PANEL_Y = 70;               // Top margin for AWS logo
-        this.PANEL_OVERLAP = 10;         // How much panel overlaps frame
+        this.PANEL_X = (this.TEMPLATE_WIDTH - this.PANEL_WIDTH) / 2;  // Centered: (500-380)/2 = 60
+        this.PANEL_Y = 70;               // Top margin for AWS logo space
         
-        // Nova Canvas area (inside floating panel)
-        this.NOVA_WIDTH = 340;           // AI image width
-        this.NOVA_HEIGHT = 510;          // AI image height
-        this.NOVA_X = (this.TEMPLATE_WIDTH - this.NOVA_WIDTH) / 2;
-        this.NOVA_Y = this.PANEL_Y + 30; // Centered in panel
+        // Nova Canvas area (PROPERLY positioned in the black panel center)
+        // Based on cardtemplate.jpg, the image should fill most of the black area with some padding
+        this.NOVA_WIDTH = 320;           // Image width (leaves 30px margin on each side)
+        this.NOVA_HEIGHT = 480;          // Image height (leaves 45px margin top/bottom)
+        this.NOVA_X = this.PANEL_X + (this.PANEL_WIDTH - this.NOVA_WIDTH) / 2;   // Centered in panel: 60 + (380-320)/2 = 90
+        this.NOVA_Y = this.PANEL_Y + (this.PANEL_HEIGHT - this.NOVA_HEIGHT) / 2; // Centered in panel: 70 + (570-480)/2 = 115
         
         // Art Deco colors with holographic enhancement
         this.GOLD_PRIMARY = '#D4AF37';
@@ -506,10 +506,27 @@ class SnapMagicCardTemplateSystem {
     }
     
     /**
-     * Draw Nova Canvas image with 3D depth effects
+     * Draw Nova Canvas image with 3D depth effects (with positioning debug)
      */
     drawNovaImageWith3D(novaImg) {
         this.ctx.save();
+        
+        // Debug: Log positioning calculations
+        console.log('🖼️ Nova Image Positioning Debug:');
+        console.log(`   Template: ${this.TEMPLATE_WIDTH}x${this.TEMPLATE_HEIGHT}`);
+        console.log(`   Panel: ${this.PANEL_WIDTH}x${this.PANEL_HEIGHT} at (${this.PANEL_X}, ${this.PANEL_Y})`);
+        console.log(`   Nova: ${this.NOVA_WIDTH}x${this.NOVA_HEIGHT} at (${this.NOVA_X}, ${this.NOVA_Y})`);
+        console.log(`   Nova bounds: left=${this.NOVA_X}, right=${this.NOVA_X + this.NOVA_WIDTH}, top=${this.NOVA_Y}, bottom=${this.NOVA_Y + this.NOVA_HEIGHT}`);
+        console.log(`   Panel bounds: left=${this.PANEL_X}, right=${this.PANEL_X + this.PANEL_WIDTH}, top=${this.PANEL_Y}, bottom=${this.PANEL_Y + this.PANEL_HEIGHT}`);
+        
+        // Debug: Draw positioning guide rectangles (temporary - remove after testing)
+        this.ctx.strokeStyle = '#ff0000'; // Red for Nova area
+        this.ctx.lineWidth = 2;
+        this.ctx.strokeRect(this.NOVA_X, this.NOVA_Y, this.NOVA_WIDTH, this.NOVA_HEIGHT);
+        
+        this.ctx.strokeStyle = '#00ff00'; // Green for Panel area
+        this.ctx.lineWidth = 1;
+        this.ctx.strokeRect(this.PANEL_X, this.PANEL_Y, this.PANEL_WIDTH, this.PANEL_HEIGHT);
         
         // Apply subtle 3D transformation based on view angle
         const transform = this.calculate3DTransform();
@@ -520,6 +537,7 @@ class SnapMagicCardTemplateSystem {
         );
         
         // Draw Nova Canvas image
+        console.log(`🎨 Drawing Nova image at (${this.NOVA_X}, ${this.NOVA_Y}) with size ${this.NOVA_WIDTH}x${this.NOVA_HEIGHT}`);
         this.ctx.drawImage(novaImg, this.NOVA_X, this.NOVA_Y, this.NOVA_WIDTH, this.NOVA_HEIGHT);
         
         // Add depth lighting effect
