@@ -91,10 +91,10 @@ async function validateCardTemplate() {
     const expectedDimensions = {
         TEMPLATE_WIDTH: 500,
         TEMPLATE_HEIGHT: 750,
-        NOVA_WIDTH: 300,
-        NOVA_HEIGHT: 540,
-        NOVA_X: 100,
-        NOVA_Y: 105
+        NOVA_WIDTH: 280,    // Updated for sophisticated frame
+        NOVA_HEIGHT: 520,   // Updated for sophisticated frame
+        NOVA_X: 110,        // Updated for sophisticated frame
+        NOVA_Y: 115         // Updated for sophisticated frame
     };
     
     let dimensionsValid = true;
