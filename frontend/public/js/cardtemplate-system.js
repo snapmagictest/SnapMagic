@@ -14,15 +14,15 @@ class SnapMagicCardTemplateSystem {
         this.TEMPLATE_WIDTH = 500;
         this.TEMPLATE_HEIGHT = 750;
         
-        // Art Deco frame specifications (from cardtemplate.jpg analysis)
-        this.FRAME_BORDER = 35;          // Inner frame border
+        // Art Deco frame specifications (from detailed cardtemplate.jpg analysis)
+        this.FRAME_BORDER = 80;          // Space taken by complex frame decorations
         
-        // Nova Canvas area (filling the central black area, matching cardtemplate.jpg)
-        // Based on visual analysis, the image area starts after the frame decorations
-        this.NOVA_WIDTH = 400;           // Image width (fills most of the central area)
-        this.NOVA_HEIGHT = 620;          // Image height (fills most of the central area)
-        this.NOVA_X = (this.TEMPLATE_WIDTH - this.NOVA_WIDTH) / 2;   // Centered: (500-400)/2 = 50
-        this.NOVA_Y = (this.TEMPLATE_HEIGHT - this.NOVA_HEIGHT) / 2; // Centered: (750-620)/2 = 65
+        // Nova Canvas area (filling the central black area, avoiding frame decorations)
+        // Based on visual analysis, the image area needs to avoid the complex corner decorations
+        this.NOVA_WIDTH = 340;           // Image width (500 - 160 for frame decorations)
+        this.NOVA_HEIGHT = 590;          // Image height (750 - 160 for frame decorations)
+        this.NOVA_X = (this.TEMPLATE_WIDTH - this.NOVA_WIDTH) / 2;   // Centered: (500-340)/2 = 80
+        this.NOVA_Y = (this.TEMPLATE_HEIGHT - this.NOVA_HEIGHT) / 2; // Centered: (750-590)/2 = 80
         
         // Art Deco colors with holographic enhancement
         this.GOLD_PRIMARY = '#D4AF37';
@@ -223,7 +223,7 @@ class SnapMagicCardTemplateSystem {
     }
     
     /**
-     * Draw Art Deco frame matching cardtemplate.jpg exactly
+     * Draw Art Deco frame matching cardtemplate.jpg EXACTLY
      */
     drawSimpleGoldenFrame() {
         this.ctx.save();
@@ -231,79 +231,160 @@ class SnapMagicCardTemplateSystem {
         // Set golden color matching the reference image
         this.ctx.strokeStyle = this.GOLD_PRIMARY;
         this.ctx.fillStyle = this.GOLD_PRIMARY;
-        this.ctx.lineWidth = 3;
+        this.ctx.lineWidth = 2;
         
-        // Draw main outer border
-        const borderWidth = 20;
-        this.ctx.strokeRect(borderWidth, borderWidth, 
-                           this.TEMPLATE_WIDTH - (borderWidth * 2), 
-                           this.TEMPLATE_HEIGHT - (borderWidth * 2));
-        
-        // Draw inner border
-        const innerBorder = 35;
-        this.ctx.strokeRect(innerBorder, innerBorder, 
-                           this.TEMPLATE_WIDTH - (innerBorder * 2), 
-                           this.TEMPLATE_HEIGHT - (innerBorder * 2));
-        
-        // Draw Art Deco corner decorations matching the reference
-        this.drawArtDecoCorners();
-        
-        // Draw top and bottom decorative elements
-        this.drawTopBottomDecorations();
+        // Draw the complex Art Deco frame exactly as shown in cardtemplate.jpg
+        this.drawComplexArtDecoFrame();
         
         this.ctx.restore();
-        console.log('✅ Art Deco frame drawn matching cardtemplate.jpg');
+        console.log('✅ Complex Art Deco frame drawn matching cardtemplate.jpg exactly');
     }
     
     /**
-     * Draw Art Deco corner decorations matching cardtemplate.jpg
+     * Draw the complete Art Deco frame system matching cardtemplate.jpg
      */
-    drawArtDecoCorners() {
+    drawComplexArtDecoFrame() {
+        // Draw outer border lines
+        this.drawOuterBorderLines();
+        
+        // Draw complex corner decorations
+        this.drawComplexCornerDecorations();
+        
+        // Draw top and bottom decorative panels
+        this.drawTopBottomDecorativePanels();
+        
+        // Draw side decorative elements
+        this.drawSideDecorativeElements();
+    }
+    
+    /**
+     * Draw outer border lines (multiple parallel lines)
+     */
+    drawOuterBorderLines() {
+        const margins = [15, 20, 25]; // Multiple border lines at different distances
+        
+        margins.forEach(margin => {
+            this.ctx.strokeRect(margin, margin, 
+                               this.TEMPLATE_WIDTH - (margin * 2), 
+                               this.TEMPLATE_HEIGHT - (margin * 2));
+        });
+    }
+    
+    /**
+     * Draw complex Art Deco corner decorations matching cardtemplate.jpg
+     */
+    drawComplexCornerDecorations() {
         const corners = [
-            { x: 0, y: 0, flipX: 1, flipY: 1 },           // Top-left
-            { x: this.TEMPLATE_WIDTH, y: 0, flipX: -1, flipY: 1 },    // Top-right
-            { x: 0, y: this.TEMPLATE_HEIGHT, flipX: 1, flipY: -1 },   // Bottom-left
-            { x: this.TEMPLATE_WIDTH, y: this.TEMPLATE_HEIGHT, flipX: -1, flipY: -1 } // Bottom-right
+            { x: 0, y: 0, rotation: 0 },                    // Top-left
+            { x: this.TEMPLATE_WIDTH, y: 0, rotation: 90 }, // Top-right
+            { x: this.TEMPLATE_WIDTH, y: this.TEMPLATE_HEIGHT, rotation: 180 }, // Bottom-right
+            { x: 0, y: this.TEMPLATE_HEIGHT, rotation: 270 } // Bottom-left
         ];
         
         corners.forEach(corner => {
             this.ctx.save();
             this.ctx.translate(corner.x, corner.y);
-            this.ctx.scale(corner.flipX, corner.flipY);
+            this.ctx.rotate((corner.rotation * Math.PI) / 180);
             
-            // Draw stepped corner decoration matching the reference
-            this.ctx.beginPath();
-            this.ctx.moveTo(0, 0);
-            this.ctx.lineTo(60, 0);
-            this.ctx.lineTo(60, 20);
-            this.ctx.lineTo(40, 20);
-            this.ctx.lineTo(40, 40);
-            this.ctx.lineTo(20, 40);
-            this.ctx.lineTo(20, 60);
-            this.ctx.lineTo(0, 60);
-            this.ctx.closePath();
-            this.ctx.fill();
+            // Draw the complex stepped corner pattern from cardtemplate.jpg
+            this.drawSingleCornerPattern();
             
             this.ctx.restore();
         });
     }
     
     /**
-     * Draw top and bottom decorative elements matching cardtemplate.jpg
+     * Draw a single corner pattern (will be rotated for each corner)
      */
-    drawTopBottomDecorations() {
-        // Top decoration
+    drawSingleCornerPattern() {
+        this.ctx.beginPath();
+        
+        // Create the complex stepped pattern visible in cardtemplate.jpg
+        // Outer stepped elements
+        this.ctx.moveTo(0, 0);
+        this.ctx.lineTo(80, 0);
+        this.ctx.lineTo(80, 15);
+        this.ctx.lineTo(65, 15);
+        this.ctx.lineTo(65, 30);
+        this.ctx.lineTo(50, 30);
+        this.ctx.lineTo(50, 45);
+        this.ctx.lineTo(35, 45);
+        this.ctx.lineTo(35, 60);
+        this.ctx.lineTo(20, 60);
+        this.ctx.lineTo(20, 75);
+        this.ctx.lineTo(15, 75);
+        this.ctx.lineTo(15, 80);
+        this.ctx.lineTo(0, 80);
+        this.ctx.closePath();
+        this.ctx.fill();
+        
+        // Add inner geometric details
+        this.ctx.strokeRect(25, 25, 30, 30);
+        this.ctx.strokeRect(30, 30, 20, 20);
+    }
+    
+    /**
+     * Draw top and bottom decorative panels
+     */
+    drawTopBottomDecorativePanels() {
         const centerX = this.TEMPLATE_WIDTH / 2;
-        const topY = 20;
-        const bottomY = this.TEMPLATE_HEIGHT - 20;
+        const panelWidth = 200;
+        const panelHeight = 25;
         
-        // Draw top decorative element
-        this.ctx.fillRect(centerX - 80, topY - 5, 160, 10);
-        this.ctx.fillRect(centerX - 60, topY - 10, 120, 5);
+        // Top decorative panel
+        this.drawDecorativePanel(centerX - panelWidth/2, 15, panelWidth, panelHeight);
         
-        // Draw bottom decorative element
-        this.ctx.fillRect(centerX - 80, bottomY - 5, 160, 10);
-        this.ctx.fillRect(centerX - 60, bottomY, 120, 5);
+        // Bottom decorative panel
+        this.drawDecorativePanel(centerX - panelWidth/2, this.TEMPLATE_HEIGHT - 40, panelWidth, panelHeight);
+    }
+    
+    /**
+     * Draw a single decorative panel with Art Deco styling
+     */
+    drawDecorativePanel(x, y, width, height) {
+        // Main panel rectangle
+        this.ctx.strokeRect(x, y, width, height);
+        
+        // Inner decorative lines
+        this.ctx.strokeRect(x + 5, y + 5, width - 10, height - 10);
+        
+        // Central decorative element
+        const centerX = x + width/2;
+        const centerY = y + height/2;
+        this.ctx.strokeRect(centerX - 15, centerY - 3, 30, 6);
+    }
+    
+    /**
+     * Draw side decorative elements
+     */
+    drawSideDecorativeElements() {
+        const centerY = this.TEMPLATE_HEIGHT / 2;
+        const elementHeight = 100;
+        
+        // Left side decorative elements
+        this.drawSideElement(15, centerY - elementHeight/2, 20, elementHeight);
+        
+        // Right side decorative elements  
+        this.drawSideElement(this.TEMPLATE_WIDTH - 35, centerY - elementHeight/2, 20, elementHeight);
+    }
+    
+    /**
+     * Draw a single side decorative element
+     */
+    drawSideElement(x, y, width, height) {
+        // Main vertical element
+        this.ctx.strokeRect(x, y, width, height);
+        
+        // Decorative segments
+        const segments = 5;
+        const segmentHeight = height / segments;
+        
+        for (let i = 1; i < segments; i++) {
+            this.ctx.beginPath();
+            this.ctx.moveTo(x, y + (i * segmentHeight));
+            this.ctx.lineTo(x + width, y + (i * segmentHeight));
+            this.ctx.stroke();
+        }
     }
         
         const t = (this.animationTime * 0.01) % 1;
