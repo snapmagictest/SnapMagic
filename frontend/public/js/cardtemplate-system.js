@@ -17,12 +17,12 @@ class SnapMagicCardTemplateSystem {
         // Art Deco frame specifications (from detailed cardtemplate.jpg analysis)
         this.FRAME_BORDER = 80;          // Space taken by complex frame decorations
         
-        // Nova Canvas area (filling the central black area, avoiding all frame decorations)
-        // Based on detailed analysis of the new complex frame design
-        this.NOVA_WIDTH = 300;           // Image width (leaves room for complex frame decorations)
-        this.NOVA_HEIGHT = 540;          // Image height (leaves room for complex frame decorations)
-        this.NOVA_X = (this.TEMPLATE_WIDTH - this.NOVA_WIDTH) / 2;   // Centered: (500-300)/2 = 100
-        this.NOVA_Y = (this.TEMPLATE_HEIGHT - this.NOVA_HEIGHT) / 2; // Centered: (750-540)/2 = 105
+        // Nova Canvas area (optimized for the sophisticated frame design)
+        // Calculated to avoid all frame decorations while maximizing image area
+        this.NOVA_WIDTH = 280;           // Image width (optimized for complex frame)
+        this.NOVA_HEIGHT = 520;          // Image height (optimized for complex frame)
+        this.NOVA_X = (this.TEMPLATE_WIDTH - this.NOVA_WIDTH) / 2;   // Centered: (500-280)/2 = 110
+        this.NOVA_Y = (this.TEMPLATE_HEIGHT - this.NOVA_HEIGHT) / 2; // Centered: (750-520)/2 = 115
         
         // Art Deco colors with holographic enhancement
         this.GOLD_PRIMARY = '#D4AF37';
