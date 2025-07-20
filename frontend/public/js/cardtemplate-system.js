@@ -17,12 +17,12 @@ class SnapMagicCardTemplateSystem {
         // Art Deco frame specifications (from detailed cardtemplate.jpg analysis)
         this.FRAME_BORDER = 80;          // Space taken by complex frame decorations
         
-        // Nova Canvas area (filling the central black area, avoiding frame decorations)
-        // Based on detailed analysis of cardtemplate.jpg proportions
-        this.NOVA_WIDTH = 320;           // Image width (leaves room for frame decorations)
-        this.NOVA_HEIGHT = 560;          // Image height (leaves room for frame decorations)
-        this.NOVA_X = (this.TEMPLATE_WIDTH - this.NOVA_WIDTH) / 2;   // Centered: (500-320)/2 = 90
-        this.NOVA_Y = (this.TEMPLATE_HEIGHT - this.NOVA_HEIGHT) / 2; // Centered: (750-560)/2 = 95
+        // Nova Canvas area (filling the central black area, avoiding all frame decorations)
+        // Based on detailed analysis of the new complex frame design
+        this.NOVA_WIDTH = 300;           // Image width (leaves room for complex frame decorations)
+        this.NOVA_HEIGHT = 540;          // Image height (leaves room for complex frame decorations)
+        this.NOVA_X = (this.TEMPLATE_WIDTH - this.NOVA_WIDTH) / 2;   // Centered: (500-300)/2 = 100
+        this.NOVA_Y = (this.TEMPLATE_HEIGHT - this.NOVA_HEIGHT) / 2; // Centered: (750-540)/2 = 105
         
         // Art Deco colors with holographic enhancement
         this.GOLD_PRIMARY = '#D4AF37';
@@ -696,20 +696,25 @@ class SnapMagicCardTemplateSystem {
     }
     
     /**
-     * Draw Nova Canvas image properly positioned (no debug rectangles)
+     * Draw Nova Canvas image properly positioned (with detailed positioning info)
      */
     drawNovaImageWith3D(novaImg) {
         this.ctx.save();
         
-        // Debug: Log positioning calculations (console only)
-        console.log('🖼️ Nova Image Positioning:');
-        console.log(`   Nova: ${this.NOVA_WIDTH}x${this.NOVA_HEIGHT} at (${this.NOVA_X}, ${this.NOVA_Y})`);
+        // Debug: Log detailed positioning calculations
+        console.log('🖼️ Nova Image Positioning Details:');
+        console.log(`   Template size: ${this.TEMPLATE_WIDTH}x${this.TEMPLATE_HEIGHT}`);
+        console.log(`   Nova size: ${this.NOVA_WIDTH}x${this.NOVA_HEIGHT}`);
+        console.log(`   Nova position: (${this.NOVA_X}, ${this.NOVA_Y})`);
+        console.log(`   Nova bounds: ${this.NOVA_X} to ${this.NOVA_X + this.NOVA_WIDTH} (width), ${this.NOVA_Y} to ${this.NOVA_Y + this.NOVA_HEIGHT} (height)`);
+        console.log(`   Margins: left=${this.NOVA_X}, right=${this.TEMPLATE_WIDTH - (this.NOVA_X + this.NOVA_WIDTH)}, top=${this.NOVA_Y}, bottom=${this.TEMPLATE_HEIGHT - (this.NOVA_Y + this.NOVA_HEIGHT)}`);
         
-        // Draw Nova Canvas image (no debug rectangles)
+        // Draw Nova Canvas image
         console.log(`🎨 Drawing Nova image at (${this.NOVA_X}, ${this.NOVA_Y}) with size ${this.NOVA_WIDTH}x${this.NOVA_HEIGHT}`);
         this.ctx.drawImage(novaImg, this.NOVA_X, this.NOVA_Y, this.NOVA_WIDTH, this.NOVA_HEIGHT);
         
         this.ctx.restore();
+        console.log('✅ Nova image drawn successfully');
     }
     
     /**
