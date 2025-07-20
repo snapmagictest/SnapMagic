@@ -1,23 +1,31 @@
 /**
- * SnapMagic CardTemplate 3D Effects Extension
- * Advanced 3D shader effects for premium holographic cards
+ * SnapMagic CardTemplate 3D Effects Extension - DISABLED
+ * All effects disabled to match cardtemplate.jpg exactly (no rainbow/sparkles)
  */
 
-// Extend the CardTemplate system with 3D effects
+// Extend the CardTemplate system with DISABLED 3D effects (clean design)
 Object.assign(SnapMagicCardTemplateSystem.prototype, {
     
     /**
-     * Draw 3D sparkle effects across the card
+     * Draw 3D sparkle effects - DISABLED for clean design
      */
     async draw3DSparkleEffects() {
-        try {
-            console.log('✨ Drawing 3D sparkle effects...');
-            
-            // Draw view-dependent sparkles
-            this.drawViewDependentSparkles();
-            
-            // Draw surface pattern effects
-            this.drawSurfacePatternEffects();
+        // DISABLED - no sparkles, no rainbow effects, clean design matching cardtemplate.jpg
+        console.log('✅ 3D effects disabled for clean design (matching cardtemplate.jpg)');
+        return;
+    },
+    
+    /**
+     * Apply holographic enhancement - DISABLED for clean design
+     */
+    applyHolographicEnhancement() {
+        // DISABLED - no holographic effects, clean design matching cardtemplate.jpg
+        console.log('✅ Holographic effects disabled for clean design (matching cardtemplate.jpg)');
+        return;
+    }
+});
+
+console.log('✅ CardTemplate 3D Effects DISABLED for clean design matching cardtemplate.jpg');
             
             // Draw glare effects
             this.drawGlareEffects();

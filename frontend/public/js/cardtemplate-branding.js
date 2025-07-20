@@ -31,10 +31,7 @@ Object.assign(SnapMagicCardTemplateSystem.prototype, {
                     const finalLogoX = logoX - logoSize.width / 2;
                     const finalLogoY = logoY;
                     
-                    // Add holographic glow effect to logo
-                    this.addHolographicGlow(finalLogoX, finalLogoY, logoSize.width, logoSize.height);
-                    
-                    // Draw the AWS logo
+                    // Draw the AWS logo (no holographic glow for clean design)
                     this.ctx.drawImage(awsLogo, finalLogoX, finalLogoY, logoSize.width, logoSize.height);
                     
                     this.ctx.restore();
@@ -43,18 +40,13 @@ Object.assign(SnapMagicCardTemplateSystem.prototype, {
                 };
                 
                 awsLogo.onerror = () => {
-                    // Fallback text with holographic effect
+                    // Fallback text with simple golden color (no rainbow effects)
                     this.ctx.save();
                     
-                    const colorIndex = Math.floor(this.animationTime * 0.02) % this.RAINBOW_COLORS.length;
-                    this.ctx.fillStyle = this.RAINBOW_COLORS[colorIndex];
+                    this.ctx.fillStyle = this.GOLD_PRIMARY; // Simple golden color
                     this.ctx.font = 'bold 18px serif';
                     this.ctx.textAlign = 'center';
                     this.ctx.textBaseline = 'middle';
-                    
-                    // Add glow effect
-                    this.ctx.shadowColor = this.RAINBOW_COLORS[colorIndex];
-                    this.ctx.shadowBlur = 10;
                     
                     this.ctx.fillText('POWERED BY AWS', this.TEMPLATE_WIDTH / 2, 35);
                     
