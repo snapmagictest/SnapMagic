@@ -1,6 +1,6 @@
 /**
- * SnapMagic CardTemplate System - Exact ASCII Design Implementation
- * Matches the cardtemplate.jpg exactly based on ASCII analysis
+ * SnapMagic CardTemplate System - Sophisticated Art Deco Premium
+ * Uses our custom sophisticated-art-deco-template.png design
  */
 
 class SnapMagicCardTemplateSystem {
@@ -9,40 +9,45 @@ class SnapMagicCardTemplateSystem {
         this.canvas = null;
         this.ctx = null;
         
-        // Template dimensions (matching cardtemplate.jpg exactly)
-        this.TEMPLATE_WIDTH = 500;
-        this.TEMPLATE_HEIGHT = 750;
+        // Template dimensions (matching our sophisticated design)
+        this.TEMPLATE_WIDTH = 420;
+        this.TEMPLATE_HEIGHT = 680;
         
-        // Frame measurements based on ASCII analysis
-        this.OUTER_BORDER = 15;          // Outermost frame border
-        this.INNER_BORDER = 25;          // Inner frame border
-        this.CORNER_SIZE = 60;           // Corner decoration size
-        this.PANEL_HEIGHT = 40;          // Top/bottom panel height
-        this.SIDE_WIDTH = 20;            // Side panel width
+        // Nova Canvas area (from our sophisticated template layout)
+        this.NOVA_WIDTH = 360;           // Main image area width
+        this.NOVA_HEIGHT = 480;          // Main image area height
+        this.NOVA_X = 30;                // X position from template
+        this.NOVA_Y = 80;                // Y position from template
         
-        // Nova Canvas area (central black rectangle)
-        this.NOVA_WIDTH = 350;           // Central area width
-        this.NOVA_HEIGHT = 580;          // Central area height
-        this.NOVA_X = (this.TEMPLATE_WIDTH - this.NOVA_WIDTH) / 2;   // Centered
-        this.NOVA_Y = (this.TEMPLATE_HEIGHT - this.NOVA_HEIGHT) / 2; // Centered
+        // Header area for logos (from our template)
+        this.HEADER_X = 60;
+        this.HEADER_Y = 20;
+        this.HEADER_WIDTH = 300;
+        this.HEADER_HEIGHT = 50;
         
-        // Champagne gold colors (corrected)
-        this.GOLD_PRIMARY = '#C9A961';    // Warm, muted champagne gold
-        this.GOLD_SECONDARY = '#B8A082';  // Deeper champagne tone
-        this.GOLD_ACCENT = '#D4B76A';     // Brighter highlights
-        this.GOLD_SHINE = '#E6D4A3';      // Metallic shine
+        // Footer area for AWS branding (from our template)
+        this.FOOTER_X = 20;
+        this.FOOTER_Y = 570;
+        this.FOOTER_WIDTH = 380;
+        this.FOOTER_HEIGHT = 90;
+        
+        // Our custom gradient gold colors
+        this.GOLD_PRIMARY = '#D2AC47';    // Rich golden brown
+        this.GOLD_SECONDARY = '#AE8625';  // Deep antique gold
+        this.GOLD_ACCENT = '#F7EF8A';     // Light golden yellow
+        this.GOLD_MUTED = '#EDC967';      // Warm golden yellow
         this.BLACK_PANEL = '#000000';
         this.WHITE_TEXT = '#FFFFFF';
         
-        console.log('✅ CardTemplate System initialized with exact ASCII design');
+        console.log('✅ Sophisticated Art Deco Premium CardTemplate System initialized');
     }
     
     /**
-     * Create trading card with exact ASCII design
+     * Create trading card with our sophisticated art deco design
      */
     async createCardTemplate(novaImageBase64, userPrompt = '') {
         try {
-            console.log('🎨 Creating CardTemplate with exact ASCII design...');
+            console.log('🎨 Creating Sophisticated Art Deco Premium CardTemplate...');
             
             // Create canvas
             this.canvas = document.createElement('canvas');
@@ -50,282 +55,220 @@ class SnapMagicCardTemplateSystem {
             this.canvas.height = this.TEMPLATE_HEIGHT;
             this.ctx = this.canvas.getContext('2d');
             
-            // Draw solid black background
-            this.drawBlackBackground();
-            
-            // Draw the exact frame design from ASCII
-            this.drawExactFrameDesign();
-            console.log('✅ Exact frame design drawn');
-            
-            // Load and draw Nova Canvas image
-            const novaImg = new Image();
+            // Load our sophisticated art deco template
+            const templateImg = new Image();
             
             return new Promise((resolve, reject) => {
-                novaImg.onload = async () => {
+                templateImg.onload = async () => {
                     try {
-                        console.log('✅ Nova Canvas image loaded');
+                        console.log('✅ Sophisticated Art Deco template loaded');
                         
-                        // Draw Nova Canvas image in central black area
-                        this.drawNovaImage(novaImg);
-                        console.log('✅ Nova Canvas image drawn');
+                        // Draw the template background
+                        this.ctx.drawImage(templateImg, 0, 0, this.TEMPLATE_WIDTH, this.TEMPLATE_HEIGHT);
+                        console.log('✅ Template background drawn');
                         
-                        // Draw branding (handled by branding system)
-                        await this.drawCardTemplateLogo();
-                        await this.drawCardTemplateFooter();
-                        console.log('✅ CardTemplate branding drawn');
+                        // Load and draw Nova Canvas image
+                        const novaImg = new Image();
                         
-                        // Return final card as base64
-                        const finalCard = this.canvas.toDataURL('image/png').split(',')[1];
-                        console.log('✅ CardTemplate created successfully with exact design');
-                        resolve(finalCard);
+                        novaImg.onload = async () => {
+                            try {
+                                console.log('✅ Nova Canvas image loaded');
+                                
+                                // Draw Nova Canvas image in the designated area
+                                this.drawNovaImage(novaImg);
+                                console.log('✅ Nova Canvas image drawn');
+                                
+                                // Draw branding elements
+                                await this.drawBranding();
+                                console.log('✅ Branding drawn');
+                                
+                                // Return final card as base64
+                                const finalCard = this.canvas.toDataURL('image/png').split(',')[1];
+                                console.log('✅ Sophisticated Art Deco Premium CardTemplate created successfully');
+                                resolve(finalCard);
+                                
+                            } catch (error) {
+                                console.error('❌ Error processing Nova Canvas image:', error);
+                                reject(error);
+                            }
+                        };
+                        
+                        novaImg.onerror = () => {
+                            console.error('❌ Failed to load Nova Canvas image');
+                            reject(new Error('Failed to load Nova Canvas image'));
+                        };
+                        
+                        novaImg.src = `data:image/png;base64,${novaImageBase64}`;
                         
                     } catch (error) {
-                        console.error('❌ Error creating CardTemplate:', error);
+                        console.error('❌ Error loading template:', error);
                         reject(error);
                     }
                 };
                 
-                novaImg.onerror = () => {
-                    console.error('❌ Failed to load Nova Canvas image');
-                    reject(new Error('Failed to load Nova Canvas image'));
+                templateImg.onerror = () => {
+                    console.error('❌ Failed to load sophisticated art deco template');
+                    reject(new Error('Failed to load sophisticated art deco template'));
                 };
                 
-                novaImg.src = `data:image/png;base64,${novaImageBase64}`;
+                // Load our sophisticated art deco template
+                templateImg.src = 'sophisticated-art-deco-template.png';
             });
             
         } catch (error) {
-            console.error('❌ CardTemplate creation failed:', error);
+            console.error('❌ Sophisticated Art Deco Premium CardTemplate creation failed:', error);
             throw error;
         }
     }
     
     /**
-     * Draw solid black background
+     * Draw Nova Canvas image in the designated area with proper clipping
      */
-    drawBlackBackground() {
-        this.ctx.fillStyle = '#000000';
-        this.ctx.fillRect(0, 0, this.TEMPLATE_WIDTH, this.TEMPLATE_HEIGHT);
-        console.log('✅ Solid black background drawn');
-    }
-    
-    /**
-     * Draw the exact frame design matching ASCII layout
-     */
-    drawExactFrameDesign() {
+    drawNovaImage(novaImg) {
+        // Save context for clipping
         this.ctx.save();
-        this.ctx.strokeStyle = this.GOLD_PRIMARY;
-        this.ctx.fillStyle = this.GOLD_PRIMARY;
-        this.ctx.lineWidth = 2;
         
-        // Draw outer border frame
-        this.drawOuterBorderFrame();
+        // Create clipping path for the image area
+        this.ctx.beginPath();
+        this.ctx.rect(this.NOVA_X, this.NOVA_Y, this.NOVA_WIDTH, this.NOVA_HEIGHT);
+        this.ctx.clip();
         
-        // Draw inner border frame
-        this.drawInnerBorderFrame();
+        // Calculate scaling to fit image while maintaining aspect ratio
+        const imgAspect = novaImg.width / novaImg.height;
+        const areaAspect = this.NOVA_WIDTH / this.NOVA_HEIGHT;
         
-        // Draw corner decorations (4 corners)
-        this.drawCornerDecorations();
+        let drawWidth, drawHeight, drawX, drawY;
         
-        // Draw top decorative panel
-        this.drawTopDecorativePanel();
+        if (imgAspect > areaAspect) {
+            // Image is wider - fit to height
+            drawHeight = this.NOVA_HEIGHT;
+            drawWidth = drawHeight * imgAspect;
+            drawX = this.NOVA_X - (drawWidth - this.NOVA_WIDTH) / 2;
+            drawY = this.NOVA_Y;
+        } else {
+            // Image is taller - fit to width
+            drawWidth = this.NOVA_WIDTH;
+            drawHeight = drawWidth / imgAspect;
+            drawX = this.NOVA_X;
+            drawY = this.NOVA_Y - (drawHeight - this.NOVA_HEIGHT) / 2;
+        }
         
-        // Draw bottom decorative panel
-        this.drawBottomDecorativePanel();
+        // Draw the image
+        this.ctx.drawImage(novaImg, drawX, drawY, drawWidth, drawHeight);
         
-        // Draw side panels (left and right)
-        this.drawSidePanels();
-        
+        // Restore context
         this.ctx.restore();
     }
     
     /**
-     * Draw outer border frame (outermost rectangle)
+     * Draw branding elements (header logos and footer AWS)
      */
-    drawOuterBorderFrame() {
-        // Main outer border
-        this.ctx.strokeRect(
-            this.OUTER_BORDER, 
-            this.OUTER_BORDER, 
-            this.TEMPLATE_WIDTH - (this.OUTER_BORDER * 2), 
-            this.TEMPLATE_HEIGHT - (this.OUTER_BORDER * 2)
-        );
+    async drawBranding() {
+        try {
+            // Draw header logos if available
+            await this.drawHeaderLogos();
+            
+            // Draw footer AWS branding
+            await this.drawFooterBranding();
+            
+        } catch (error) {
+            console.warn('⚠️ Branding drawing failed:', error);
+        }
     }
     
     /**
-     * Draw inner border frame
+     * Draw header logos in the header area (numbered logo system)
      */
-    drawInnerBorderFrame() {
-        // Inner border frame
-        this.ctx.strokeRect(
-            this.INNER_BORDER, 
-            this.INNER_BORDER, 
-            this.TEMPLATE_WIDTH - (this.INNER_BORDER * 2), 
-            this.TEMPLATE_HEIGHT - (this.INNER_BORDER * 2)
-        );
+    async drawHeaderLogos() {
+        try {
+            // Load numbered logos (1.png, 2.png, etc.)
+            const logoPromises = [];
+            const maxLogos = 6;
+            
+            for (let i = 1; i <= maxLogos; i++) {
+                logoPromises.push(this.loadLogo(i));
+            }
+            
+            const logos = await Promise.all(logoPromises);
+            const validLogos = logos.filter(logo => logo !== null);
+            
+            if (validLogos.length > 0) {
+                this.drawLogosInHeader(validLogos);
+                console.log(`✅ Drew ${validLogos.length} header logos`);
+            } else {
+                console.log('📋 No header logos found, header area remains as designed');
+            }
+            
+        } catch (error) {
+            console.warn('⚠️ Header logo loading failed:', error);
+        }
     }
     
     /**
-     * Draw corner decorations (stepped geometric patterns)
+     * Load a single logo by number
      */
-    drawCornerDecorations() {
-        const corners = [
-            { x: this.OUTER_BORDER, y: this.OUTER_BORDER },                    // Top-left
-            { x: this.TEMPLATE_WIDTH - this.OUTER_BORDER - this.CORNER_SIZE, y: this.OUTER_BORDER }, // Top-right
-            { x: this.OUTER_BORDER, y: this.TEMPLATE_HEIGHT - this.OUTER_BORDER - this.CORNER_SIZE }, // Bottom-left
-            { x: this.TEMPLATE_WIDTH - this.OUTER_BORDER - this.CORNER_SIZE, y: this.TEMPLATE_HEIGHT - this.OUTER_BORDER - this.CORNER_SIZE } // Bottom-right
-        ];
-        
-        corners.forEach(corner => {
-            this.drawSingleCornerDecoration(corner.x, corner.y);
+    async loadLogo(number) {
+        return new Promise((resolve) => {
+            const img = new Image();
+            img.onload = () => resolve({ img, number });
+            img.onerror = () => resolve(null);
+            img.src = `logos/${number}.png`;
         });
     }
     
     /**
-     * Draw single corner decoration (stepped pattern)
+     * Draw logos in header area with proper spacing
      */
-    drawSingleCornerDecoration(x, y) {
-        // Create stepped corner pattern
-        this.ctx.fillRect(x, y, this.CORNER_SIZE, 15);                    // Top horizontal
-        this.ctx.fillRect(x, y, 15, this.CORNER_SIZE);                    // Left vertical
-        this.ctx.fillRect(x + 15, y + 15, this.CORNER_SIZE - 15, 10);     // Second step
-        this.ctx.fillRect(x + 15, y + 15, 10, this.CORNER_SIZE - 15);     // Second step vertical
-        this.ctx.fillRect(x + 25, y + 25, this.CORNER_SIZE - 25, 8);      // Third step
-        this.ctx.fillRect(x + 25, y + 25, 8, this.CORNER_SIZE - 25);      // Third step vertical
+    drawLogosInHeader(logos) {
+        const logoHeight = 30;
+        const spacing = 10;
+        const totalWidth = logos.reduce((width, logo) => {
+            const logoWidth = (logo.img.width / logo.img.height) * logoHeight;
+            return width + logoWidth + spacing;
+        }, -spacing); // Remove last spacing
         
-        // Add inner decorative lines
-        this.ctx.strokeRect(x + 10, y + 10, this.CORNER_SIZE - 20, this.CORNER_SIZE - 20);
-        this.ctx.strokeRect(x + 20, y + 20, this.CORNER_SIZE - 40, this.CORNER_SIZE - 40);
+        let currentX = this.HEADER_X + (this.HEADER_WIDTH - totalWidth) / 2;
+        const logoY = this.HEADER_Y + (this.HEADER_HEIGHT - logoHeight) / 2;
+        
+        logos.forEach(logo => {
+            const logoWidth = (logo.img.width / logo.img.height) * logoHeight;
+            this.ctx.drawImage(logo.img, currentX, logoY, logoWidth, logoHeight);
+            currentX += logoWidth + spacing;
+        });
     }
     
     /**
-     * Draw top decorative panel
+     * Draw footer AWS branding
      */
-    drawTopDecorativePanel() {
-        const panelX = this.TEMPLATE_WIDTH / 2 - 150; // Centered, 300px wide
-        const panelY = this.OUTER_BORDER + 10;
-        const panelWidth = 300;
-        
-        // Main panel rectangle
-        this.ctx.strokeRect(panelX, panelY, panelWidth, this.PANEL_HEIGHT);
-        
-        // Inner panel rectangle
-        this.ctx.strokeRect(panelX + 5, panelY + 5, panelWidth - 10, this.PANEL_HEIGHT - 10);
-        
-        // Central decorative element
-        const centerX = panelX + panelWidth / 2;
-        const centerY = panelY + this.PANEL_HEIGHT / 2;
-        
-        // Diamond pattern in center
-        this.ctx.beginPath();
-        this.ctx.moveTo(centerX, centerY - 8);
-        this.ctx.lineTo(centerX + 12, centerY);
-        this.ctx.lineTo(centerX, centerY + 8);
-        this.ctx.lineTo(centerX - 12, centerY);
-        this.ctx.closePath();
-        this.ctx.fill();
-        
-        // Side decorative elements
-        this.ctx.strokeRect(panelX + 30, centerY - 5, 20, 10);
-        this.ctx.strokeRect(panelX + panelWidth - 50, centerY - 5, 20, 10);
-    }
-    
-    /**
-     * Draw bottom decorative panel (mirror of top)
-     */
-    drawBottomDecorativePanel() {
-        const panelX = this.TEMPLATE_WIDTH / 2 - 150; // Centered, 300px wide
-        const panelY = this.TEMPLATE_HEIGHT - this.OUTER_BORDER - this.PANEL_HEIGHT - 10;
-        const panelWidth = 300;
-        
-        // Main panel rectangle
-        this.ctx.strokeRect(panelX, panelY, panelWidth, this.PANEL_HEIGHT);
-        
-        // Inner panel rectangle
-        this.ctx.strokeRect(panelX + 5, panelY + 5, panelWidth - 10, this.PANEL_HEIGHT - 10);
-        
-        // Central decorative element
-        const centerX = panelX + panelWidth / 2;
-        const centerY = panelY + this.PANEL_HEIGHT / 2;
-        
-        // Diamond pattern in center
-        this.ctx.beginPath();
-        this.ctx.moveTo(centerX, centerY - 8);
-        this.ctx.lineTo(centerX + 12, centerY);
-        this.ctx.lineTo(centerX, centerY + 8);
-        this.ctx.lineTo(centerX - 12, centerY);
-        this.ctx.closePath();
-        this.ctx.fill();
-        
-        // Side decorative elements
-        this.ctx.strokeRect(panelX + 30, centerY - 5, 20, 10);
-        this.ctx.strokeRect(panelX + panelWidth - 50, centerY - 5, 20, 10);
-    }
-    
-    /**
-     * Draw side panels (left and right vertical elements)
-     */
-    drawSidePanels() {
-        const panelHeight = 200;
-        const centerY = this.TEMPLATE_HEIGHT / 2 - panelHeight / 2;
-        
-        // Left side panel
-        const leftX = this.OUTER_BORDER + 5;
-        this.ctx.strokeRect(leftX, centerY, this.SIDE_WIDTH, panelHeight);
-        this.ctx.strokeRect(leftX + 2, centerY + 5, this.SIDE_WIDTH - 4, panelHeight - 10);
-        
-        // Add segmented pattern to left panel
-        for (let i = 1; i < 8; i++) {
-            const segmentY = centerY + (i * panelHeight / 8);
-            this.ctx.beginPath();
-            this.ctx.moveTo(leftX + 2, segmentY);
-            this.ctx.lineTo(leftX + this.SIDE_WIDTH - 2, segmentY);
-            this.ctx.stroke();
+    async drawFooterBranding() {
+        try {
+            // Load AWS "Powered by AWS" logo
+            const awsLogo = new Image();
+            
+            return new Promise((resolve) => {
+                awsLogo.onload = () => {
+                    // Draw AWS logo in footer area
+                    const logoHeight = 30;
+                    const logoWidth = (awsLogo.width / awsLogo.height) * logoHeight;
+                    const logoX = this.FOOTER_X + (this.FOOTER_WIDTH - logoWidth) / 2;
+                    const logoY = this.FOOTER_Y + (this.FOOTER_HEIGHT - logoHeight) / 2;
+                    
+                    this.ctx.drawImage(awsLogo, logoX, logoY, logoWidth, logoHeight);
+                    console.log('✅ AWS footer logo drawn');
+                    resolve();
+                };
+                
+                awsLogo.onerror = () => {
+                    console.warn('⚠️ AWS logo not found, skipping footer branding');
+                    resolve();
+                };
+                
+                awsLogo.src = 'powered-by-aws-white-horizontal.png';
+            });
+            
+        } catch (error) {
+            console.warn('⚠️ Footer branding failed:', error);
         }
-        
-        // Right side panel
-        const rightX = this.TEMPLATE_WIDTH - this.OUTER_BORDER - this.SIDE_WIDTH - 5;
-        this.ctx.strokeRect(rightX, centerY, this.SIDE_WIDTH, panelHeight);
-        this.ctx.strokeRect(rightX + 2, centerY + 5, this.SIDE_WIDTH - 4, panelHeight - 10);
-        
-        // Add segmented pattern to right panel
-        for (let i = 1; i < 8; i++) {
-            const segmentY = centerY + (i * panelHeight / 8);
-            this.ctx.beginPath();
-            this.ctx.moveTo(rightX + 2, segmentY);
-            this.ctx.lineTo(rightX + this.SIDE_WIDTH - 2, segmentY);
-            this.ctx.stroke();
-        }
-    }
-    
-    /**
-     * Draw Nova Canvas image in central black area
-     */
-    drawNovaImage(novaImg) {
-        this.ctx.save();
-        
-        console.log('🖼️ Drawing Nova image in central black area:');
-        console.log(`   Nova size: ${this.NOVA_WIDTH}x${this.NOVA_HEIGHT}`);
-        console.log(`   Nova position: (${this.NOVA_X}, ${this.NOVA_Y})`);
-        
-        // Draw Nova Canvas image in the central black rectangle
-        this.ctx.drawImage(novaImg, this.NOVA_X, this.NOVA_Y, this.NOVA_WIDTH, this.NOVA_HEIGHT);
-        
-        this.ctx.restore();
-        console.log('✅ Nova image drawn in central area');
-    }
-    
-    /**
-     * Placeholder for AWS logo drawing (implemented in branding file)
-     */
-    async drawCardTemplateLogo() {
-        console.log('🏢 AWS logo drawing handled by branding system');
-    }
-    
-    /**
-     * Placeholder for footer drawing (implemented in branding file)
-     */
-    async drawCardTemplateFooter() {
-        console.log('📄 Footer drawing handled by branding system');
     }
     
     /**
@@ -333,11 +276,18 @@ class SnapMagicCardTemplateSystem {
      */
     updateTemplateConfig(config) {
         this.templateConfig = config;
-        console.log('⚙️ Template configuration updated');
+        console.log('✅ Sophisticated template config updated');
+    }
+    
+    /**
+     * Get template configuration
+     */
+    getTemplateConfig() {
+        return this.templateConfig;
     }
 }
 
 // Make CardTemplate system available globally
 window.SnapMagicCardTemplateSystem = SnapMagicCardTemplateSystem;
 
-console.log('✅ SnapMagic CardTemplate System loaded with exact ASCII design implementation');
+console.log('✅ SnapMagic Sophisticated Art Deco Premium CardTemplate System loaded');
