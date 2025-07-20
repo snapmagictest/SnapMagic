@@ -18,15 +18,15 @@ function createSophisticatedArtDecoTemplate() {
     const canvas = createCanvas(WIDTH, HEIGHT);
     const ctx = canvas.getContext('2d');
     
-    // Sophisticated Art Deco color palette
+    // Custom Gradient Gold color palette
     const COLORS = {
         background: '#000000',           // Deep black
-        goldPrimary: '#D4AF37',         // Rich gold
-        goldSecondary: '#B8860B',       // Darker gold
-        goldAccent: '#FFD700',          // Bright gold highlights
-        goldMuted: '#CD853F',           // Muted gold for details
+        goldPrimary: '#D2AC47',         // Rich golden brown (primary borders)
+        goldSecondary: '#AE8625',       // Deep antique gold (secondary elements)
+        goldAccent: '#F7EF8A',          // Light golden yellow (highlights)
+        goldMuted: '#EDC967',           // Warm golden yellow (accents)
         champagne: '#F7E7CE',           // Light champagne
-        bronze: '#CD7F32'               // Bronze accents
+        bronze: '#AE8625'               // Deep antique gold for bronze elements
     };
     
     // Layout areas
@@ -34,23 +34,23 @@ function createSophisticatedArtDecoTemplate() {
         // Main image area - centered and proportioned
         imageArea: {
             x: 30,
-            y: 90,
+            y: 80,
             width: 360,
             height: 480
         },
         // Header area for logos/branding
         headerArea: {
             x: 60,
-            y: 30,
+            y: 20,
             width: 300,
             height: 50
         },
         // Footer area for AWS branding
         footerArea: {
-            x: 30,
-            y: 580,
-            width: 360,
-            height: 80
+            x: 20,
+            y: 570,
+            width: 380,
+            height: 90
         }
     };
     
@@ -158,26 +158,13 @@ function createSophisticatedArtDecoTemplate() {
     // Side decorative elements
     function drawSideDecoration(x, y, width, height) {
         ctx.strokeStyle = COLORS.goldSecondary;
-        ctx.lineWidth = 1;
+        ctx.lineWidth = 4;
         
-        // Vertical decorative lines
-        for (let i = 0; i < 3; i++) {
-            const lineX = x + (width / 4) * (i + 1);
-            ctx.beginPath();
-            ctx.moveTo(lineX, y + 10);
-            ctx.lineTo(lineX, y + height - 10);
-            ctx.stroke();
-        }
-        
-        // Horizontal accent lines
+        // Single solid vertical line in center
+        const lineX = x + (width / 2);
         ctx.beginPath();
-        ctx.moveTo(x + 5, y + height / 3);
-        ctx.lineTo(x + width - 5, y + height / 3);
-        ctx.stroke();
-        
-        ctx.beginPath();
-        ctx.moveTo(x + 5, y + (height * 2) / 3);
-        ctx.lineTo(x + width - 5, y + (height * 2) / 3);
+        ctx.moveTo(lineX, y + 10);
+        ctx.lineTo(lineX, y + height - 10);
         ctx.stroke();
     }
     
@@ -193,7 +180,7 @@ function createSophisticatedArtDecoTemplate() {
     ctx.lineWidth = 2;
     
     const stepWidth = 40;
-    const stepHeight = 25;
+    const stepHeight = 70;
     
     // Draw stepped footer shape
     ctx.beginPath();
@@ -233,23 +220,8 @@ function createSophisticatedArtDecoTemplate() {
     ctx.fillRect(footer.x + stepWidth - 4, footer.y + footer.height - 10, 8, 8);
     ctx.fillRect(footer.x + footer.width - stepWidth - 4, footer.y + footer.height - 10, 8, 8);
     
-    // === STEP 7: CENTRAL DECORATIVE ACCENTS ===
-    // Top center accent
-    ctx.fillStyle = COLORS.goldAccent;
-    ctx.beginPath();
-    ctx.moveTo(WIDTH / 2, imgArea.y - 15);
-    ctx.lineTo(WIDTH / 2 - 8, imgArea.y - 5);
-    ctx.lineTo(WIDTH / 2 + 8, imgArea.y - 5);
-    ctx.closePath();
-    ctx.fill();
-    
-    // Bottom center accent
-    ctx.beginPath();
-    ctx.moveTo(WIDTH / 2, footer.y - 5);
-    ctx.lineTo(WIDTH / 2 - 8, footer.y - 15);
-    ctx.lineTo(WIDTH / 2 + 8, footer.y - 15);
-    ctx.closePath();
-    ctx.fill();
+    // === STEP 7: REMOVED TRIANGULAR ACCENTS ===
+    // Triangular accents removed for cleaner design
     
     // === SAVE TEMPLATE ===
     const buffer = canvas.toBuffer('image/png');
