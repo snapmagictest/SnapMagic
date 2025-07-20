@@ -16,20 +16,20 @@ class SnapMagicCardTemplateSystem {
         
         // Art Deco frame specifications (from cardtemplate.jpg analysis)
         this.FRAME_BORDER = 45;          // Golden frame border width
-        this.INNER_SPACING = 15;         // Space between frame and black panel
         
         // Black panel area (the central black rectangle in cardtemplate.jpg)
-        this.PANEL_WIDTH = 380;          // Black panel width
-        this.PANEL_HEIGHT = 570;         // Black panel height
-        this.PANEL_X = (this.TEMPLATE_WIDTH - this.PANEL_WIDTH) / 2;  // Centered: (500-380)/2 = 60
-        this.PANEL_Y = 70;               // Top margin for AWS logo space
+        // Based on visual analysis of cardtemplate.jpg
+        this.PANEL_WIDTH = 410;          // Wider black panel (500 - 45*2 = 410)
+        this.PANEL_HEIGHT = 660;         // Taller black panel (750 - 45*2 = 660)
+        this.PANEL_X = this.FRAME_BORDER;  // Start after frame border = 45
+        this.PANEL_Y = this.FRAME_BORDER;  // Start after frame border = 45
         
-        // Nova Canvas area (PROPERLY positioned in the black panel center)
-        // Based on cardtemplate.jpg, the image should fill most of the black area with some padding
-        this.NOVA_WIDTH = 320;           // Image width (leaves 30px margin on each side)
-        this.NOVA_HEIGHT = 480;          // Image height (leaves 45px margin top/bottom)
-        this.NOVA_X = this.PANEL_X + (this.PANEL_WIDTH - this.NOVA_WIDTH) / 2;   // Centered in panel: 60 + (380-320)/2 = 90
-        this.NOVA_Y = this.PANEL_Y + (this.PANEL_HEIGHT - this.NOVA_HEIGHT) / 2; // Centered in panel: 70 + (570-480)/2 = 115
+        // Nova Canvas area (filling most of the black panel, matching cardtemplate.jpg)
+        // The image should fill most of the black area with minimal padding
+        this.NOVA_WIDTH = 380;           // Image width (410 - 30px total padding)
+        this.NOVA_HEIGHT = 600;          // Image height (660 - 60px total padding)
+        this.NOVA_X = this.PANEL_X + 15; // 15px padding from left edge of panel = 60
+        this.NOVA_Y = this.PANEL_Y + 30; // 30px padding from top edge of panel = 75
         
         // Art Deco colors with holographic enhancement
         this.GOLD_PRIMARY = '#D4AF37';
@@ -166,10 +166,10 @@ class SnapMagicCardTemplateSystem {
                 // Start animation loop for holographic effects
                 this.startAnimationLoop();
                 
-                // Draw Art Deco background and frame
+                // Draw Art Deco background and simple golden frame
                 this.drawArtDecoBackground();
-                this.drawHolographicArtDecoFrame();
-                console.log('✅ Art Deco frame with holographic effects drawn');
+                this.drawSimpleGoldenFrame();
+                console.log('✅ Simple golden frame drawn (matching cardtemplate.jpg)');
                 
                 // Load and draw Nova Canvas image
                 const novaImg = new Image();
@@ -177,26 +177,14 @@ class SnapMagicCardTemplateSystem {
                     try {
                         console.log('✅ Nova Canvas image loaded for CardTemplate');
                         
-                        // Draw floating black panel with stencil effect
-                        this.drawFloatingBlackPanel();
-                        console.log('✅ Floating black panel drawn');
-                        
-                        // Draw Nova Canvas image with 3D depth effects
+                        // Draw Nova Canvas image (background is already black, no panel needed)
                         this.drawNovaImageWith3D(novaImg);
-                        console.log('✅ Nova Canvas image with 3D effects drawn');
+                        console.log('✅ Nova Canvas image drawn');
                         
-                        // Draw 3D sparkles and surface effects
-                        await this.draw3DSparkleEffects();
-                        console.log('✅ 3D sparkle effects drawn');
-                        
-                        // Draw AWS logo and branding
+                        // Draw AWS logo and branding (simple, no holographic effects)
                         await this.drawCardTemplateLogo();
                         await this.drawCardTemplateFooter();
                         console.log('✅ CardTemplate branding drawn');
-                        
-                        // Apply final holographic enhancement
-                        this.applyHolographicEnhancement();
-                        console.log('✅ Holographic enhancement applied');
                         
                         // Export final card
                         const finalCardDataUrl = this.canvas.toDataURL('image/png', 1.0);
@@ -234,47 +222,58 @@ class SnapMagicCardTemplateSystem {
      * Draw Art Deco background
      */
     drawArtDecoBackground() {
-        // Fill entire canvas with deep black base
-        this.ctx.fillStyle = '#0a0a0a';
+        // Fill entire canvas with solid black background (exactly matching cardtemplate.jpg)
+        this.ctx.fillStyle = '#000000';
         this.ctx.fillRect(0, 0, this.TEMPLATE_WIDTH, this.TEMPLATE_HEIGHT);
         
-        console.log('✅ Art Deco background drawn');
+        console.log('✅ Solid black background drawn (matching cardtemplate.jpg)');
     }
     
     /**
-     * Draw holographic Art Deco frame with rainbow effects
+     * Draw simple golden Art Deco frame (matching cardtemplate.jpg exactly)
      */
-    drawHolographicArtDecoFrame() {
+    drawSimpleGoldenFrame() {
         this.ctx.save();
         
-        // Create holographic gradient for frame
-        const gradient = this.createHolographicGradient();
+        // Draw golden frame border (matching cardtemplate.jpg)
+        this.ctx.strokeStyle = this.GOLD_PRIMARY;
+        this.ctx.lineWidth = this.FRAME_BORDER;
+        this.ctx.strokeRect(
+            this.FRAME_BORDER / 2, 
+            this.FRAME_BORDER / 2, 
+            this.TEMPLATE_WIDTH - this.FRAME_BORDER, 
+            this.TEMPLATE_HEIGHT - this.FRAME_BORDER
+        );
         
-        // Draw outer Art Deco frame
-        this.ctx.fillStyle = gradient;
-        this.ctx.fillRect(0, 0, this.TEMPLATE_WIDTH, this.TEMPLATE_HEIGHT);
-        
-        // Draw diamond pattern decorations with holographic effect
-        this.drawHolographicDiamondPattern();
-        
-        // Draw corner ornaments
-        this.drawArtDecoCornerOrnaments();
-        
-        // Draw side decorative elements
-        this.drawArtDecoSideElements();
+        // Draw simple corner decorations (like in cardtemplate.jpg)
+        this.drawSimpleCornerDecorations();
         
         this.ctx.restore();
+        console.log('✅ Simple golden frame drawn (matching cardtemplate.jpg)');
     }
     
     /**
-     * Create holographic gradient with rainbow cycling
+     * Draw simple corner decorations (matching cardtemplate.jpg)
      */
-    createHolographicGradient() {
-        const gradient = this.ctx.createLinearGradient(0, 0, this.TEMPLATE_WIDTH, this.TEMPLATE_HEIGHT);
+    drawSimpleCornerDecorations() {
+        const corners = [
+            { x: this.FRAME_BORDER, y: this.FRAME_BORDER },
+            { x: this.TEMPLATE_WIDTH - this.FRAME_BORDER, y: this.FRAME_BORDER },
+            { x: this.FRAME_BORDER, y: this.TEMPLATE_HEIGHT - this.FRAME_BORDER },
+            { x: this.TEMPLATE_WIDTH - this.FRAME_BORDER, y: this.TEMPLATE_HEIGHT - this.FRAME_BORDER }
+        ];
         
-        // Use your existing rainbow colors with animation
-        const colorIndex = Math.floor(this.animationTime * 0.01) % this.RAINBOW_COLORS.length;
-        const nextColorIndex = (colorIndex + 1) % this.RAINBOW_COLORS.length;
+        this.ctx.strokeStyle = this.GOLD_ACCENT;
+        this.ctx.lineWidth = 2;
+        
+        corners.forEach((corner) => {
+            // Draw simple geometric corner decoration
+            const size = 15;
+            this.ctx.beginPath();
+            this.ctx.rect(corner.x - size/2, corner.y - size/2, size, size);
+            this.ctx.stroke();
+        });
+    }
         
         const t = (this.animationTime * 0.01) % 1;
         const currentColor = this.interpolateColor(
@@ -506,42 +505,18 @@ class SnapMagicCardTemplateSystem {
     }
     
     /**
-     * Draw Nova Canvas image with 3D depth effects (with positioning debug)
+     * Draw Nova Canvas image properly positioned (no debug rectangles)
      */
     drawNovaImageWith3D(novaImg) {
         this.ctx.save();
         
-        // Debug: Log positioning calculations
-        console.log('🖼️ Nova Image Positioning Debug:');
-        console.log(`   Template: ${this.TEMPLATE_WIDTH}x${this.TEMPLATE_HEIGHT}`);
-        console.log(`   Panel: ${this.PANEL_WIDTH}x${this.PANEL_HEIGHT} at (${this.PANEL_X}, ${this.PANEL_Y})`);
+        // Debug: Log positioning calculations (console only)
+        console.log('🖼️ Nova Image Positioning:');
         console.log(`   Nova: ${this.NOVA_WIDTH}x${this.NOVA_HEIGHT} at (${this.NOVA_X}, ${this.NOVA_Y})`);
-        console.log(`   Nova bounds: left=${this.NOVA_X}, right=${this.NOVA_X + this.NOVA_WIDTH}, top=${this.NOVA_Y}, bottom=${this.NOVA_Y + this.NOVA_HEIGHT}`);
-        console.log(`   Panel bounds: left=${this.PANEL_X}, right=${this.PANEL_X + this.PANEL_WIDTH}, top=${this.PANEL_Y}, bottom=${this.PANEL_Y + this.PANEL_HEIGHT}`);
         
-        // Debug: Draw positioning guide rectangles (temporary - remove after testing)
-        this.ctx.strokeStyle = '#ff0000'; // Red for Nova area
-        this.ctx.lineWidth = 2;
-        this.ctx.strokeRect(this.NOVA_X, this.NOVA_Y, this.NOVA_WIDTH, this.NOVA_HEIGHT);
-        
-        this.ctx.strokeStyle = '#00ff00'; // Green for Panel area
-        this.ctx.lineWidth = 1;
-        this.ctx.strokeRect(this.PANEL_X, this.PANEL_Y, this.PANEL_WIDTH, this.PANEL_HEIGHT);
-        
-        // Apply subtle 3D transformation based on view angle
-        const transform = this.calculate3DTransform();
-        this.ctx.setTransform(
-            transform.scaleX, transform.skewX,
-            transform.skewY, transform.scaleY,
-            transform.translateX, transform.translateY
-        );
-        
-        // Draw Nova Canvas image
+        // Draw Nova Canvas image (no debug rectangles)
         console.log(`🎨 Drawing Nova image at (${this.NOVA_X}, ${this.NOVA_Y}) with size ${this.NOVA_WIDTH}x${this.NOVA_HEIGHT}`);
         this.ctx.drawImage(novaImg, this.NOVA_X, this.NOVA_Y, this.NOVA_WIDTH, this.NOVA_HEIGHT);
-        
-        // Add depth lighting effect
-        this.addDepthLighting();
         
         this.ctx.restore();
     }
