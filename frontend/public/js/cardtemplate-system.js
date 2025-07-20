@@ -241,39 +241,49 @@ class SnapMagicCardTemplateSystem {
     }
     
     /**
-     * Draw the complete Art Deco frame system matching cardtemplate.jpg
+     * Draw the complete Art Deco frame system matching cardtemplate.jpg EXACTLY
      */
     drawComplexArtDecoFrame() {
-        // Draw outer border lines
-        this.drawOuterBorderLines();
+        // Draw multiple parallel border lines (the layered frame system)
+        this.drawMultipleParallelBorders();
         
-        // Draw complex corner decorations
-        this.drawComplexCornerDecorations();
+        // Draw the complex corner decorations with precise geometric patterns
+        this.drawPreciseCornerDecorations();
         
-        // Draw top and bottom decorative panels
+        // Draw top and bottom decorative panels with stepped designs
         this.drawTopBottomDecorativePanels();
         
-        // Draw side decorative elements
+        // Draw side decorative elements with vertical patterns
         this.drawSideDecorativeElements();
     }
     
     /**
-     * Draw outer border lines (multiple parallel lines)
+     * Draw multiple parallel border lines exactly as shown in cardtemplate.jpg
      */
-    drawOuterBorderLines() {
-        const margins = [15, 20, 25]; // Multiple border lines at different distances
+    drawMultipleParallelBorders() {
+        // Outer border system - multiple parallel lines
+        const borderLevels = [
+            { margin: 8, lineWidth: 2 },   // Outermost border
+            { margin: 15, lineWidth: 1.5 }, // Second border
+            { margin: 22, lineWidth: 1 },   // Third border
+            { margin: 28, lineWidth: 1.5 }, // Inner border
+        ];
         
-        margins.forEach(margin => {
-            this.ctx.strokeRect(margin, margin, 
-                               this.TEMPLATE_WIDTH - (margin * 2), 
-                               this.TEMPLATE_HEIGHT - (margin * 2));
+        borderLevels.forEach(level => {
+            this.ctx.lineWidth = level.lineWidth;
+            this.ctx.strokeRect(
+                level.margin, 
+                level.margin, 
+                this.TEMPLATE_WIDTH - (level.margin * 2), 
+                this.TEMPLATE_HEIGHT - (level.margin * 2)
+            );
         });
     }
     
     /**
-     * Draw complex Art Deco corner decorations matching cardtemplate.jpg
+     * Draw precise corner decorations matching the geometric patterns in cardtemplate.jpg
      */
-    drawComplexCornerDecorations() {
+    drawPreciseCornerDecorations() {
         const corners = [
             { x: 0, y: 0, rotation: 0 },                    // Top-left
             { x: this.TEMPLATE_WIDTH, y: 0, rotation: 90 }, // Top-right
@@ -286,143 +296,174 @@ class SnapMagicCardTemplateSystem {
             this.ctx.translate(corner.x, corner.y);
             this.ctx.rotate((corner.rotation * Math.PI) / 180);
             
-            // Draw the complex stepped corner pattern from cardtemplate.jpg
-            this.drawSingleCornerPattern();
+            // Draw the precise geometric corner pattern from cardtemplate.jpg
+            this.drawPreciseCornerPattern();
             
             this.ctx.restore();
         });
     }
     
     /**
-     * Draw a single corner pattern (will be rotated for each corner)
-     * This matches the exact stepped pattern visible in cardtemplate.jpg
+     * Draw a single precise corner pattern matching cardtemplate.jpg exactly
      */
-    drawSingleCornerPattern() {
-        // Draw the main stepped corner shape
+    drawPreciseCornerPattern() {
+        // Main angular corner decoration
         this.ctx.beginPath();
         this.ctx.moveTo(0, 0);
-        this.ctx.lineTo(90, 0);      // Top edge
-        this.ctx.lineTo(90, 12);     // First step down
-        this.ctx.lineTo(78, 12);     // First step in
-        this.ctx.lineTo(78, 24);     // Second step down
-        this.ctx.lineTo(66, 24);     // Second step in
-        this.ctx.lineTo(66, 36);     // Third step down
-        this.ctx.lineTo(54, 36);     // Third step in
-        this.ctx.lineTo(54, 48);     // Fourth step down
-        this.ctx.lineTo(42, 48);     // Fourth step in
-        this.ctx.lineTo(42, 60);     // Fifth step down
-        this.ctx.lineTo(30, 60);     // Fifth step in
-        this.ctx.lineTo(30, 72);     // Sixth step down
-        this.ctx.lineTo(18, 72);     // Sixth step in
-        this.ctx.lineTo(18, 84);     // Seventh step down
-        this.ctx.lineTo(12, 84);     // Narrow to edge
-        this.ctx.lineTo(12, 90);     // Final step down
-        this.ctx.lineTo(0, 90);      // Left edge
+        this.ctx.lineTo(100, 0);     // Top horizontal line
+        this.ctx.lineTo(85, 15);     // First diagonal cut
+        this.ctx.lineTo(85, 25);     // First vertical segment
+        this.ctx.lineTo(70, 25);     // First horizontal step
+        this.ctx.lineTo(70, 40);     // Second vertical segment
+        this.ctx.lineTo(55, 40);     // Second horizontal step
+        this.ctx.lineTo(55, 55);     // Third vertical segment
+        this.ctx.lineTo(40, 55);     // Third horizontal step
+        this.ctx.lineTo(40, 70);     // Fourth vertical segment
+        this.ctx.lineTo(25, 70);     // Fourth horizontal step
+        this.ctx.lineTo(25, 85);     // Fifth vertical segment
+        this.ctx.lineTo(15, 85);     // Final horizontal step
+        this.ctx.lineTo(15, 100);    // Final vertical line
+        this.ctx.lineTo(0, 100);     // Left vertical line
         this.ctx.closePath();
         this.ctx.fill();
         
-        // Add inner decorative lines for more detail
-        this.ctx.strokeStyle = this.GOLD_ACCENT;
+        // Add inner geometric details
+        this.ctx.strokeStyle = '#000000'; // Black lines for definition
         this.ctx.lineWidth = 1;
         
-        // Draw inner stepped lines
+        // Inner stepped pattern
         this.ctx.beginPath();
-        this.ctx.moveTo(15, 15);
-        this.ctx.lineTo(75, 15);
-        this.ctx.lineTo(75, 75);
-        this.ctx.lineTo(15, 75);
+        this.ctx.moveTo(20, 20);
+        this.ctx.lineTo(80, 20);
+        this.ctx.lineTo(65, 35);
+        this.ctx.lineTo(65, 50);
+        this.ctx.lineTo(50, 50);
+        this.ctx.lineTo(50, 65);
+        this.ctx.lineTo(35, 65);
+        this.ctx.lineTo(35, 80);
+        this.ctx.lineTo(20, 80);
         this.ctx.closePath();
         this.ctx.stroke();
         
-        // Add central decorative square
-        this.ctx.strokeRect(30, 30, 30, 30);
-        this.ctx.strokeRect(35, 35, 20, 20);
+        // Central decorative elements
+        this.ctx.strokeRect(30, 30, 40, 40);
+        this.ctx.strokeRect(35, 35, 30, 30);
+        this.ctx.strokeRect(40, 40, 20, 20);
         
-        // Reset stroke style
+        // Reset styles
         this.ctx.strokeStyle = this.GOLD_PRIMARY;
         this.ctx.lineWidth = 2;
     }
     
     /**
-     * Draw top and bottom decorative panels
+     * Draw top and bottom decorative panels matching cardtemplate.jpg
      */
     drawTopBottomDecorativePanels() {
         const centerX = this.TEMPLATE_WIDTH / 2;
-        const panelWidth = 200;
-        const panelHeight = 25;
+        const panelWidth = 300;
+        const panelHeight = 30;
         
         // Top decorative panel
-        this.drawDecorativePanel(centerX - panelWidth/2, 15, panelWidth, panelHeight);
+        this.drawGeometricDecorativePanel(centerX - panelWidth/2, 15, panelWidth, panelHeight);
         
         // Bottom decorative panel
-        this.drawDecorativePanel(centerX - panelWidth/2, this.TEMPLATE_HEIGHT - 40, panelWidth, panelHeight);
+        this.drawGeometricDecorativePanel(centerX - panelWidth/2, this.TEMPLATE_HEIGHT - 45, panelWidth, panelHeight);
     }
     
     /**
-     * Draw a single decorative panel with precise Art Deco styling
+     * Draw a geometric decorative panel with Art Deco styling
      */
-    drawDecorativePanel(x, y, width, height) {
+    drawGeometricDecorativePanel(x, y, width, height) {
         // Main panel background
         this.ctx.fillRect(x, y, width, height);
         
-        // Create inner stepped pattern
-        this.ctx.strokeStyle = '#000000'; // Black lines for contrast
+        // Create stepped inner pattern
+        this.ctx.strokeStyle = '#000000';
         this.ctx.lineWidth = 1;
         
-        // Draw stepped inner border
-        const step = 3;
-        this.ctx.strokeRect(x + step, y + step, width - (step * 2), height - (step * 2));
-        this.ctx.strokeRect(x + step * 2, y + step * 2, width - (step * 4), height - (step * 4));
+        // Multiple inner rectangles creating depth
+        const steps = [3, 6, 9];
+        steps.forEach(step => {
+            this.ctx.strokeRect(x + step, y + step/2, width - (step * 2), height - step);
+        });
         
-        // Central decorative diamond
+        // Central geometric elements
         const centerX = x + width/2;
         const centerY = y + height/2;
-        const diamondSize = 8;
         
+        // Diamond pattern in center
         this.ctx.beginPath();
-        this.ctx.moveTo(centerX, centerY - diamondSize);
-        this.ctx.lineTo(centerX + diamondSize, centerY);
-        this.ctx.lineTo(centerX, centerY + diamondSize);
-        this.ctx.lineTo(centerX - diamondSize, centerY);
+        this.ctx.moveTo(centerX, centerY - 8);
+        this.ctx.lineTo(centerX + 12, centerY);
+        this.ctx.lineTo(centerX, centerY + 8);
+        this.ctx.lineTo(centerX - 12, centerY);
         this.ctx.closePath();
         this.ctx.fill();
         
-        // Reset stroke style
+        // Side geometric elements
+        const sideElements = [
+            { x: x + 30, y: centerY },
+            { x: x + width - 30, y: centerY }
+        ];
+        
+        sideElements.forEach(element => {
+            this.ctx.strokeRect(element.x - 8, element.y - 4, 16, 8);
+            this.ctx.strokeRect(element.x - 6, element.y - 2, 12, 4);
+        });
+        
+        // Reset styles
         this.ctx.strokeStyle = this.GOLD_PRIMARY;
         this.ctx.lineWidth = 2;
     }
     
     /**
-     * Draw side decorative elements
+     * Draw side decorative elements matching cardtemplate.jpg
      */
     drawSideDecorativeElements() {
         const centerY = this.TEMPLATE_HEIGHT / 2;
-        const elementHeight = 100;
+        const elementHeight = 200;
+        const elementWidth = 25;
         
         // Left side decorative elements
-        this.drawSideElement(15, centerY - elementHeight/2, 20, elementHeight);
+        this.drawVerticalDecorativeElement(10, centerY - elementHeight/2, elementWidth, elementHeight);
         
         // Right side decorative elements  
-        this.drawSideElement(this.TEMPLATE_WIDTH - 35, centerY - elementHeight/2, 20, elementHeight);
+        this.drawVerticalDecorativeElement(this.TEMPLATE_WIDTH - 35, centerY - elementHeight/2, elementWidth, elementHeight);
     }
     
     /**
-     * Draw a single side decorative element
+     * Draw a single vertical decorative element
      */
-    drawSideElement(x, y, width, height) {
-        // Main vertical element
-        this.ctx.strokeRect(x, y, width, height);
+    drawVerticalDecorativeElement(x, y, width, height) {
+        // Main vertical panel
+        this.ctx.fillRect(x, y, width, height);
         
-        // Decorative segments
-        const segments = 5;
-        const segmentHeight = height / segments;
+        // Inner vertical lines for definition
+        this.ctx.strokeStyle = '#000000';
+        this.ctx.lineWidth = 1;
+        this.ctx.strokeRect(x + 2, y + 5, width - 4, height - 10);
+        this.ctx.strokeRect(x + 4, y + 10, width - 8, height - 20);
+        
+        // Segmented pattern
+        const segments = 8;
+        const segmentHeight = (height - 20) / segments;
         
         for (let i = 1; i < segments; i++) {
+            const segmentY = y + 10 + (i * segmentHeight);
             this.ctx.beginPath();
-            this.ctx.moveTo(x, y + (i * segmentHeight));
-            this.ctx.lineTo(x + width, y + (i * segmentHeight));
+            this.ctx.moveTo(x + 4, segmentY);
+            this.ctx.lineTo(x + width - 4, segmentY);
             this.ctx.stroke();
+            
+            // Alternating decorative elements
+            if (i % 2 === 0) {
+                this.ctx.fillRect(x + 6, segmentY - 2, width - 12, 4);
+            }
         }
+        
+        // Reset styles
+        this.ctx.strokeStyle = this.GOLD_PRIMARY;
+        this.ctx.lineWidth = 2;
     }
         
         const t = (this.animationTime * 0.01) % 1;
