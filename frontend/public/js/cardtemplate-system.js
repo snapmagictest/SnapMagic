@@ -18,11 +18,11 @@ class SnapMagicCardTemplateSystem {
         this.FRAME_BORDER = 80;          // Space taken by complex frame decorations
         
         // Nova Canvas area (filling the central black area, avoiding frame decorations)
-        // Based on visual analysis, the image area needs to avoid the complex corner decorations
-        this.NOVA_WIDTH = 340;           // Image width (500 - 160 for frame decorations)
-        this.NOVA_HEIGHT = 590;          // Image height (750 - 160 for frame decorations)
-        this.NOVA_X = (this.TEMPLATE_WIDTH - this.NOVA_WIDTH) / 2;   // Centered: (500-340)/2 = 80
-        this.NOVA_Y = (this.TEMPLATE_HEIGHT - this.NOVA_HEIGHT) / 2; // Centered: (750-590)/2 = 80
+        // Based on detailed analysis of cardtemplate.jpg proportions
+        this.NOVA_WIDTH = 320;           // Image width (leaves room for frame decorations)
+        this.NOVA_HEIGHT = 560;          // Image height (leaves room for frame decorations)
+        this.NOVA_X = (this.TEMPLATE_WIDTH - this.NOVA_WIDTH) / 2;   // Centered: (500-320)/2 = 90
+        this.NOVA_Y = (this.TEMPLATE_HEIGHT - this.NOVA_HEIGHT) / 2; // Centered: (750-560)/2 = 95
         
         // Art Deco colors with holographic enhancement
         this.GOLD_PRIMARY = '#D4AF37';
@@ -295,32 +295,52 @@ class SnapMagicCardTemplateSystem {
     
     /**
      * Draw a single corner pattern (will be rotated for each corner)
+     * This matches the exact stepped pattern visible in cardtemplate.jpg
      */
     drawSingleCornerPattern() {
+        // Draw the main stepped corner shape
         this.ctx.beginPath();
-        
-        // Create the complex stepped pattern visible in cardtemplate.jpg
-        // Outer stepped elements
         this.ctx.moveTo(0, 0);
-        this.ctx.lineTo(80, 0);
-        this.ctx.lineTo(80, 15);
-        this.ctx.lineTo(65, 15);
-        this.ctx.lineTo(65, 30);
-        this.ctx.lineTo(50, 30);
-        this.ctx.lineTo(50, 45);
-        this.ctx.lineTo(35, 45);
-        this.ctx.lineTo(35, 60);
-        this.ctx.lineTo(20, 60);
-        this.ctx.lineTo(20, 75);
-        this.ctx.lineTo(15, 75);
-        this.ctx.lineTo(15, 80);
-        this.ctx.lineTo(0, 80);
+        this.ctx.lineTo(90, 0);      // Top edge
+        this.ctx.lineTo(90, 12);     // First step down
+        this.ctx.lineTo(78, 12);     // First step in
+        this.ctx.lineTo(78, 24);     // Second step down
+        this.ctx.lineTo(66, 24);     // Second step in
+        this.ctx.lineTo(66, 36);     // Third step down
+        this.ctx.lineTo(54, 36);     // Third step in
+        this.ctx.lineTo(54, 48);     // Fourth step down
+        this.ctx.lineTo(42, 48);     // Fourth step in
+        this.ctx.lineTo(42, 60);     // Fifth step down
+        this.ctx.lineTo(30, 60);     // Fifth step in
+        this.ctx.lineTo(30, 72);     // Sixth step down
+        this.ctx.lineTo(18, 72);     // Sixth step in
+        this.ctx.lineTo(18, 84);     // Seventh step down
+        this.ctx.lineTo(12, 84);     // Narrow to edge
+        this.ctx.lineTo(12, 90);     // Final step down
+        this.ctx.lineTo(0, 90);      // Left edge
         this.ctx.closePath();
         this.ctx.fill();
         
-        // Add inner geometric details
-        this.ctx.strokeRect(25, 25, 30, 30);
-        this.ctx.strokeRect(30, 30, 20, 20);
+        // Add inner decorative lines for more detail
+        this.ctx.strokeStyle = this.GOLD_ACCENT;
+        this.ctx.lineWidth = 1;
+        
+        // Draw inner stepped lines
+        this.ctx.beginPath();
+        this.ctx.moveTo(15, 15);
+        this.ctx.lineTo(75, 15);
+        this.ctx.lineTo(75, 75);
+        this.ctx.lineTo(15, 75);
+        this.ctx.closePath();
+        this.ctx.stroke();
+        
+        // Add central decorative square
+        this.ctx.strokeRect(30, 30, 30, 30);
+        this.ctx.strokeRect(35, 35, 20, 20);
+        
+        // Reset stroke style
+        this.ctx.strokeStyle = this.GOLD_PRIMARY;
+        this.ctx.lineWidth = 2;
     }
     
     /**
@@ -339,19 +359,37 @@ class SnapMagicCardTemplateSystem {
     }
     
     /**
-     * Draw a single decorative panel with Art Deco styling
+     * Draw a single decorative panel with precise Art Deco styling
      */
     drawDecorativePanel(x, y, width, height) {
-        // Main panel rectangle
-        this.ctx.strokeRect(x, y, width, height);
+        // Main panel background
+        this.ctx.fillRect(x, y, width, height);
         
-        // Inner decorative lines
-        this.ctx.strokeRect(x + 5, y + 5, width - 10, height - 10);
+        // Create inner stepped pattern
+        this.ctx.strokeStyle = '#000000'; // Black lines for contrast
+        this.ctx.lineWidth = 1;
         
-        // Central decorative element
+        // Draw stepped inner border
+        const step = 3;
+        this.ctx.strokeRect(x + step, y + step, width - (step * 2), height - (step * 2));
+        this.ctx.strokeRect(x + step * 2, y + step * 2, width - (step * 4), height - (step * 4));
+        
+        // Central decorative diamond
         const centerX = x + width/2;
         const centerY = y + height/2;
-        this.ctx.strokeRect(centerX - 15, centerY - 3, 30, 6);
+        const diamondSize = 8;
+        
+        this.ctx.beginPath();
+        this.ctx.moveTo(centerX, centerY - diamondSize);
+        this.ctx.lineTo(centerX + diamondSize, centerY);
+        this.ctx.lineTo(centerX, centerY + diamondSize);
+        this.ctx.lineTo(centerX - diamondSize, centerY);
+        this.ctx.closePath();
+        this.ctx.fill();
+        
+        // Reset stroke style
+        this.ctx.strokeStyle = this.GOLD_PRIMARY;
+        this.ctx.lineWidth = 2;
     }
     
     /**
