@@ -165,37 +165,13 @@ class SnapMagicCardTemplateSystem {
         this.ctx.rect(this.CARD_IMAGE_X, this.CARD_IMAGE_Y, this.CARD_IMAGE_WIDTH, this.CARD_IMAGE_HEIGHT);
         this.ctx.clip();
         
-        // Scale image to fill the entire card space (crop if needed)
-        const imgAspect = novaImg.width / novaImg.height;
-        const areaAspect = this.CARD_IMAGE_WIDTH / this.CARD_IMAGE_HEIGHT;
+        // Force image to fill the entire card space width and height
+        const drawWidth = this.CARD_IMAGE_WIDTH;   // Always use full width (360px)
+        const drawHeight = this.CARD_IMAGE_HEIGHT; // Always use full height (378px)
+        const drawX = this.CARD_IMAGE_X;           // Start at left edge
+        const drawY = this.CARD_IMAGE_Y;           // Start at top edge
         
-        let drawWidth, drawHeight, drawX, drawY;
-        
-        // Always fill the entire card space - crop if necessary
-        if (imgAspect > areaAspect) {
-            // Image is wider - fit to width and crop height
-            drawWidth = this.CARD_IMAGE_WIDTH;
-            drawHeight = drawWidth / imgAspect;
-            drawX = this.CARD_IMAGE_X;
-            drawY = this.CARD_IMAGE_Y + (this.CARD_IMAGE_HEIGHT - drawHeight) / 2;
-        } else {
-            // Image is taller - fit to height and crop width
-            drawHeight = this.CARD_IMAGE_HEIGHT;
-            drawWidth = drawHeight * imgAspect;
-            drawX = this.CARD_IMAGE_X + (this.CARD_IMAGE_WIDTH - drawWidth) / 2;
-            drawY = this.CARD_IMAGE_Y;
-        }
-        
-        // Ensure minimum fill - make image larger if needed to fill space
-        const fillFactor = 1.1; // Make image 10% larger to ensure full coverage
-        drawWidth *= fillFactor;
-        drawHeight *= fillFactor;
-        
-        // Recenter the enlarged image
-        drawX = this.CARD_IMAGE_X + (this.CARD_IMAGE_WIDTH - drawWidth) / 2;
-        drawY = this.CARD_IMAGE_Y + (this.CARD_IMAGE_HEIGHT - drawHeight) / 2;
-        
-        // Draw the image
+        // Draw the image to fill the entire card space (will stretch if needed)
         this.ctx.drawImage(novaImg, drawX, drawY, drawWidth, drawHeight);
         
         // Restore context
