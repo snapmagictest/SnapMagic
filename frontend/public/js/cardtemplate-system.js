@@ -15,21 +15,14 @@ class SnapMagicCardTemplateSystem {
         this.TEMPLATE_HEIGHT = 750;
         
         // Art Deco frame specifications (from cardtemplate.jpg analysis)
-        this.FRAME_BORDER = 45;          // Golden frame border width
+        this.FRAME_BORDER = 35;          // Inner frame border
         
-        // Black panel area (the central black rectangle in cardtemplate.jpg)
-        // Based on visual analysis of cardtemplate.jpg
-        this.PANEL_WIDTH = 410;          // Wider black panel (500 - 45*2 = 410)
-        this.PANEL_HEIGHT = 660;         // Taller black panel (750 - 45*2 = 660)
-        this.PANEL_X = this.FRAME_BORDER;  // Start after frame border = 45
-        this.PANEL_Y = this.FRAME_BORDER;  // Start after frame border = 45
-        
-        // Nova Canvas area (filling most of the black panel, matching cardtemplate.jpg)
-        // The image should fill most of the black area with minimal padding
-        this.NOVA_WIDTH = 380;           // Image width (410 - 30px total padding)
-        this.NOVA_HEIGHT = 600;          // Image height (660 - 60px total padding)
-        this.NOVA_X = this.PANEL_X + 15; // 15px padding from left edge of panel = 60
-        this.NOVA_Y = this.PANEL_Y + 30; // 30px padding from top edge of panel = 75
+        // Nova Canvas area (filling the central black area, matching cardtemplate.jpg)
+        // Based on visual analysis, the image area starts after the frame decorations
+        this.NOVA_WIDTH = 400;           // Image width (fills most of the central area)
+        this.NOVA_HEIGHT = 620;          // Image height (fills most of the central area)
+        this.NOVA_X = (this.TEMPLATE_WIDTH - this.NOVA_WIDTH) / 2;   // Centered: (500-400)/2 = 50
+        this.NOVA_Y = (this.TEMPLATE_HEIGHT - this.NOVA_HEIGHT) / 2; // Centered: (750-620)/2 = 65
         
         // Art Deco colors with holographic enhancement
         this.GOLD_PRIMARY = '#D4AF37';
@@ -230,49 +223,87 @@ class SnapMagicCardTemplateSystem {
     }
     
     /**
-     * Draw simple golden Art Deco frame (matching cardtemplate.jpg exactly)
+     * Draw Art Deco frame matching cardtemplate.jpg exactly
      */
     drawSimpleGoldenFrame() {
         this.ctx.save();
         
-        // Draw golden frame border (matching cardtemplate.jpg)
+        // Set golden color matching the reference image
         this.ctx.strokeStyle = this.GOLD_PRIMARY;
-        this.ctx.lineWidth = this.FRAME_BORDER;
-        this.ctx.strokeRect(
-            this.FRAME_BORDER / 2, 
-            this.FRAME_BORDER / 2, 
-            this.TEMPLATE_WIDTH - this.FRAME_BORDER, 
-            this.TEMPLATE_HEIGHT - this.FRAME_BORDER
-        );
+        this.ctx.fillStyle = this.GOLD_PRIMARY;
+        this.ctx.lineWidth = 3;
         
-        // Draw simple corner decorations (like in cardtemplate.jpg)
-        this.drawSimpleCornerDecorations();
+        // Draw main outer border
+        const borderWidth = 20;
+        this.ctx.strokeRect(borderWidth, borderWidth, 
+                           this.TEMPLATE_WIDTH - (borderWidth * 2), 
+                           this.TEMPLATE_HEIGHT - (borderWidth * 2));
+        
+        // Draw inner border
+        const innerBorder = 35;
+        this.ctx.strokeRect(innerBorder, innerBorder, 
+                           this.TEMPLATE_WIDTH - (innerBorder * 2), 
+                           this.TEMPLATE_HEIGHT - (innerBorder * 2));
+        
+        // Draw Art Deco corner decorations matching the reference
+        this.drawArtDecoCorners();
+        
+        // Draw top and bottom decorative elements
+        this.drawTopBottomDecorations();
         
         this.ctx.restore();
-        console.log('✅ Simple golden frame drawn (matching cardtemplate.jpg)');
+        console.log('✅ Art Deco frame drawn matching cardtemplate.jpg');
     }
     
     /**
-     * Draw simple corner decorations (matching cardtemplate.jpg)
+     * Draw Art Deco corner decorations matching cardtemplate.jpg
      */
-    drawSimpleCornerDecorations() {
+    drawArtDecoCorners() {
         const corners = [
-            { x: this.FRAME_BORDER, y: this.FRAME_BORDER },
-            { x: this.TEMPLATE_WIDTH - this.FRAME_BORDER, y: this.FRAME_BORDER },
-            { x: this.FRAME_BORDER, y: this.TEMPLATE_HEIGHT - this.FRAME_BORDER },
-            { x: this.TEMPLATE_WIDTH - this.FRAME_BORDER, y: this.TEMPLATE_HEIGHT - this.FRAME_BORDER }
+            { x: 0, y: 0, flipX: 1, flipY: 1 },           // Top-left
+            { x: this.TEMPLATE_WIDTH, y: 0, flipX: -1, flipY: 1 },    // Top-right
+            { x: 0, y: this.TEMPLATE_HEIGHT, flipX: 1, flipY: -1 },   // Bottom-left
+            { x: this.TEMPLATE_WIDTH, y: this.TEMPLATE_HEIGHT, flipX: -1, flipY: -1 } // Bottom-right
         ];
         
-        this.ctx.strokeStyle = this.GOLD_ACCENT;
-        this.ctx.lineWidth = 2;
-        
-        corners.forEach((corner) => {
-            // Draw simple geometric corner decoration
-            const size = 15;
+        corners.forEach(corner => {
+            this.ctx.save();
+            this.ctx.translate(corner.x, corner.y);
+            this.ctx.scale(corner.flipX, corner.flipY);
+            
+            // Draw stepped corner decoration matching the reference
             this.ctx.beginPath();
-            this.ctx.rect(corner.x - size/2, corner.y - size/2, size, size);
-            this.ctx.stroke();
+            this.ctx.moveTo(0, 0);
+            this.ctx.lineTo(60, 0);
+            this.ctx.lineTo(60, 20);
+            this.ctx.lineTo(40, 20);
+            this.ctx.lineTo(40, 40);
+            this.ctx.lineTo(20, 40);
+            this.ctx.lineTo(20, 60);
+            this.ctx.lineTo(0, 60);
+            this.ctx.closePath();
+            this.ctx.fill();
+            
+            this.ctx.restore();
         });
+    }
+    
+    /**
+     * Draw top and bottom decorative elements matching cardtemplate.jpg
+     */
+    drawTopBottomDecorations() {
+        // Top decoration
+        const centerX = this.TEMPLATE_WIDTH / 2;
+        const topY = 20;
+        const bottomY = this.TEMPLATE_HEIGHT - 20;
+        
+        // Draw top decorative element
+        this.ctx.fillRect(centerX - 80, topY - 5, 160, 10);
+        this.ctx.fillRect(centerX - 60, topY - 10, 120, 5);
+        
+        // Draw bottom decorative element
+        this.ctx.fillRect(centerX - 80, bottomY - 5, 160, 10);
+        this.ctx.fillRect(centerX - 60, bottomY, 120, 5);
     }
         
         const t = (this.animationTime * 0.01) % 1;
