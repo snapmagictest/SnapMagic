@@ -304,51 +304,70 @@ class SnapMagicCardTemplateSystem {
     }
     
     /**
-     * Draw a single precise corner pattern matching cardtemplate.jpg exactly
+     * Draw a single precise corner pattern matching cardtemplate.jpg EXACTLY
      */
     drawPreciseCornerPattern() {
-        // Main angular corner decoration
+        // Main angular corner decoration with more precise measurements
         this.ctx.beginPath();
         this.ctx.moveTo(0, 0);
-        this.ctx.lineTo(100, 0);     // Top horizontal line
-        this.ctx.lineTo(85, 15);     // First diagonal cut
-        this.ctx.lineTo(85, 25);     // First vertical segment
-        this.ctx.lineTo(70, 25);     // First horizontal step
-        this.ctx.lineTo(70, 40);     // Second vertical segment
-        this.ctx.lineTo(55, 40);     // Second horizontal step
-        this.ctx.lineTo(55, 55);     // Third vertical segment
-        this.ctx.lineTo(40, 55);     // Third horizontal step
-        this.ctx.lineTo(40, 70);     // Fourth vertical segment
-        this.ctx.lineTo(25, 70);     // Fourth horizontal step
-        this.ctx.lineTo(25, 85);     // Fifth vertical segment
-        this.ctx.lineTo(15, 85);     // Final horizontal step
-        this.ctx.lineTo(15, 100);    // Final vertical line
-        this.ctx.lineTo(0, 100);     // Left vertical line
+        this.ctx.lineTo(110, 0);     // Extended top horizontal line
+        this.ctx.lineTo(95, 15);     // First diagonal cut
+        this.ctx.lineTo(95, 20);     // First vertical segment
+        this.ctx.lineTo(80, 20);     // First horizontal step
+        this.ctx.lineTo(80, 35);     // Second vertical segment
+        this.ctx.lineTo(65, 35);     // Second horizontal step
+        this.ctx.lineTo(65, 50);     // Third vertical segment
+        this.ctx.lineTo(50, 50);     // Third horizontal step
+        this.ctx.lineTo(50, 65);     // Fourth vertical segment
+        this.ctx.lineTo(35, 65);     // Fourth horizontal step
+        this.ctx.lineTo(35, 80);     // Fifth vertical segment
+        this.ctx.lineTo(20, 80);     // Fifth horizontal step
+        this.ctx.lineTo(20, 95);     // Sixth vertical segment
+        this.ctx.lineTo(15, 95);     // Final horizontal step
+        this.ctx.lineTo(15, 110);    // Extended final vertical line
+        this.ctx.lineTo(0, 110);     // Left vertical line
         this.ctx.closePath();
         this.ctx.fill();
         
-        // Add inner geometric details
+        // Add multiple inner geometric details for sophistication
         this.ctx.strokeStyle = '#000000'; // Black lines for definition
         this.ctx.lineWidth = 1;
         
-        // Inner stepped pattern
+        // Primary inner stepped pattern
         this.ctx.beginPath();
-        this.ctx.moveTo(20, 20);
-        this.ctx.lineTo(80, 20);
-        this.ctx.lineTo(65, 35);
-        this.ctx.lineTo(65, 50);
-        this.ctx.lineTo(50, 50);
-        this.ctx.lineTo(50, 65);
-        this.ctx.lineTo(35, 65);
-        this.ctx.lineTo(35, 80);
-        this.ctx.lineTo(20, 80);
+        this.ctx.moveTo(25, 25);
+        this.ctx.lineTo(85, 25);
+        this.ctx.lineTo(70, 40);
+        this.ctx.lineTo(70, 55);
+        this.ctx.lineTo(55, 55);
+        this.ctx.lineTo(55, 70);
+        this.ctx.lineTo(40, 70);
+        this.ctx.lineTo(40, 85);
+        this.ctx.lineTo(25, 85);
         this.ctx.closePath();
         this.ctx.stroke();
         
-        // Central decorative elements
-        this.ctx.strokeRect(30, 30, 40, 40);
-        this.ctx.strokeRect(35, 35, 30, 30);
-        this.ctx.strokeRect(40, 40, 20, 20);
+        // Secondary inner pattern
+        this.ctx.strokeRect(35, 35, 40, 40);
+        this.ctx.strokeRect(40, 40, 30, 30);
+        this.ctx.strokeRect(45, 45, 20, 20);
+        
+        // Add corner accent lines
+        this.ctx.beginPath();
+        this.ctx.moveTo(25, 0);
+        this.ctx.lineTo(25, 25);
+        this.ctx.lineTo(0, 25);
+        this.ctx.stroke();
+        
+        this.ctx.beginPath();
+        this.ctx.moveTo(50, 0);
+        this.ctx.lineTo(50, 15);
+        this.ctx.stroke();
+        
+        this.ctx.beginPath();
+        this.ctx.moveTo(0, 50);
+        this.ctx.lineTo(15, 50);
+        this.ctx.stroke();
         
         // Reset styles
         this.ctx.strokeStyle = this.GOLD_PRIMARY;
@@ -371,44 +390,83 @@ class SnapMagicCardTemplateSystem {
     }
     
     /**
-     * Draw a geometric decorative panel with Art Deco styling
+     * Draw a geometric decorative panel with sophisticated Art Deco styling
      */
     drawGeometricDecorativePanel(x, y, width, height) {
         // Main panel background
         this.ctx.fillRect(x, y, width, height);
         
-        // Create stepped inner pattern
+        // Create sophisticated stepped inner pattern
         this.ctx.strokeStyle = '#000000';
         this.ctx.lineWidth = 1;
         
-        // Multiple inner rectangles creating depth
-        const steps = [3, 6, 9];
-        steps.forEach(step => {
+        // Multiple inner rectangles creating sophisticated depth
+        const steps = [2, 4, 6, 8];
+        steps.forEach((step, index) => {
+            const alpha = 1 - (index * 0.2); // Varying opacity for depth
+            this.ctx.globalAlpha = alpha;
             this.ctx.strokeRect(x + step, y + step/2, width - (step * 2), height - step);
         });
+        this.ctx.globalAlpha = 1; // Reset opacity
         
-        // Central geometric elements
+        // Central sophisticated geometric elements
         const centerX = x + width/2;
         const centerY = y + height/2;
         
-        // Diamond pattern in center
+        // Main central diamond with stepped pattern
+        this.ctx.beginPath();
+        this.ctx.moveTo(centerX, centerY - 12);
+        this.ctx.lineTo(centerX + 16, centerY);
+        this.ctx.lineTo(centerX, centerY + 12);
+        this.ctx.lineTo(centerX - 16, centerY);
+        this.ctx.closePath();
+        this.ctx.fill();
+        
+        // Inner diamond
+        this.ctx.strokeStyle = '#000000';
         this.ctx.beginPath();
         this.ctx.moveTo(centerX, centerY - 8);
         this.ctx.lineTo(centerX + 12, centerY);
         this.ctx.lineTo(centerX, centerY + 8);
         this.ctx.lineTo(centerX - 12, centerY);
         this.ctx.closePath();
-        this.ctx.fill();
+        this.ctx.stroke();
         
-        // Side geometric elements
+        // Side geometric elements with more sophistication
         const sideElements = [
-            { x: x + 30, y: centerY },
-            { x: x + width - 30, y: centerY }
+            { x: x + 40, y: centerY },
+            { x: x + 80, y: centerY },
+            { x: x + width - 80, y: centerY },
+            { x: x + width - 40, y: centerY }
         ];
         
-        sideElements.forEach(element => {
-            this.ctx.strokeRect(element.x - 8, element.y - 4, 16, 8);
-            this.ctx.strokeRect(element.x - 6, element.y - 2, 12, 4);
+        sideElements.forEach((element, index) => {
+            // Alternating patterns for visual interest
+            if (index % 2 === 0) {
+                // Rectangular elements
+                this.ctx.strokeRect(element.x - 10, element.y - 5, 20, 10);
+                this.ctx.strokeRect(element.x - 8, element.y - 3, 16, 6);
+            } else {
+                // Diamond elements
+                this.ctx.beginPath();
+                this.ctx.moveTo(element.x, element.y - 6);
+                this.ctx.lineTo(element.x + 8, element.y);
+                this.ctx.lineTo(element.x, element.y + 6);
+                this.ctx.lineTo(element.x - 8, element.y);
+                this.ctx.closePath();
+                this.ctx.stroke();
+            }
+        });
+        
+        // Add corner accent elements
+        const corners = [
+            { x: x + 15, y: y + height/2 },
+            { x: x + width - 15, y: y + height/2 }
+        ];
+        
+        corners.forEach(corner => {
+            this.ctx.strokeRect(corner.x - 6, corner.y - 8, 12, 16);
+            this.ctx.strokeRect(corner.x - 4, corner.y - 6, 8, 12);
         });
         
         // Reset styles
