@@ -23,10 +23,11 @@ class SnapMagicCardTemplateSystem {
         this.NOVA_X = (this.TEMPLATE_WIDTH - this.NOVA_WIDTH) / 2;   // Centered: (500-280)/2 = 110
         this.NOVA_Y = (this.TEMPLATE_HEIGHT - this.NOVA_HEIGHT) / 2; // Centered: (750-520)/2 = 115
         
-        // Art Deco colors (clean golden palette)
-        this.GOLD_PRIMARY = '#D4AF37';
-        this.GOLD_SECONDARY = '#B8860B';
-        this.GOLD_ACCENT = '#FFD700';
+        // Art Deco colors (CORRECTED to match cardtemplate.jpg exactly)
+        this.GOLD_PRIMARY = '#C9A961';    // Warm, muted champagne gold (NOT bright yellow)
+        this.GOLD_SECONDARY = '#B8A082';  // Deeper champagne tone for depth
+        this.GOLD_ACCENT = '#D4B76A';     // Slightly brighter for highlights
+        this.GOLD_SHINE = '#E6D4A3';      // Metallic shine effect
         this.BLACK_PANEL = '#000000';
         this.WHITE_TEXT = '#FFFFFF';
         
@@ -108,21 +109,21 @@ class SnapMagicCardTemplateSystem {
     }
     
     /**
-     * Draw Art Deco frame matching cardtemplate.jpg EXACTLY
+     * Draw Art Deco frame matching cardtemplate.jpg EXACTLY with metallic shine
      */
     drawSimpleGoldenFrame() {
         this.ctx.save();
         
-        // Set golden color matching the reference image
+        // Set the corrected champagne gold color
         this.ctx.strokeStyle = this.GOLD_PRIMARY;
         this.ctx.fillStyle = this.GOLD_PRIMARY;
         this.ctx.lineWidth = 2;
         
-        // Draw the complex Art Deco frame exactly as shown in cardtemplate.jpg
+        // Draw the complex Art Deco frame with metallic effects
         this.drawComplexArtDecoFrame();
         
         this.ctx.restore();
-        console.log('✅ Complex Art Deco frame drawn matching cardtemplate.jpg exactly');
+        console.log('✅ Complex Art Deco frame drawn with corrected champagne gold color');
     }
     
     /**
@@ -143,19 +144,36 @@ class SnapMagicCardTemplateSystem {
     }
     
     /**
-     * Draw multiple parallel border lines exactly as shown in cardtemplate.jpg
+     * Draw multiple parallel border lines EXACTLY as shown in cardtemplate.jpg
      */
     drawMultipleParallelBorders() {
-        // Outer border system - multiple parallel lines
+        // Precise border system matching cardtemplate.jpg exactly
         const borderLevels = [
-            { margin: 8, lineWidth: 2 },   // Outermost border
-            { margin: 15, lineWidth: 1.5 }, // Second border
-            { margin: 22, lineWidth: 1 },   // Third border
-            { margin: 28, lineWidth: 1.5 }, // Inner border
+            { margin: 12, lineWidth: 1 },    // Outermost thin line
+            { margin: 18, lineWidth: 3 },    // Main thick border
+            { margin: 22, lineWidth: 1 },    // Inner thin line
+            { margin: 26, lineWidth: 2 },    // Secondary border
         ];
         
         borderLevels.forEach(level => {
             this.ctx.lineWidth = level.lineWidth;
+            
+            // Add metallic shine effect to thicker lines
+            if (level.lineWidth >= 3) {
+                this.ctx.strokeStyle = this.GOLD_SHINE;
+                this.ctx.strokeRect(
+                    level.margin, 
+                    level.margin, 
+                    this.TEMPLATE_WIDTH - (level.margin * 2), 
+                    this.TEMPLATE_HEIGHT - (level.margin * 2)
+                );
+                
+                // Main color on top
+                this.ctx.strokeStyle = this.GOLD_PRIMARY;
+            } else {
+                this.ctx.strokeStyle = this.GOLD_SECONDARY;
+            }
+            
             this.ctx.strokeRect(
                 level.margin, 
                 level.margin, 
@@ -189,10 +207,19 @@ class SnapMagicCardTemplateSystem {
     }
     
     /**
-     * Draw a single precise corner pattern matching cardtemplate.jpg EXACTLY
+     * Draw a single precise corner pattern with metallic shine effect
      */
     drawPreciseCornerPattern() {
-        // Main angular corner decoration with more precise measurements
+        // Create metallic gradient for realistic gold shine
+        const gradient = this.ctx.createLinearGradient(0, 0, 110, 110);
+        gradient.addColorStop(0, this.GOLD_SHINE);      // Bright highlight
+        gradient.addColorStop(0.3, this.GOLD_PRIMARY);  // Main color
+        gradient.addColorStop(0.7, this.GOLD_SECONDARY); // Shadow
+        gradient.addColorStop(1, this.GOLD_PRIMARY);     // Main color
+        
+        this.ctx.fillStyle = gradient;
+        
+        // Main angular corner decoration with precise measurements
         this.ctx.beginPath();
         this.ctx.moveTo(0, 0);
         this.ctx.lineTo(110, 0);     // Extended top horizontal line
@@ -214,8 +241,8 @@ class SnapMagicCardTemplateSystem {
         this.ctx.closePath();
         this.ctx.fill();
         
-        // Add multiple inner geometric details for sophistication
-        this.ctx.strokeStyle = '#000000'; // Black lines for definition
+        // Add inner geometric details with proper gold tones
+        this.ctx.strokeStyle = this.GOLD_SECONDARY; // Darker gold for definition
         this.ctx.lineWidth = 1;
         
         // Primary inner stepped pattern
@@ -232,12 +259,14 @@ class SnapMagicCardTemplateSystem {
         this.ctx.closePath();
         this.ctx.stroke();
         
-        // Secondary inner pattern
+        // Secondary inner pattern with shine
+        this.ctx.strokeStyle = this.GOLD_ACCENT;
         this.ctx.strokeRect(35, 35, 40, 40);
         this.ctx.strokeRect(40, 40, 30, 30);
         this.ctx.strokeRect(45, 45, 20, 20);
         
         // Add corner accent lines
+        this.ctx.strokeStyle = this.GOLD_SHINE;
         this.ctx.beginPath();
         this.ctx.moveTo(25, 0);
         this.ctx.lineTo(25, 25);
@@ -275,30 +304,40 @@ class SnapMagicCardTemplateSystem {
     }
     
     /**
-     * Draw a geometric decorative panel with sophisticated Art Deco styling
+     * Draw a geometric decorative panel with metallic Art Deco styling
      */
     drawGeometricDecorativePanel(x, y, width, height) {
-        // Main panel background
+        // Create metallic gradient for panel background
+        const gradient = this.ctx.createLinearGradient(x, y, x + width, y + height);
+        gradient.addColorStop(0, this.GOLD_SHINE);
+        gradient.addColorStop(0.5, this.GOLD_PRIMARY);
+        gradient.addColorStop(1, this.GOLD_SECONDARY);
+        
+        this.ctx.fillStyle = gradient;
         this.ctx.fillRect(x, y, width, height);
         
         // Create sophisticated stepped inner pattern
-        this.ctx.strokeStyle = '#000000';
+        this.ctx.strokeStyle = this.GOLD_SECONDARY;
         this.ctx.lineWidth = 1;
         
         // Multiple inner rectangles creating sophisticated depth
         const steps = [2, 4, 6, 8];
         steps.forEach((step, index) => {
-            const alpha = 1 - (index * 0.2); // Varying opacity for depth
-            this.ctx.globalAlpha = alpha;
+            // Alternate between different gold tones for depth
+            this.ctx.strokeStyle = index % 2 === 0 ? this.GOLD_SECONDARY : this.GOLD_ACCENT;
             this.ctx.strokeRect(x + step, y + step/2, width - (step * 2), height - step);
         });
-        this.ctx.globalAlpha = 1; // Reset opacity
         
         // Central sophisticated geometric elements
         const centerX = x + width/2;
         const centerY = y + height/2;
         
-        // Main central diamond with stepped pattern
+        // Main central diamond with metallic gradient
+        const diamondGradient = this.ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, 16);
+        diamondGradient.addColorStop(0, this.GOLD_SHINE);
+        diamondGradient.addColorStop(1, this.GOLD_PRIMARY);
+        
+        this.ctx.fillStyle = diamondGradient;
         this.ctx.beginPath();
         this.ctx.moveTo(centerX, centerY - 12);
         this.ctx.lineTo(centerX + 16, centerY);
@@ -307,8 +346,8 @@ class SnapMagicCardTemplateSystem {
         this.ctx.closePath();
         this.ctx.fill();
         
-        // Inner diamond
-        this.ctx.strokeStyle = '#000000';
+        // Inner diamond with accent color
+        this.ctx.strokeStyle = this.GOLD_ACCENT;
         this.ctx.beginPath();
         this.ctx.moveTo(centerX, centerY - 8);
         this.ctx.lineTo(centerX + 12, centerY);
@@ -317,7 +356,7 @@ class SnapMagicCardTemplateSystem {
         this.ctx.closePath();
         this.ctx.stroke();
         
-        // Side geometric elements with more sophistication
+        // Side geometric elements with metallic tones
         const sideElements = [
             { x: x + 40, y: centerY },
             { x: x + 80, y: centerY },
@@ -326,7 +365,9 @@ class SnapMagicCardTemplateSystem {
         ];
         
         sideElements.forEach((element, index) => {
-            // Alternating patterns for visual interest
+            // Alternating patterns with different gold tones
+            this.ctx.strokeStyle = index % 2 === 0 ? this.GOLD_ACCENT : this.GOLD_SHINE;
+            
             if (index % 2 === 0) {
                 // Rectangular elements
                 this.ctx.strokeRect(element.x - 10, element.y - 5, 20, 10);
@@ -343,14 +384,16 @@ class SnapMagicCardTemplateSystem {
             }
         });
         
-        // Add corner accent elements
+        // Add corner accent elements with shine
         const corners = [
             { x: x + 15, y: y + height/2 },
             { x: x + width - 15, y: y + height/2 }
         ];
         
         corners.forEach(corner => {
+            this.ctx.strokeStyle = this.GOLD_SHINE;
             this.ctx.strokeRect(corner.x - 6, corner.y - 8, 12, 16);
+            this.ctx.strokeStyle = this.GOLD_ACCENT;
             this.ctx.strokeRect(corner.x - 4, corner.y - 6, 8, 12);
         });
         
