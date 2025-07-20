@@ -1,6 +1,6 @@
 /**
- * SnapMagic CardTemplate System - Clean Art Deco Design
- * Matches cardtemplate.jpg exactly with sophisticated golden frame
+ * SnapMagic CardTemplate System - Exact ASCII Design Implementation
+ * Matches the cardtemplate.jpg exactly based on ASCII analysis
  */
 
 class SnapMagicCardTemplateSystem {
@@ -13,36 +13,36 @@ class SnapMagicCardTemplateSystem {
         this.TEMPLATE_WIDTH = 500;
         this.TEMPLATE_HEIGHT = 750;
         
-        // Art Deco frame specifications (from detailed cardtemplate.jpg analysis)
-        this.FRAME_BORDER = 80;          // Space taken by complex frame decorations
+        // Frame measurements based on ASCII analysis
+        this.OUTER_BORDER = 15;          // Outermost frame border
+        this.INNER_BORDER = 25;          // Inner frame border
+        this.CORNER_SIZE = 60;           // Corner decoration size
+        this.PANEL_HEIGHT = 40;          // Top/bottom panel height
+        this.SIDE_WIDTH = 20;            // Side panel width
         
-        // Nova Canvas area (optimized for the sophisticated frame design)
-        // Calculated to avoid all frame decorations while maximizing image area
-        this.NOVA_WIDTH = 280;           // Image width (optimized for complex frame)
-        this.NOVA_HEIGHT = 520;          // Image height (optimized for complex frame)
-        this.NOVA_X = (this.TEMPLATE_WIDTH - this.NOVA_WIDTH) / 2;   // Centered: (500-280)/2 = 110
-        this.NOVA_Y = (this.TEMPLATE_HEIGHT - this.NOVA_HEIGHT) / 2; // Centered: (750-520)/2 = 115
+        // Nova Canvas area (central black rectangle)
+        this.NOVA_WIDTH = 350;           // Central area width
+        this.NOVA_HEIGHT = 580;          // Central area height
+        this.NOVA_X = (this.TEMPLATE_WIDTH - this.NOVA_WIDTH) / 2;   // Centered
+        this.NOVA_Y = (this.TEMPLATE_HEIGHT - this.NOVA_HEIGHT) / 2; // Centered
         
-        // Art Deco colors (CORRECTED to match cardtemplate.jpg exactly)
-        this.GOLD_PRIMARY = '#C9A961';    // Warm, muted champagne gold (NOT bright yellow)
-        this.GOLD_SECONDARY = '#B8A082';  // Deeper champagne tone for depth
-        this.GOLD_ACCENT = '#D4B76A';     // Slightly brighter for highlights
-        this.GOLD_SHINE = '#E6D4A3';      // Metallic shine effect
+        // Champagne gold colors (corrected)
+        this.GOLD_PRIMARY = '#C9A961';    // Warm, muted champagne gold
+        this.GOLD_SECONDARY = '#B8A082';  // Deeper champagne tone
+        this.GOLD_ACCENT = '#D4B76A';     // Brighter highlights
+        this.GOLD_SHINE = '#E6D4A3';      // Metallic shine
         this.BLACK_PANEL = '#000000';
         this.WHITE_TEXT = '#FFFFFF';
         
-        console.log('✅ CardTemplate System initialized with clean Art Deco design');
+        console.log('✅ CardTemplate System initialized with exact ASCII design');
     }
     
     /**
-     * Create trading card with Art Deco template
-     * @param {string} novaImageBase64 - Base64 encoded Nova Canvas image
-     * @param {string} userPrompt - Original user prompt
-     * @returns {Promise<string>} - Base64 encoded final trading card
+     * Create trading card with exact ASCII design
      */
     async createCardTemplate(novaImageBase64, userPrompt = '') {
         try {
-            console.log('🎨 Creating CardTemplate with Art Deco design...');
+            console.log('🎨 Creating CardTemplate with exact ASCII design...');
             
             // Create canvas
             this.canvas = document.createElement('canvas');
@@ -50,10 +50,12 @@ class SnapMagicCardTemplateSystem {
             this.canvas.height = this.TEMPLATE_HEIGHT;
             this.ctx = this.canvas.getContext('2d');
             
-            // Draw Art Deco background and frame
-            this.drawArtDecoBackground();
-            this.drawSimpleGoldenFrame();
-            console.log('✅ Art Deco frame drawn');
+            // Draw solid black background
+            this.drawBlackBackground();
+            
+            // Draw the exact frame design from ASCII
+            this.drawExactFrameDesign();
+            console.log('✅ Exact frame design drawn');
             
             // Load and draw Nova Canvas image
             const novaImg = new Image();
@@ -61,20 +63,20 @@ class SnapMagicCardTemplateSystem {
             return new Promise((resolve, reject) => {
                 novaImg.onload = async () => {
                     try {
-                        console.log('✅ Nova Canvas image loaded for CardTemplate');
+                        console.log('✅ Nova Canvas image loaded');
                         
-                        // Draw Nova Canvas image
-                        this.drawNovaImageWith3D(novaImg);
+                        // Draw Nova Canvas image in central black area
+                        this.drawNovaImage(novaImg);
                         console.log('✅ Nova Canvas image drawn');
                         
-                        // Draw AWS logo and branding
+                        // Draw branding (handled by branding system)
                         await this.drawCardTemplateLogo();
                         await this.drawCardTemplateFooter();
                         console.log('✅ CardTemplate branding drawn');
                         
                         // Return final card as base64
                         const finalCard = this.canvas.toDataURL('image/png').split(',')[1];
-                        console.log('✅ CardTemplate created successfully');
+                        console.log('✅ CardTemplate created successfully with exact design');
                         resolve(finalCard);
                         
                     } catch (error) {
@@ -98,380 +100,218 @@ class SnapMagicCardTemplateSystem {
     }
     
     /**
-     * Draw Art Deco background - SOLID BLACK ONLY (matching cardtemplate.jpg)
+     * Draw solid black background
      */
-    drawArtDecoBackground() {
-        // Fill entire canvas with solid black background (exactly like cardtemplate.jpg)
+    drawBlackBackground() {
         this.ctx.fillStyle = '#000000';
         this.ctx.fillRect(0, 0, this.TEMPLATE_WIDTH, this.TEMPLATE_HEIGHT);
-        
-        console.log('✅ Solid black background drawn (matching cardtemplate.jpg)');
+        console.log('✅ Solid black background drawn');
     }
     
     /**
-     * Draw Art Deco frame matching cardtemplate.jpg EXACTLY with metallic shine
+     * Draw the exact frame design matching ASCII layout
      */
-    drawSimpleGoldenFrame() {
+    drawExactFrameDesign() {
         this.ctx.save();
-        
-        // Set the corrected champagne gold color
         this.ctx.strokeStyle = this.GOLD_PRIMARY;
         this.ctx.fillStyle = this.GOLD_PRIMARY;
         this.ctx.lineWidth = 2;
         
-        // Draw the complex Art Deco frame with metallic effects
-        this.drawComplexArtDecoFrame();
+        // Draw outer border frame
+        this.drawOuterBorderFrame();
+        
+        // Draw inner border frame
+        this.drawInnerBorderFrame();
+        
+        // Draw corner decorations (4 corners)
+        this.drawCornerDecorations();
+        
+        // Draw top decorative panel
+        this.drawTopDecorativePanel();
+        
+        // Draw bottom decorative panel
+        this.drawBottomDecorativePanel();
+        
+        // Draw side panels (left and right)
+        this.drawSidePanels();
         
         this.ctx.restore();
-        console.log('✅ Complex Art Deco frame drawn with corrected champagne gold color');
     }
     
     /**
-     * Draw the complete Art Deco frame system matching cardtemplate.jpg EXACTLY
+     * Draw outer border frame (outermost rectangle)
      */
-    drawComplexArtDecoFrame() {
-        // Draw multiple parallel border lines (the layered frame system)
-        this.drawMultipleParallelBorders();
-        
-        // Draw the complex corner decorations with precise geometric patterns
-        this.drawPreciseCornerDecorations();
-        
-        // Draw top and bottom decorative panels with stepped designs
-        this.drawTopBottomDecorativePanels();
-        
-        // Draw side decorative elements with vertical patterns
-        this.drawSideDecorativeElements();
+    drawOuterBorderFrame() {
+        // Main outer border
+        this.ctx.strokeRect(
+            this.OUTER_BORDER, 
+            this.OUTER_BORDER, 
+            this.TEMPLATE_WIDTH - (this.OUTER_BORDER * 2), 
+            this.TEMPLATE_HEIGHT - (this.OUTER_BORDER * 2)
+        );
     }
     
     /**
-     * Draw multiple parallel border lines EXACTLY as shown in cardtemplate.jpg
+     * Draw inner border frame
      */
-    drawMultipleParallelBorders() {
-        // Precise border system matching cardtemplate.jpg exactly
-        const borderLevels = [
-            { margin: 12, lineWidth: 1 },    // Outermost thin line
-            { margin: 18, lineWidth: 3 },    // Main thick border
-            { margin: 22, lineWidth: 1 },    // Inner thin line
-            { margin: 26, lineWidth: 2 },    // Secondary border
-        ];
-        
-        borderLevels.forEach(level => {
-            this.ctx.lineWidth = level.lineWidth;
-            
-            // Add metallic shine effect to thicker lines
-            if (level.lineWidth >= 3) {
-                this.ctx.strokeStyle = this.GOLD_SHINE;
-                this.ctx.strokeRect(
-                    level.margin, 
-                    level.margin, 
-                    this.TEMPLATE_WIDTH - (level.margin * 2), 
-                    this.TEMPLATE_HEIGHT - (level.margin * 2)
-                );
-                
-                // Main color on top
-                this.ctx.strokeStyle = this.GOLD_PRIMARY;
-            } else {
-                this.ctx.strokeStyle = this.GOLD_SECONDARY;
-            }
-            
-            this.ctx.strokeRect(
-                level.margin, 
-                level.margin, 
-                this.TEMPLATE_WIDTH - (level.margin * 2), 
-                this.TEMPLATE_HEIGHT - (level.margin * 2)
-            );
-        });
+    drawInnerBorderFrame() {
+        // Inner border frame
+        this.ctx.strokeRect(
+            this.INNER_BORDER, 
+            this.INNER_BORDER, 
+            this.TEMPLATE_WIDTH - (this.INNER_BORDER * 2), 
+            this.TEMPLATE_HEIGHT - (this.INNER_BORDER * 2)
+        );
     }
     
     /**
-     * Draw precise corner decorations matching the geometric patterns in cardtemplate.jpg
+     * Draw corner decorations (stepped geometric patterns)
      */
-    drawPreciseCornerDecorations() {
+    drawCornerDecorations() {
         const corners = [
-            { x: 0, y: 0, rotation: 0 },                    // Top-left
-            { x: this.TEMPLATE_WIDTH, y: 0, rotation: 90 }, // Top-right
-            { x: this.TEMPLATE_WIDTH, y: this.TEMPLATE_HEIGHT, rotation: 180 }, // Bottom-right
-            { x: 0, y: this.TEMPLATE_HEIGHT, rotation: 270 } // Bottom-left
+            { x: this.OUTER_BORDER, y: this.OUTER_BORDER },                    // Top-left
+            { x: this.TEMPLATE_WIDTH - this.OUTER_BORDER - this.CORNER_SIZE, y: this.OUTER_BORDER }, // Top-right
+            { x: this.OUTER_BORDER, y: this.TEMPLATE_HEIGHT - this.OUTER_BORDER - this.CORNER_SIZE }, // Bottom-left
+            { x: this.TEMPLATE_WIDTH - this.OUTER_BORDER - this.CORNER_SIZE, y: this.TEMPLATE_HEIGHT - this.OUTER_BORDER - this.CORNER_SIZE } // Bottom-right
         ];
         
         corners.forEach(corner => {
-            this.ctx.save();
-            this.ctx.translate(corner.x, corner.y);
-            this.ctx.rotate((corner.rotation * Math.PI) / 180);
-            
-            // Draw the precise geometric corner pattern from cardtemplate.jpg
-            this.drawPreciseCornerPattern();
-            
-            this.ctx.restore();
+            this.drawSingleCornerDecoration(corner.x, corner.y);
         });
     }
     
     /**
-     * Draw a single precise corner pattern with metallic shine effect
+     * Draw single corner decoration (stepped pattern)
      */
-    drawPreciseCornerPattern() {
-        // Create metallic gradient for realistic gold shine
-        const gradient = this.ctx.createLinearGradient(0, 0, 110, 110);
-        gradient.addColorStop(0, this.GOLD_SHINE);      // Bright highlight
-        gradient.addColorStop(0.3, this.GOLD_PRIMARY);  // Main color
-        gradient.addColorStop(0.7, this.GOLD_SECONDARY); // Shadow
-        gradient.addColorStop(1, this.GOLD_PRIMARY);     // Main color
+    drawSingleCornerDecoration(x, y) {
+        // Create stepped corner pattern
+        this.ctx.fillRect(x, y, this.CORNER_SIZE, 15);                    // Top horizontal
+        this.ctx.fillRect(x, y, 15, this.CORNER_SIZE);                    // Left vertical
+        this.ctx.fillRect(x + 15, y + 15, this.CORNER_SIZE - 15, 10);     // Second step
+        this.ctx.fillRect(x + 15, y + 15, 10, this.CORNER_SIZE - 15);     // Second step vertical
+        this.ctx.fillRect(x + 25, y + 25, this.CORNER_SIZE - 25, 8);      // Third step
+        this.ctx.fillRect(x + 25, y + 25, 8, this.CORNER_SIZE - 25);      // Third step vertical
         
-        this.ctx.fillStyle = gradient;
-        
-        // Main angular corner decoration with precise measurements
-        this.ctx.beginPath();
-        this.ctx.moveTo(0, 0);
-        this.ctx.lineTo(110, 0);     // Extended top horizontal line
-        this.ctx.lineTo(95, 15);     // First diagonal cut
-        this.ctx.lineTo(95, 20);     // First vertical segment
-        this.ctx.lineTo(80, 20);     // First horizontal step
-        this.ctx.lineTo(80, 35);     // Second vertical segment
-        this.ctx.lineTo(65, 35);     // Second horizontal step
-        this.ctx.lineTo(65, 50);     // Third vertical segment
-        this.ctx.lineTo(50, 50);     // Third horizontal step
-        this.ctx.lineTo(50, 65);     // Fourth vertical segment
-        this.ctx.lineTo(35, 65);     // Fourth horizontal step
-        this.ctx.lineTo(35, 80);     // Fifth vertical segment
-        this.ctx.lineTo(20, 80);     // Fifth horizontal step
-        this.ctx.lineTo(20, 95);     // Sixth vertical segment
-        this.ctx.lineTo(15, 95);     // Final horizontal step
-        this.ctx.lineTo(15, 110);    // Extended final vertical line
-        this.ctx.lineTo(0, 110);     // Left vertical line
-        this.ctx.closePath();
-        this.ctx.fill();
-        
-        // Add inner geometric details with proper gold tones
-        this.ctx.strokeStyle = this.GOLD_SECONDARY; // Darker gold for definition
-        this.ctx.lineWidth = 1;
-        
-        // Primary inner stepped pattern
-        this.ctx.beginPath();
-        this.ctx.moveTo(25, 25);
-        this.ctx.lineTo(85, 25);
-        this.ctx.lineTo(70, 40);
-        this.ctx.lineTo(70, 55);
-        this.ctx.lineTo(55, 55);
-        this.ctx.lineTo(55, 70);
-        this.ctx.lineTo(40, 70);
-        this.ctx.lineTo(40, 85);
-        this.ctx.lineTo(25, 85);
-        this.ctx.closePath();
-        this.ctx.stroke();
-        
-        // Secondary inner pattern with shine
-        this.ctx.strokeStyle = this.GOLD_ACCENT;
-        this.ctx.strokeRect(35, 35, 40, 40);
-        this.ctx.strokeRect(40, 40, 30, 30);
-        this.ctx.strokeRect(45, 45, 20, 20);
-        
-        // Add corner accent lines
-        this.ctx.strokeStyle = this.GOLD_SHINE;
-        this.ctx.beginPath();
-        this.ctx.moveTo(25, 0);
-        this.ctx.lineTo(25, 25);
-        this.ctx.lineTo(0, 25);
-        this.ctx.stroke();
-        
-        this.ctx.beginPath();
-        this.ctx.moveTo(50, 0);
-        this.ctx.lineTo(50, 15);
-        this.ctx.stroke();
-        
-        this.ctx.beginPath();
-        this.ctx.moveTo(0, 50);
-        this.ctx.lineTo(15, 50);
-        this.ctx.stroke();
-        
-        // Reset styles
-        this.ctx.strokeStyle = this.GOLD_PRIMARY;
-        this.ctx.lineWidth = 2;
+        // Add inner decorative lines
+        this.ctx.strokeRect(x + 10, y + 10, this.CORNER_SIZE - 20, this.CORNER_SIZE - 20);
+        this.ctx.strokeRect(x + 20, y + 20, this.CORNER_SIZE - 40, this.CORNER_SIZE - 40);
     }
     
     /**
-     * Draw top and bottom decorative panels matching cardtemplate.jpg
+     * Draw top decorative panel
      */
-    drawTopBottomDecorativePanels() {
-        const centerX = this.TEMPLATE_WIDTH / 2;
+    drawTopDecorativePanel() {
+        const panelX = this.TEMPLATE_WIDTH / 2 - 150; // Centered, 300px wide
+        const panelY = this.OUTER_BORDER + 10;
         const panelWidth = 300;
-        const panelHeight = 30;
         
-        // Top decorative panel
-        this.drawGeometricDecorativePanel(centerX - panelWidth/2, 15, panelWidth, panelHeight);
+        // Main panel rectangle
+        this.ctx.strokeRect(panelX, panelY, panelWidth, this.PANEL_HEIGHT);
         
-        // Bottom decorative panel
-        this.drawGeometricDecorativePanel(centerX - panelWidth/2, this.TEMPLATE_HEIGHT - 45, panelWidth, panelHeight);
-    }
-    
-    /**
-     * Draw a geometric decorative panel with metallic Art Deco styling
-     */
-    drawGeometricDecorativePanel(x, y, width, height) {
-        // Create metallic gradient for panel background
-        const gradient = this.ctx.createLinearGradient(x, y, x + width, y + height);
-        gradient.addColorStop(0, this.GOLD_SHINE);
-        gradient.addColorStop(0.5, this.GOLD_PRIMARY);
-        gradient.addColorStop(1, this.GOLD_SECONDARY);
+        // Inner panel rectangle
+        this.ctx.strokeRect(panelX + 5, panelY + 5, panelWidth - 10, this.PANEL_HEIGHT - 10);
         
-        this.ctx.fillStyle = gradient;
-        this.ctx.fillRect(x, y, width, height);
+        // Central decorative element
+        const centerX = panelX + panelWidth / 2;
+        const centerY = panelY + this.PANEL_HEIGHT / 2;
         
-        // Create sophisticated stepped inner pattern
-        this.ctx.strokeStyle = this.GOLD_SECONDARY;
-        this.ctx.lineWidth = 1;
-        
-        // Multiple inner rectangles creating sophisticated depth
-        const steps = [2, 4, 6, 8];
-        steps.forEach((step, index) => {
-            // Alternate between different gold tones for depth
-            this.ctx.strokeStyle = index % 2 === 0 ? this.GOLD_SECONDARY : this.GOLD_ACCENT;
-            this.ctx.strokeRect(x + step, y + step/2, width - (step * 2), height - step);
-        });
-        
-        // Central sophisticated geometric elements
-        const centerX = x + width/2;
-        const centerY = y + height/2;
-        
-        // Main central diamond with metallic gradient
-        const diamondGradient = this.ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, 16);
-        diamondGradient.addColorStop(0, this.GOLD_SHINE);
-        diamondGradient.addColorStop(1, this.GOLD_PRIMARY);
-        
-        this.ctx.fillStyle = diamondGradient;
-        this.ctx.beginPath();
-        this.ctx.moveTo(centerX, centerY - 12);
-        this.ctx.lineTo(centerX + 16, centerY);
-        this.ctx.lineTo(centerX, centerY + 12);
-        this.ctx.lineTo(centerX - 16, centerY);
-        this.ctx.closePath();
-        this.ctx.fill();
-        
-        // Inner diamond with accent color
-        this.ctx.strokeStyle = this.GOLD_ACCENT;
+        // Diamond pattern in center
         this.ctx.beginPath();
         this.ctx.moveTo(centerX, centerY - 8);
         this.ctx.lineTo(centerX + 12, centerY);
         this.ctx.lineTo(centerX, centerY + 8);
         this.ctx.lineTo(centerX - 12, centerY);
         this.ctx.closePath();
-        this.ctx.stroke();
+        this.ctx.fill();
         
-        // Side geometric elements with metallic tones
-        const sideElements = [
-            { x: x + 40, y: centerY },
-            { x: x + 80, y: centerY },
-            { x: x + width - 80, y: centerY },
-            { x: x + width - 40, y: centerY }
-        ];
-        
-        sideElements.forEach((element, index) => {
-            // Alternating patterns with different gold tones
-            this.ctx.strokeStyle = index % 2 === 0 ? this.GOLD_ACCENT : this.GOLD_SHINE;
-            
-            if (index % 2 === 0) {
-                // Rectangular elements
-                this.ctx.strokeRect(element.x - 10, element.y - 5, 20, 10);
-                this.ctx.strokeRect(element.x - 8, element.y - 3, 16, 6);
-            } else {
-                // Diamond elements
-                this.ctx.beginPath();
-                this.ctx.moveTo(element.x, element.y - 6);
-                this.ctx.lineTo(element.x + 8, element.y);
-                this.ctx.lineTo(element.x, element.y + 6);
-                this.ctx.lineTo(element.x - 8, element.y);
-                this.ctx.closePath();
-                this.ctx.stroke();
-            }
-        });
-        
-        // Add corner accent elements with shine
-        const corners = [
-            { x: x + 15, y: y + height/2 },
-            { x: x + width - 15, y: y + height/2 }
-        ];
-        
-        corners.forEach(corner => {
-            this.ctx.strokeStyle = this.GOLD_SHINE;
-            this.ctx.strokeRect(corner.x - 6, corner.y - 8, 12, 16);
-            this.ctx.strokeStyle = this.GOLD_ACCENT;
-            this.ctx.strokeRect(corner.x - 4, corner.y - 6, 8, 12);
-        });
-        
-        // Reset styles
-        this.ctx.strokeStyle = this.GOLD_PRIMARY;
-        this.ctx.lineWidth = 2;
+        // Side decorative elements
+        this.ctx.strokeRect(panelX + 30, centerY - 5, 20, 10);
+        this.ctx.strokeRect(panelX + panelWidth - 50, centerY - 5, 20, 10);
     }
     
     /**
-     * Draw side decorative elements matching cardtemplate.jpg
+     * Draw bottom decorative panel (mirror of top)
      */
-    drawSideDecorativeElements() {
-        const centerY = this.TEMPLATE_HEIGHT / 2;
-        const elementHeight = 200;
-        const elementWidth = 25;
+    drawBottomDecorativePanel() {
+        const panelX = this.TEMPLATE_WIDTH / 2 - 150; // Centered, 300px wide
+        const panelY = this.TEMPLATE_HEIGHT - this.OUTER_BORDER - this.PANEL_HEIGHT - 10;
+        const panelWidth = 300;
         
-        // Left side decorative elements
-        this.drawVerticalDecorativeElement(10, centerY - elementHeight/2, elementWidth, elementHeight);
+        // Main panel rectangle
+        this.ctx.strokeRect(panelX, panelY, panelWidth, this.PANEL_HEIGHT);
         
-        // Right side decorative elements  
-        this.drawVerticalDecorativeElement(this.TEMPLATE_WIDTH - 35, centerY - elementHeight/2, elementWidth, elementHeight);
+        // Inner panel rectangle
+        this.ctx.strokeRect(panelX + 5, panelY + 5, panelWidth - 10, this.PANEL_HEIGHT - 10);
+        
+        // Central decorative element
+        const centerX = panelX + panelWidth / 2;
+        const centerY = panelY + this.PANEL_HEIGHT / 2;
+        
+        // Diamond pattern in center
+        this.ctx.beginPath();
+        this.ctx.moveTo(centerX, centerY - 8);
+        this.ctx.lineTo(centerX + 12, centerY);
+        this.ctx.lineTo(centerX, centerY + 8);
+        this.ctx.lineTo(centerX - 12, centerY);
+        this.ctx.closePath();
+        this.ctx.fill();
+        
+        // Side decorative elements
+        this.ctx.strokeRect(panelX + 30, centerY - 5, 20, 10);
+        this.ctx.strokeRect(panelX + panelWidth - 50, centerY - 5, 20, 10);
     }
     
     /**
-     * Draw a single vertical decorative element
+     * Draw side panels (left and right vertical elements)
      */
-    drawVerticalDecorativeElement(x, y, width, height) {
-        // Main vertical panel
-        this.ctx.fillRect(x, y, width, height);
+    drawSidePanels() {
+        const panelHeight = 200;
+        const centerY = this.TEMPLATE_HEIGHT / 2 - panelHeight / 2;
         
-        // Inner vertical lines for definition
-        this.ctx.strokeStyle = '#000000';
-        this.ctx.lineWidth = 1;
-        this.ctx.strokeRect(x + 2, y + 5, width - 4, height - 10);
-        this.ctx.strokeRect(x + 4, y + 10, width - 8, height - 20);
+        // Left side panel
+        const leftX = this.OUTER_BORDER + 5;
+        this.ctx.strokeRect(leftX, centerY, this.SIDE_WIDTH, panelHeight);
+        this.ctx.strokeRect(leftX + 2, centerY + 5, this.SIDE_WIDTH - 4, panelHeight - 10);
         
-        // Segmented pattern
-        const segments = 8;
-        const segmentHeight = (height - 20) / segments;
-        
-        for (let i = 1; i < segments; i++) {
-            const segmentY = y + 10 + (i * segmentHeight);
+        // Add segmented pattern to left panel
+        for (let i = 1; i < 8; i++) {
+            const segmentY = centerY + (i * panelHeight / 8);
             this.ctx.beginPath();
-            this.ctx.moveTo(x + 4, segmentY);
-            this.ctx.lineTo(x + width - 4, segmentY);
+            this.ctx.moveTo(leftX + 2, segmentY);
+            this.ctx.lineTo(leftX + this.SIDE_WIDTH - 2, segmentY);
             this.ctx.stroke();
-            
-            // Alternating decorative elements
-            if (i % 2 === 0) {
-                this.ctx.fillRect(x + 6, segmentY - 2, width - 12, 4);
-            }
         }
         
-        // Reset styles
-        this.ctx.strokeStyle = this.GOLD_PRIMARY;
-        this.ctx.lineWidth = 2;
+        // Right side panel
+        const rightX = this.TEMPLATE_WIDTH - this.OUTER_BORDER - this.SIDE_WIDTH - 5;
+        this.ctx.strokeRect(rightX, centerY, this.SIDE_WIDTH, panelHeight);
+        this.ctx.strokeRect(rightX + 2, centerY + 5, this.SIDE_WIDTH - 4, panelHeight - 10);
+        
+        // Add segmented pattern to right panel
+        for (let i = 1; i < 8; i++) {
+            const segmentY = centerY + (i * panelHeight / 8);
+            this.ctx.beginPath();
+            this.ctx.moveTo(rightX + 2, segmentY);
+            this.ctx.lineTo(rightX + this.SIDE_WIDTH - 2, segmentY);
+            this.ctx.stroke();
+        }
     }
     
     /**
-     * Draw Nova Canvas image properly positioned (with detailed positioning info)
+     * Draw Nova Canvas image in central black area
      */
-    drawNovaImageWith3D(novaImg) {
+    drawNovaImage(novaImg) {
         this.ctx.save();
         
-        // Debug: Log detailed positioning calculations
-        console.log('🖼️ Nova Image Positioning Details:');
-        console.log(`   Template size: ${this.TEMPLATE_WIDTH}x${this.TEMPLATE_HEIGHT}`);
+        console.log('🖼️ Drawing Nova image in central black area:');
         console.log(`   Nova size: ${this.NOVA_WIDTH}x${this.NOVA_HEIGHT}`);
         console.log(`   Nova position: (${this.NOVA_X}, ${this.NOVA_Y})`);
-        console.log(`   Nova bounds: ${this.NOVA_X} to ${this.NOVA_X + this.NOVA_WIDTH} (width), ${this.NOVA_Y} to ${this.NOVA_Y + this.NOVA_HEIGHT} (height)`);
-        console.log(`   Margins: left=${this.NOVA_X}, right=${this.TEMPLATE_WIDTH - (this.NOVA_X + this.NOVA_WIDTH)}, top=${this.NOVA_Y}, bottom=${this.TEMPLATE_HEIGHT - (this.NOVA_Y + this.NOVA_HEIGHT)}`);
         
-        // Draw Nova Canvas image
-        console.log(`🎨 Drawing Nova image at (${this.NOVA_X}, ${this.NOVA_Y}) with size ${this.NOVA_WIDTH}x${this.NOVA_HEIGHT}`);
+        // Draw Nova Canvas image in the central black rectangle
         this.ctx.drawImage(novaImg, this.NOVA_X, this.NOVA_Y, this.NOVA_WIDTH, this.NOVA_HEIGHT);
         
         this.ctx.restore();
-        console.log('✅ Nova image drawn successfully');
+        console.log('✅ Nova image drawn in central area');
     }
     
     /**
@@ -500,4 +340,4 @@ class SnapMagicCardTemplateSystem {
 // Make CardTemplate system available globally
 window.SnapMagicCardTemplateSystem = SnapMagicCardTemplateSystem;
 
-console.log('✅ SnapMagic CardTemplate System loaded successfully (clean Art Deco design)');
+console.log('✅ SnapMagic CardTemplate System loaded with exact ASCII design implementation');
