@@ -154,7 +154,7 @@ class SnapMagicCardTemplateSystem {
     }
     
     /**
-     * Draw Nova Canvas image in the card image area with proper clipping
+     * Draw Nova Canvas image in the card image area with proper scaling to fill space
      */
     drawCardImage(novaImg) {
         // Save context for clipping
@@ -165,25 +165,35 @@ class SnapMagicCardTemplateSystem {
         this.ctx.rect(this.CARD_IMAGE_X, this.CARD_IMAGE_Y, this.CARD_IMAGE_WIDTH, this.CARD_IMAGE_HEIGHT);
         this.ctx.clip();
         
-        // Calculate scaling to fit image while maintaining aspect ratio
+        // Scale image to fill the entire card space (crop if needed)
         const imgAspect = novaImg.width / novaImg.height;
         const areaAspect = this.CARD_IMAGE_WIDTH / this.CARD_IMAGE_HEIGHT;
         
         let drawWidth, drawHeight, drawX, drawY;
         
+        // Always fill the entire card space - crop if necessary
         if (imgAspect > areaAspect) {
-            // Image is wider - fit to height
-            drawHeight = this.CARD_IMAGE_HEIGHT;
-            drawWidth = drawHeight * imgAspect;
-            drawX = this.CARD_IMAGE_X - (drawWidth - this.CARD_IMAGE_WIDTH) / 2;
-            drawY = this.CARD_IMAGE_Y;
-        } else {
-            // Image is taller - fit to width
+            // Image is wider - fit to width and crop height
             drawWidth = this.CARD_IMAGE_WIDTH;
             drawHeight = drawWidth / imgAspect;
             drawX = this.CARD_IMAGE_X;
-            drawY = this.CARD_IMAGE_Y - (drawHeight - this.CARD_IMAGE_HEIGHT) / 2;
+            drawY = this.CARD_IMAGE_Y + (this.CARD_IMAGE_HEIGHT - drawHeight) / 2;
+        } else {
+            // Image is taller - fit to height and crop width
+            drawHeight = this.CARD_IMAGE_HEIGHT;
+            drawWidth = drawHeight * imgAspect;
+            drawX = this.CARD_IMAGE_X + (this.CARD_IMAGE_WIDTH - drawWidth) / 2;
+            drawY = this.CARD_IMAGE_Y;
         }
+        
+        // Ensure minimum fill - make image larger if needed to fill space
+        const fillFactor = 1.1; // Make image 10% larger to ensure full coverage
+        drawWidth *= fillFactor;
+        drawHeight *= fillFactor;
+        
+        // Recenter the enlarged image
+        drawX = this.CARD_IMAGE_X + (this.CARD_IMAGE_WIDTH - drawWidth) / 2;
+        drawY = this.CARD_IMAGE_Y + (this.CARD_IMAGE_HEIGHT - drawHeight) / 2;
         
         // Draw the image
         this.ctx.drawImage(novaImg, drawX, drawY, drawWidth, drawHeight);
