@@ -14,21 +14,21 @@ class SnapMagicCardTemplateSystem {
         this.TEMPLATE_HEIGHT = 626;
         
         // Card image area (central black area in cardtemplateEdit.jpg)
-        this.CARD_IMAGE_X = 36;          // Adjusted X position for 345px width (centered)
+        this.CARD_IMAGE_X = 48;          // Adjusted X position for 320px width (centered)
         this.CARD_IMAGE_Y = 105;         // Moved up slightly to see footer line
-        this.CARD_IMAGE_WIDTH = 345;     // Reduced from 360 to 345
+        this.CARD_IMAGE_WIDTH = 320;     // Reduced from 345 to 320
         this.CARD_IMAGE_HEIGHT = 378;    // Keep same height
         
         // Header area (top gold rectangle for AWS logo)
-        this.HEADER_X = 36;              // Match card image left edge
+        this.HEADER_X = 48;              // Match card image left edge
         this.HEADER_Y = 107;             // Top gold rectangle position
-        this.HEADER_WIDTH = 345;         // Match card image width
+        this.HEADER_WIDTH = 320;         // Match card image width
         this.HEADER_HEIGHT = 40;         // Header rectangle height
         
         // Footer area (bottom gold rectangle for event branding)
-        this.FOOTER_X = 36;              // Match card image left edge
+        this.FOOTER_X = 48;              // Match card image left edge
         this.FOOTER_Y = 516;             // Bottom gold rectangle position
-        this.FOOTER_WIDTH = 345;         // Match card image width
+        this.FOOTER_WIDTH = 320;         // Match card image width
         this.FOOTER_HEIGHT = 60;         // Footer rectangle height
         
         console.log('✅ Perfect Art Deco Premium CardTemplate System initialized');
