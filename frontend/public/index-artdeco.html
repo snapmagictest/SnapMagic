@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SnapMagic - AI Trading Card Creator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Reset and base styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Great Gatsby Art Deco Color Palette */
+        :root {
+            /* Primary Art Deco Colors */
+            --art-deco-gold: #D4AF37;
+            --art-deco-brass: #B8860B;
+            --art-deco-black: #000000;
+            --art-deco-cream: #F5F5DC;
+            
+            /* Gradients */
+            --gold-gradient: linear-gradient(135deg, #D4AF37 0%, #B8860B 100%);
+            --black-gold-gradient: linear-gradient(135deg, #000000 0%, #1C1C1C 50%, #D4AF37 100%);
+            
+            /* Glass Effects */
+            --glass-gold: rgba(212, 175, 55, 0.15);
+            --glass-black: rgba(0, 0, 0, 0.8);
+            --glass-border: rgba(212, 175, 55, 0.3);
+            
+            /* Text Colors */
+            --text-gold: #D4AF37;
+            --text-cream: #F5F5DC;
+            --text-white: #FFFFFF;
+            
+            /* Shadows */
+            --shadow-gold: 0 8px 32px rgba(212, 175, 55, 0.3);
+            --shadow-black: 0 8px 32px rgba(0, 0, 0, 0.8);
+            
+            /* Fonts */
+            --font-display: 'Playfair Display', serif;
+            --font-heading: 'Cinzel', serif;
+            --font-body: 'Cormorant Garamond', serif;
+        }
+
+        body {
+            font-family: var(--font-body);
+            background: var(--art-deco-black);
+            background-image: 
+                radial-gradient(circle at 25% 25%, rgba(212, 175, 55, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 75% 75%, rgba(184, 134, 11, 0.1) 0%, transparent 50%),
+                linear-gradient(45deg, transparent 30%, rgba(212, 175, 55, 0.02) 50%, transparent 70%);
+            min-height: 100vh;
+            color: var(--text-cream);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Art Deco Header */
+        .art-deco-header {
+            background: var(--glass-black);
+            backdrop-filter: blur(20px);
+            border-bottom: 2px solid var(--glass-border);
+            padding: 1.5rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+        }
+
+        .art-deco-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: var(--gold-gradient);
+        }
+
+        .snapmagic-logo {
+            font-family: var(--font-display);
+            font-size: 2.5rem;
+            font-weight: 900;
+            background: var(--gold-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 4px 8px rgba(212, 175, 55, 0.3);
+            letter-spacing: -0.02em;
+        }
+
+        .aws-logo {
+            height: 32px;
+            opacity: 0.9;
+            transition: opacity 0.3s ease;
+        }
+
+        .aws-logo:hover {
+            opacity: 1;
+        }
+
+        /* Main Container */
+        .main-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        /* Art Deco Section */
+        .art-deco-section {
+            background: var(--glass-gold);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .art-deco-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--gold-gradient);
+        }
+
+        .section-title {
+            font-family: var(--font-heading);
+            font-size: 2rem;
+            color: var(--text-gold);
+            text-align: center;
+            margin-bottom: 2rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+        }
+
+        /* Art Deco Buttons */
+        .art-deco-btn {
+            background: var(--gold-gradient);
+            color: var(--art-deco-black);
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            font-family: var(--font-heading);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            box-shadow: var(--shadow-gold);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .art-deco-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.5s;
+        }
+
+        .art-deco-btn:hover::before {
+            left: 100%;
+        }
+
+        .art-deco-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px rgba(212, 175, 55, 0.4);
+        }
+
+        .art-deco-btn:active {
+            transform: translateY(0);
+        }
+
+        /* Prompt Selection Cards */
+        .prompt-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .prompt-card {
+            background: var(--glass-black);
+            backdrop-filter: blur(15px);
+            border: 2px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .prompt-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--gold-gradient);
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+
+        .prompt-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .prompt-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--art-deco-gold);
+            box-shadow: var(--shadow-gold);
+        }
+
+        .prompt-card-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            background: var(--gold-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .prompt-card-title {
+            font-family: var(--font-heading);
+            font-size: 1.3rem;
+            color: var(--text-gold);
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .prompt-card-desc {
+            color: var(--text-cream);
+            font-size: 0.95rem;
+            line-height: 1.5;
+            opacity: 0.9;
+        }
+
+        /* Prompt Input Area */
+        .prompt-input-area {
+            margin-top: 2rem;
+            display: none;
+        }
+
+        .prompt-input-area.active {
+            display: block;
+            animation: fadeInUp 0.5s ease;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .art-deco-textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 1.5rem;
+            background: var(--glass-black);
+            border: 2px solid var(--glass-border);
+            border-radius: 12px;
+            color: var(--text-cream);
+            font-family: var(--font-body);
+            font-size: 1rem;
+            resize: vertical;
+            transition: all 0.3s ease;
+        }
+
+        .art-deco-textarea:focus {
+            outline: none;
+            border-color: var(--art-deco-gold);
+            box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.2);
+        }
+
+        .art-deco-textarea::placeholder {
+            color: rgba(245, 245, 220, 0.5);
+        }
+
+        /* Card Gallery */
+        .card-gallery {
+            text-align: center;
+            margin: 2rem 0;
+        }
+
+        .card-display {
+            max-width: 400px;
+            margin: 0 auto 1rem;
+            position: relative;
+        }
+
+        .generated-card {
+            width: 100%;
+            border-radius: 12px;
+            border: 3px solid var(--art-deco-gold);
+            box-shadow: var(--shadow-gold);
+            transition: transform 0.3s ease;
+        }
+
+        .generated-card:hover {
+            transform: scale(1.02);
+        }
+
+        .gallery-nav {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .gallery-btn {
+            background: var(--gold-gradient);
+            color: var(--art-deco-black);
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .gallery-btn:hover {
+            transform: scale(1.1);
+            box-shadow: var(--shadow-gold);
+        }
+
+        .gallery-dots {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .gallery-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--glass-border);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .gallery-dot.active {
+            background: var(--art-deco-gold);
+            transform: scale(1.2);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .snapmagic-logo {
+                font-size: 2rem;
+            }
+            
+            .main-container {
+                padding: 1rem 0.5rem;
+            }
+            
+            .art-deco-section {
+                padding: 1.5rem;
+                margin-bottom: 1.5rem;
+            }
+            
+            .section-title {
+                font-size: 1.5rem;
+            }
+            
+            .prompt-options {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .art-deco-btn {
+                padding: 0.8rem 1.5rem;
+                font-size: 0.9rem;
+            }
+            
+            .gallery-nav {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .art-deco-header {
+                padding: 1rem;
+            }
+            
+            .snapmagic-logo {
+                font-size: 1.8rem;
+            }
+            
+            .aws-logo {
+                height: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Art Deco Header -->
+    <header class="art-deco-header">
+        <div class="snapmagic-logo">SnapMagic</div>
+        <img src="https://d0.awsstatic.com/logos/powered-by-aws-white.png" alt="Powered by AWS" class="aws-logo">
+    </header>
+
+    <!-- Main Container -->
+    <div class="main-container">
+        <!-- Prompt Selection Section -->
+        <section class="art-deco-section">
+            <h2 class="section-title">Create Your Trading Card</h2>
+            
+            <div class="prompt-options">
+                <div class="prompt-card" onclick="selectPromptOption('generate')">
+                    <div class="prompt-card-icon">🎭</div>
+                    <h3 class="prompt-card-title">Generate AI Prompt</h3>
+                    <p class="prompt-card-desc">Let AI create a creative prompt for your trading card</p>
+                </div>
+                
+                <div class="prompt-card" onclick="selectPromptOption('create')">
+                    <div class="prompt-card-icon">✍️</div>
+                    <h3 class="prompt-card-title">Create Own Prompt</h3>
+                    <p class="prompt-card-desc">Enter your own custom prompt description</p>
+                </div>
+                
+                <div class="prompt-card" onclick="selectPromptOption('optimize')">
+                    <div class="prompt-card-icon">⚡</div>
+                    <h3 class="prompt-card-title">Optimize Prompt</h3>
+                    <p class="prompt-card-desc">Ask AI to enhance your existing prompt</p>
+                </div>
+            </div>
+
+            <!-- Prompt Input Area (hidden initially) -->
+            <div id="promptInputArea" class="hidden">
+                <textarea id="promptTextarea" class="art-deco-textarea" placeholder="Enter your prompt here..."></textarea>
+                <div style="text-align: center; margin-top: 1rem;">
+                    <button class="art-deco-btn" onclick="generateCard()">🎨 Generate Trading Card</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Results Section -->
+        <section class="art-deco-section">
+            <h2 class="section-title">Your Creations</h2>
+            
+            <!-- Card Gallery -->
+            <div id="cardGallery" class="card-gallery hidden">
+                <div class="card-display">
+                    <img id="currentCard" src="" alt="Generated Card" class="generated-card">
+                </div>
+                
+                <div class="gallery-nav">
+                    <button class="gallery-btn" onclick="previousCard()">◀</button>
+                    <div class="gallery-dots" id="galleryDots">
+                        <!-- Dots will be generated dynamically -->
+                    </div>
+                    <button class="gallery-btn" onclick="nextCard()">▶</button>
+                </div>
+                
+                <!-- Card Action Buttons -->
+                <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; margin-top: 2rem;">
+                    <button class="art-deco-btn" onclick="downloadCard()">💾 Download</button>
+                    <button class="art-deco-btn" onclick="printCard()">🖨️ Print</button>
+                    <button class="art-deco-btn" onclick="shareCard()">📱 Share</button>
+                </div>
+            </div>
+            
+            <!-- Placeholder when no cards -->
+            <div id="noCardsPlaceholder" style="text-align: center; color: var(--text-cream); padding: 2rem;">
+                <p style="font-size: 1.2rem; opacity: 0.7;">Cards, videos and prints will appear here</p>
+            </div>
+        </section>
+
+        <!-- Video Generation Section -->
+        <section class="art-deco-section">
+            <h2 class="section-title">Animate Selected Card</h2>
+            
+            <div id="videoSection">
+                <!-- Selected Card Preview -->
+                <div style="text-align: center; margin-bottom: 2rem;">
+                    <div style="max-width: 300px; margin: 0 auto;">
+                        <img id="selectedCardForVideo" src="" alt="Selected Card" style="width: 100%; border-radius: 12px; border: 2px solid var(--art-deco-gold); display: none;">
+                    </div>
+                </div>
+                
+                <!-- Animation Description -->
+                <div style="margin-bottom: 2rem;">
+                    <h3 style="font-family: var(--font-heading); color: var(--text-gold); margin-bottom: 1rem; text-align: center;">Animation Description</h3>
+                    <p style="color: var(--text-cream); text-align: center; margin-bottom: 1rem; opacity: 0.8;">Works the same as the card description</p>
+                    
+                    <textarea id="animationPrompt" class="art-deco-textarea" placeholder="Describe how you want the card to be animated..." disabled></textarea>
+                    
+                    <!-- Animation Prompt Options -->
+                    <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; margin-top: 1rem;">
+                        <button class="art-deco-btn" onclick="generateAnimationPrompt()" disabled id="genAnimBtn">🎭 Generate AI Prompt</button>
+                        <button class="art-deco-btn" onclick="optimizeAnimationPrompt()" disabled id="optAnimBtn">⚡ Optimize Prompt</button>
+                    </div>
+                </div>
+                
+                <!-- Generate Video Button -->
+                <div style="text-align: center;">
+                    <button class="art-deco-btn" onclick="generateVideo()" disabled id="generateVideoBtn" style="font-size: 1.1rem; padding: 1.2rem 2.5rem;">
+                        🎬 Generate Video (2 min wait)
+                    </button>
+                </div>
+                
+                <!-- Video Result -->
+                <div id="videoResult" class="hidden" style="margin-top: 2rem; text-align: center;">
+                    <video id="generatedVideo" controls style="max-width: 100%; border-radius: 12px; border: 2px solid var(--art-deco-gold);">
+                        <source src="" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
+                    <div style="margin-top: 1rem;">
+                        <button class="art-deco-btn" onclick="downloadVideo()">💾 Download Video</button>
+                    </div>
+                </div>
+                
+                <!-- Placeholder when no card selected -->
+                <div id="noCardSelected" style="text-align: center; color: var(--text-cream); padding: 2rem;">
+                    <p style="font-size: 1.1rem; opacity: 0.7;">Generate a card first to enable video animation</p>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        console.log('🎭 SnapMagic Art Deco Theme Loaded');
+        
+        // Global state
+        let currentPromptMode = null;
+        let generatedCards = [];
+        let currentCardIndex = 0;
+        
+        // Prompt selection functions
+        function selectPromptOption(mode) {
+            currentPromptMode = mode;
+            const inputArea = document.getElementById('promptInputArea');
+            const textarea = document.getElementById('promptTextarea');
+            
+            // Show input area
+            inputArea.classList.remove('hidden');
+            
+            // Update placeholder based on mode
+            switch(mode) {
+                case 'generate':
+                    textarea.placeholder = 'Click "Generate Trading Card" to let AI create a prompt for you...';
+                    textarea.value = '';
+                    textarea.disabled = true;
+                    break;
+                case 'create':
+                    textarea.placeholder = 'Enter your own creative prompt here...';
+                    textarea.disabled = false;
+                    textarea.focus();
+                    break;
+                case 'optimize':
+                    textarea.placeholder = 'Enter your prompt here and AI will enhance it...';
+                    textarea.disabled = false;
+                    textarea.focus();
+                    break;
+            }
+            
+            // Add visual feedback
+            document.querySelectorAll('.prompt-card').forEach(card => {
+                card.style.opacity = '0.6';
+            });
+            event.target.closest('.prompt-card').style.opacity = '1';
+            event.target.closest('.prompt-card').style.borderColor = 'var(--art-deco-gold)';
+        }
+        
+        // Card generation function
+        function generateCard() {
+            if (!currentPromptMode) {
+                alert('Please select a prompt option first');
+                return;
+            }
+            
+            const textarea = document.getElementById('promptTextarea');
+            let prompt = textarea.value.trim();
+            
+            // Handle different modes
+            if (currentPromptMode === 'generate') {
+                prompt = generateAIPrompt();
+                textarea.value = prompt;
+            } else if (currentPromptMode === 'optimize') {
+                prompt = optimizePrompt(prompt);
+                textarea.value = prompt;
+            }
+            
+            if (!prompt) {
+                alert('Please enter a prompt');
+                return;
+            }
+            
+            // Simulate card generation
+            console.log('🎨 Generating card with prompt:', prompt);
+            
+            // Show loading state
+            showProcessing('Generating your magical trading card...');
+            
+            // Simulate API call
+            setTimeout(() => {
+                const mockCard = {
+                    id: Date.now(),
+                    prompt: prompt,
+                    imageUrl: 'https://via.placeholder.com/400x600/D4AF37/000000?text=Generated+Card+' + (generatedCards.length + 1),
+                    timestamp: new Date()
+                };
+                
+                generatedCards.push(mockCard);
+                currentCardIndex = generatedCards.length - 1;
+                
+                hideProcessing();
+                showCardGallery();
+                enableVideoGeneration();
+            }, 2000);
+        }
+        
+        // Gallery functions
+        function showCardGallery() {
+            const gallery = document.getElementById('cardGallery');
+            const placeholder = document.getElementById('noCardsPlaceholder');
+            const currentCard = document.getElementById('currentCard');
+            
+            gallery.classList.remove('hidden');
+            placeholder.style.display = 'none';
+            
+            // Update current card
+            currentCard.src = generatedCards[currentCardIndex].imageUrl;
+            
+            // Update gallery dots
+            updateGalleryDots();
+            
+            // Update video section
+            updateVideoSection();
+        }
+        
+        function updateGalleryDots() {
+            const dotsContainer = document.getElementById('galleryDots');
+            dotsContainer.innerHTML = '';
+            
+            generatedCards.forEach((card, index) => {
+                const dot = document.createElement('div');
+                dot.className = 'gallery-dot' + (index === currentCardIndex ? ' active' : '');
+                dot.onclick = () => goToCard(index);
+                dotsContainer.appendChild(dot);
+            });
+        }
+        
+        function previousCard() {
+            if (currentCardIndex > 0) {
+                currentCardIndex--;
+                showCardGallery();
+            }
+        }
+        
+        function nextCard() {
+            if (currentCardIndex < generatedCards.length - 1) {
+                currentCardIndex++;
+                showCardGallery();
+            }
+        }
+        
+        function goToCard(index) {
+            currentCardIndex = index;
+            showCardGallery();
+        }
+        
+        // Video generation functions
+        function enableVideoGeneration() {
+            const animationPrompt = document.getElementById('animationPrompt');
+            const genAnimBtn = document.getElementById('genAnimBtn');
+            const optAnimBtn = document.getElementById('optAnimBtn');
+            const generateVideoBtn = document.getElementById('generateVideoBtn');
+            const noCardSelected = document.getElementById('noCardSelected');
+            
+            // Enable controls
+            animationPrompt.disabled = false;
+            genAnimBtn.disabled = false;
+            optAnimBtn.disabled = false;
+            generateVideoBtn.disabled = false;
+            
+            // Hide placeholder
+            noCardSelected.style.display = 'none';
+        }
+        
+        function updateVideoSection() {
+            const selectedCard = document.getElementById('selectedCardForVideo');
+            if (generatedCards.length > 0) {
+                selectedCard.src = generatedCards[currentCardIndex].imageUrl;
+                selectedCard.style.display = 'block';
+            }
+        }
+        
+        function generateVideo() {
+            const animationPrompt = document.getElementById('animationPrompt').value.trim();
+            if (!animationPrompt) {
+                alert('Please enter an animation description');
+                return;
+            }
+            
+            showProcessing('Generating your animated video... (2 minutes)');
+            
+            // Simulate video generation
+            setTimeout(() => {
+                const videoResult = document.getElementById('videoResult');
+                const video = document.getElementById('generatedVideo');
+                
+                // Mock video URL
+                video.src = 'https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4';
+                
+                hideProcessing();
+                videoResult.classList.remove('hidden');
+                
+                // Scroll to video
+                videoResult.scrollIntoView({ behavior: 'smooth' });
+            }, 3000);
+        }
+        
+        // Utility functions
+        function generateAIPrompt() {
+            const prompts = [
+                "A majestic dragon soaring through golden clouds at sunset",
+                "A cyberpunk warrior with glowing neon armor in a futuristic city",
+                "An elegant Art Deco ballroom dancer in 1920s attire",
+                "A mystical forest guardian with ancient magical powers",
+                "A steampunk inventor in their brass and copper workshop"
+            ];
+            return prompts[Math.floor(Math.random() * prompts.length)];
+        }
+        
+        function optimizePrompt(prompt) {
+            if (!prompt) return '';
+            return prompt + ", highly detailed, professional artwork, dramatic lighting, vibrant colors";
+        }
+        
+        function showProcessing(message) {
+            // Create processing overlay
+            const overlay = document.createElement('div');
+            overlay.id = 'processingOverlay';
+            overlay.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.8);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 9999;
+                backdrop-filter: blur(5px);
+            `;
+            
+            overlay.innerHTML = `
+                <div style="background: var(--glass-gold); padding: 2rem; border-radius: 16px; text-align: center; border: 2px solid var(--art-deco-gold);">
+                    <div style="font-size: 2rem; margin-bottom: 1rem;">⏳</div>
+                    <div style="color: var(--text-cream); font-size: 1.2rem;">${message}</div>
+                </div>
+            `;
+            
+            document.body.appendChild(overlay);
+        }
+        
+        function hideProcessing() {
+            const overlay = document.getElementById('processingOverlay');
+            if (overlay) {
+                overlay.remove();
+            }
+        }
+        
+        // Action button functions
+        function downloadCard() {
+            if (generatedCards.length > 0) {
+                console.log('📥 Downloading card:', generatedCards[currentCardIndex]);
+                alert('Card download started!');
+            }
+        }
+        
+        function printCard() {
+            if (generatedCards.length > 0) {
+                console.log('🖨️ Printing card:', generatedCards[currentCardIndex]);
+                alert('Card added to print queue!');
+            }
+        }
+        
+        function shareCard() {
+            if (generatedCards.length > 0) {
+                console.log('📱 Sharing card:', generatedCards[currentCardIndex]);
+                alert('Share options coming soon!');
+            }
+        }
+        
+        function downloadVideo() {
+            console.log('📥 Downloading video');
+            alert('Video download started!');
+        }
+        
+        function generateAnimationPrompt() {
+            const prompts = [
+                "Gentle floating motion with sparkling magical effects",
+                "Dynamic rotation with glowing energy particles",
+                "Subtle breathing animation with ambient lighting",
+                "Elegant swaying motion with golden light rays",
+                "Mystical pulsing glow with floating elements"
+            ];
+            document.getElementById('animationPrompt').value = prompts[Math.floor(Math.random() * prompts.length)];
+        }
+        
+        function optimizeAnimationPrompt() {
+            const current = document.getElementById('animationPrompt').value.trim();
+            if (current) {
+                document.getElementById('animationPrompt').value = current + ", smooth transitions, cinematic quality, professional animation";
+            }
+        }
+    </script>
+</body>
+</html>
