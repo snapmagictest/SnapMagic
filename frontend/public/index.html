@@ -15,62 +15,59 @@
             box-sizing: border-box;
         }
 
-        body {
-            font-family: 'Cormorant Garamond', serif;
-            background: #000000;
-            background-image: 
-                radial-gradient(circle at 25% 25%, rgba(212, 175, 55, 0.1) 0%, transparent 50%),
-                radial-gradient(circle at 75% 75%, rgba(184, 134, 11, 0.1) 0%, transparent 50%),
-                linear-gradient(45deg, transparent 30%, rgba(212, 175, 55, 0.02) 50%, transparent 70%);
-            min-height: 100vh;
-            color: #F5F5DC;
-            line-height: 1.6;
-            overflow-x: hidden;
-        }
-
-        /* Art Deco Color Palette */
+        /* Great Gatsby Art Deco Color Palette */
         :root {
             /* Primary Art Deco Colors */
-            --primary-gradient: linear-gradient(135deg, #D4AF37 0%, #B8860B 100%);
-            --secondary-gradient: linear-gradient(135deg, #B8860B 0%, #CD7F32 100%);
-            --accent-gradient: linear-gradient(135deg, #D4AF37 0%, #B8860B 50%, #CD7F32 100%);
-            --success-gradient: linear-gradient(135deg, #D4AF37 0%, #B8860B 100%);
-            --warning-gradient: linear-gradient(135deg, #CD7F32 0%, #D4AF37 100%);
+            --art-deco-gold: #D4AF37;
+            --art-deco-brass: #B8860B;
+            --art-deco-black: #000000;
+            --art-deco-cream: #F5F5DC;
             
-            --glass-bg: rgba(212, 175, 55, 0.08);
-            --glass-border: rgba(212, 175, 55, 0.12);
-            --glass-hover: rgba(212, 175, 55, 0.15);
+            /* Gradients */
+            --gold-gradient: linear-gradient(135deg, #D4AF37 0%, #B8860B 100%);
+            --black-gold-gradient: linear-gradient(135deg, #000000 0%, #1C1C1C 50%, #D4AF37 100%);
             
-            --dark-surface: rgba(20, 20, 30, 0.6);
-            --darker-surface: rgba(10, 10, 15, 0.8);
+            /* Glass Effects */
+            --glass-gold: rgba(212, 175, 55, 0.15);
+            --glass-black: rgba(0, 0, 0, 0.8);
+            --glass-border: rgba(212, 175, 55, 0.3);
             
-            --text-primary: #F5F5DC;
-            --text-secondary: #D4AF37;
-            --text-muted: #B8860B;
+            /* Text Colors */
+            --text-gold: #D4AF37;
+            --text-cream: #F5F5DC;
+            --text-white: #FFFFFF;
             
-            --shadow-soft: 0 8px 32px rgba(212, 175, 55, 0.3);
-            --shadow-medium: 0 16px 48px rgba(212, 175, 55, 0.4);
-            --shadow-strong: 0 24px 64px rgba(212, 175, 55, 0.5);
+            /* Shadows */
+            --shadow-gold: 0 8px 32px rgba(212, 175, 55, 0.3);
+            --shadow-black: 0 8px 32px rgba(0, 0, 0, 0.8);
             
-            --border-radius-sm: 12px;
-            --border-radius-md: 16px;
-            --border-radius-lg: 24px;
-            --border-radius-xl: 32px;
-            
-            /* Art Deco Fonts */
+            /* Fonts */
             --font-display: 'Playfair Display', serif;
             --font-heading: 'Cinzel', serif;
             --font-body: 'Cormorant Garamond', serif;
         }
 
-        /* Loading screen styles - Sleek AI Theme */
+        body {
+            font-family: var(--font-body);
+            background: var(--art-deco-black);
+            background-image: 
+                radial-gradient(circle at 25% 25%, rgba(212, 175, 55, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 75% 75%, rgba(184, 134, 11, 0.1) 0%, transparent 50%),
+                linear-gradient(45deg, transparent 30%, rgba(212, 175, 55, 0.02) 50%, transparent 70%);
+            min-height: 100vh;
+            color: var(--text-cream);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Loading Screen */
         .loading-screen {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 25%, #16213e 50%, #0f3460 75%, #533483 100%);
+            background: var(--art-deco-black);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -86,50 +83,48 @@
             text-align: center; 
             padding: 3rem;
             backdrop-filter: blur(20px);
-            background: var(--glass-bg);
+            background: var(--glass-gold);
             border: 1px solid var(--glass-border);
-            border-radius: var(--border-radius-xl);
-            box-shadow: var(--shadow-medium);
+            border-radius: 24px;
+            box-shadow: var(--shadow-gold);
         }
         .loading-logo { 
             font-size: 5rem; 
             margin-bottom: 1.5rem; 
-            background: var(--primary-gradient);
+            background: var(--gold-gradient);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            filter: drop-shadow(0 4px 8px rgba(102, 126, 234, 0.3));
         }
         .loading-title { 
+            font-family: var(--font-display);
             font-size: 2.8rem; 
             margin-bottom: 1rem; 
-            background: var(--accent-gradient);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            color: var(--text-gold);
             font-weight: 700;
             letter-spacing: -0.02em;
         }
         .loading-subtitle { 
             font-size: 1.3rem; 
             margin-bottom: 2rem; 
-            color: var(--text-secondary);
+            color: var(--text-cream);
             font-weight: 400;
         }
         .loading-text { 
             font-size: 1rem; 
-            color: var(--text-muted);
+            color: var(--text-cream);
             font-weight: 300;
+            opacity: 0.8;
         }
 
-        /* Login Screen - Sleek Glassmorphism Design */
+        /* Login Screen */
         .login-screen {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 25%, #16213e 50%, #0f3460 75%, #533483 100%);
+            background: var(--art-deco-black);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -138,14 +133,14 @@
         }
 
         .login-container {
-            background: var(--glass-bg);
+            background: var(--glass-gold);
             backdrop-filter: blur(24px);
             border: 1px solid var(--glass-border);
-            border-radius: var(--border-radius-xl);
+            border-radius: 24px;
             padding: 3.5rem;
             width: 100%;
             max-width: 420px;
-            box-shadow: var(--shadow-medium);
+            box-shadow: var(--shadow-gold);
             text-align: center;
             position: relative;
             overflow: hidden;
@@ -158,32 +153,33 @@
             left: 0;
             right: 0;
             height: 1px;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            background: var(--gold-gradient);
         }
 
         .login-logo {
             font-size: 4rem;
             margin-bottom: 1.5rem;
-            background: var(--primary-gradient);
+            background: var(--gold-gradient);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            filter: drop-shadow(0 4px 8px rgba(102, 126, 234, 0.3));
         }
 
         .login-title {
+            font-family: var(--font-display);
             font-size: 2.2rem;
             margin-bottom: 0.5rem;
-            color: var(--text-primary);
+            color: var(--text-gold);
             font-weight: 700;
             letter-spacing: -0.02em;
         }
 
         .login-subtitle {
-            color: var(--text-secondary);
+            color: var(--text-cream);
             margin-bottom: 2.5rem;
             font-size: 1.1rem;
             font-weight: 400;
+            opacity: 0.9;
         }
 
         .form-group {
@@ -194,7 +190,7 @@
         .form-label {
             display: block;
             margin-bottom: 0.8rem;
-            color: var(--text-primary);
+            color: var(--text-cream);
             font-weight: 500;
             font-size: 0.95rem;
             letter-spacing: 0.01em;
@@ -204,87 +200,41 @@
             width: 100%;
             padding: 1.2rem 1.5rem;
             border: 1px solid var(--glass-border);
-            border-radius: var(--border-radius-md);
-            background: rgba(255, 255, 255, 0.06);
-            color: var(--text-primary);
+            border-radius: 12px;
+            background: var(--glass-black);
+            color: var(--text-cream);
             font-size: 1rem;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.3s ease;
             backdrop-filter: blur(8px);
         }
 
         .form-input:focus {
             outline: none;
-            border-color: rgba(102, 126, 234, 0.6);
-            background: rgba(255, 255, 255, 0.08);
-            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+            border-color: var(--art-deco-gold);
+            box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.2);
             transform: translateY(-1px);
         }
 
         .form-input::placeholder {
-            color: var(--text-muted);
+            color: rgba(245, 245, 220, 0.5);
         }
 
-        /* Modern Button Styles */
-        .btn {
-            padding: 1.2rem 2rem;
-            border: none;
-            border-radius: var(--border-radius-md);
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            overflow: hidden;
-            letter-spacing: 0.01em;
+        /* Hidden elements initially */
+        .hidden {
+            display: none !important;
         }
 
-        .btn::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
-            transition: left 0.5s;
-        }
-
-        .btn:hover::before {
-            left: 100%;
-        }
-
-        .btn-primary {
-            background: var(--primary-gradient);
-            color: white;
-            width: 100%;
-            box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
-        }
-
-        .btn-primary:active {
-            transform: translateY(0);
-        }
-
-        /* Main App - Sleek AI Interface */
+        /* Art Deco Main App Styles */
         .main-app {
             display: none;
             min-height: 100vh;
-            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 25%, #16213e 50%, #0f3460 75%, #533483 100%);
         }
 
-        .app-header {
-            background: var(--glass-bg);
-            backdrop-filter: blur(24px);
-            border-bottom: 1px solid var(--glass-border);
-            padding: 1rem 2rem;
+        .art-deco-header {
+            background: var(--glass-black);
+            backdrop-filter: blur(20px);
+            border-bottom: 2px solid var(--glass-border);
+            padding: 1.5rem 2rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -293,833 +243,47 @@
             left: 0;
             right: 0;
             z-index: 1000;
-            box-shadow: 0 2px 16px rgba(0, 0, 0, 0.1);
             height: 70px;
         }
 
-        .header-left {
-            display: flex;
-            align-items: center;
+        .art-deco-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: var(--gold-gradient);
+        }
+
+        .snapmagic-logo {
+            font-family: var(--font-display);
+            font-size: 2.5rem;
+            font-weight: 900;
+            background: var(--gold-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 4px 8px rgba(212, 175, 55, 0.3);
+            letter-spacing: -0.02em;
         }
 
         .header-right {
             display: flex;
             align-items: center;
+            gap: 1rem;
         }
 
-        .app-title {
-            font-size: 1.8rem;
-            font-weight: 700;
-            background: var(--primary-gradient);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin: 0;
-            letter-spacing: -0.02em;
-        }
-
-        .powered-by-aws {
-            height: 24px;
+        .aws-logo {
+            height: 32px;
             opacity: 0.9;
             transition: opacity 0.3s ease;
         }
 
-        .powered-by-aws:hover {
+        .aws-logo:hover {
             opacity: 1;
         }
 
-        /* Add top margin to main content to account for fixed header */
-        .main-app {
-            padding-top: 70px;
-        }
-
-        /* Remove unused styles */
-        .header-center, .app-subtitle, .aws-logo {
-            display: none;
-        }
-            filter: drop-shadow(0 4px 8px rgba(102, 126, 234, 0.3));
-        }
-
-        .app-subtitle {
-            color: var(--text-secondary);
-            font-size: 1.1rem;
-            margin-bottom: 1.5rem;
-            font-weight: 400;
-        }
-
-        .user-info {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 1.5rem;
-            flex-wrap: wrap;
-        }
-
-        .welcome-text {
-            color: var(--text-primary);
-            font-weight: 500;
-            font-size: 1rem;
-        }
-
-        .btn-secondary {
-            background: var(--glass-bg);
-            color: var(--text-primary);
-            padding: 0.8rem 1.5rem;
-            font-size: 0.9rem;
-            border: 1px solid var(--glass-border);
-            backdrop-filter: blur(8px);
-        }
-
-        .btn-secondary:hover {
-            background: var(--glass-hover);
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-        }
-
-        .btn-warning {
-            background: linear-gradient(135deg, #f59e0b, #d97706);
-            color: white;
-        }
-
-        .btn-warning:hover {
-            background: linear-gradient(135deg, #d97706, #b45309);
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
-        }
-
-        .btn-linkedin {
-            background: linear-gradient(135deg, #0077b5, #005885);
-            color: white;
-        }
-
-        .btn-linkedin:hover {
-            background: linear-gradient(135deg, #005885, #004066);
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(0, 119, 181, 0.3);
-        }
-
-        /* Improved button styles for better theme consistency */
-        .btn-info {
-            background: linear-gradient(135deg, #3b82f6, #2563eb);
-            color: white;
-            border: none;
-        }
-
-        .btn-info:hover {
-            background: linear-gradient(135deg, #2563eb, #1d4ed8);
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-        }
-
-        .btn-danger {
-            background: linear-gradient(135deg, #dc2626, #b91c1c);
-            color: white;
-            border: none;
-        }
-
-        .btn-danger:hover {
-            background: linear-gradient(135deg, #b91c1c, #991b1b);
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
-        }
-
-        .btn-sm {
-            padding: 0.5rem 1rem;
-            font-size: 0.875rem;
-            border-radius: var(--border-radius-sm);
-        }
-
-        /* Sleek Tab Navigation */
-        .tab-navigation {
-            background: var(--dark-surface);
-            backdrop-filter: blur(16px);
-            border-bottom: 1px solid var(--glass-border);
-            padding: 0 2rem;
-            display: flex;
-            justify-content: center;
-            overflow-x: auto;
-            position: sticky;
-            top: 70px;
-            z-index: 100;
-        }
-
-        .tab-navigation::before {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, var(--glass-border), transparent);
-        }
-
-        .tab-nav-item {
-            padding: 1.5rem 2.5rem;
-            cursor: pointer;
-            border-bottom: 3px solid transparent;
-            color: var(--text-muted);
-            font-weight: 500;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            white-space: nowrap;
-            position: relative;
-            font-size: 1rem;
-        }
-
-        .tab-nav-item::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: var(--glass-bg);
-            opacity: 0;
-            transition: opacity 0.3s ease;
-            border-radius: var(--border-radius-sm) var(--border-radius-sm) 0 0;
-        }
-
-        .tab-nav-item:hover {
-            color: var(--text-secondary);
-        }
-
-        .tab-nav-item:hover::before {
-            opacity: 1;
-        }
-
-        .tab-nav-item.active {
-            color: var(--text-primary);
-            border-bottom-color: transparent;
-            background: var(--glass-bg);
-            border-radius: var(--border-radius-sm) var(--border-radius-sm) 0 0;
-            position: relative;
-        }
-
-        .tab-nav-item.active::after {
-            content: '';
-            position: absolute;
-            bottom: -1px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 60%;
-            height: 3px;
-            background: var(--accent-gradient);
-            border-radius: 2px;
-        }
-
-        /* Tab Content - Sleek Cards */
-        .tab-content-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 1rem;
-        }
-
-        .tab-content {
-            display: none;
-            padding: 1.5rem 0;
-        }
-
-        .tab-content.active {
-            display: block;
-            animation: fadeInUp 0.5s ease-out;
-        }
-
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* Instructions Tab - Modern Cards */
-        .instructions-container {
-            background: var(--glass-bg);
-            backdrop-filter: blur(24px);
-            border-radius: var(--border-radius-xl);
-            padding: 3rem;
-            border: 1px solid var(--glass-border);
-            box-shadow: var(--shadow-medium);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .instructions-container::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-        }
-
-        .instructions-title {
-            font-size: 2.5rem;
-            color: var(--text-primary);
-            margin-bottom: 2rem;
-            text-align: center;
-            font-weight: 700;
-            letter-spacing: -0.02em;
-        }
-
-        .instruction-step {
-            background: var(--dark-surface);
-            backdrop-filter: blur(16px);
-            border-radius: var(--border-radius-lg);
-            padding: 2rem;
-            margin-bottom: 2rem;
-            border: 1px solid var(--glass-border);
-            position: relative;
-            transition: all 0.3s ease;
-        }
-
-        .instruction-step:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-soft);
-            border-color: rgba(102, 126, 234, 0.3);
-        }
-
-        .instruction-step::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 4px;
-            height: 100%;
-            background: var(--accent-gradient);
-            border-radius: 2px;
-        }
-
-        .step-number {
-            background: var(--primary-gradient);
-            color: white;
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            margin-right: 1.5rem;
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-        }
-
-        .step-title {
-            font-size: 1.3rem;
-            color: var(--text-primary);
-            margin-bottom: 0.8rem;
-            font-weight: 600;
-            letter-spacing: -0.01em;
-        }
-
-        .step-description {
-            color: var(--text-secondary);
-            line-height: 1.7;
-            font-size: 1rem;
-        }
-
-        .warning-box {
-            background: linear-gradient(135deg, rgba(250, 112, 154, 0.1), rgba(254, 225, 64, 0.1));
-            border: 1px solid rgba(250, 112, 154, 0.3);
-            border-radius: var(--border-radius-lg);
-            padding: 1.5rem;
-            margin-top: 2.5rem;
-            backdrop-filter: blur(8px);
-        }
-
-        .warning-title {
-            background: var(--warning-gradient);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            font-weight: 600;
-            margin-bottom: 0.8rem;
-            font-size: 1.1rem;
-        }
-
-        .warning-text {
-            color: var(--text-secondary);
-            font-size: 0.95rem;
-            line-height: 1.6;
-        }
-
-        /* Name Input Modals */
-        .modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            backdrop-filter: blur(10px);
-        }
-
-        .modal-content {
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            padding: 2rem;
-            border-radius: 20px;
-            border: 2px solid rgba(0, 212, 255, 0.3);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
-            text-align: center;
-            max-width: 500px;
-            width: 90%;
-        }
-
-        .modal-content h3 {
-            color: #00d4ff;
-            margin-bottom: 1rem;
-            font-size: 1.5rem;
-        }
-
-        .modal-content p {
-            color: rgba(255, 255, 255, 0.8);
-            margin-bottom: 1.5rem;
-            line-height: 1.5;
-        }
-
-        .name-input {
-            width: 100%;
-            padding: 1rem;
-            border: 2px solid rgba(0, 212, 255, 0.3);
-            border-radius: 12px;
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-            font-size: 1.1rem;
-            text-align: center;
-            margin-bottom: 1.5rem;
-            backdrop-filter: blur(10px);
-        }
-
-        .name-input:focus {
-            outline: none;
-            border-color: #00d4ff;
-            box-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
-        }
-
-        .name-input::placeholder {
-            color: rgba(255, 255, 255, 0.5);
-        }
-
-        .name-preview {
-            background: rgba(0, 212, 255, 0.1);
-            border: 2px solid rgba(0, 212, 255, 0.3);
-            border-radius: 12px;
-            padding: 1rem;
-            margin: 1rem 0;
-            font-size: 1.3rem;
-            font-weight: bold;
-            color: #00d4ff;
-            min-height: 50px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .modal-buttons {
-            display: flex;
-            gap: 1rem;
-            justify-content: center;
-            margin-top: 1.5rem;
-        }
-
-        .modal-buttons .btn {
-            flex: 1;
-            max-width: 150px;
-        }
-
-        /* LinkedIn Sharing Popup Styles */
-        .linkedin-steps {
-            margin: 1.5rem 0;
-        }
-
-        .step-item {
-            display: flex;
-            align-items: center;
-            margin-bottom: 1rem;
-            padding: 0.8rem;
-            background: rgba(0, 212, 255, 0.1);
-            border-radius: 8px;
-            border-left: 3px solid #00d4ff;
-        }
-
-        .step-number {
-            background: #00d4ff;
-            color: #1a1a2e;
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: 0.9rem;
-            margin-right: 1rem;
-            flex-shrink: 0;
-        }
-
-        .step-text {
-            color: rgba(255, 255, 255, 0.9);
-            font-size: 0.95rem;
-        }
-
-        .linkedin-buttons {
-            display: flex;
-            gap: 1rem;
-            margin: 1.5rem 0;
-            justify-content: center;
-        }
-
-        .linkedin-buttons .btn {
-            flex: 1;
-            max-width: 200px;
-            min-height: 50px;
-            font-size: 1rem;
-        }
-
-        .btn.disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            background: #666 !important;
-        }
-
-        .btn.disabled:hover {
-            background: #666 !important;
-            transform: none !important;
-        }
-
-        /* Gallery Navigation Styles */
-        .gallery-navigation {
-            margin-top: 1rem;
-            padding: 1rem;
-            background: rgba(0, 212, 255, 0.1);
-            border-radius: 12px;
-            border: 1px solid rgba(0, 212, 255, 0.3);
-        }
-
-        .gallery-controls {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 1rem;
-            margin-bottom: 1rem;
-        }
-
-        .gallery-btn {
-            min-width: 50px;
-            height: 40px;
-            font-size: 1.2rem;
-            font-weight: bold;
-        }
-
-        .gallery-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            background: #666 !important;
-        }
-
-        .gallery-info {
-            color: #00d4ff;
-            font-weight: 600;
-            font-size: 1rem;
-            min-width: 120px;
-            text-align: center;
-        }
-
-        .gallery-numbers {
-            display: flex;
-            justify-content: center;
-            gap: 0.5rem;
-            flex-wrap: wrap;
-        }
-
-        .gallery-num {
-            background: rgba(255, 255, 255, 0.1);
-            color: rgba(255, 255, 255, 0.8);
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            border-radius: 8px;
-            padding: 0.5rem 0.8rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            min-width: 40px;
-            text-align: center;
-        }
-
-        .gallery-num:hover {
-            background: rgba(0, 212, 255, 0.2);
-            border-color: #00d4ff;
-            color: #00d4ff;
-            transform: translateY(-2px);
-        }
-
-        .gallery-num.active {
-            background: #00d4ff;
-            color: #1a1a2e;
-            border-color: #00d4ff;
-            transform: translateY(-2px);
-        }
-
-        /* Mobile responsive for gallery */
-        @media (max-width: 768px) {
-            .gallery-controls {
-                flex-direction: column;
-                gap: 0.5rem;
-            }
-            
-            .gallery-numbers {
-                gap: 0.3rem;
-            }
-            
-            .gallery-num {
-                padding: 0.4rem 0.6rem;
-                min-width: 35px;
-            }
-        }
-
-        /* Video Prompt with Prefix */
-        .video-prompt-container {
-            position: relative;
-            margin-bottom: 1rem;
-        }
-
-        .prompt-prefix {
-            background: rgba(255, 255, 255, 0.1);
-            color: #00d4ff;
-            padding: 0.8rem 1rem;
-            border: 2px solid rgba(0, 212, 255, 0.3);
-            border-bottom: none;
-            border-radius: 12px 12px 0 0;
-            font-weight: 600;
-            font-size: 0.9rem;
-            text-align: center;
-            backdrop-filter: blur(10px);
-        }
-
-        .video-prompt-input {
-            border-radius: 0 0 12px 12px !important;
-            border-top: none !important;
-            margin-bottom: 0 !important;
-        }
-
-        /* Card Generation Tab - Sleek Layout */
-        .generation-container {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 3rem;
-            align-items: start;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 1rem;
-        }
-
-        .input-section, .result-section {
-            background: var(--glass-bg);
-            backdrop-filter: blur(24px);
-            border-radius: var(--border-radius-xl);
-            padding: 2.5rem;
-            border: 1px solid var(--glass-border);
-            box-shadow: var(--shadow-medium);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .input-section::before, .result-section::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-        }
-
-        .section-title {
-            font-size: 1.8rem;
-            color: var(--text-primary);
-            margin-bottom: 2rem;
-            font-weight: 600;
-            letter-spacing: -0.01em;
-        }
-
-        .prompt-input {
-            width: 100%;
-            min-height: 140px;
-            padding: 1.5rem;
-            border: 1px solid var(--glass-border);
-            border-radius: var(--border-radius-md);
-            background: var(--dark-surface);
-            backdrop-filter: blur(8px);
-            color: var(--text-primary);
-            font-size: 1rem;
-            resize: vertical;
-            margin-bottom: 1.5rem;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            font-family: inherit;
-            line-height: 1.6;
-        }
-
-        .prompt-input:focus {
-            outline: none;
-            border-color: rgba(102, 126, 234, 0.6);
-            background: rgba(255, 255, 255, 0.08);
-            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
-            transform: translateY(-1px);
-        }
-
-        .prompt-input::placeholder {
-            color: var(--text-muted);
-        }
-
-        /* Prompt Flow UI Styles */
-        .prompt-container {
-            width: 100%;
-        }
-
-        .prompt-flow-buttons {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 12px;
-            flex-wrap: wrap;
-        }
-
-        .prompt-flow-btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 10px 16px;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            white-space: nowrap;
-        }
-
-        .prompt-flow-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-        }
-
-        .prompt-flow-btn:active {
-            transform: translateY(0);
-        }
-
-        .prompt-flow-btn:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-
-        .prompt-flow-btn i {
-            font-size: 16px;
-        }
-
-        .prompt-flow-divider {
-            color: var(--text-muted);
-            font-size: 14px;
-            font-style: italic;
-            margin: 0 8px;
-        }
-
-        @media (max-width: 768px) {
-            .prompt-flow-buttons {
-                flex-direction: column;
-                align-items: stretch;
-            }
-            
-            .prompt-flow-btn {
-                justify-content: center;
-            }
-            
-            .prompt-flow-divider {
-                text-align: center;
-                margin: 8px 0;
-            }
-        }
-
-        /* Video Card Selection Styles */
-        .video-card-selection {
-            background: var(--dark-surface);
-            backdrop-filter: blur(16px);
-            border-radius: var(--border-radius-lg);
-            padding: 2rem;
-            margin-bottom: 2rem;
-            border: 1px solid var(--glass-border);
-        }
-
-        .section-subtitle {
-            font-size: 1.4rem;
-            color: var(--text-primary);
-            margin-bottom: 1.5rem;
-            font-weight: 600;
-            text-align: center;
-        }
-
-        .video-card-display {
-            display: flex;
-            justify-content: center;
-            margin-bottom: 1.5rem;
-        }
-
-        .video-card-image {
-            max-width: 300px;
-            max-height: 400px;
-            border-radius: var(--border-radius-md);
-            box-shadow: var(--shadow-medium);
-            border: 2px solid var(--glass-border);
-            transition: all 0.3s ease;
-        }
-
-        .video-card-image:hover {
-            transform: scale(1.02);
-            box-shadow: var(--shadow-strong);
-            border-color: rgba(102, 126, 234, 0.4);
-        }
-
-        .video-prompt-section {
-            background: var(--dark-surface);
-            backdrop-filter: blur(16px);
-            border-radius: var(--border-radius-lg);
-            padding: 2rem;
-            border: 1px solid var(--glass-border);
-        }
-
-        /* Override Code Input */
-        .override-code-input {
-            width: 100%;
-            padding: 0.75rem;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 8px;
-            background: rgba(255, 255, 255, 0.05);
-            color: white;
-            font-size: 0.9rem;
-            transition: all 0.3s ease;
-        }
-
-        .override-code-input:focus {
-            outline: none;
-            border-color: #00d4ff;
-            box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.2);
-            background: rgba(255, 255, 255, 0.1);
-        }
-
-        .override-code-input::placeholder {
-            color: rgba(255, 255, 255, 0.5);
-        }
-
-        /* Staff Override Button */
         .staff-override-btn {
             background: linear-gradient(135deg, #ff6b6b, #ee5a24);
             color: white;
@@ -1130,50 +294,206 @@
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
-            margin-right: 1rem;
-            box-shadow: 0 2px 8px rgba(255, 107, 107, 0.3);
         }
 
         .staff-override-btn:hover {
             background: linear-gradient(135deg, #ff5252, #d63031);
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(255, 107, 107, 0.4);
         }
 
-        .staff-override-btn:active {
-            transform: translateY(0);
+        /* Main Container */
+        .main-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 90px 1rem 2rem;
         }
 
-        /* Generate Button Styling */
-        .btn-generate {
-            background: var(--secondary-gradient);
-            color: white;
-            width: 100%;
-            padding: 1.3rem;
-            font-size: 1.1rem;
-            font-weight: 600;
-            box-shadow: 0 6px 20px rgba(240, 147, 251, 0.3);
+        /* Art Deco Section */
+        .art-deco-section {
+            background: var(--glass-gold);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
             position: relative;
             overflow: hidden;
         }
 
-        .btn-generate:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 30px rgba(240, 147, 251, 0.4);
+        .art-deco-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--gold-gradient);
         }
 
-        .btn-generate:disabled {
+        .section-title {
+            font-family: var(--font-heading);
+            font-size: 2rem;
+            color: var(--text-gold);
+            text-align: center;
+            margin-bottom: 2rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+        }
+
+        .section-subtitle {
+            font-family: var(--font-heading);
+            font-size: 1.4rem;
+            color: var(--text-gold);
+            margin-bottom: 1.5rem;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        /* Art Deco Buttons */
+        .art-deco-btn {
+            background: var(--gold-gradient);
+            color: var(--art-deco-black);
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            font-family: var(--font-heading);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            box-shadow: var(--shadow-gold);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .art-deco-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.5s;
+        }
+
+        .art-deco-btn:hover::before {
+            left: 100%;
+        }
+
+        .art-deco-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px rgba(212, 175, 55, 0.4);
+        }
+
+        .art-deco-btn:active {
+            transform: translateY(0);
+        }
+
+        .art-deco-btn:disabled {
             opacity: 0.6;
             cursor: not-allowed;
             transform: none;
             box-shadow: none;
         }
 
+        .btn-primary {
+            background: var(--gold-gradient);
+            color: var(--art-deco-black);
+            width: 100%;
+            padding: 1.2rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow-gold);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px rgba(212, 175, 55, 0.4);
+        }
+
+        /* Prompt Selection Cards */
+        .prompt-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .prompt-card {
+            background: var(--glass-black);
+            backdrop-filter: blur(15px);
+            border: 2px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .prompt-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--art-deco-gold);
+            box-shadow: var(--shadow-gold);
+        }
+
+        .prompt-card-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .prompt-card-title {
+            font-family: var(--font-heading);
+            font-size: 1.2rem;
+            color: var(--text-gold);
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .prompt-card-desc {
+            color: var(--text-cream);
+            font-size: 0.9rem;
+            line-height: 1.5;
+            opacity: 0.9;
+        }
+
+        /* Art Deco Textarea */
+        .art-deco-textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 1.5rem;
+            background: var(--glass-black);
+            border: 2px solid var(--glass-border);
+            border-radius: 12px;
+            color: var(--text-cream);
+            font-family: var(--font-body);
+            font-size: 1rem;
+            resize: vertical;
+            transition: all 0.3s ease;
+        }
+
+        .art-deco-textarea:focus {
+            outline: none;
+            border-color: var(--art-deco-gold);
+            box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.2);
+        }
+
+        .art-deco-textarea::placeholder {
+            color: rgba(245, 245, 220, 0.5);
+        }
+
         /* Usage Limits Display */
         .usage-limits {
-            background: var(--glass-bg);
+            background: var(--glass-black);
             border: 1px solid var(--glass-border);
-            border-radius: var(--border-radius-md);
+            border-radius: 12px;
             padding: 1rem;
             margin: 1.5rem 0;
             backdrop-filter: blur(8px);
@@ -1195,13 +515,13 @@
         }
 
         .usage-text {
-            color: var(--text-secondary);
+            color: var(--text-cream);
             font-size: 0.9rem;
             font-weight: 500;
         }
 
         .usage-count {
-            color: var(--text-primary);
+            color: var(--text-gold);
             font-weight: 600;
         }
 
@@ -1217,15 +537,16 @@
             color: #66bb6a;
         }
 
-        @media (max-width: 768px) {
-            .usage-limits {
-                flex-direction: column;
-                gap: 0.5rem;
-            }
-            
-            .usage-item {
-                justify-content: center;
-            }
+        /* Card Gallery */
+        .card-gallery {
+            text-align: center;
+            margin: 2rem 0;
+        }
+
+        .card-display {
+            max-width: 400px;
+            margin: 0 auto 1rem;
+            position: relative;
         }
 
         .result-image {
@@ -1239,159 +560,191 @@
             /* Holographic border effect */
             border: 4px solid;
             border-image: linear-gradient(45deg, 
-                #ff0080, #ff8c00, #40e0d0, #ff0080, 
-                #9400d3, #00ff00, #ff1493, #00bfff,
-                #ff0080, #ff8c00, #40e0d0
+                #D4AF37, #B8860B, #CD7F32, #D4AF37, 
+                #B8860B, #CD7F32, #D4AF37, #B8860B,
+                #D4AF37, #B8860B, #CD7F32
             ) 1;
             
-            /* Multiple layered shadows for depth */
-            box-shadow: 
-                0 0 20px rgba(255, 0, 128, 0.3),
-                0 0 40px rgba(64, 224, 208, 0.2),
-                0 8px 32px rgba(0, 0, 0, 0.3),
-                inset 0 1px 0 rgba(255, 255, 255, 0.2);
-            
-            /* Subtle background gradient for metallic effect */
-            background: linear-gradient(135deg, 
-                rgba(255, 255, 255, 0.1) 0%,
-                rgba(255, 255, 255, 0.05) 50%,
-                rgba(0, 0, 0, 0.05) 100%
-            );
+            box-shadow: var(--shadow-gold);
         }
 
         .result-image:hover {
-            transform: scale(1.03) rotateY(5deg);
-            
-            /* Enhanced holographic effect on hover */
-            border-image: linear-gradient(45deg, 
-                #ff1493, #00ff00, #ff0080, #40e0d0, 
-                #ff8c00, #9400d3, #00bfff, #ff1493,
-                #00ff00, #ff0080, #40e0d0
-            ) 1;
-            
-            box-shadow: 
-                0 0 30px rgba(255, 20, 147, 0.5),
-                0 0 60px rgba(64, 224, 208, 0.3),
-                0 12px 48px rgba(0, 0, 0, 0.4),
-                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+            transform: scale(1.03);
+            box-shadow: 0 0 30px rgba(212, 175, 55, 0.5);
         }
 
-        /* Add holographic shimmer animation */
-        @keyframes holographic-shimmer {
-            0% {
-                border-image: linear-gradient(45deg, 
-                    #ff0080, #ff8c00, #40e0d0, #ff0080, 
-                    #9400d3, #00ff00, #ff1493, #00bfff,
-                    #ff0080, #ff8c00, #40e0d0
-                ) 1;
-            }
-            25% {
-                border-image: linear-gradient(45deg, 
-                    #40e0d0, #ff0080, #9400d3, #ff8c00, 
-                    #00ff00, #ff1493, #00bfff, #ff0080,
-                    #40e0d0, #ff8c00, #9400d3
-                ) 1;
-            }
-            50% {
-                border-image: linear-gradient(45deg, 
-                    #9400d3, #40e0d0, #00ff00, #ff0080, 
-                    #ff1493, #ff8c00, #00bfff, #40e0d0,
-                    #9400d3, #00ff00, #ff0080
-                ) 1;
-            }
-            75% {
-                border-image: linear-gradient(45deg, 
-                    #00ff00, #9400d3, #ff1493, #40e0d0, 
-                    #ff8c00, #00bfff, #ff0080, #9400d3,
-                    #00ff00, #ff1493, #40e0d0
-                ) 1;
-            }
-            100% {
-                border-image: linear-gradient(45deg, 
-                    #ff0080, #ff8c00, #40e0d0, #ff0080, 
-                    #9400d3, #00ff00, #ff1493, #00bfff,
-                    #ff0080, #ff8c00, #40e0d0
-                ) 1;
-            }
+        /* Gallery Navigation */
+        .gallery-navigation {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: var(--glass-gold);
+            border-radius: 12px;
+            border: 1px solid var(--glass-border);
         }
 
-        /* Apply subtle animation to the card */
-        .result-image {
-            animation: holographic-shimmer 3s ease-in-out infinite;
+        .gallery-controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
         }
-        
-        .card-info {
-            margin-top: 15px;
-            padding: 10px;
-            background: #f8f9fa;
-            border-radius: 8px;
-            font-size: 14px;
-            color: #666;
+
+        .gallery-btn {
+            background: var(--gold-gradient);
+            color: var(--art-deco-black);
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
         }
-        
-        .card-info p {
-            margin: 5px 0;
+
+        .gallery-btn:hover {
+            transform: scale(1.1);
+            box-shadow: var(--shadow-gold);
         }
-        
-        .error-text {
-            color: #e74c3c;
-            font-size: 14px;
-            margin-top: 10px;
+
+        .gallery-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .gallery-info {
+            color: var(--text-gold);
+            font-weight: 600;
+            font-size: 1rem;
+            min-width: 120px;
             text-align: center;
         }
 
+        .gallery-numbers {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .gallery-num {
+            background: var(--glass-black);
+            color: var(--text-cream);
+            border: 2px solid var(--glass-border);
+            border-radius: 8px;
+            padding: 0.5rem 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 40px;
+            text-align: center;
+        }
+
+        .gallery-num:hover {
+            background: var(--glass-gold);
+            border-color: var(--art-deco-gold);
+            color: var(--text-gold);
+            transform: translateY(-2px);
+        }
+
+        .gallery-num.active {
+            background: var(--art-deco-gold);
+            color: var(--art-deco-black);
+            border-color: var(--art-deco-gold);
+            transform: translateY(-2px);
+        }
+
+        /* Result Actions */
         .result-actions {
             display: flex;
             gap: 1rem;
             flex-wrap: wrap;
             justify-content: center;
+            margin-top: 2rem;
         }
 
-        .result-actions .btn {
+        .result-actions .art-deco-btn {
             flex: 1;
             min-width: 160px;
             text-align: center;
         }
 
-        .btn-success {
-            background: var(--success-gradient);
-            color: white;
-            box-shadow: 0 4px 16px rgba(67, 233, 123, 0.3);
-        }
-
-        .btn-success:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(67, 233, 123, 0.4);
-        }
-
-        /* Video Tab - Enhanced Design */
-        .video-container {
-            background: var(--glass-bg);
-            backdrop-filter: blur(24px);
-            border-radius: var(--border-radius-xl);
-            padding: 3rem;
+        /* Video Section Styles */
+        .video-card-selection {
+            background: var(--glass-black);
+            backdrop-filter: blur(16px);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
             border: 1px solid var(--glass-border);
-            box-shadow: var(--shadow-medium);
-            text-align: center;
-            position: relative;
-            overflow: hidden;
         }
 
-        .video-container::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        .video-card-display {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .video-card-image {
+            max-width: 300px;
+            max-height: 400px;
+            border-radius: 12px;
+            box-shadow: var(--shadow-gold);
+            border: 2px solid var(--glass-border);
+            transition: all 0.3s ease;
+        }
+
+        .video-card-image:hover {
+            transform: scale(1.02);
+            border-color: var(--art-deco-gold);
+        }
+
+        .video-prompt-section {
+            background: var(--glass-black);
+            backdrop-filter: blur(16px);
+            border-radius: 16px;
+            padding: 2rem;
+            border: 1px solid var(--glass-border);
+        }
+
+        .video-prompt-container {
+            position: relative;
+            margin-bottom: 1rem;
+        }
+
+        .prompt-prefix {
+            background: var(--glass-black);
+            color: var(--text-gold);
+            padding: 0.8rem 1rem;
+            border: 2px solid var(--glass-border);
+            border-bottom: none;
+            border-radius: 12px 12px 0 0;
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-align: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .video-prompt-input {
+            border-radius: 0 0 12px 12px !important;
+            border-top: none !important;
+            margin-bottom: 0 !important;
+        }
+
+        .prompt-flow-buttons {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
         }
 
         .video-player {
             width: 100%;
             max-width: 700px;
-            border-radius: var(--border-radius-lg);
-            box-shadow: var(--shadow-medium);
+            border-radius: 16px;
+            box-shadow: var(--shadow-gold);
             margin: 1.5rem auto;
             transition: transform 0.3s ease;
         }
@@ -1400,7 +753,7 @@
             transform: scale(1.02);
         }
 
-        /* Processing States - Sleek Design */
+        /* Processing Overlay */
         .processing-overlay {
             position: fixed;
             top: 0;
@@ -1416,13 +769,13 @@
         }
 
         .processing-content {
-            background: var(--glass-bg);
+            background: var(--glass-gold);
             backdrop-filter: blur(24px);
-            border-radius: var(--border-radius-xl);
+            border-radius: 24px;
             padding: 3.5rem;
             text-align: center;
             border: 1px solid var(--glass-border);
-            box-shadow: var(--shadow-strong);
+            box-shadow: var(--shadow-gold);
             max-width: 400px;
             position: relative;
             overflow: hidden;
@@ -1435,7 +788,7 @@
             left: 0;
             right: 0;
             height: 1px;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            background: var(--gold-gradient);
         }
 
         .processing-spinner {
@@ -1457,7 +810,7 @@
             right: -4px;
             bottom: -4px;
             border-radius: 50%;
-            background: var(--accent-gradient);
+            background: var(--gold-gradient);
             z-index: -1;
             animation: spin 1s linear infinite reverse;
         }
@@ -1468,365 +821,170 @@
         }
 
         .processing-text {
-            color: var(--text-primary);
+            color: var(--text-gold);
             font-size: 1.3rem;
             margin-bottom: 0.8rem;
             font-weight: 600;
         }
 
         .processing-subtext {
-            color: var(--text-secondary);
+            color: var(--text-cream);
             font-size: 1rem;
-            line-height: 1.5;
-        }
-
-        /* Responsive Design - Mobile First */
-        /* Mobile First Responsive Design */
-        @media (max-width: 768px) {
-            .app-header {
-                padding: 0.75rem 1rem;
-                height: 60px;
-            }
-
-            .main-app {
-                padding-top: 60px;
-            }
-
-            .app-title {
-                font-size: 1.4rem;
-            }
-
-            .powered-by-aws {
-                height: 20px;
-            }
-
-            .tab-navigation {
-                padding: 0 0.5rem;
-                top: 60px;
-            }
-
-            .tab-nav-item {
-                font-size: 0.85rem;
-                padding: 0.75rem 1rem;
-                white-space: nowrap;
-            }
-
-            .tab-content {
-                padding: 1rem 0;
-            }
-
-            .generation-container {
-                grid-template-columns: 1fr;
-                gap: 1.5rem;
-                padding: 0 0.5rem;
-            }
-
-            .input-section, .result-section {
-                padding: 1.5rem;
-            }
-
-            .section-title {
-                font-size: 1.25rem;
-            }
-
-            .btn {
-                width: 100%;
-                margin-bottom: 0.5rem;
-            }
-
-            .result-actions {
-                flex-direction: column;
-                gap: 0.5rem;
-            }
-
-            .result-actions .btn {
-                width: 100%;
-            }
-
-            .instructions-container {
-                padding: 1.5rem;
-            }
-
-            .instruction-step {
-                padding: 1.25rem;
-            }
-        }
-
-        /* Desktop improvements */
-        @media (min-width: 769px) {
-            .app-title {
-                font-size: 2rem;
-            }
-
-            .powered-by-aws {
-                height: 28px;
-            }
-
-            .result-actions {
-                flex-direction: row;
-                justify-content: center;
-                align-items: stretch;
-            }
-
-            .result-actions .btn {
-                flex: 1;
-                min-width: 160px;
-                max-width: 200px;
-            }
-        }
-            }
-
-            .video-container {
-                padding: 2rem;
-            }
-
-            .processing-content {
-                padding: 2.5rem;
-                margin: 1rem;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .login-container {
-                padding: 2.5rem;
-                margin: 1rem;
-            }
-            
-            .app-title {
-                font-size: 2rem;
-            }
-            
-            .tab-nav-item {
-                padding: 1rem 1.5rem;
-                font-size: 0.9rem;
-            }
-
-            .instructions-title {
-                font-size: 2rem;
-            }
-
-            .section-title {
-                font-size: 1.5rem;
-            }
-
-            .step-number {
-                width: 32px;
-                height: 32px;
-                margin-right: 1rem;
-            }
-        }
-
-        /* Utility Classes */
-        .hidden {
-            display: none !important;
-        }
-
-        /* Smooth Scrolling */
-        html {
-            scroll-behavior: smooth;
-        }
-
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: var(--dark-surface);
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: var(--glass-border);
-            border-radius: 4px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: var(--glass-hover);
-        }
-        /* Prompt Selection Cards (Wireframe Layout) */
-        .prompt-options {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .prompt-card {
-            background: var(--glass-bg);
-            backdrop-filter: blur(15px);
-            border: 2px solid var(--glass-border);
-            border-radius: var(--border-radius-md);
-            padding: 1.5rem;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            position: relative;
-        }
-
-        .prompt-card:hover {
-            transform: translateY(-5px);
-            border-color: var(--text-secondary);
-            box-shadow: var(--shadow-medium);
-        }
-
-        .prompt-card-icon {
-            font-size: 2.5rem;
-            margin-bottom: 1rem;
-        }
-
-        .prompt-card-title {
-            font-family: var(--font-heading);
-            font-size: 1.2rem;
-            color: var(--text-secondary);
-            margin-bottom: 0.5rem;
-            font-weight: 600;
-        }
-
-        .prompt-card-desc {
-            color: var(--text-primary);
-            font-size: 0.9rem;
             line-height: 1.5;
             opacity: 0.9;
         }
 
-        .prompt-input-section {
-            margin-top: 2rem;
-        }
-
-        .prompt-input-section.hidden {
-            display: none;
-        }
-
-        /* Main Content Layout */
-        .main-content {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 2rem 1rem;
-        }
-
-        .content-section {
-            background: var(--glass-bg);
-            backdrop-filter: blur(20px);
-            border: 1px solid var(--glass-border);
-            border-radius: var(--border-radius-lg);
-            padding: 2rem;
-            margin-bottom: 2rem;
-            position: relative;
-        }
-
-        .content-section::before {
-            content: '';
-            position: absolute;
+        /* Modal Styles */
+        .modal {
+            position: fixed;
             top: 0;
             left: 0;
-            right: 0;
-            height: 2px;
-            background: var(--primary-gradient);
-            border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
         }
 
-        /* Gallery Navigation with Dots */
-        .gallery-controls {
+        .modal-content {
+            background: var(--glass-gold);
+            backdrop-filter: blur(24px);
+            padding: 2rem;
+            border-radius: 20px;
+            border: 2px solid var(--glass-border);
+            box-shadow: var(--shadow-gold);
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+        }
+
+        .modal-content h3 {
+            color: var(--text-gold);
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+            font-family: var(--font-heading);
+        }
+
+        .modal-content p {
+            color: var(--text-cream);
+            margin-bottom: 1.5rem;
+            line-height: 1.5;
+            opacity: 0.9;
+        }
+
+        .name-input {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid var(--glass-border);
+            border-radius: 12px;
+            background: var(--glass-black);
+            color: var(--text-cream);
+            font-size: 1.1rem;
+            text-align: center;
+            margin-bottom: 1.5rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .name-input:focus {
+            outline: none;
+            border-color: var(--art-deco-gold);
+            box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.2);
+        }
+
+        .name-input::placeholder {
+            color: rgba(245, 245, 220, 0.5);
+        }
+
+        .name-preview {
+            background: var(--glass-gold);
+            border: 2px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 1rem;
+            margin: 1rem 0;
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: var(--text-gold);
+            min-height: 50px;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 1rem;
-            margin-bottom: 1rem;
         }
 
-        .nav-button {
-            background: var(--primary-gradient);
-            color: var(--art-deco-black);
-            border: none;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            font-size: 1.2rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .nav-button:hover {
-            transform: scale(1.1);
-            box-shadow: var(--shadow-medium);
-        }
-
-        .nav-button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .gallery-dots {
+        .modal-buttons {
             display: flex;
-            gap: 0.5rem;
-            align-items: center;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 1.5rem;
         }
 
-        .gallery-dot {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            background: var(--glass-border);
-            cursor: pointer;
-            transition: all 0.3s ease;
+        .modal-buttons .art-deco-btn {
+            flex: 1;
+            max-width: 150px;
         }
 
-        .gallery-dot.active {
-            background: var(--text-secondary);
-            transform: scale(1.2);
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .snapmagic-logo {
+                font-size: 2rem;
+            }
+            
+            .main-container {
+                padding: 80px 0.5rem 1rem;
+            }
+            
+            .art-deco-section {
+                padding: 1.5rem;
+                margin-bottom: 1.5rem;
+            }
+            
+            .section-title {
+                font-size: 1.5rem;
+            }
+            
+            .prompt-options {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .art-deco-btn {
+                padding: 0.8rem 1.5rem;
+                font-size: 0.9rem;
+            }
+            
+            .usage-limits {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            
+            .usage-item {
+                justify-content: center;
+            }
+            
+            .result-actions {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            
+            .result-actions .art-deco-btn {
+                width: 100%;
+            }
         }
 
-        .gallery-dot:hover {
-            background: var(--text-secondary);
-            opacity: 0.8;
-        }
-
-        /* Action Buttons */
-        .action-button {
-            background: var(--secondary-gradient);
-            color: var(--art-deco-black);
-            border: none;
-            padding: 0.8rem 1.5rem;
-            border-radius: var(--border-radius-sm);
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin: 0.25rem;
-        }
-
-        .action-button:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-medium);
-        }
-
-        .secondary-button {
-            background: var(--glass-bg);
-            color: var(--text-primary);
-            border: 2px solid var(--glass-border);
-            padding: 0.8rem 1.5rem;
-            border-radius: var(--border-radius-sm);
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .secondary-button:hover {
-            border-color: var(--text-secondary);
-            background: var(--glass-hover);
-        }
-
-        /* Placeholder Content */
-        .placeholder-content {
-            text-align: center;
-            color: var(--text-primary);
-            padding: 2rem;
-            opacity: 0.7;
-        }
-
-        .placeholder-content p {
-            font-size: 1.2rem;
-            margin-bottom: 1rem;
+        @media (max-width: 480px) {
+            .art-deco-header {
+                padding: 1rem;
+            }
+            
+            .snapmagic-logo {
+                font-size: 1.8rem;
+            }
+            
+            .aws-logo {
+                height: 24px;
+            }
         }
     </style>
 </head>
@@ -1859,35 +1017,29 @@
                     <input type="password" id="password" name="password" class="form-input" required>
                 </div>
                 
-                <button type="submit" class="btn btn-primary">Sign In</button>
+                <button type="submit" class="btn-primary">Sign In</button>
             </form>
         </div>
     </div>
 
     <!-- Main Application -->
     <div id="mainApp" class="main-app">
-        <!-- Header -->
-        <header class="app-header">
-            <div class="header-left">
-                <h1 class="app-title">SnapMagic</h1>
-            </div>
+        <!-- Art Deco Header -->
+        <header class="art-deco-header">
+            <div class="snapmagic-logo">SnapMagic</div>
             <div class="header-right">
                 <!-- Staff Override Button -->
                 <button id="staffOverrideBtn" class="staff-override-btn" style="display: none;">
                     🔓 Staff Override
                 </button>
-                
-                <a href="https://aws.amazon.com/what-is-cloud-computing" target="_blank" rel="noopener noreferrer">
-                    <img src="https://d0.awsstatic.com/logos/powered-by-aws-white.png" alt="Powered by AWS Cloud Computing" class="powered-by-aws">
-                </a>
+                <img src="https://d0.awsstatic.com/logos/powered-by-aws-white.png" alt="Powered by AWS" class="aws-logo">
             </div>
         </header>
 
-        <!-- Tab Navigation -->
-        <!-- Single Page Content (No Tabs) -->
-        <main class="main-content">
-            <!-- Prompt Selection Section (3 Cards as per wireframe) -->
-            <section class="content-section">
+        <!-- Main Container -->
+        <div class="main-container">
+            <!-- Prompt Selection Section -->
+            <section class="art-deco-section">
                 <h2 class="section-title">Create Your Trading Card</h2>
                 
                 <div class="prompt-options">
@@ -1910,295 +1062,83 @@
                     </div>
                 </div>
 
-                <!-- Prompt Input Area -->
-                <div id="promptInputArea" class="prompt-input-section hidden">
-                    <div class="input-container">
-                        <textarea id="promptInput" class="prompt-input" placeholder="Enter your prompt here..."></textarea>
-                        
-                        <!-- Hidden buttons for original functionality -->
-                        <button id="generatePromptBtn" class="hidden"></button>
-                        <button id="optimizePromptBtn" class="hidden"></button>
-                        
-                        <!-- Usage Limits Display -->
-                        <div class="usage-limits">
-                            <div class="usage-item">
-                                <span class="usage-icon">🎴</span>
-                                <span class="usage-text">Cards: <span id="cardUsage">Loading...</span></span>
-                            </div>
-                            <div class="usage-item">
-                                <span class="usage-icon">🎬</span>
-                                <span class="usage-text">Videos: <span id="videoUsage">Loading...</span></span>
-                            </div>
-                            <div class="usage-item">
-                                <span class="usage-icon">🖨️</span>
-                                <span class="usage-text">Prints: <span id="printUsage">Loading...</span></span>
-                            </div>
+                <!-- Prompt Input Area (hidden initially) -->
+                <div id="promptInputArea" class="hidden">
+                    <textarea id="promptInput" class="art-deco-textarea" placeholder="Enter your prompt here..."></textarea>
+                    
+                    <!-- Hidden buttons for original functionality -->
+                    <button id="generatePromptBtn" class="hidden"></button>
+                    <button id="optimizePromptBtn" class="hidden"></button>
+                    
+                    <!-- Usage Limits Display -->
+                    <div id="usageLimits" class="usage-limits">
+                        <div class="usage-item">
+                            <span class="usage-icon">🎴</span>
+                            <span class="usage-text">Cards: <span id="cardUsage">Loading...</span></span>
                         </div>
-                        
-                        <div class="generate-button-container">
-                            <button id="generateBtn" class="generate-button">🎨 Generate Trading Card</button>
+                        <div class="usage-item">
+                            <span class="usage-icon">🎬</span>
+                            <span class="usage-text">Videos: <span id="videoUsage">Loading...</span></span>
                         </div>
+                        <div class="usage-item">
+                            <span class="usage-icon">🖨️</span>
+                            <span class="usage-text">Prints: <span id="printUsage">Loading...</span></span>
+                        </div>
+                    </div>
+                    
+                    <div style="text-align: center; margin-top: 1rem;">
+                        <button id="generateBtn" class="art-deco-btn">🎨 Generate Trading Card</button>
                     </div>
                 </div>
             </section>
 
-            <!-- Results Section (Cards, Videos, Prints) -->
-            <section class="content-section">
+            <!-- Results Section -->
+            <section class="art-deco-section">
                 <h2 class="section-title">Your Creations</h2>
                 
-                <!-- Card Gallery with Navigation -->
-                <div id="cardGallerySection" class="gallery-section hidden">
-                    <div class="card-display-area">
-                        <div id="resultContainer" class="result-container">
-                            <!-- Generated cards will appear here -->
+                <!-- Card Gallery -->
+                <div id="cardGallery" class="card-gallery hidden">
+                    <div class="card-display">
+                        <div id="resultContainer">
+                            <!-- Generated card will appear here -->
                         </div>
                     </div>
                     
-                    <!-- Gallery Navigation (◀ ●●●● ▶) -->
+                    <!-- Gallery Navigation -->
                     <div id="galleryNavigation" class="gallery-navigation hidden">
                         <div class="gallery-controls">
-                            <button id="galleryPrevBtn" class="nav-button">◀</button>
-                            <div class="gallery-dots" id="galleryDots">
-                                <!-- Dots will be generated dynamically -->
-                            </div>
-                            <button id="galleryNextBtn" class="nav-button">▶</button>
+                            <button id="galleryPrevBtn" class="gallery-btn">◀</button>
+                            <span id="galleryInfo" class="gallery-info">Card 1 of 1</span>
+                            <button id="galleryNextBtn" class="gallery-btn">▶</button>
                         </div>
-                        <div class="gallery-info">
-                            <span id="galleryInfo">Card 1 of 1</span>
-                        </div>
-                        <div id="galleryNumbers" class="gallery-numbers hidden">
-                            <!-- Dynamic number buttons for original functionality -->
+                        <div id="galleryNumbers" class="gallery-numbers">
+                            <!-- Dynamic number buttons will be inserted here -->
                         </div>
                     </div>
                     
                     <!-- Card Action Buttons -->
                     <div id="resultActions" class="result-actions hidden">
-                        <button id="downloadBtn" class="action-button">💾 Download</button>
-                        <button id="printBtn" class="action-button">🖨️ Print</button>
-                        <button id="createVideoBtn" class="action-button">🎬 Create Video</button>
-                        <button id="enterCompetitionBtn" class="action-button">🏆 Competition</button>
-                        <button id="shareLinkedInBtn" class="action-button">📱 LinkedIn</button>
-                        <button id="createAnotherBtn" class="action-button">🔄 Create Another</button>
+                        <button id="downloadBtn" class="art-deco-btn">💾 Download Card</button>
+                        <button id="printBtn" class="art-deco-btn">🖨️ Save for Print</button>
+                        <button id="createVideoBtn" class="art-deco-btn">🎬 Create Video</button>
+                        <button id="enterCompetitionBtn" class="art-deco-btn">🏆 Enter Competition</button>
+                        <button id="shareLinkedInBtn" class="art-deco-btn">📱 Share on LinkedIn</button>
+                        <button id="createAnotherBtn" class="art-deco-btn">🔄 Create Another</button>
                     </div>
                 </div>
                 
                 <!-- Placeholder when no cards -->
-                <div id="noCardsPlaceholder" class="placeholder-content">
-                    <p>Cards, videos and prints will appear here</p>
+                <div id="noCardsPlaceholder" style="text-align: center; color: var(--text-cream); padding: 2rem;">
+                    <p style="font-size: 1.2rem; opacity: 0.7;">Cards, videos and prints will appear here</p>
                 </div>
             </section>
 
             <!-- Video Generation Section -->
-            <section class="content-section">
+            <section class="art-deco-section">
                 <h2 class="section-title">Animate Selected Card</h2>
                 
-                <div id="videoSection" class="video-section">
+                <div id="videoSection">
                     <!-- Video Controls -->
-                    <div id="videoControls" class="video-controls hidden">
-                        <!-- Selected Card Preview -->
-                        <div class="selected-card-preview">
-                            <img id="videoSelectedCard" src="" alt="Selected Card" class="preview-card">
-                        </div>
-                        
-                        <!-- Video Gallery Navigation -->
-                        <div id="videoGalleryNavigation" class="gallery-navigation hidden">
-                            <div class="gallery-controls">
-                                <button id="videoGalleryPrevBtn" class="nav-button">◀</button>
-                                <div class="gallery-dots" id="videoGalleryDots">
-                                    <!-- Dots for video gallery -->
-                                </div>
-                                <button id="videoGalleryNextBtn" class="nav-button">▶</button>
-                            </div>
-                            <div class="gallery-info">
-                                <span id="videoGalleryInfo">Card 1 of 1</span>
-                            </div>
-                            <div id="videoGalleryNumbers" class="gallery-numbers hidden">
-                                <!-- Dynamic number buttons -->
-                            </div>
-                        </div>
-                        
-                        <!-- Animation Description -->
-                        <div class="animation-section">
-                            <h3 class="subsection-title">Animation Description</h3>
-                            <p class="description-text">Works the same as the card description</p>
-                            
-                            <div class="animation-input-container">
-                                <textarea id="animationPrompt" class="prompt-input" placeholder="Describe how you want the card to be animated..."></textarea>
-                                
-                                <!-- AI Prompt Generation Buttons -->
-                                <div class="prompt-buttons">
-                                    <button id="generateAnimationPromptBtn" class="secondary-button">🎭 Generate AI Prompt</button>
-                                    <button id="optimizeAnimationPromptBtn" class="secondary-button">⚡ Optimize Prompt</button>
-                                </div>
-                                
-                                <div class="generate-video-container">
-                                    <button id="generateVideoBtn" class="generate-button">🎬 Generate Video (2 min wait)</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Video Result -->
-                    <div id="videoResult" class="video-result hidden">
-                        <div class="video-player-container">
-                            <video id="videoPlayer" class="video-player" controls>
-                                <source id="videoSource" src="" type="video/mp4">
-                                Your browser does not support the video tag.
-                            </video>
-                        </div>
-                        <div class="video-actions">
-                            <button id="downloadVideoBtn" class="action-button">💾 Download Video</button>
-                            <button id="createAnotherVideoBtn" class="action-button">🔄 Create Another Video</button>
-                        </div>
-                    </div>
-                    
-                    <!-- Placeholder when no card selected -->
-                    <div id="noCardSelected" class="placeholder-content">
-                        <p>Generate a card first to enable video animation</p>
-                        <button id="backToCardBtn" class="secondary-button">🎴 Go to Card Creation</button>
-                    </div>
-                </div>
-            </section>
-        </main>
-                            <div>
-                                <h3 class="step-title">Enter Your Prompt</h3>
-                                <p class="step-description">Describe what you want on your trading card. Be creative! Examples: "A magical wizard casting spells", "A futuristic robot in a cyberpunk city", "A majestic dragon flying over mountains".</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="instruction-step">
-                        <div style="display: flex; align-items: flex-start;">
-                            <span class="step-number">2</span>
-                            <div>
-                                <h3 class="step-title">Generate Your Card</h3>
-                                <p class="step-description">Click the generate button and watch as AI creates your unique trading card. The process takes about 10-15 seconds using Amazon Bedrock's advanced image generation.</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="instruction-step">
-                        <div style="display: flex; align-items: flex-start;">
-                            <span class="step-number">3</span>
-                            <div>
-                                <h3 class="step-title">Personalize Your Card</h3>
-                                <p class="step-description">
-                                    <strong>Enter Your Name:</strong> A modal will ask for your name to display on the left panel of your card.<br><br>
-                                    <strong>Spell Check:</strong> Review your name carefully - you'll see a preview and can edit if needed.<br><br>
-                                    <strong>Two Options:</strong><br>
-                                    • <em>Enter your name</em> → Your name appears vertically on the left panel<br>
-                                    • <em>Leave blank</em> → AWS logo appears on both left and right panels<br><br>
-                                    <strong>Confirm:</strong> Click "Yes, Generate Card" when you're happy with your choice.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="instruction-step">
-                        <div style="display: flex; align-items: flex-start;">
-                            <span class="step-number">4</span>
-                            <div>
-                                <h3 class="step-title">Create Animation (Optional)</h3>
-                                <p class="step-description">Want to bring your card to life? Click the video option to create an animated version. The video generation takes approximately 2 minutes to complete.</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="instruction-step">
-                        <div style="display: flex; align-items: flex-start;">
-                            <span class="step-number">5</span>
-                            <div>
-                                <h3 class="step-title">Download Your Creation</h3>
-                                <p class="step-description">Once generated, download your card or video immediately. You can create multiple variations and download them all during your session.</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="warning-box">
-                        <h4 class="warning-title">⚠️ Important Notice</h4>
-                        <p class="warning-text">We do not store your generated content on our servers. All cards and videos are only available during your current session. Make sure to download anything you want to keep before signing out or closing the application.</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Card Generation Tab -->
-            <div id="card-generation" class="tab-content">
-                <div class="generation-container">
-                    <div class="input-section">
-                        <h2 class="section-title">Create Your Trading Card</h2>
-                        
-                        <!-- Prompt Input with Three Flow Options -->
-                        <div class="prompt-container">
-                            <div class="prompt-flow-buttons">
-                                <button id="generatePromptBtn" class="prompt-flow-btn" title="Generate creative prompt using AI">
-                                    <i class="fas fa-magic"></i> Generate Prompt
-                                </button>
-                                <button id="optimizePromptBtn" class="prompt-flow-btn" title="Enhance your existing prompt with AI">
-                                    <i class="fas fa-wand-magic-sparkles"></i> Optimize Prompt
-                                </button>
-                                <div class="prompt-flow-divider">or type directly:</div>
-                            </div>
-                            <textarea id="promptInput" class="prompt-input" placeholder="Describe your trading card... (e.g., 'A magical wizard casting spells in an enchanted forest')"></textarea>
-                        </div>
-                        
-                        
-                        <!-- Usage Limits Display -->
-                        <div id="usageLimits" class="usage-limits">
-                            <div class="usage-item">
-                                <span class="usage-icon">🎴</span>
-                                <span class="usage-text">Cards: <span id="cardUsage">Loading...</span></span>
-                            </div>
-                            <div class="usage-item">
-                                <span class="usage-icon">🎬</span>
-                                <span class="usage-text">Videos: <span id="videoUsage">Loading...</span></span>
-                            </div>
-                            <div class="usage-item">
-                                <span class="usage-icon">🖨️</span>
-                                <span class="usage-text">Prints: <span id="printUsage">Loading...</span></span>
-                            </div>
-                        </div>
-                        
-                        <button id="generateBtn" class="btn btn-generate">🎨 Generate Trading Card</button>
-                    </div>
-                    
-                    <div class="result-section">
-                        <h2 class="section-title">Your Generated Card</h2>
-                        <div id="resultContainer">
-                            <p style="color: var(--text-secondary); text-align: center; padding: 2rem;">Your generated trading card will appear here</p>
-                        </div>
-                        
-                        <!-- Gallery Navigation -->
-                        <div id="galleryNavigation" class="gallery-navigation hidden">
-                            <div class="gallery-controls">
-                                <button id="galleryPrevBtn" class="btn btn-secondary gallery-btn">←</button>
-                                <span id="galleryInfo" class="gallery-info">Card 1 of 1</span>
-                                <button id="galleryNextBtn" class="btn btn-secondary gallery-btn">→</button>
-                            </div>
-                            <div id="galleryNumbers" class="gallery-numbers">
-                                <!-- Dynamic number buttons will be inserted here -->
-                            </div>
-                        </div>
-                        <div id="resultActions" class="result-actions hidden">
-                            <button id="downloadBtn" class="btn btn-success">💾 Download Card</button>
-                            <button id="printBtn" class="btn btn-info">🖨️ Save for Print</button>
-                            <button id="createVideoBtn" class="btn btn-primary">🎬 Create Video</button>
-                            <button id="enterCompetitionBtn" class="btn btn-warning">🏆 Enter Competition</button>
-                            <button id="shareLinkedInBtn" class="btn btn-linkedin">📱 Share on LinkedIn</button>
-                            <button id="createAnotherBtn" class="btn btn-secondary">🔄 Create Another</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Video Generation Tab -->
-            <div id="video-generation" class="tab-content">
-                <div class="video-container">
-                    <h2 class="section-title">Animate Your Trading Card</h2>
-                    <div id="videoSection">
-                        <p style="color: var(--text-secondary); margin-bottom: 2rem;">Generate a trading card first, then come back here to create an animated version.</p>
-                        <button id="backToCardBtn" class="btn btn-primary">🎴 Go to Card Creation</button>
-                    </div>
-                    
                     <div id="videoControls" class="hidden">
                         <!-- Video Card Gallery Section -->
                         <div class="video-card-selection">
@@ -2212,9 +1152,9 @@
                             <!-- Video Gallery Navigation -->
                             <div id="videoGalleryNavigation" class="gallery-navigation hidden">
                                 <div class="gallery-controls">
-                                    <button id="videoGalleryPrevBtn" class="btn btn-secondary gallery-btn">←</button>
+                                    <button id="videoGalleryPrevBtn" class="gallery-btn">◀</button>
                                     <span id="videoGalleryInfo" class="gallery-info">Card 1 of 1</span>
-                                    <button id="videoGalleryNextBtn" class="btn btn-secondary gallery-btn">→</button>
+                                    <button id="videoGalleryNextBtn" class="gallery-btn">▶</button>
                                 </div>
                                 <div id="videoGalleryNumbers" class="gallery-numbers">
                                     <!-- Dynamic number buttons will be inserted here -->
@@ -2226,37 +1166,43 @@
                         <div class="video-prompt-section">
                             <div class="video-prompt-container">
                                 <div class="prompt-prefix">Animation Description:</div>
-                                <textarea id="animationPrompt" class="prompt-input video-prompt-input" placeholder="Describe how you want the card to be animated... (or click 'Generate AI Prompt' for automatic suggestions)"></textarea>
+                                <textarea id="animationPrompt" class="art-deco-textarea video-prompt-input" placeholder="Describe how you want the card to be animated..."></textarea>
                             </div>
                             
                             <!-- AI Prompt Generation -->
                             <div class="prompt-flow-buttons">
-                                <button id="generateAnimationPromptBtn" class="prompt-flow-btn">
-                                    <i class="fas fa-magic"></i> Generate AI Prompt
+                                <button id="generateAnimationPromptBtn" class="art-deco-btn">
+                                    🎭 Generate AI Prompt
                                 </button>
-                                <span class="prompt-flow-divider">or</span>
-                                <button id="optimizeAnimationPromptBtn" class="prompt-flow-btn">
-                                    <i class="fas fa-wand-magic-sparkles"></i> Optimize My Prompt
+                                <button id="optimizeAnimationPromptBtn" class="art-deco-btn">
+                                    ⚡ Optimize My Prompt
                                 </button>
                             </div>
                             
-                            
-                            <button id="generateVideoBtn" class="btn btn-generate">🎬 Generate Video (2 min wait)</button>
+                            <button id="generateVideoBtn" class="art-deco-btn" style="margin-top: 1rem;">🎬 Generate Video (2 min wait)</button>
                         </div>
                     </div>
                     
+                    <!-- Video Result -->
                     <div id="videoResult" class="hidden">
                         <video id="videoPlayer" class="video-player" controls>
                             <source id="videoSource" src="" type="video/mp4">
                             Your browser does not support the video tag.
                         </video>
                         <div class="result-actions">
-                            <button id="downloadVideoBtn" class="btn btn-success">💾 Download Video</button>
-                            <button id="createAnotherVideoBtn" class="btn btn-secondary">🔄 Create Another Video</button>
+                            <button id="downloadVideoBtn" class="art-deco-btn">💾 Download Video</button>
+                            <button id="createAnotherVideoBtn" class="art-deco-btn">🔄 Create Another Video</button>
                         </div>
                     </div>
+                    
+                    <!-- Placeholder when no card selected -->
+                    <div id="noCardSelected" style="text-align: center; color: var(--text-cream); padding: 2rem;">
+                        <p style="font-size: 1.1rem; opacity: 0.7;">Generate a card first to enable video animation</p>
+                        <button id="backToCardBtn" class="art-deco-btn" style="margin-top: 1rem;">🎴 Go to Card Creation</button>
+                    </div>
                 </div>
-            </div>
+            </section>
+        </div>
     </div>
 
     <!-- Processing Overlay -->
@@ -2268,20 +1214,19 @@
         </div>
     </div>
 
-    <!-- Name Input Modal -->
+    <!-- All Modals (Name Input, Competition, etc.) -->
     <div id="nameInputModal" class="modal hidden">
         <div class="modal-content">
             <h3>Enter Your Name</h3>
             <p>Your name will be displayed on the left panel of your trading card.</p>
             <input type="text" id="nameInput" class="name-input" placeholder="Enter your name (or leave blank for AWS logo)" maxlength="50">
             <div class="modal-buttons">
-                <button id="nameConfirmBtn" class="btn btn-primary">Continue</button>
-                <button id="nameCancelBtn" class="btn btn-secondary">Cancel</button>
+                <button id="nameConfirmBtn" class="art-deco-btn">Continue</button>
+                <button id="nameCancelBtn" class="art-deco-btn">Cancel</button>
             </div>
         </div>
     </div>
 
-    <!-- Name Confirmation Modal -->
     <div id="nameConfirmModal" class="modal hidden">
         <div class="modal-content">
             <h3>Confirm Your Name</h3>
@@ -2289,78 +1234,74 @@
             <div id="namePreview" class="name-preview"></div>
             <p>Please check the spelling. Is this correct?</p>
             <div class="modal-buttons">
-                <button id="nameYesBtn" class="btn btn-primary">Yes, Generate Card</button>
-                <button id="nameEditBtn" class="btn btn-secondary">No, Edit Name</button>
+                <button id="nameYesBtn" class="art-deco-btn">Yes, Generate Card</button>
+                <button id="nameEditBtn" class="art-deco-btn">No, Edit Name</button>
             </div>
         </div>
     </div>
 
-    <!-- Print Success Modal -->
     <div id="printSuccessModal" class="modal hidden">
         <div class="modal-content">
             <h3>🖨️ Card Added to Print!</h3>
             <p>Your card has been saved for printing.</p>
-            <div style="background: rgba(0, 212, 255, 0.1); border: 1px solid rgba(0, 212, 255, 0.3); border-radius: 8px; padding: 1.5rem; margin: 1rem 0; text-align: center;">
-                <p style="color: #00d4ff; font-weight: bold; margin-bottom: 0.5rem;">You are print number:</p>
-                <div id="printNumber" style="font-size: 2rem; font-weight: bold; color: #00d4ff; text-shadow: 0 0 10px rgba(0, 212, 255, 0.3);"></div>
-                <p style="color: rgba(255, 255, 255, 0.7); font-size: 0.9rem; margin-top: 0.5rem;">Show this number at the SnapMagic Booth to print your sticker</p>
+            <div style="background: var(--glass-gold); border: 1px solid var(--glass-border); border-radius: 8px; padding: 1.5rem; margin: 1rem 0; text-align: center;">
+                <p style="color: var(--text-gold); font-weight: bold; margin-bottom: 0.5rem;">You are print number:</p>
+                <div id="printNumber" style="font-size: 2rem; font-weight: bold; color: var(--text-gold);"></div>
+                <p style="color: var(--text-cream); font-size: 0.9rem; margin-top: 0.5rem; opacity: 0.8;">Show this number at the SnapMagic Booth to print your sticker</p>
             </div>
             <div class="modal-buttons">
-                <button id="printSuccessOkBtn" class="btn btn-primary">Got it!</button>
+                <button id="printSuccessOkBtn" class="art-deco-btn">Got it!</button>
             </div>
         </div>
     </div>
 
-    <!-- Competition Entry Modal -->
     <div id="competitionModal" class="modal hidden">
         <div class="modal-content">
             <h3>🏆 Enter Competition</h3>
             <p>Enter your phone number to participate in our trading card competition! Winners will be contacted directly.</p>
             <input type="tel" id="phoneInput" class="name-input" placeholder="Enter your phone number" maxlength="20">
             <div class="modal-buttons">
-                <button id="competitionSubmitBtn" class="btn btn-primary">Submit Entry</button>
-                <button id="competitionCancelBtn" class="btn btn-secondary">Cancel</button>
+                <button id="competitionSubmitBtn" class="art-deco-btn">Submit Entry</button>
+                <button id="competitionCancelBtn" class="art-deco-btn">Cancel</button>
             </div>
         </div>
     </div>
 
-    <!-- Competition Success Modal -->
     <div id="competitionSuccessModal" class="modal hidden">
         <div class="modal-content">
             <h3>🎉 Competition Entry Submitted!</h3>
             <p>Thank you for entering the competition! Your card has been submitted and you'll be contacted if you win.</p>
             <div id="competitionDetails" class="name-preview"></div>
             <div class="modal-buttons">
-                <button id="competitionSuccessOkBtn" class="btn btn-primary">Awesome!</button>
+                <button id="competitionSuccessOkBtn" class="art-deco-btn">Awesome!</button>
             </div>
         </div>
     </div>
 
-    <!-- Competition Error Modal -->
     <div id="competitionErrorModal" class="modal hidden">
         <div class="modal-content" style="border: 3px solid #e53e3e;">
             <h3>⚠️ Already Entered</h3>
             <p>This phone number has already been entered in the competition. Please visit SnapMagic staff to re-enter.</p>
             <div class="modal-buttons">
-                <button id="competitionErrorOkBtn" class="btn btn-danger">OK, I'll Visit Staff</button>
+                <button id="competitionErrorOkBtn" class="art-deco-btn">OK, I'll Visit Staff</button>
             </div>
         </div>
     </div>
 
-    <!-- Limit Reached Modal -->
     <div id="limitReachedModal" class="modal hidden">
         <div class="modal-content" style="border: 3px solid #f56500;">
             <h3>🚫 Generation Limit Reached</h3>
             <p>Limit reached. Please visit SnapMagic staff to reset.</p>
-            <p style="font-size: 0.9em; color: #666; margin-top: 1rem;">Limits reset when the event system restarts. Contact event staff if you need assistance.</p>
+            <p style="font-size: 0.9em; color: var(--text-cream); margin-top: 1rem; opacity: 0.7;">Limits reset when the event system restarts. Contact event staff if you need assistance.</p>
             <div class="modal-buttons">
-                <button id="limitReachedOkBtn" class="btn btn-warning">OK, I'll Visit Staff</button>
+                <button id="limitReachedOkBtn" class="art-deco-btn">OK, I'll Visit Staff</button>
             </div>
         </div>
     </div>
 
+    <!-- JavaScript and Configuration -->
     <script>
-        // Prompt selection function for wireframe UI
+        // Prompt selection function for beautiful Art Deco UI
         function selectPromptOption(mode) {
             const inputArea = document.getElementById('promptInputArea');
             const textarea = document.getElementById('promptInput');
@@ -2392,92 +1333,6 @@
                     break;
             }
         }
-
-        // Gallery dots functionality
-        function createGalleryDots(containerId, totalCards, currentIndex = 0) {
-            const container = document.getElementById(containerId);
-            if (!container) return;
-            
-            container.innerHTML = '';
-            
-            for (let i = 0; i < totalCards; i++) {
-                const dot = document.createElement('div');
-                dot.className = `gallery-dot ${i === currentIndex ? 'active' : ''}`;
-                dot.onclick = () => navigateToCard(i);
-                container.appendChild(dot);
-            }
-        }
-
-        function updateGalleryDots(containerId, currentIndex) {
-            const container = document.getElementById(containerId);
-            if (!container) return;
-            
-            const dots = container.querySelectorAll('.gallery-dot');
-            dots.forEach((dot, index) => {
-                dot.classList.toggle('active', index === currentIndex);
-            });
-        }
-
-        function navigateToCard(index) {
-            if (window.snapMagicApp && window.snapMagicApp.userGallery) {
-                window.snapMagicApp.userGallery.currentIndex = index;
-                window.snapMagicApp.updateGalleryDisplay();
-                updateGalleryDots('galleryDots', index);
-            }
-        }
-
-        // Initialize when app loads
-        document.addEventListener('DOMContentLoaded', function() {
-            // Show the card gallery section and hide placeholder initially
-            const cardGallery = document.getElementById('cardGallerySection');
-            const placeholder = document.getElementById('noCardsPlaceholder');
-            
-            if (placeholder) {
-                placeholder.style.display = 'block';
-            }
-            if (cardGallery) {
-                cardGallery.classList.add('hidden');
-            }
-
-            // Integration with original app.js
-            // Override the original gallery update to work with dots
-            if (window.snapMagicApp) {
-                const originalUpdateGallery = window.snapMagicApp.updateGalleryDisplay;
-                window.snapMagicApp.updateGalleryDisplay = function() {
-                    if (originalUpdateGallery) {
-                        originalUpdateGallery.call(this);
-                    }
-                    // Update dots
-                    if (this.userGallery && this.userGallery.totalCards > 0) {
-                        createGalleryDots('galleryDots', this.userGallery.totalCards, this.userGallery.currentIndex);
-                        updateGalleryDots('galleryDots', this.userGallery.currentIndex);
-                    }
-                };
-            }
-
-            // Show card gallery when cards are generated
-            const observer = new MutationObserver(function(mutations) {
-                mutations.forEach(function(mutation) {
-                    if (mutation.type === 'childList') {
-                        const resultContainer = document.getElementById('resultContainer');
-                        if (resultContainer && resultContainer.children.length > 0) {
-                            // Cards were generated, show gallery
-                            if (cardGallery) {
-                                cardGallery.classList.remove('hidden');
-                            }
-                            if (placeholder) {
-                                placeholder.style.display = 'none';
-                            }
-                        }
-                    }
-                });
-            });
-
-            const resultContainer = document.getElementById('resultContainer');
-            if (resultContainer) {
-                observer.observe(resultContainer, { childList: true, subtree: true });
-            }
-        });
     </script>
 
     <script>
@@ -2489,8 +1344,9 @@
             FEATURES: ['trading_cards', 'video_animation', 'cardtemplate_premium']
         };
     </script>
+    
+    <!-- Template System -->
     <script src="js/template-system.js"></script>
-    <!-- CardTemplate Premium System -->
     <script src="js/cardtemplate-loader.js"></script>
     <script src="js/app.js"></script>
 </body>
