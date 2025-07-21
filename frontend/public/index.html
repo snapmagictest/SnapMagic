@@ -2392,6 +2392,53 @@
                     break;
             }
         }
+
+        // Gallery dots functionality
+        function createGalleryDots(containerId, totalCards, currentIndex = 0) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            
+            container.innerHTML = '';
+            
+            for (let i = 0; i < totalCards; i++) {
+                const dot = document.createElement('div');
+                dot.className = `gallery-dot ${i === currentIndex ? 'active' : ''}`;
+                dot.onclick = () => navigateToCard(i);
+                container.appendChild(dot);
+            }
+        }
+
+        function updateGalleryDots(containerId, currentIndex) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            
+            const dots = container.querySelectorAll('.gallery-dot');
+            dots.forEach((dot, index) => {
+                dot.classList.toggle('active', index === currentIndex);
+            });
+        }
+
+        function navigateToCard(index) {
+            if (window.snapMagicApp && window.snapMagicApp.userGallery) {
+                window.snapMagicApp.userGallery.currentIndex = index;
+                window.snapMagicApp.updateGalleryDisplay();
+                updateGalleryDots('galleryDots', index);
+            }
+        }
+
+        // Initialize when app loads
+        document.addEventListener('DOMContentLoaded', function() {
+            // Show the card gallery section and hide placeholder initially
+            const cardGallery = document.getElementById('cardGallerySection');
+            const placeholder = document.getElementById('noCardsPlaceholder');
+            
+            if (placeholder) {
+                placeholder.style.display = 'block';
+            }
+            if (cardGallery) {
+                cardGallery.classList.add('hidden');
+            }
+        });
     </script>
 
     <script>
