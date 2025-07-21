@@ -1643,6 +1643,59 @@
         ::-webkit-scrollbar-thumb:hover {
             background: var(--glass-hover);
         }
+        /* Prompt Selection Cards (Wireframe Layout) */
+        .prompt-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .prompt-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(15px);
+            border: 2px solid var(--glass-border);
+            border-radius: var(--border-radius-md);
+            padding: 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .prompt-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--text-secondary);
+            box-shadow: var(--shadow-medium);
+        }
+
+        .prompt-card-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .prompt-card-title {
+            font-family: var(--font-heading);
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .prompt-card-desc {
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            line-height: 1.5;
+            opacity: 0.9;
+        }
+
+        .prompt-input-section {
+            margin-top: 2rem;
+        }
+
+        .prompt-input-section.hidden {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -2014,6 +2067,41 @@
             </div>
         </div>
     </div>
+
+    <script>
+        // Prompt selection function for wireframe UI
+        function selectPromptOption(mode) {
+            const inputArea = document.getElementById('promptInputArea');
+            const textarea = document.getElementById('promptInput');
+            
+            // Show input area
+            if (inputArea) {
+                inputArea.classList.remove('hidden');
+            }
+            
+            // Handle different modes
+            switch(mode) {
+                case 'generate':
+                    // Trigger the existing generate prompt functionality
+                    if (window.snapMagicApp) {
+                        window.snapMagicApp.handleGeneratePrompt();
+                    }
+                    break;
+                case 'create':
+                    if (textarea) {
+                        textarea.placeholder = 'Enter your own creative prompt here...';
+                        textarea.focus();
+                    }
+                    break;
+                case 'optimize':
+                    if (textarea) {
+                        textarea.placeholder = 'Enter your prompt here and AI will enhance it...';
+                        textarea.focus();
+                    }
+                    break;
+            }
+        }
+    </script>
 
     <script>
         // Configuration - will be replaced by CDK deployment
