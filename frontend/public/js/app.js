@@ -1081,7 +1081,7 @@ class SnapMagicApp {
             
             // Get selected template from template selector
             const selectedTemplate = window.snapMagicTemplateSelector ? 
-                window.snapMagicTemplateSelector.getCurrentTemplate() : 'sleek';
+                window.snapMagicTemplateSelector.getCurrentTemplate() : 'cardtemplate';
             
             console.log(`🎴 Compositing trading card with template: ${selectedTemplate}`);
             

@@ -49,7 +49,7 @@ if (window.SnapMagicTemplateSystem) {
 // Template Selection UI Enhancement
 class SnapMagicTemplateSelector {
     constructor() {
-        this.currentTemplate = 'sleek';
+        this.currentTemplate = 'cardtemplate'; // Changed from 'sleek' to use cardtemplateEdit.jpg
         this.templates = {
             'sleek': {
                 name: 'Sleek Modern',
@@ -284,7 +284,7 @@ if (window.generateCard) {
     window.generateCard = async function(...args) {
         // Get selected template
         const templateSelector = window.snapMagicTemplateSelector;
-        const selectedTemplate = templateSelector ? templateSelector.getCurrentTemplate() : 'sleek';
+        const selectedTemplate = templateSelector ? templateSelector.getCurrentTemplate() : 'cardtemplate';
         
         console.log(`🎴 Generating card with template: ${selectedTemplate}`);
         
