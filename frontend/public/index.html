@@ -759,6 +759,19 @@
             flex-wrap: wrap;
         }
 
+        /* Ensure video controls are visible when cards exist */
+        #videoControls:not(.hidden) {
+            display: block !important;
+        }
+
+        #noCardSelected {
+            display: block;
+        }
+
+        #noCardSelected.hidden {
+            display: none !important;
+        }
+
         .video-player {
             width: 100%;
             max-width: 700px;
@@ -1359,6 +1372,8 @@
             const placeholder = document.getElementById('noCardsPlaceholder');
             const resultActions = document.getElementById('resultActions');
             const galleryNavigation = document.getElementById('galleryNavigation');
+            const videoControls = document.getElementById('videoControls');
+            const noCardSelected = document.getElementById('noCardSelected');
             
             if (cardGallery) {
                 cardGallery.classList.remove('hidden');
@@ -1371,6 +1386,33 @@
             }
             if (galleryNavigation) {
                 galleryNavigation.classList.remove('hidden');
+            }
+            
+            // Show video controls and hide placeholder
+            if (videoControls) {
+                videoControls.classList.remove('hidden');
+            }
+            if (noCardSelected) {
+                noCardSelected.style.display = 'none';
+            }
+            
+            // Update video card display
+            updateVideoCardDisplay();
+        }
+
+        // Function to update video card display
+        function updateVideoCardDisplay() {
+            const videoSelectedCard = document.getElementById('videoSelectedCard');
+            const resultContainer = document.getElementById('resultContainer');
+            
+            if (videoSelectedCard && resultContainer) {
+                // Find the generated card image
+                const cardImage = resultContainer.querySelector('img');
+                if (cardImage) {
+                    videoSelectedCard.src = cardImage.src;
+                    videoSelectedCard.alt = 'Selected Card for Animation';
+                    console.log('🎬 Updated video card display with generated card');
+                }
             }
         }
 
@@ -1406,6 +1448,26 @@
                         showCardResults();
                     };
 
+                    // Override template selection to always use cardtemplateEdit
+                    if (window.snapMagicTemplateSelector) {
+                        const originalGetTemplate = window.snapMagicTemplateSelector.getCurrentTemplate;
+                        window.snapMagicTemplateSelector.getCurrentTemplate = function() {
+                            console.log('🎨 Forcing use of cardtemplateEdit template');
+                            return 'cardtemplateEdit';
+                        };
+                    }
+
+                    // Also override any template system calls
+                    if (window.snapMagicApp.templateSystem) {
+                        const originalCreateCard = window.snapMagicApp.templateSystem.createTradingCardWithTemplate;
+                        if (originalCreateCard) {
+                            window.snapMagicApp.templateSystem.createTradingCardWithTemplate = function(imageBase64, name, template) {
+                                console.log('🎨 Overriding template to use cardtemplateEdit');
+                                return originalCreateCard.call(this, imageBase64, name, 'cardtemplateEdit');
+                            };
+                        }
+                    }
+
                     // Monitor result container for changes
                     const resultContainer = document.getElementById('resultContainer');
                     if (resultContainer) {
@@ -1435,7 +1497,18 @@
             API_URL: 'PLACEHOLDER_API_URL',
             TEMPLATE_CONFIG: 'PLACEHOLDER_TEMPLATE_CONFIG',
             VERSION: '3.0',
-            FEATURES: ['trading_cards', 'video_animation', 'cardtemplate_premium']
+            FEATURES: ['trading_cards', 'video_animation', 'cardtemplate_premium'],
+            // Force use of cardtemplateEdit
+            DEFAULT_TEMPLATE: 'cardtemplateEdit',
+            FORCE_TEMPLATE: 'cardtemplateEdit'
+        };
+
+        // Global template override
+        window.FORCE_CARD_TEMPLATE = 'cardtemplateEdit';
+        
+        // Override any template selection immediately
+        window.getCurrentTemplate = function() {
+            return 'cardtemplateEdit';
         };
     </script>
     
