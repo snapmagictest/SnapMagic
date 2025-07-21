@@ -2438,6 +2438,45 @@
             if (cardGallery) {
                 cardGallery.classList.add('hidden');
             }
+
+            // Integration with original app.js
+            // Override the original gallery update to work with dots
+            if (window.snapMagicApp) {
+                const originalUpdateGallery = window.snapMagicApp.updateGalleryDisplay;
+                window.snapMagicApp.updateGalleryDisplay = function() {
+                    if (originalUpdateGallery) {
+                        originalUpdateGallery.call(this);
+                    }
+                    // Update dots
+                    if (this.userGallery && this.userGallery.totalCards > 0) {
+                        createGalleryDots('galleryDots', this.userGallery.totalCards, this.userGallery.currentIndex);
+                        updateGalleryDots('galleryDots', this.userGallery.currentIndex);
+                    }
+                };
+            }
+
+            // Show card gallery when cards are generated
+            const observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    if (mutation.type === 'childList') {
+                        const resultContainer = document.getElementById('resultContainer');
+                        if (resultContainer && resultContainer.children.length > 0) {
+                            // Cards were generated, show gallery
+                            if (cardGallery) {
+                                cardGallery.classList.remove('hidden');
+                            }
+                            if (placeholder) {
+                                placeholder.style.display = 'none';
+                            }
+                        }
+                    }
+                });
+            });
+
+            const resultContainer = document.getElementById('resultContainer');
+            if (resultContainer) {
+                observer.observe(resultContainer, { childList: true, subtree: true });
+            }
         });
     </script>
 
