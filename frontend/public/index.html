@@ -549,6 +549,13 @@
             position: relative;
         }
 
+        /* Result Section Styling */
+        .result-section {
+            text-align: center;
+            margin: 1rem 0;
+        }
+
+        .result-section img,
         .result-image {
             width: 100%;
             max-width: 400px;
@@ -568,9 +575,21 @@
             box-shadow: var(--shadow-gold);
         }
 
+        .result-section img:hover,
         .result-image:hover {
             transform: scale(1.03);
             box-shadow: 0 0 30px rgba(212, 175, 55, 0.5);
+        }
+
+        /* Ensure any generated content shows properly */
+        #resultContainer > * {
+            display: block !important;
+            visibility: visible !important;
+        }
+
+        #resultContainer img {
+            display: block !important;
+            margin: 0 auto;
         }
 
         /* Gallery Navigation */
@@ -1099,7 +1118,7 @@
                 <!-- Card Gallery -->
                 <div id="cardGallery" class="card-gallery hidden">
                     <div class="card-display">
-                        <div id="resultContainer">
+                        <div id="resultContainer" class="result-section">
                             <!-- Generated card will appear here -->
                         </div>
                     </div>
@@ -1333,6 +1352,81 @@
                     break;
             }
         }
+
+        // Function to show card results in Art Deco UI
+        function showCardResults() {
+            const cardGallery = document.getElementById('cardGallery');
+            const placeholder = document.getElementById('noCardsPlaceholder');
+            const resultActions = document.getElementById('resultActions');
+            const galleryNavigation = document.getElementById('galleryNavigation');
+            
+            if (cardGallery) {
+                cardGallery.classList.remove('hidden');
+            }
+            if (placeholder) {
+                placeholder.style.display = 'none';
+            }
+            if (resultActions) {
+                resultActions.classList.remove('hidden');
+            }
+            if (galleryNavigation) {
+                galleryNavigation.classList.remove('hidden');
+            }
+        }
+
+        // Override the original app's result display function
+        document.addEventListener('DOMContentLoaded', function() {
+            // Wait for the app to load, then override its methods
+            setTimeout(function() {
+                if (window.snapMagicApp) {
+                    // Store original method
+                    const originalDisplayResult = window.snapMagicApp.displayCardResult;
+                    
+                    // Override with Art Deco UI updates
+                    window.snapMagicApp.displayCardResult = function(cardData) {
+                        // Call original method
+                        if (originalDisplayResult) {
+                            originalDisplayResult.call(this, cardData);
+                        }
+                        
+                        // Show Art Deco UI elements
+                        showCardResults();
+                        
+                        console.log('🎭 Art Deco UI updated after card generation');
+                    };
+
+                    // Also override the gallery update method
+                    const originalUpdateGallery = window.snapMagicApp.updateGalleryDisplay;
+                    window.snapMagicApp.updateGalleryDisplay = function() {
+                        if (originalUpdateGallery) {
+                            originalUpdateGallery.call(this);
+                        }
+                        
+                        // Ensure Art Deco UI is visible
+                        showCardResults();
+                    };
+
+                    // Monitor result container for changes
+                    const resultContainer = document.getElementById('resultContainer');
+                    if (resultContainer) {
+                        const observer = new MutationObserver(function(mutations) {
+                            mutations.forEach(function(mutation) {
+                                if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+                                    // New content added to result container
+                                    console.log('🎭 Card generated, updating Art Deco UI');
+                                    showCardResults();
+                                }
+                            });
+                        });
+                        
+                        observer.observe(resultContainer, { 
+                            childList: true, 
+                            subtree: true 
+                        });
+                    }
+                }
+            }, 1000);
+        });
     </script>
 
     <script>
