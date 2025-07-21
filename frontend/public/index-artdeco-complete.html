@@ -1,0 +1,1336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SnapMagic - AI Trading Card Creator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Reset and base styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Great Gatsby Art Deco Color Palette */
+        :root {
+            /* Primary Art Deco Colors */
+            --art-deco-gold: #D4AF37;
+            --art-deco-brass: #B8860B;
+            --art-deco-black: #000000;
+            --art-deco-cream: #F5F5DC;
+            
+            /* Gradients */
+            --gold-gradient: linear-gradient(135deg, #D4AF37 0%, #B8860B 100%);
+            --black-gold-gradient: linear-gradient(135deg, #000000 0%, #1C1C1C 50%, #D4AF37 100%);
+            
+            /* Glass Effects */
+            --glass-gold: rgba(212, 175, 55, 0.15);
+            --glass-black: rgba(0, 0, 0, 0.8);
+            --glass-border: rgba(212, 175, 55, 0.3);
+            
+            /* Text Colors */
+            --text-gold: #D4AF37;
+            --text-cream: #F5F5DC;
+            --text-white: #FFFFFF;
+            
+            /* Shadows */
+            --shadow-gold: 0 8px 32px rgba(212, 175, 55, 0.3);
+            --shadow-black: 0 8px 32px rgba(0, 0, 0, 0.8);
+            
+            /* Fonts */
+            --font-display: 'Playfair Display', serif;
+            --font-heading: 'Cinzel', serif;
+            --font-body: 'Cormorant Garamond', serif;
+        }
+
+        body {
+            font-family: var(--font-body);
+            background: var(--art-deco-black);
+            background-image: 
+                radial-gradient(circle at 25% 25%, rgba(212, 175, 55, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 75% 75%, rgba(184, 134, 11, 0.1) 0%, transparent 50%),
+                linear-gradient(45deg, transparent 30%, rgba(212, 175, 55, 0.02) 50%, transparent 70%);
+            min-height: 100vh;
+            color: var(--text-cream);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Loading Screen */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--art-deco-black);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            z-index: 9999;
+            transition: opacity 0.8s ease;
+        }
+        .loading-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        .loading-container { 
+            text-align: center; 
+            padding: 3rem;
+            backdrop-filter: blur(20px);
+            background: var(--glass-gold);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            box-shadow: var(--shadow-gold);
+        }
+        .loading-logo { 
+            font-size: 5rem; 
+            margin-bottom: 1.5rem; 
+            background: var(--gold-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .loading-title { 
+            font-family: var(--font-display);
+            font-size: 2.8rem; 
+            margin-bottom: 1rem; 
+            color: var(--text-gold);
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+        .loading-subtitle { 
+            font-size: 1.3rem; 
+            margin-bottom: 2rem; 
+            color: var(--text-cream);
+            font-weight: 400;
+        }
+        .loading-text { 
+            font-size: 1rem; 
+            color: var(--text-cream);
+            font-weight: 300;
+            opacity: 0.8;
+        }
+
+        /* Login Screen */
+        .login-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--art-deco-black);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 1rem;
+        }
+
+        .login-container {
+            background: var(--glass-gold);
+            backdrop-filter: blur(24px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 3.5rem;
+            width: 100%;
+            max-width: 420px;
+            box-shadow: var(--shadow-gold);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .login-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: var(--gold-gradient);
+        }
+
+        .login-logo {
+            font-size: 4rem;
+            margin-bottom: 1.5rem;
+            background: var(--gold-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .login-title {
+            font-family: var(--font-display);
+            font-size: 2.2rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-gold);
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+
+        .login-subtitle {
+            color: var(--text-cream);
+            margin-bottom: 2.5rem;
+            font-size: 1.1rem;
+            font-weight: 400;
+            opacity: 0.9;
+        }
+
+        .form-group {
+            margin-bottom: 1.8rem;
+            text-align: left;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.8rem;
+            color: var(--text-cream);
+            font-weight: 500;
+            font-size: 0.95rem;
+            letter-spacing: 0.01em;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 1.2rem 1.5rem;
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            background: var(--glass-black);
+            color: var(--text-cream);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(8px);
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--art-deco-gold);
+            box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.2);
+            transform: translateY(-1px);
+        }
+
+        .form-input::placeholder {
+            color: rgba(245, 245, 220, 0.5);
+        }
+
+        /* Hidden elements initially */
+        .hidden {
+            display: none !important;
+        }
+
+        /* Art Deco Main App Styles */
+        .main-app {
+            display: none;
+            min-height: 100vh;
+        }
+
+        .art-deco-header {
+            background: var(--glass-black);
+            backdrop-filter: blur(20px);
+            border-bottom: 2px solid var(--glass-border);
+            padding: 1.5rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            height: 70px;
+        }
+
+        .art-deco-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: var(--gold-gradient);
+        }
+
+        .snapmagic-logo {
+            font-family: var(--font-display);
+            font-size: 2.5rem;
+            font-weight: 900;
+            background: var(--gold-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 4px 8px rgba(212, 175, 55, 0.3);
+            letter-spacing: -0.02em;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .aws-logo {
+            height: 32px;
+            opacity: 0.9;
+            transition: opacity 0.3s ease;
+        }
+
+        .aws-logo:hover {
+            opacity: 1;
+        }
+
+        .staff-override-btn {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .staff-override-btn:hover {
+            background: linear-gradient(135deg, #ff5252, #d63031);
+            transform: translateY(-2px);
+        }
+
+        /* Main Container */
+        .main-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 90px 1rem 2rem;
+        }
+
+        /* Art Deco Section */
+        .art-deco-section {
+            background: var(--glass-gold);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .art-deco-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--gold-gradient);
+        }
+
+        .section-title {
+            font-family: var(--font-heading);
+            font-size: 2rem;
+            color: var(--text-gold);
+            text-align: center;
+            margin-bottom: 2rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+        }
+
+        .section-subtitle {
+            font-family: var(--font-heading);
+            font-size: 1.4rem;
+            color: var(--text-gold);
+            margin-bottom: 1.5rem;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        /* Art Deco Buttons */
+        .art-deco-btn {
+            background: var(--gold-gradient);
+            color: var(--art-deco-black);
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            font-family: var(--font-heading);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            box-shadow: var(--shadow-gold);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .art-deco-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.5s;
+        }
+
+        .art-deco-btn:hover::before {
+            left: 100%;
+        }
+
+        .art-deco-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px rgba(212, 175, 55, 0.4);
+        }
+
+        .art-deco-btn:active {
+            transform: translateY(0);
+        }
+
+        .art-deco-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-primary {
+            background: var(--gold-gradient);
+            color: var(--art-deco-black);
+            width: 100%;
+            padding: 1.2rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow-gold);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px rgba(212, 175, 55, 0.4);
+        }
+
+        /* Prompt Selection Cards */
+        .prompt-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .prompt-card {
+            background: var(--glass-black);
+            backdrop-filter: blur(15px);
+            border: 2px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .prompt-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--art-deco-gold);
+            box-shadow: var(--shadow-gold);
+        }
+
+        .prompt-card-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .prompt-card-title {
+            font-family: var(--font-heading);
+            font-size: 1.2rem;
+            color: var(--text-gold);
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .prompt-card-desc {
+            color: var(--text-cream);
+            font-size: 0.9rem;
+            line-height: 1.5;
+            opacity: 0.9;
+        }
+
+        /* Art Deco Textarea */
+        .art-deco-textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 1.5rem;
+            background: var(--glass-black);
+            border: 2px solid var(--glass-border);
+            border-radius: 12px;
+            color: var(--text-cream);
+            font-family: var(--font-body);
+            font-size: 1rem;
+            resize: vertical;
+            transition: all 0.3s ease;
+        }
+
+        .art-deco-textarea:focus {
+            outline: none;
+            border-color: var(--art-deco-gold);
+            box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.2);
+        }
+
+        .art-deco-textarea::placeholder {
+            color: rgba(245, 245, 220, 0.5);
+        }
+
+        /* Usage Limits Display */
+        .usage-limits {
+            background: var(--glass-black);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 1rem;
+            margin: 1.5rem 0;
+            backdrop-filter: blur(8px);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .usage-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex: 1;
+        }
+
+        .usage-icon {
+            font-size: 1.2rem;
+        }
+
+        .usage-text {
+            color: var(--text-cream);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .usage-count {
+            color: var(--text-gold);
+            font-weight: 600;
+        }
+
+        .usage-count.warning {
+            color: #ffa726;
+        }
+
+        .usage-count.danger {
+            color: #ef5350;
+        }
+
+        .usage-count.success {
+            color: #66bb6a;
+        }
+
+        /* Card Gallery */
+        .card-gallery {
+            text-align: center;
+            margin: 2rem 0;
+        }
+
+        .card-display {
+            max-width: 400px;
+            margin: 0 auto 1rem;
+            position: relative;
+        }
+
+        .result-image {
+            width: 100%;
+            max-width: 400px;
+            border-radius: 15px;
+            margin-bottom: 1.5rem;
+            transition: all 0.4s ease;
+            position: relative;
+            
+            /* Holographic border effect */
+            border: 4px solid;
+            border-image: linear-gradient(45deg, 
+                #D4AF37, #B8860B, #CD7F32, #D4AF37, 
+                #B8860B, #CD7F32, #D4AF37, #B8860B,
+                #D4AF37, #B8860B, #CD7F32
+            ) 1;
+            
+            box-shadow: var(--shadow-gold);
+        }
+
+        .result-image:hover {
+            transform: scale(1.03);
+            box-shadow: 0 0 30px rgba(212, 175, 55, 0.5);
+        }
+
+        /* Gallery Navigation */
+        .gallery-navigation {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: var(--glass-gold);
+            border-radius: 12px;
+            border: 1px solid var(--glass-border);
+        }
+
+        .gallery-controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .gallery-btn {
+            background: var(--gold-gradient);
+            color: var(--art-deco-black);
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .gallery-btn:hover {
+            transform: scale(1.1);
+            box-shadow: var(--shadow-gold);
+        }
+
+        .gallery-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .gallery-info {
+            color: var(--text-gold);
+            font-weight: 600;
+            font-size: 1rem;
+            min-width: 120px;
+            text-align: center;
+        }
+
+        .gallery-numbers {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .gallery-num {
+            background: var(--glass-black);
+            color: var(--text-cream);
+            border: 2px solid var(--glass-border);
+            border-radius: 8px;
+            padding: 0.5rem 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 40px;
+            text-align: center;
+        }
+
+        .gallery-num:hover {
+            background: var(--glass-gold);
+            border-color: var(--art-deco-gold);
+            color: var(--text-gold);
+            transform: translateY(-2px);
+        }
+
+        .gallery-num.active {
+            background: var(--art-deco-gold);
+            color: var(--art-deco-black);
+            border-color: var(--art-deco-gold);
+            transform: translateY(-2px);
+        }
+
+        /* Result Actions */
+        .result-actions {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 2rem;
+        }
+
+        .result-actions .art-deco-btn {
+            flex: 1;
+            min-width: 160px;
+            text-align: center;
+        }
+
+        /* Video Section Styles */
+        .video-card-selection {
+            background: var(--glass-black);
+            backdrop-filter: blur(16px);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--glass-border);
+        }
+
+        .video-card-display {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .video-card-image {
+            max-width: 300px;
+            max-height: 400px;
+            border-radius: 12px;
+            box-shadow: var(--shadow-gold);
+            border: 2px solid var(--glass-border);
+            transition: all 0.3s ease;
+        }
+
+        .video-card-image:hover {
+            transform: scale(1.02);
+            border-color: var(--art-deco-gold);
+        }
+
+        .video-prompt-section {
+            background: var(--glass-black);
+            backdrop-filter: blur(16px);
+            border-radius: 16px;
+            padding: 2rem;
+            border: 1px solid var(--glass-border);
+        }
+
+        .video-prompt-container {
+            position: relative;
+            margin-bottom: 1rem;
+        }
+
+        .prompt-prefix {
+            background: var(--glass-black);
+            color: var(--text-gold);
+            padding: 0.8rem 1rem;
+            border: 2px solid var(--glass-border);
+            border-bottom: none;
+            border-radius: 12px 12px 0 0;
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-align: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .video-prompt-input {
+            border-radius: 0 0 12px 12px !important;
+            border-top: none !important;
+            margin-bottom: 0 !important;
+        }
+
+        .prompt-flow-buttons {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+
+        .video-player {
+            width: 100%;
+            max-width: 700px;
+            border-radius: 16px;
+            box-shadow: var(--shadow-gold);
+            margin: 1.5rem auto;
+            transition: transform 0.3s ease;
+        }
+
+        .video-player:hover {
+            transform: scale(1.02);
+        }
+
+        /* Processing Overlay */
+        .processing-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(8px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+
+        .processing-content {
+            background: var(--glass-gold);
+            backdrop-filter: blur(24px);
+            border-radius: 24px;
+            padding: 3.5rem;
+            text-align: center;
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--shadow-gold);
+            max-width: 400px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .processing-content::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: var(--gold-gradient);
+        }
+
+        .processing-spinner {
+            width: 64px;
+            height: 64px;
+            border: 4px solid var(--glass-border);
+            border-top: 4px solid transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 2rem;
+            position: relative;
+        }
+
+        .processing-spinner::before {
+            content: '';
+            position: absolute;
+            top: -4px;
+            left: -4px;
+            right: -4px;
+            bottom: -4px;
+            border-radius: 50%;
+            background: var(--gold-gradient);
+            z-index: -1;
+            animation: spin 1s linear infinite reverse;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .processing-text {
+            color: var(--text-gold);
+            font-size: 1.3rem;
+            margin-bottom: 0.8rem;
+            font-weight: 600;
+        }
+
+        .processing-subtext {
+            color: var(--text-cream);
+            font-size: 1rem;
+            line-height: 1.5;
+            opacity: 0.9;
+        }
+
+        /* Modal Styles */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+        }
+
+        .modal-content {
+            background: var(--glass-gold);
+            backdrop-filter: blur(24px);
+            padding: 2rem;
+            border-radius: 20px;
+            border: 2px solid var(--glass-border);
+            box-shadow: var(--shadow-gold);
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+        }
+
+        .modal-content h3 {
+            color: var(--text-gold);
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+            font-family: var(--font-heading);
+        }
+
+        .modal-content p {
+            color: var(--text-cream);
+            margin-bottom: 1.5rem;
+            line-height: 1.5;
+            opacity: 0.9;
+        }
+
+        .name-input {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid var(--glass-border);
+            border-radius: 12px;
+            background: var(--glass-black);
+            color: var(--text-cream);
+            font-size: 1.1rem;
+            text-align: center;
+            margin-bottom: 1.5rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .name-input:focus {
+            outline: none;
+            border-color: var(--art-deco-gold);
+            box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.2);
+        }
+
+        .name-input::placeholder {
+            color: rgba(245, 245, 220, 0.5);
+        }
+
+        .name-preview {
+            background: var(--glass-gold);
+            border: 2px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 1rem;
+            margin: 1rem 0;
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: var(--text-gold);
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 1.5rem;
+        }
+
+        .modal-buttons .art-deco-btn {
+            flex: 1;
+            max-width: 150px;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .snapmagic-logo {
+                font-size: 2rem;
+            }
+            
+            .main-container {
+                padding: 80px 0.5rem 1rem;
+            }
+            
+            .art-deco-section {
+                padding: 1.5rem;
+                margin-bottom: 1.5rem;
+            }
+            
+            .section-title {
+                font-size: 1.5rem;
+            }
+            
+            .prompt-options {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .art-deco-btn {
+                padding: 0.8rem 1.5rem;
+                font-size: 0.9rem;
+            }
+            
+            .usage-limits {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            
+            .usage-item {
+                justify-content: center;
+            }
+            
+            .result-actions {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            
+            .result-actions .art-deco-btn {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .art-deco-header {
+                padding: 1rem;
+            }
+            
+            .snapmagic-logo {
+                font-size: 1.8rem;
+            }
+            
+            .aws-logo {
+                height: 24px;
+            }
+        }
+    </style>
+    </style>
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loadingScreen" class="loading-screen">
+        <div class="loading-container">
+            <div class="loading-logo">🎴</div>
+            <h1 class="loading-title">SnapMagic</h1>
+            <p class="loading-subtitle">AI-Powered Trading Card Creator</p>
+            <p class="loading-text">Loading your magical experience...</p>
+        </div>
+    </div>
+
+    <!-- Login Screen -->
+    <div id="loginScreen" class="login-screen hidden">
+        <div class="login-container">
+            <div class="login-logo">🎴</div>
+            <h1 class="login-title">SnapMagic</h1>
+            <p class="login-subtitle">Create magical trading cards with AI</p>
+            
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="username" class="form-label">Username</label>
+                    <input type="text" id="username" name="username" class="form-input" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password" class="form-label">Password</label>
+                    <input type="password" id="password" name="password" class="form-input" required>
+                </div>
+                
+                <button type="submit" class="btn btn-primary">Sign In</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main Application -->
+    <div id="mainApp" class="main-app">
+        <!-- Art Deco Header -->
+        <header class="art-deco-header">
+            <div class="snapmagic-logo">SnapMagic</div>
+            <div class="header-right">
+                <!-- Staff Override Button -->
+                <button id="staffOverrideBtn" class="staff-override-btn" style="display: none;">
+                    🔓 Staff Override
+                </button>
+                <img src="https://d0.awsstatic.com/logos/powered-by-aws-white.png" alt="Powered by AWS" class="aws-logo">
+            </div>
+        </header>
+
+        <!-- Main Container -->
+        <div class="main-container">
+            <!-- Prompt Selection Section -->
+            <section class="art-deco-section">
+                <h2 class="section-title">Create Your Trading Card</h2>
+                
+                <div class="prompt-options">
+                    <div class="prompt-card" onclick="selectPromptOption('generate')">
+                        <div class="prompt-card-icon">🎭</div>
+                        <h3 class="prompt-card-title">Generate AI Prompt</h3>
+                        <p class="prompt-card-desc">Let AI create a creative prompt for your trading card</p>
+                    </div>
+                    
+                    <div class="prompt-card" onclick="selectPromptOption('create')">
+                        <div class="prompt-card-icon">✍️</div>
+                        <h3 class="prompt-card-title">Create Own Prompt</h3>
+                        <p class="prompt-card-desc">Enter your own custom prompt description</p>
+                    </div>
+                    
+                    <div class="prompt-card" onclick="selectPromptOption('optimize')">
+                        <div class="prompt-card-icon">⚡</div>
+                        <h3 class="prompt-card-title">Optimize Prompt</h3>
+                        <p class="prompt-card-desc">Ask AI to enhance your existing prompt</p>
+                    </div>
+                </div>
+
+                <!-- Prompt Input Area (hidden initially) -->
+                <div id="promptInputArea" class="hidden">
+                    <textarea id="promptInput" class="art-deco-textarea" placeholder="Enter your prompt here..."></textarea>
+                    
+                    <!-- Hidden buttons for original functionality -->
+                    <button id="generatePromptBtn" class="hidden"></button>
+                    <button id="optimizePromptBtn" class="hidden"></button>
+                    
+                    <!-- Usage Limits Display -->
+                    <div id="usageLimits" class="usage-limits">
+                        <div class="usage-item">
+                            <span class="usage-icon">🎴</span>
+                            <span class="usage-text">Cards: <span id="cardUsage">Loading...</span></span>
+                        </div>
+                        <div class="usage-item">
+                            <span class="usage-icon">🎬</span>
+                            <span class="usage-text">Videos: <span id="videoUsage">Loading...</span></span>
+                        </div>
+                        <div class="usage-item">
+                            <span class="usage-icon">🖨️</span>
+                            <span class="usage-text">Prints: <span id="printUsage">Loading...</span></span>
+                        </div>
+                    </div>
+                    
+                    <div style="text-align: center; margin-top: 1rem;">
+                        <button id="generateBtn" class="art-deco-btn">🎨 Generate Trading Card</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Results Section -->
+            <section class="art-deco-section">
+                <h2 class="section-title">Your Creations</h2>
+                
+                <!-- Card Gallery -->
+                <div id="cardGallery" class="card-gallery hidden">
+                    <div class="card-display">
+                        <div id="resultContainer">
+                            <!-- Generated card will appear here -->
+                        </div>
+                    </div>
+                    
+                    <!-- Gallery Navigation -->
+                    <div id="galleryNavigation" class="gallery-navigation hidden">
+                        <div class="gallery-controls">
+                            <button id="galleryPrevBtn" class="gallery-btn">◀</button>
+                            <span id="galleryInfo" class="gallery-info">Card 1 of 1</span>
+                            <button id="galleryNextBtn" class="gallery-btn">▶</button>
+                        </div>
+                        <div id="galleryNumbers" class="gallery-numbers">
+                            <!-- Dynamic number buttons will be inserted here -->
+                        </div>
+                    </div>
+                    
+                    <!-- Card Action Buttons -->
+                    <div id="resultActions" class="result-actions hidden">
+                        <button id="downloadBtn" class="art-deco-btn">💾 Download Card</button>
+                        <button id="printBtn" class="art-deco-btn">🖨️ Save for Print</button>
+                        <button id="createVideoBtn" class="art-deco-btn">🎬 Create Video</button>
+                        <button id="enterCompetitionBtn" class="art-deco-btn">🏆 Enter Competition</button>
+                        <button id="shareLinkedInBtn" class="art-deco-btn">📱 Share on LinkedIn</button>
+                        <button id="createAnotherBtn" class="art-deco-btn">🔄 Create Another</button>
+                    </div>
+                </div>
+                
+                <!-- Placeholder when no cards -->
+                <div id="noCardsPlaceholder" style="text-align: center; color: var(--text-cream); padding: 2rem;">
+                    <p style="font-size: 1.2rem; opacity: 0.7;">Cards, videos and prints will appear here</p>
+                </div>
+            </section>
+
+            <!-- Video Generation Section -->
+            <section class="art-deco-section">
+                <h2 class="section-title">Animate Selected Card</h2>
+                
+                <div id="videoSection">
+                    <!-- Video Controls -->
+                    <div id="videoControls" class="hidden">
+                        <!-- Video Card Gallery Section -->
+                        <div class="video-card-selection">
+                            <h3 class="section-subtitle">Select Card to Animate</h3>
+                            
+                            <!-- Selected Card Display -->
+                            <div id="videoCardDisplay" class="video-card-display">
+                                <img id="videoSelectedCard" src="" alt="Selected Card" class="video-card-image">
+                            </div>
+                            
+                            <!-- Video Gallery Navigation -->
+                            <div id="videoGalleryNavigation" class="gallery-navigation hidden">
+                                <div class="gallery-controls">
+                                    <button id="videoGalleryPrevBtn" class="gallery-btn">◀</button>
+                                    <span id="videoGalleryInfo" class="gallery-info">Card 1 of 1</span>
+                                    <button id="videoGalleryNextBtn" class="gallery-btn">▶</button>
+                                </div>
+                                <div id="videoGalleryNumbers" class="gallery-numbers">
+                                    <!-- Dynamic number buttons will be inserted here -->
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Animation Prompt Section -->
+                        <div class="video-prompt-section">
+                            <div class="video-prompt-container">
+                                <div class="prompt-prefix">Animation Description:</div>
+                                <textarea id="animationPrompt" class="art-deco-textarea video-prompt-input" placeholder="Describe how you want the card to be animated..."></textarea>
+                            </div>
+                            
+                            <!-- AI Prompt Generation -->
+                            <div class="prompt-flow-buttons">
+                                <button id="generateAnimationPromptBtn" class="art-deco-btn">
+                                    🎭 Generate AI Prompt
+                                </button>
+                                <button id="optimizeAnimationPromptBtn" class="art-deco-btn">
+                                    ⚡ Optimize My Prompt
+                                </button>
+                            </div>
+                            
+                            <button id="generateVideoBtn" class="art-deco-btn" style="margin-top: 1rem;">🎬 Generate Video (2 min wait)</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Video Result -->
+                    <div id="videoResult" class="hidden">
+                        <video id="videoPlayer" class="video-player" controls>
+                            <source id="videoSource" src="" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                        <div class="result-actions">
+                            <button id="downloadVideoBtn" class="art-deco-btn">💾 Download Video</button>
+                            <button id="createAnotherVideoBtn" class="art-deco-btn">🔄 Create Another Video</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Placeholder when no card selected -->
+                    <div id="noCardSelected" style="text-align: center; color: var(--text-cream); padding: 2rem;">
+                        <p style="font-size: 1.1rem; opacity: 0.7;">Generate a card first to enable video animation</p>
+                        <button id="backToCardBtn" class="art-deco-btn" style="margin-top: 1rem;">🎴 Go to Card Creation</button>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <!-- Processing Overlay -->
+    <div id="processingOverlay" class="processing-overlay">
+        <div class="processing-content">
+            <div class="processing-spinner"></div>
+            <div class="processing-text">Creating your magic...</div>
+            <div class="processing-subtext">Please wait while AI generates your content</div>
+        </div>
+    </div>
+
+    <!-- Name Input Modal -->
+    <div id="nameInputModal" class="modal hidden">
+        <div class="modal-content">
+            <h3>Enter Your Name</h3>
+            <p>Your name will be displayed on the left panel of your trading card.</p>
+            <input type="text" id="nameInput" class="name-input" placeholder="Enter your name (or leave blank for AWS logo)" maxlength="50">
+            <div class="modal-buttons">
+                <button id="nameConfirmBtn" class="art-deco-btn">Continue</button>
+                <button id="nameCancelBtn" class="art-deco-btn">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Name Confirmation Modal -->
+    <div id="nameConfirmModal" class="modal hidden">
+        <div class="modal-content">
+            <h3>Confirm Your Name</h3>
+            <p>Your name will appear on the card as:</p>
+            <div id="namePreview" class="name-preview"></div>
+            <p>Please check the spelling. Is this correct?</p>
+            <div class="modal-buttons">
+                <button id="nameYesBtn" class="art-deco-btn">Yes, Generate Card</button>
+                <button id="nameEditBtn" class="art-deco-btn">No, Edit Name</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Print Success Modal -->
+    <div id="printSuccessModal" class="modal hidden">
+        <div class="modal-content">
+            <h3>🖨️ Card Added to Print!</h3>
+            <p>Your card has been saved for printing.</p>
+            <div style="background: var(--glass-gold); border: 1px solid var(--glass-border); border-radius: 8px; padding: 1.5rem; margin: 1rem 0; text-align: center;">
+                <p style="color: var(--text-gold); font-weight: bold; margin-bottom: 0.5rem;">You are print number:</p>
+                <div id="printNumber" style="font-size: 2rem; font-weight: bold; color: var(--text-gold);"></div>
+                <p style="color: var(--text-cream); font-size: 0.9rem; margin-top: 0.5rem; opacity: 0.8;">Show this number at the SnapMagic Booth to print your sticker</p>
+            </div>
+            <div class="modal-buttons">
+                <button id="printSuccessOkBtn" class="art-deco-btn">Got it!</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Competition Entry Modal -->
+    <div id="competitionModal" class="modal hidden">
+        <div class="modal-content">
+            <h3>🏆 Enter Competition</h3>
+            <p>Enter your phone number to participate in our trading card competition! Winners will be contacted directly.</p>
+            <input type="tel" id="phoneInput" class="name-input" placeholder="Enter your phone number" maxlength="20">
+            <div class="modal-buttons">
+                <button id="competitionSubmitBtn" class="art-deco-btn">Submit Entry</button>
+                <button id="competitionCancelBtn" class="art-deco-btn">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Competition Success Modal -->
+    <div id="competitionSuccessModal" class="modal hidden">
+        <div class="modal-content">
+            <h3>🎉 Competition Entry Submitted!</h3>
+            <p>Thank you for entering the competition! Your card has been submitted and you'll be contacted if you win.</p>
+            <div id="competitionDetails" class="name-preview"></div>
+            <div class="modal-buttons">
+                <button id="competitionSuccessOkBtn" class="art-deco-btn">Awesome!</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Competition Error Modal -->
+    <div id="competitionErrorModal" class="modal hidden">
+        <div class="modal-content" style="border: 3px solid #e53e3e;">
+            <h3>⚠️ Already Entered</h3>
+            <p>This phone number has already been entered in the competition. Please visit SnapMagic staff to re-enter.</p>
+            <div class="modal-buttons">
+                <button id="competitionErrorOkBtn" class="art-deco-btn">OK, I'll Visit Staff</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Limit Reached Modal -->
+    <div id="limitReachedModal" class="modal hidden">
+        <div class="modal-content" style="border: 3px solid #f56500;">
+            <h3>🚫 Generation Limit Reached</h3>
+            <p>Limit reached. Please visit SnapMagic staff to reset.</p>
+            <p style="font-size: 0.9em; color: var(--text-cream); margin-top: 1rem; opacity: 0.7;">Limits reset when the event system restarts. Contact event staff if you need assistance.</p>
+            <div class="modal-buttons">
+                <button id="limitReachedOkBtn" class="art-deco-btn">OK, I'll Visit Staff</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Configuration Script -->
+    <script>
+        // Configuration - will be replaced by CDK deployment
+        window.SNAPMAGIC_CONFIG = {
+            API_URL: 'PLACEHOLDER_API_URL',
+            TEMPLATE_CONFIG: 'PLACEHOLDER_TEMPLATE_CONFIG',
+            VERSION: '3.0',
+            FEATURES: ['trading_cards', 'video_animation', 'cardtemplate_premium']
+        };
+    </script>
+    
+    <!-- Template System -->
+    <script src="js/template-system.js"></script>
+    <script src="js/cardtemplate-loader.js"></script>
+    
+    <!-- Complete SnapMagic App with Art Deco Theme -->
+    <script>
+        // Initialize the complete SnapMagic App
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🎭 SnapMagic Art Deco Complete - Initializing...');
+            
+            // Create and initialize the app
+            window.snapMagicApp = new SnapMagicApp();
+        });
+    </script>
+    <script src="js/app.js"></script>
+</body>
+</html>
