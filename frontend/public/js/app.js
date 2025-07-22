@@ -418,19 +418,24 @@ class SnapMagicApp {
         document.getElementById('generatePromptBtn').addEventListener('click', () => this.handleGeneratePrompt());
         document.getElementById('optimizePromptBtn').addEventListener('click', () => this.handleOptimizePrompt());
         
-        // Enable/disable optimize button based on text input
-        this.elements.userPrompt.addEventListener('input', () => {
-            const optimizeBtn = document.getElementById('optimizePromptBtn');
-            const hasMinText = this.elements.userPrompt.value.trim().length >= 10;
-            optimizeBtn.disabled = !hasMinText;
-            if (hasMinText) {
-                optimizeBtn.classList.remove('disabled');
-            } else {
-                optimizeBtn.classList.add('disabled');
-            }
-        });
+        // Enable/disable optimize button based on text input - with null checks
+        const userPromptElement = document.getElementById('userPrompt');
+        if (userPromptElement) {
+            userPromptElement.addEventListener('input', () => {
+                const optimizeBtn = document.getElementById('optimizePromptBtn');
+                if (optimizeBtn) {
+                    const hasMinText = userPromptElement.value.trim().length >= 10;
+                    optimizeBtn.disabled = !hasMinText;
+                    if (hasMinText) {
+                        optimizeBtn.classList.remove('disabled');
+                    } else {
+                        optimizeBtn.classList.add('disabled');
+                    }
+                }
+            });
+        }
         
-        // Initialize optimize button as disabled
+        // Initialize optimize button as disabled - with null check
         const optimizeBtn = document.getElementById('optimizePromptBtn');
         if (optimizeBtn) {
             optimizeBtn.disabled = true;
