@@ -2109,6 +2109,68 @@ class SnapMagicApp {
         if (nextBtn) {
             nextBtn.addEventListener('click', () => this.navigateGallery(1));
         }
+        
+        // Add swipe support for mobile gallery navigation
+        this.setupGallerySwipeSupport();
+    }
+    
+    /**
+     * Setup swipe support for gallery navigation
+     */
+    setupGallerySwipeSupport() {
+        const cardDisplay = document.querySelector('.card-display');
+        if (!cardDisplay) return;
+        
+        let startX = 0;
+        let startY = 0;
+        let isSwipeActive = false;
+        
+        // Touch start
+        cardDisplay.addEventListener('touchstart', (e) => {
+            if (this.userGallery.totalCards <= 1) return;
+            
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
+            isSwipeActive = true;
+            cardDisplay.classList.add('swiping');
+        }, { passive: true });
+        
+        // Touch end
+        cardDisplay.addEventListener('touchend', (e) => {
+            if (!isSwipeActive || this.userGallery.totalCards <= 1) return;
+            
+            const endX = e.changedTouches[0].clientX;
+            const endY = e.changedTouches[0].clientY;
+            const deltaX = endX - startX;
+            const deltaY = endY - startY;
+            
+            // Check if it's a horizontal swipe (not vertical scroll)
+            if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 50) {
+                if (deltaX > 0) {
+                    // Swipe right - go to previous card
+                    this.navigateGallery(-1);
+                } else {
+                    // Swipe left - go to next card
+                    this.navigateGallery(1);
+                }
+            }
+            
+            isSwipeActive = false;
+            cardDisplay.classList.remove('swiping');
+        }, { passive: true });
+        
+        // Prevent default touch behavior during swipe
+        cardDisplay.addEventListener('touchmove', (e) => {
+            if (isSwipeActive && this.userGallery.totalCards > 1) {
+                const deltaX = e.touches[0].clientX - startX;
+                const deltaY = e.touches[0].clientY - startY;
+                
+                // If horizontal swipe is dominant, prevent vertical scroll
+                if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                    e.preventDefault();
+                }
+            }
+        }, { passive: false });
     }
 
     /**
@@ -2304,24 +2366,19 @@ class SnapMagicApp {
      * Update gallery navigation display
      */
     updateGalleryDisplay() {
-        const galleryInfo = document.getElementById('galleryInfo');
-        const galleryNumbers = document.getElementById('galleryNumbers');
+        const galleryDots = document.getElementById('galleryDots');
         const prevBtn = document.getElementById('galleryPrevBtn');
         const nextBtn = document.getElementById('galleryNextBtn');
         
-        if (!galleryInfo || !galleryNumbers) return;
+        if (!galleryDots) return;
         
-        // Update info text
-        galleryInfo.textContent = `Card ${this.userGallery.currentIndex + 1} of ${this.userGallery.totalCards}`;
-        
-        // Update number buttons
-        galleryNumbers.innerHTML = '';
+        // Update dot indicators
+        galleryDots.innerHTML = '';
         for (let i = 0; i < this.userGallery.totalCards; i++) {
-            const btn = document.createElement('button');
-            btn.className = `gallery-num ${i === this.userGallery.currentIndex ? 'active' : ''}`;
-            btn.textContent = i + 1;
-            btn.addEventListener('click', () => this.jumpToCard(i + 1));
-            galleryNumbers.appendChild(btn);
+            const dot = document.createElement('div');
+            dot.className = `gallery-dot ${i === this.userGallery.currentIndex ? 'active' : ''}`;
+            dot.addEventListener('click', () => this.jumpToCard(i + 1));
+            galleryDots.appendChild(dot);
         }
         
         // Update prev/next button states

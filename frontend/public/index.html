@@ -610,7 +610,7 @@
             margin: 0 auto;
         }
 
-        /* Gallery Navigation */
+        /* Modern Gallery Navigation */
         .gallery-navigation {
             margin-top: 1rem;
             padding: 1rem;
@@ -619,77 +619,82 @@
             border: 1px solid var(--glass-border);
         }
 
-        .gallery-controls {
+        .gallery-controls-modern {
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 1rem;
-            margin-bottom: 1rem;
+            gap: 1.5rem;
+            position: relative;
         }
 
-        .gallery-btn {
+        .gallery-arrow {
             background: var(--gold-gradient);
             color: var(--art-deco-black);
             border: none;
-            width: 40px;
-            height: 40px;
             border-radius: 50%;
-            font-size: 1.2rem;
+            width: 45px;
+            height: 45px;
+            font-size: 1.8rem;
+            font-weight: bold;
             cursor: pointer;
             transition: all 0.3s ease;
-        }
-
-        .gallery-btn:hover {
-            transform: scale(1.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
             box-shadow: var(--shadow-gold);
         }
 
-        .gallery-btn:disabled {
-            opacity: 0.5;
+        .gallery-arrow:hover {
+            transform: scale(1.1);
+            box-shadow: 0 8px 25px rgba(212, 175, 55, 0.4);
+        }
+
+        .gallery-arrow:disabled {
+            opacity: 0.3;
             cursor: not-allowed;
             transform: none;
         }
 
-        .gallery-info {
-            color: var(--text-gold);
-            font-weight: 600;
-            font-size: 1rem;
-            min-width: 120px;
-            text-align: center;
-        }
-
-        .gallery-numbers {
+        .gallery-dots {
             display: flex;
+            gap: 0.6rem;
+            align-items: center;
             justify-content: center;
-            gap: 0.5rem;
+            min-height: 20px;
             flex-wrap: wrap;
         }
 
-        .gallery-num {
-            background: var(--glass-black);
-            color: var(--text-cream);
-            border: 2px solid var(--glass-border);
-            border-radius: 8px;
-            padding: 0.5rem 0.8rem;
-            font-weight: 600;
+        .gallery-dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: rgba(245, 245, 220, 0.3);
+            border: 2px solid rgba(212, 175, 55, 0.5);
             cursor: pointer;
             transition: all 0.3s ease;
-            min-width: 40px;
-            text-align: center;
         }
 
-        .gallery-num:hover {
-            background: var(--glass-gold);
-            border-color: var(--art-deco-gold);
-            color: var(--text-gold);
-            transform: translateY(-2px);
+        .gallery-dot:hover {
+            background: rgba(212, 175, 55, 0.6);
+            transform: scale(1.2);
         }
 
-        .gallery-num.active {
+        .gallery-dot.active {
             background: var(--art-deco-gold);
-            color: var(--art-deco-black);
             border-color: var(--art-deco-gold);
-            transform: translateY(-2px);
+            box-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+            transform: scale(1.1);
+        }
+
+        /* Touch/Swipe Support */
+        .card-display {
+            position: relative;
+            touch-action: pan-y;
+            user-select: none;
+        }
+
+        .card-display.swiping {
+            transition: none;
         }
 
         /* Result Actions */
@@ -1156,13 +1161,12 @@
                     
                     <!-- Gallery Navigation -->
                     <div id="galleryNavigation" class="gallery-navigation hidden">
-                        <div class="gallery-controls">
-                            <button id="galleryPrevBtn" class="gallery-btn">◀</button>
-                            <span id="galleryInfo" class="gallery-info">Card 1 of 1</span>
-                            <button id="galleryNextBtn" class="gallery-btn">▶</button>
-                        </div>
-                        <div id="galleryNumbers" class="gallery-numbers">
-                            <!-- Dynamic number buttons will be inserted here -->
+                        <div class="gallery-controls-modern">
+                            <button id="galleryPrevBtn" class="gallery-arrow gallery-arrow-left">‹</button>
+                            <div id="galleryDots" class="gallery-dots">
+                                <!-- Dynamic dot indicators will be inserted here -->
+                            </div>
+                            <button id="galleryNextBtn" class="gallery-arrow gallery-arrow-right">›</button>
                         </div>
                     </div>
                     
