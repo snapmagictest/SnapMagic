@@ -1091,38 +1091,44 @@ def lambda_handler(event, context):
         # LOGIN ENDPOINT (NO AUTHENTICATION REQUIRED)
         # ========================================
         if action == 'login':
-            username = body.get('username', '')
-            password = body.get('password', '')
-            
-            logger.info(f"Login attempt for user: {username}")
-            
-            # Load event credentials from environment variables
-            event_creds = load_event_credentials()
-            
-            if username == event_creds['username'] and password == event_creds['password']:
-                # Create token using the existing auth module
-                auth_handler = SnapMagicAuthSimple()
-                token = auth_handler.generate_token(username)
+            try:
+                username = body.get('username', '')
+                password = body.get('password', '')
                 
-                # Get client IP for simplified tracking
-                request_headers = event.get('headers', {})
-                client_ip = get_client_ip(request_headers)
-                remaining_usage = get_remaining_usage_simplified(client_ip)
+                logger.info(f"Login attempt for user: {username}")
                 
-                logger.info(f"Login successful for IP: {client_ip}, remaining usage: {remaining_usage}")
+                # Load event credentials from environment variables
+                event_creds = load_event_credentials()
+                logger.info(f"Loaded credentials for comparison")
                 
-                return create_success_response({
-                    'success': True,  # Frontend expects this field
-                    'message': 'Login successful',
-                    'token': token,
-                    'expires_in': 86400,  # 24 hours
-                    'user': {'username': username},
-                    'remaining': remaining_usage,  # Include usage info at login
-                    'client_ip': client_ip  # For debugging - IP only, no session ID
-                })
-            else:
-                logger.warning(f"Invalid login attempt: {username}")
-                return create_error_response("Invalid credentials", 401)
+                if username == event_creds['username'] and password == event_creds['password']:
+                    # Create token using the existing auth module
+                    auth_handler = SnapMagicAuthSimple()
+                    token = auth_handler.generate_token(username)
+                    
+                    # Get client IP for simplified tracking
+                    request_headers = event.get('headers', {})
+                    client_ip = get_client_ip(request_headers)
+                    remaining_usage = get_remaining_usage_simplified(client_ip)
+                    
+                    logger.info(f"Login successful for IP: {client_ip}, remaining usage: {remaining_usage}")
+                    
+                    return create_success_response({
+                        'success': True,  # Frontend expects this field
+                        'message': 'Login successful',
+                        'token': token,
+                        'expires_in': 86400,  # 24 hours
+                        'user': {'username': username},
+                        'remaining': remaining_usage,  # Include usage info at login
+                        'client_ip': client_ip  # For debugging - IP only, no session ID
+                    })
+                else:
+                    logger.warning(f"Invalid login attempt: {username}")
+                    return create_error_response("Invalid credentials", 401)
+            except Exception as login_error:
+                logger.error(f"❌ Login function error: {str(login_error)}")
+                logger.error(f"❌ Login error details: {repr(login_error)}")
+                return create_error_response(f"Login system error: {str(login_error)}", 500)
         
         # ========================================
         # ALL OTHER ENDPOINTS REQUIRE AUTHENTICATION

@@ -602,12 +602,12 @@ class SnapMagicApp {
             } else {
                 console.error('❌ Login failed:', data.error);
                 this.hideProcessing();
-                this.showError(data.error || 'Login failed. Please check your credentials.');
+                this.showErrorModal('Login Failed', data.error || 'Login failed. Please check your credentials.');
             }
         } catch (error) {
             console.error('❌ Login error:', error);
             this.hideProcessing();
-            this.showError('Login failed. Please check your connection and try again.');
+            this.showErrorModal('Login Failed', 'Login failed. Please check your connection and try again.');
         }
     }
 
