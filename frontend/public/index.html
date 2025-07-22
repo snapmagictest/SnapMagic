@@ -1363,9 +1363,29 @@
             // Handle different modes
             switch(mode) {
                 case 'generate':
+                    // Show progress on the card like video button
+                    const generateCard = event.target.closest('.prompt-card');
+                    const cardTitle = generateCard.querySelector('.prompt-card-title');
+                    const originalTitle = cardTitle.textContent;
+                    
+                    // Disable card and show progress
+                    generateCard.style.opacity = '0.6';
+                    generateCard.style.pointerEvents = 'none';
+                    cardTitle.textContent = 'Generating...';
+                    
                     // Trigger the existing generate prompt functionality
                     if (window.snapMagicApp) {
-                        window.snapMagicApp.handleGeneratePrompt();
+                        window.snapMagicApp.handleGeneratePrompt().then(() => {
+                            // Reset card after completion
+                            generateCard.style.opacity = '1';
+                            generateCard.style.pointerEvents = 'auto';
+                            cardTitle.textContent = originalTitle;
+                        }).catch(() => {
+                            // Reset card on error
+                            generateCard.style.opacity = '1';
+                            generateCard.style.pointerEvents = 'auto';
+                            cardTitle.textContent = originalTitle;
+                        });
                     }
                     break;
                 case 'create':
