@@ -1395,9 +1395,35 @@
                     }
                     break;
                 case 'optimize':
-                    if (textarea) {
-                        textarea.placeholder = 'Enter your prompt here and AI will enhance it...';
-                        textarea.focus();
+                    // Show progress on the card like video button
+                    const optimizeCard = event.target.closest('.prompt-card');
+                    const optimizeCardTitle = optimizeCard.querySelector('.prompt-card-title');
+                    const optimizeOriginalTitle = optimizeCardTitle.textContent;
+                    
+                    // Check if there's text to optimize
+                    if (!textarea.value.trim()) {
+                        alert('Please enter a prompt to optimize first');
+                        return;
+                    }
+                    
+                    // Disable card and show progress
+                    optimizeCard.style.opacity = '0.6';
+                    optimizeCard.style.pointerEvents = 'none';
+                    optimizeCardTitle.textContent = 'Optimizing...';
+                    
+                    // Trigger the existing optimize prompt functionality
+                    if (window.snapMagicApp) {
+                        window.snapMagicApp.handleOptimizePrompt().then(() => {
+                            // Reset card after completion
+                            optimizeCard.style.opacity = '1';
+                            optimizeCard.style.pointerEvents = 'auto';
+                            optimizeCardTitle.textContent = optimizeOriginalTitle;
+                        }).catch(() => {
+                            // Reset card on error
+                            optimizeCard.style.opacity = '1';
+                            optimizeCard.style.pointerEvents = 'auto';
+                            optimizeCardTitle.textContent = optimizeOriginalTitle;
+                        });
                     }
                     break;
             }
