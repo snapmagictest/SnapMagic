@@ -421,7 +421,7 @@ class SnapMagicApp {
         // Enable/disable optimize button based on text input - with null checks
         const userPromptElement = document.getElementById('userPrompt');
         if (userPromptElement) {
-            userPromptElement.addEventListener('input', () => {
+            const updateOptimizeButton = () => {
                 const optimizeBtn = document.getElementById('optimizePromptBtn');
                 if (optimizeBtn) {
                     const hasMinText = userPromptElement.value.trim().length >= 10;
@@ -432,14 +432,12 @@ class SnapMagicApp {
                         optimizeBtn.classList.add('disabled');
                     }
                 }
-            });
-        }
-        
-        // Initialize optimize button as disabled - with null check
-        const optimizeBtn = document.getElementById('optimizePromptBtn');
-        if (optimizeBtn) {
-            optimizeBtn.disabled = true;
-            optimizeBtn.classList.add('disabled');
+            };
+            
+            userPromptElement.addEventListener('input', updateOptimizeButton);
+            
+            // Initialize based on current text content
+            updateOptimizeButton();
         }
         
         // Competition and sharing
@@ -2529,7 +2527,7 @@ class SnapMagicApp {
         // Enable/disable animation optimize button based on text input - with null checks
         const animationPromptElement = document.getElementById('animationPrompt');
         if (animationPromptElement && optimizeAnimationPromptBtn) {
-            animationPromptElement.addEventListener('input', () => {
+            const updateAnimationOptimizeButton = () => {
                 const hasMinText = animationPromptElement.value.trim().length >= 10;
                 optimizeAnimationPromptBtn.disabled = !hasMinText;
                 if (hasMinText) {
@@ -2537,11 +2535,12 @@ class SnapMagicApp {
                 } else {
                     optimizeAnimationPromptBtn.classList.add('disabled');
                 }
-            });
+            };
             
-            // Initialize as disabled
-            optimizeAnimationPromptBtn.disabled = true;
-            optimizeAnimationPromptBtn.classList.add('disabled');
+            animationPromptElement.addEventListener('input', updateAnimationOptimizeButton);
+            
+            // Initialize based on current text content
+            updateAnimationOptimizeButton();
         }
     }
 
@@ -2715,12 +2714,12 @@ class SnapMagicApp {
                 
             } else {
                 console.error('❌ Animation prompt generation failed:', data.error);
-                this.showError(data.error || 'Failed to generate animation prompt');
+                this.showErrorModal('Animation Prompt Generation Failed', data.error || 'Failed to generate animation prompt. Please try again.');
             }
             
         } catch (error) {
             console.error('❌ Animation prompt generation error:', error);
-            this.showError('Failed to generate animation prompt. Please try again.');
+            this.showErrorModal('Animation Prompt Generation Failed', 'Failed to generate animation prompt. Please try again.');
         } finally {
             // Reset button state
             generateBtn.disabled = false;
@@ -2783,12 +2782,12 @@ class SnapMagicApp {
                 
             } else {
                 console.error('❌ Animation prompt optimization failed:', data.error);
-                this.showError(data.error || 'Failed to optimize animation prompt');
+                this.showErrorModal('Animation Prompt Optimization Failed', data.error || 'Failed to optimize animation prompt. Please try again.');
             }
             
         } catch (error) {
             console.error('❌ Animation prompt optimization error:', error);
-            this.showError('Failed to optimize animation prompt. Please try again.');
+            this.showErrorModal('Animation Prompt Optimization Failed', 'Failed to optimize animation prompt. Please try again.');
         } finally {
             // Reset button state
             optimizeBtn.disabled = false;
