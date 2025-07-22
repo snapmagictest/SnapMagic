@@ -757,27 +757,33 @@ def handle_optimize_prompt(event):
         return create_error_response(error_message, 500)
 
 def handle_generate_animation_prompt(event):
-    """Generate animation prompt from card image using Nova Lite"""
-    try:
-        import boto3
-        import json
-        import base64
-        
-        logger.info("🎬 Starting generate animation prompt from card")
-        
-        # Get request body
-        body = json.loads(event.get('body', '{}'))
-        card_image_base64 = body.get('card_image', '').strip()
-        original_prompt = body.get('original_prompt', '').strip()
-        
-        if not card_image_base64:
-            return create_error_response("Please provide a card image", 400)
-        
-        logger.info(f"🔍 Analyzing card for animation prompt generation...")
-        logger.info(f"📝 Original prompt: {original_prompt[:50]}...")
-        
-        # Create animation prompt generation template - PURE IMAGE ANALYSIS
-        animation_prompt_template = f"""
+    """Generate animation prompt from card image using Nova Lite with retry logic"""
+    import time
+    
+    max_retries = 3
+    retry_delay = 2  # seconds
+    
+    for attempt in range(max_retries):
+        try:
+            import boto3
+            import json
+            import base64
+            
+            logger.info(f"🎬 Starting generate animation prompt from card (attempt {attempt + 1}/{max_retries})")
+            
+            # Get request body
+            body = json.loads(event.get('body', '{}'))
+            card_image_base64 = body.get('card_image', '').strip()
+            original_prompt = body.get('original_prompt', '').strip()
+            
+            if not card_image_base64:
+                return create_error_response("Please provide a card image", 400)
+            
+            logger.info(f"🔍 Analyzing card for animation prompt generation...")
+            logger.info(f"📝 Original prompt: {original_prompt[:50]}...")
+            
+            # Create animation prompt generation template - PURE IMAGE ANALYSIS
+            animation_prompt_template = f"""
         Analyze this trading card image and create an animation prompt for a 6-second video that starts immediately from frame 1.
 
         Your task:
@@ -847,20 +853,34 @@ def handle_generate_animation_prompt(event):
             'original_prompt': original_prompt
         })
         
-    except Exception as bedrock_error:
-        logger.error(f"❌ Bedrock error: {str(bedrock_error)}")
-        # No fallbacks - return proper error with detailed reason
-        error_message = f"AI animation prompt generation failed: {str(bedrock_error)}"
-        if "throttling" in str(bedrock_error).lower():
-            error_message += "\n\nReason: Amazon Bedrock is currently experiencing high demand. Please wait a moment and try again."
-        elif "access" in str(bedrock_error).lower():
-            error_message += "\n\nReason: Bedrock model access may not be properly configured. Please contact support."
-        elif "quota" in str(bedrock_error).lower():
-            error_message += "\n\nReason: Service quota exceeded. Please try again later or contact support."
-        else:
-            error_message += "\n\nReason: The AI animation service is temporarily unavailable. Please try again in a few moments."
-        
-        return create_error_response(error_message, 500)
+        except Exception as bedrock_error:
+            logger.error(f"❌ Bedrock error on attempt {attempt + 1}: {str(bedrock_error)}")
+            
+            # Check if this is a retryable error
+            error_str = str(bedrock_error).lower()
+            is_retryable = any(keyword in error_str for keyword in ['throttling', 'timeout', 'connection', 'temporary'])
+            
+            if attempt < max_retries - 1 and is_retryable:
+                logger.info(f"🔄 Retrying in {retry_delay} seconds... (attempt {attempt + 1}/{max_retries})")
+                time.sleep(retry_delay)
+                retry_delay *= 2  # Exponential backoff
+                continue
+            else:
+                # Final attempt failed or non-retryable error
+                error_message = f"AI animation prompt generation failed: {str(bedrock_error)}"
+                if "throttling" in error_str:
+                    error_message += "\n\nReason: Amazon Bedrock is currently experiencing high demand. Please wait a moment and try again."
+                elif "access" in error_str:
+                    error_message += "\n\nReason: Bedrock model access may not be properly configured. Please contact support."
+                elif "quota" in error_str:
+                    error_message += "\n\nReason: Service quota exceeded. Please try again later or contact support."
+                else:
+                    error_message += "\n\nReason: The AI animation service is temporarily unavailable. Please try again in a few moments."
+                
+                return create_error_response(error_message, 500)
+    
+    # This should never be reached, but just in case
+    return create_error_response("Animation prompt generation failed after all retry attempts", 500)
 
 def handle_optimize_animation_prompt(event):
     """Optimize user's existing animation prompt using Nova Lite with card analysis"""

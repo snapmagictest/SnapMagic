@@ -2527,13 +2527,17 @@ class SnapMagicApp {
         // Enable/disable animation optimize button based on text input - with null checks
         const animationPromptElement = document.getElementById('animationPrompt');
         if (animationPromptElement && optimizeAnimationPromptBtn) {
+            console.log('🔧 Setting up animation optimize button workflow');
             const updateAnimationOptimizeButton = () => {
                 const hasMinText = animationPromptElement.value.trim().length >= 10;
+                console.log(`🔧 Animation prompt length: ${animationPromptElement.value.trim().length}, hasMinText: ${hasMinText}`);
                 optimizeAnimationPromptBtn.disabled = !hasMinText;
                 if (hasMinText) {
                     optimizeAnimationPromptBtn.classList.remove('disabled');
+                    console.log('✅ Animation optimize button enabled');
                 } else {
                     optimizeAnimationPromptBtn.classList.add('disabled');
+                    console.log('❌ Animation optimize button disabled');
                 }
             };
             
@@ -2541,6 +2545,11 @@ class SnapMagicApp {
             
             // Initialize based on current text content
             updateAnimationOptimizeButton();
+        } else {
+            console.error('❌ Animation prompt elements not found:', {
+                animationPromptElement: !!animationPromptElement,
+                optimizeAnimationPromptBtn: !!optimizeAnimationPromptBtn
+            });
         }
     }
 
