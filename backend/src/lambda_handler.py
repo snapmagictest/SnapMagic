@@ -759,16 +759,15 @@ def handle_optimize_prompt(event):
 def handle_generate_animation_prompt(event):
     """Generate animation prompt from card image using Nova Lite with retry logic"""
     import time
+    import boto3
+    import json
+    import base64
     
     max_retries = 3
     retry_delay = 2  # seconds
     
     for attempt in range(max_retries):
         try:
-            import boto3
-            import json
-            import base64
-            
             logger.info(f"🎬 Starting generate animation prompt from card (attempt {attempt + 1}/{max_retries})")
             
             # Get request body
@@ -853,31 +852,31 @@ def handle_generate_animation_prompt(event):
             'original_prompt': original_prompt
         })
         
-        except Exception as bedrock_error:
-            logger.error(f"❌ Bedrock error on attempt {attempt + 1}: {str(bedrock_error)}")
-            
-            # Check if this is a retryable error
-            error_str = str(bedrock_error).lower()
-            is_retryable = any(keyword in error_str for keyword in ['throttling', 'timeout', 'connection', 'temporary'])
-            
-            if attempt < max_retries - 1 and is_retryable:
-                logger.info(f"🔄 Retrying in {retry_delay} seconds... (attempt {attempt + 1}/{max_retries})")
-                time.sleep(retry_delay)
-                retry_delay *= 2  # Exponential backoff
-                continue
+    except Exception as bedrock_error:
+        logger.error(f"❌ Bedrock error on attempt {attempt + 1}: {str(bedrock_error)}")
+        
+        # Check if this is a retryable error
+        error_str = str(bedrock_error).lower()
+        is_retryable = any(keyword in error_str for keyword in ['throttling', 'timeout', 'connection', 'temporary'])
+        
+        if attempt < max_retries - 1 and is_retryable:
+            logger.info(f"🔄 Retrying in {retry_delay} seconds... (attempt {attempt + 1}/{max_retries})")
+            time.sleep(retry_delay)
+            retry_delay *= 2  # Exponential backoff
+            continue
+        else:
+            # Final attempt failed or non-retryable error
+            error_message = f"AI animation prompt generation failed: {str(bedrock_error)}"
+            if "throttling" in error_str:
+                error_message += "\n\nReason: Amazon Bedrock is currently experiencing high demand. Please wait a moment and try again."
+            elif "access" in error_str:
+                error_message += "\n\nReason: Bedrock model access may not be properly configured. Please contact support."
+            elif "quota" in error_str:
+                error_message += "\n\nReason: Service quota exceeded. Please try again later or contact support."
             else:
-                # Final attempt failed or non-retryable error
-                error_message = f"AI animation prompt generation failed: {str(bedrock_error)}"
-                if "throttling" in error_str:
-                    error_message += "\n\nReason: Amazon Bedrock is currently experiencing high demand. Please wait a moment and try again."
-                elif "access" in error_str:
-                    error_message += "\n\nReason: Bedrock model access may not be properly configured. Please contact support."
-                elif "quota" in error_str:
-                    error_message += "\n\nReason: Service quota exceeded. Please try again later or contact support."
-                else:
-                    error_message += "\n\nReason: The AI animation service is temporarily unavailable. Please try again in a few moments."
-                
-                return create_error_response(error_message, 500)
+                error_message += "\n\nReason: The AI animation service is temporarily unavailable. Please try again in a few moments."
+            
+            return create_error_response(error_message, 500)
     
     # This should never be reached, but just in case
     return create_error_response("Animation prompt generation failed after all retry attempts", 500)
