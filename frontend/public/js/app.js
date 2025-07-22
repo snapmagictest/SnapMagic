@@ -2985,15 +2985,5 @@ document.addEventListener('visibilitychange', () => {
     }
 });
 
-// Service Worker registration for PWA functionality
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js')
-            .then(registration => {
-                console.log('✅ SW registered: ', registration);
-            })
-            .catch(registrationError => {
-                console.log('❌ SW registration failed: ', registrationError);
-            });
-    });
-}
+// Service Worker registration removed - was causing 404 errors
+// PWA functionality disabled until sw.js file is created
