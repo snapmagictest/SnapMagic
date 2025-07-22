@@ -153,6 +153,10 @@
      * Show success notification
      */
     function showSuccessNotification() {
+        // Popup removed - just log to console instead
+        console.log('✨ Premium CardTemplate System Loaded!');
+        
+        /* Original popup code disabled:
         const successDiv = document.createElement('div');
         successDiv.style.cssText = `
             position: fixed;
@@ -193,6 +197,7 @@
                 }
             }, 500);
         }, 3000);
+        */
     }
     
     /**
