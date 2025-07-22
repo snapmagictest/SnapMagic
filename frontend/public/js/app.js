@@ -418,6 +418,25 @@ class SnapMagicApp {
         document.getElementById('generatePromptBtn').addEventListener('click', () => this.handleGeneratePrompt());
         document.getElementById('optimizePromptBtn').addEventListener('click', () => this.handleOptimizePrompt());
         
+        // Enable/disable optimize button based on text input
+        this.elements.userPrompt.addEventListener('input', () => {
+            const optimizeBtn = document.getElementById('optimizePromptBtn');
+            const hasMinText = this.elements.userPrompt.value.trim().length >= 10;
+            optimizeBtn.disabled = !hasMinText;
+            if (hasMinText) {
+                optimizeBtn.classList.remove('disabled');
+            } else {
+                optimizeBtn.classList.add('disabled');
+            }
+        });
+        
+        // Initialize optimize button as disabled
+        const optimizeBtn = document.getElementById('optimizePromptBtn');
+        if (optimizeBtn) {
+            optimizeBtn.disabled = true;
+            optimizeBtn.classList.add('disabled');
+        }
+        
         // Competition and sharing
         this.elements.enterCompetitionBtn.addEventListener('click', () => this.handleEnterCompetition());
         this.elements.shareLinkedInBtn.addEventListener('click', () => this.handleShareLinkedIn());
@@ -597,7 +616,7 @@ class SnapMagicApp {
         
         // Check password (using the override code as password)
         if (password !== 'snap') {
-            alert('❌ Incorrect password');
+            this.showErrorModal('Incorrect Password', 'The password you entered is incorrect. Please try again.');
             return;
         }
         
@@ -652,17 +671,17 @@ class SnapMagicApp {
                 `;
                 this.elements.resultActions.classList.add('hidden');
                 
-                alert(`✅ Override #${data.override_number} Applied!\n\nYour limits have been reset:\n• Cards: 5\n• Videos: 3\n• Prints: 1\n\nYou can now generate new content.`);
+                this.showSuccessModal('Override Applied!', `Override #${data.override_number} Applied!\n\nYour limits have been reset:\n• Cards: 5\n• Videos: 3\n• Prints: 1\n\nYou can now generate new content.`);
                 console.log(`✅ Override #${data.override_number} applied successfully`);
                 console.log(`📝 Client IP: ${data.client_ip}`);
                 console.log(`🔄 Gallery reset for new session`);
             } else {
-                alert('❌ Override failed: ' + (data.error || 'Unknown error'));
+                this.showErrorModal('Override Failed', data.error || 'Unknown error occurred during override.');
             }
             
         } catch (error) {
             console.error('❌ Override error:', error);
-            alert('❌ Override failed: Connection error');
+            this.showErrorModal('Override Failed', 'Connection error occurred. Please check your network and try again.');
         } finally {
             this.hideProcessing();
         }
@@ -939,17 +958,17 @@ class SnapMagicApp {
                 // Fill the prompt input with generated prompt
                 promptInput.value = data.prompt;
                 
-                // Show success feedback
-                this.showNotification('✨ Creative prompt generated!', 'success');
+                // Show visual feedback instead of popup
+                this.showTextBoxFeedback('userPrompt');
                 
                 // Optional: Show what seed was used (for debugging)
                 if (data.seed_used) {
                     console.log('🎯 Seed concept used:', data.seed_used);
                 }
                 
-                // Show fallback indicator if needed
+                // Show fallback indicator if needed - CONVERT TO ERROR MODAL
                 if (data.fallback) {
-                    this.showNotification('⚠️ Using fallback prompt generation', 'warning');
+                    this.showErrorModal('AI System Issue', 'The AI prompt generation system encountered an issue and used a simplified approach. For best results, please try again or contact support if this continues.');
                 }
             } else {
                 throw new Error(data.error || 'Failed to generate prompt');
@@ -957,7 +976,7 @@ class SnapMagicApp {
             
         } catch (error) {
             console.error('❌ Generate prompt error:', error);
-            this.showNotification('Failed to generate prompt. Please try again.', 'error');
+            this.showErrorModal('Prompt Generation Failed', 'Failed to generate prompt. Please try again.');
         } finally {
             // Reset button state
             generateBtn.disabled = false;
@@ -970,10 +989,7 @@ class SnapMagicApp {
         const promptInput = this.elements.promptInput;
         const userPrompt = promptInput.value.trim();
         
-        if (!userPrompt) {
-            this.showNotification('Please enter a prompt to optimize first', 'warning');
-            return;
-        }
+        // Button workflow prevents this scenario - no validation needed
         
         try {
             // Show loading state
@@ -1002,12 +1018,12 @@ class SnapMagicApp {
                 // Replace the prompt input with optimized version
                 promptInput.value = data.prompt;
                 
-                // Show success feedback
-                this.showNotification('✨ Prompt optimized and enhanced!', 'success');
+                // Show visual feedback instead of popup
+                this.showTextBoxFeedback('userPrompt');
                 
-                // Show fallback indicator if needed
+                // Show fallback indicator if needed - CONVERT TO ERROR MODAL
                 if (data.fallback) {
-                    this.showNotification('⚠️ Using fallback prompt optimization', 'warning');
+                    this.showErrorModal('AI System Issue', 'The AI prompt optimization system encountered an issue and used a simplified approach. For best results, please try again or contact support if this continues.');
                 }
             } else {
                 throw new Error(data.error || 'Failed to optimize prompt');
@@ -1015,7 +1031,7 @@ class SnapMagicApp {
             
         } catch (error) {
             console.error('❌ Optimize prompt error:', error);
-            this.showNotification('Failed to optimize prompt. Please try again.', 'error');
+            this.showErrorModal('Prompt Optimization Failed', 'Failed to optimize prompt. Please try again.');
         } finally {
             // Reset button state
             optimizeBtn.disabled = false;
@@ -1642,6 +1658,79 @@ class SnapMagicApp {
 
     hideProcessing() {
         this.elements.processingOverlay.style.display = 'none';
+    }
+
+    /**
+     * Show visual feedback by highlighting and focusing text box
+     */
+    showTextBoxFeedback(textareaId) {
+        const textarea = document.getElementById(textareaId);
+        if (textarea) {
+            // Add highlight animation
+            textarea.classList.add('textarea-highlight');
+            
+            // Focus the textarea
+            textarea.focus();
+            
+            // Remove animation class after animation completes
+            setTimeout(() => {
+                textarea.classList.remove('textarea-highlight');
+            }, 1500);
+        }
+    }
+
+    /**
+     * Show proper error modal with OK button
+     */
+    showErrorModal(title, message) {
+        const modalHtml = `
+            <div id="errorModal" class="modal">
+                <div class="modal-content" style="border: 3px solid #e53e3e;">
+                    <h3>⚠️ ${title}</h3>
+                    <p style="white-space: pre-line;">${message}</p>
+                    <div class="modal-buttons">
+                        <button id="errorModalOkBtn" class="art-deco-btn">OK</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        
+        // Setup event listener
+        document.getElementById('errorModalOkBtn').addEventListener('click', () => {
+            const modal = document.getElementById('errorModal');
+            if (modal) {
+                modal.remove();
+            }
+        });
+    }
+
+    /**
+     * Show proper success modal with OK button
+     */
+    showSuccessModal(title, message) {
+        const modalHtml = `
+            <div id="successModal" class="modal">
+                <div class="modal-content" style="border: 3px solid #38a169;">
+                    <h3>✅ ${title}</h3>
+                    <p style="white-space: pre-line;">${message}</p>
+                    <div class="modal-buttons">
+                        <button id="successModalOkBtn" class="art-deco-btn">OK</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        
+        // Setup event listener
+        document.getElementById('successModalOkBtn').addEventListener('click', () => {
+            const modal = document.getElementById('successModal');
+            if (modal) {
+                modal.remove();
+            }
+        });
     }
 
     showNotification(message, type = 'info') {
@@ -2606,8 +2695,8 @@ class SnapMagicApp {
                 // Fill the animation prompt input with generated prompt
                 animationPrompt.value = data.animation_prompt;
                 
-                // Show success feedback
-                this.showNotification('✨ Animation prompt generated from your card!', 'success');
+                // Show visual feedback instead of popup
+                this.showTextBoxFeedback('animationPrompt');
                 
                 console.log('✅ Animation prompt generated:', data.animation_prompt);
                 
@@ -2677,8 +2766,8 @@ class SnapMagicApp {
                 // Replace with optimized prompt
                 animationPrompt.value = data.optimized_prompt;
                 
-                // Show success feedback
-                this.showNotification('✨ Animation prompt optimized with card analysis!', 'success');
+                // Show visual feedback instead of popup
+                this.showTextBoxFeedback('animationPrompt');
                 
                 console.log('✅ Animation prompt optimized:', data.optimized_prompt);
                 

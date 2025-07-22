@@ -610,6 +610,27 @@
             margin: 0 auto;
         }
 
+        /* Text Box Highlight Animation */
+        .textarea-highlight {
+            animation: textarea-glow 1.5s ease-in-out;
+            transition: all 0.3s ease;
+        }
+
+        @keyframes textarea-glow {
+            0% { 
+                box-shadow: 0 0 5px rgba(212, 175, 55, 0.3);
+                border-color: rgba(212, 175, 55, 0.5);
+            }
+            50% { 
+                box-shadow: 0 0 20px rgba(212, 175, 55, 0.8);
+                border-color: var(--art-deco-gold);
+            }
+            100% { 
+                box-shadow: 0 0 5px rgba(212, 175, 55, 0.3);
+                border-color: rgba(212, 175, 55, 0.5);
+            }
+        }
+
         /* Modern Gallery Navigation */
         .gallery-navigation {
             margin-top: 1rem;
@@ -1405,11 +1426,8 @@
                     const optimizeCardTitle = optimizeCard.querySelector('.prompt-card-title');
                     const optimizeOriginalTitle = optimizeCardTitle.textContent;
                     
-                    // Check if there's text to optimize
-                    if (!textarea.value.trim()) {
-                        alert('Please enter a prompt to optimize first');
-                        return;
-                    }
+                    // Button workflow prevents this - no validation needed
+                    // OLD: if (!textarea.value.trim()) { alert('Please enter a prompt to optimize first'); return; }
                     
                     // Disable card and show progress
                     optimizeCard.style.opacity = '0.6';
