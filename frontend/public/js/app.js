@@ -970,11 +970,6 @@ class SnapMagicApp {
                 if (data.seed_used) {
                     console.log('🎯 Seed concept used:', data.seed_used);
                 }
-                
-                // Show fallback indicator if needed - CONVERT TO ERROR MODAL
-                if (data.fallback) {
-                    this.showErrorModal('AI System Issue', 'The AI prompt generation system encountered an issue and used a simplified approach. For best results, please try again or contact support if this continues.');
-                }
             } else {
                 throw new Error(data.error || 'Failed to generate prompt');
             }
@@ -1025,11 +1020,6 @@ class SnapMagicApp {
                 
                 // Show visual feedback instead of popup
                 this.showTextBoxFeedback('userPrompt');
-                
-                // Show fallback indicator if needed - CONVERT TO ERROR MODAL
-                if (data.fallback) {
-                    this.showErrorModal('AI System Issue', 'The AI prompt optimization system encountered an issue and used a simplified approach. For best results, please try again or contact support if this continues.');
-                }
             } else {
                 throw new Error(data.error || 'Failed to optimize prompt');
             }

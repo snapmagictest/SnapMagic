@@ -672,24 +672,18 @@ def handle_generate_prompt(event):
         
     except Exception as bedrock_error:
         logger.error(f"❌ Bedrock error: {str(bedrock_error)}")
-        # Fallback with simple enhancement
-        try:
-            # Still try to get a random concept for fallback
-            seeds_path = os.path.join(os.path.dirname(__file__), 'seeds.json')
-            with open(seeds_path, 'r') as file:
-                data = json.load(file)
-            random_concept = random.choice(data['seeds'])
-        except:
-            random_concept = "A surreal, artistic landscape"
+        # No fallbacks - return proper error with detailed reason
+        error_message = f"AI prompt generation failed: {str(bedrock_error)}"
+        if "throttling" in str(bedrock_error).lower():
+            error_message += "\n\nReason: Amazon Bedrock is currently experiencing high demand. Please wait a moment and try again."
+        elif "access" in str(bedrock_error).lower():
+            error_message += "\n\nReason: Bedrock model access may not be properly configured. Please contact support."
+        elif "quota" in str(bedrock_error).lower():
+            error_message += "\n\nReason: Service quota exceeded. Please try again later or contact support."
+        else:
+            error_message += "\n\nReason: The AI service is temporarily unavailable. Please try again in a few moments."
         
-        fallback_prompt = f"A detailed, artistic rendering of {random_concept}, with vivid colors, dramatic lighting, and intricate details"
-        
-        return create_success_response({
-            'success': True,
-            'prompt': fallback_prompt,
-            'seed_used': random_concept,
-            'fallback': True
-        })
+        return create_error_response(error_message, 500)
 
 def handle_optimize_prompt(event):
     """Optimize user's existing prompt using Nova Lite"""
@@ -749,22 +743,18 @@ def handle_optimize_prompt(event):
         
     except Exception as bedrock_error:
         logger.error(f"❌ Bedrock error: {str(bedrock_error)}")
-        # Fallback to simple enhancement
-        try:
-            # Get user prompt for fallback
-            body = json.loads(event.get('body', '{}'))
-            user_prompt = body.get('user_prompt', '').strip()
-        except:
-            user_prompt = "unknown prompt"
-            
-        fallback_prompt = f"{user_prompt}, highly detailed, professional quality, dramatic lighting, vibrant colors, masterpiece"
+        # No fallbacks - return proper error with detailed reason
+        error_message = f"AI prompt optimization failed: {str(bedrock_error)}"
+        if "throttling" in str(bedrock_error).lower():
+            error_message += "\n\nReason: Amazon Bedrock is currently experiencing high demand. Please wait a moment and try again."
+        elif "access" in str(bedrock_error).lower():
+            error_message += "\n\nReason: Bedrock model access may not be properly configured. Please contact support."
+        elif "quota" in str(bedrock_error).lower():
+            error_message += "\n\nReason: Service quota exceeded. Please try again later or contact support."
+        else:
+            error_message += "\n\nReason: The AI optimization service is temporarily unavailable. Please try again in a few moments."
         
-        return create_success_response({
-            'success': True,
-            'prompt': fallback_prompt,
-            'original_prompt': user_prompt,
-            'fallback': True
-        })
+        return create_error_response(error_message, 500)
 
 def handle_generate_animation_prompt(event):
     """Generate animation prompt from card image using Nova Lite"""
@@ -859,21 +849,18 @@ def handle_generate_animation_prompt(event):
         
     except Exception as bedrock_error:
         logger.error(f"❌ Bedrock error: {str(bedrock_error)}")
-        # Fallback with generic animation prompt
-        try:
-            body = json.loads(event.get('body', '{}'))
-            original_prompt = body.get('original_prompt', '').strip()
-        except:
-            original_prompt = "character"
-            
-        fallback_animation = f"From frame 1, character immediately comes to life with instantly glowing effects, rapidly stepping forward with fast dramatic lighting and magical energy quickly swirling around them"
+        # No fallbacks - return proper error with detailed reason
+        error_message = f"AI animation prompt generation failed: {str(bedrock_error)}"
+        if "throttling" in str(bedrock_error).lower():
+            error_message += "\n\nReason: Amazon Bedrock is currently experiencing high demand. Please wait a moment and try again."
+        elif "access" in str(bedrock_error).lower():
+            error_message += "\n\nReason: Bedrock model access may not be properly configured. Please contact support."
+        elif "quota" in str(bedrock_error).lower():
+            error_message += "\n\nReason: Service quota exceeded. Please try again later or contact support."
+        else:
+            error_message += "\n\nReason: The AI animation service is temporarily unavailable. Please try again in a few moments."
         
-        return create_success_response({
-            'success': True,
-            'animation_prompt': fallback_animation,
-            'original_prompt': original_prompt,
-            'fallback': True
-        })
+        return create_error_response(error_message, 500)
 
 def handle_optimize_animation_prompt(event):
     """Optimize user's existing animation prompt using Nova Lite with card analysis"""
@@ -955,7 +942,7 @@ def handle_optimize_animation_prompt(event):
                 ]
             )
         else:
-            # Fallback to text-only optimization if no image
+            # Text-only optimization when no image is provided
             optimization_prompt = f"""
             Take this animation prompt and enhance it for a 6-second video that starts immediately from frame 1: "{user_prompt}"
 
@@ -1004,21 +991,18 @@ def handle_optimize_animation_prompt(event):
     except Exception as bedrock_error:
         logger.error(f"❌ Bedrock optimization error: {str(bedrock_error)}")
         logger.error(f"❌ Full error details: {repr(bedrock_error)}")
-        # Fallback to simple enhancement
-        try:
-            body = json.loads(event.get('body', '{}'))
-            user_prompt = body.get('user_prompt', '').strip()
-        except:
-            user_prompt = "character animation"
-            
-        fallback_prompt = f"From frame 1, {user_prompt} immediately with fast dramatic lighting, rapid dynamic movement, instantly glowing effects, and quick cinematic visual impact"
+        # No fallbacks - return proper error with detailed reason
+        error_message = f"AI animation prompt optimization failed: {str(bedrock_error)}"
+        if "throttling" in str(bedrock_error).lower():
+            error_message += "\n\nReason: Amazon Bedrock is currently experiencing high demand. Please wait a moment and try again."
+        elif "access" in str(bedrock_error).lower():
+            error_message += "\n\nReason: Bedrock model access may not be properly configured. Please contact support."
+        elif "quota" in str(bedrock_error).lower():
+            error_message += "\n\nReason: Service quota exceeded. Please try again later or contact support."
+        else:
+            error_message += "\n\nReason: The AI animation optimization service is temporarily unavailable. Please try again in a few moments."
         
-        return create_success_response({
-            'success': True,
-            'optimized_prompt': fallback_prompt,
-            'original_prompt': user_prompt,
-            'fallback': True
-        })
+        return create_error_response(error_message, 500)
 
 def lambda_handler(event, context):
     """
