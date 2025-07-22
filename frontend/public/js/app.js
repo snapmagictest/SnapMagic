@@ -2525,6 +2525,24 @@ class SnapMagicApp {
         if (optimizeAnimationPromptBtn) {
             optimizeAnimationPromptBtn.addEventListener('click', () => this.handleOptimizeAnimationPrompt());
         }
+        
+        // Enable/disable animation optimize button based on text input - with null checks
+        const animationPromptElement = document.getElementById('animationPrompt');
+        if (animationPromptElement && optimizeAnimationPromptBtn) {
+            animationPromptElement.addEventListener('input', () => {
+                const hasMinText = animationPromptElement.value.trim().length >= 10;
+                optimizeAnimationPromptBtn.disabled = !hasMinText;
+                if (hasMinText) {
+                    optimizeAnimationPromptBtn.classList.remove('disabled');
+                } else {
+                    optimizeAnimationPromptBtn.classList.add('disabled');
+                }
+            });
+            
+            // Initialize as disabled
+            optimizeAnimationPromptBtn.disabled = true;
+            optimizeAnimationPromptBtn.classList.add('disabled');
+        }
     }
 
     /**
@@ -2717,13 +2735,10 @@ class SnapMagicApp {
         const animationPrompt = document.getElementById('animationPrompt');
         const userPrompt = animationPrompt.value.trim();
         
-        if (!userPrompt) {
-            this.showError('Please enter an animation prompt to optimize');
-            return;
-        }
-
+        // Button workflow prevents this scenario - no validation needed
+        
         if (!this.generatedCardData) {
-            this.showError('Please select a card first');
+            this.showErrorModal('No Card Selected', 'Please generate a card first before optimizing animation prompts.');
             return;
         }
 
