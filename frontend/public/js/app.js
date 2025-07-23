@@ -327,7 +327,6 @@ class SnapMagicApp {
             resultActions: document.getElementById('resultActions'),
             downloadBtn: document.getElementById('downloadBtn'),
             printBtn: document.getElementById('printBtn'),
-            createVideoBtn: document.getElementById('createVideoBtn'),
             createAnotherBtn: document.getElementById('createAnotherBtn'),
             enterCompetitionBtn: document.getElementById('enterCompetitionBtn'),
             shareLinkedInBtn: document.getElementById('shareLinkedInBtn'),
@@ -454,7 +453,6 @@ class SnapMagicApp {
         this.elements.generateBtn.addEventListener('click', () => this.handleGenerateCard());
         this.elements.downloadBtn.addEventListener('click', () => this.handleDownloadCard());
         this.elements.printBtn.addEventListener('click', () => this.handlePrintCard());
-        this.elements.createVideoBtn.addEventListener('click', () => this.handleCreateVideo());
         this.elements.createAnotherBtn.addEventListener('click', () => this.handleCreateAnother());
         
         // Prompt flow buttons
@@ -831,17 +829,6 @@ class SnapMagicApp {
             } else {
                 this.elements.generateBtn.disabled = false;
                 this.elements.generateBtn.innerHTML = `🎨 Generate Trading Card (${cardRemaining} of ${this.usageLimits.cards.total} remaining)`;
-            }
-        }
-        
-        // Update create video button
-        if (this.elements.createVideoBtn) {
-            if (videoRemaining <= 0) {
-                this.elements.createVideoBtn.disabled = true;
-                this.elements.createVideoBtn.innerHTML = '🚫 Video Limit Reached';
-            } else {
-                this.elements.createVideoBtn.disabled = false;
-                this.elements.createVideoBtn.innerHTML = `🎬 Create Video (${videoRemaining} of ${this.usageLimits.videos.total} remaining)`;
             }
         }
         
@@ -1235,11 +1222,6 @@ class SnapMagicApp {
             console.error('❌ Download failed:', error);
             this.showError('Download failed. Please try again.');
         }
-    }
-
-    handleCreateVideo() {
-        console.log('🎬 Switching to video creation');
-        this.switchTab('video-generation');
     }
 
     handleCreateAnother() {
