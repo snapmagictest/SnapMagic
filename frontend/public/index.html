@@ -517,7 +517,7 @@
 
         .textarea-clear-btn {
             position: absolute;
-            bottom: 8px;
+            bottom: 10px;
             right: 8px;
             background: rgba(212, 175, 55, 0.2);
             border: 1px solid rgba(212, 175, 55, 0.4);
@@ -533,7 +533,7 @@
 
         .textarea-limit-indicator {
             position: absolute;
-            bottom: 8px;
+            bottom: 10px;
             right: 70px;
             background: rgba(139, 69, 19, 0.2);
             border: 1px solid rgba(139, 69, 19, 0.4);
@@ -1166,8 +1166,8 @@
                 <!-- Prompt Input Area (hidden initially) -->
                 <div id="promptInputArea" class="hidden">
                     <div class="textarea-container">
-                        <textarea id="promptInput" class="art-deco-textarea" placeholder="Enter your prompt here..."></textarea>
-                        <div class="textarea-limit-indicator">1024 chars</div>
+                        <textarea id="promptInput" class="art-deco-textarea" placeholder="Enter your prompt here..." oninput="updateCharCount('promptInput', 'promptCharCount', 1024)"></textarea>
+                        <div id="promptCharCount" class="textarea-limit-indicator">0/1024</div>
                         <button class="textarea-clear-btn" onclick="clearTextarea('promptInput')">CLEAR</button>
                     </div>
                     
@@ -1249,8 +1249,8 @@
                             <div class="video-prompt-container">
                                 <div class="prompt-prefix">Animation Description:</div>
                                 <div class="textarea-container">
-                                    <textarea id="animationPrompt" class="art-deco-textarea video-prompt-input" placeholder="Describe how you want the card to be animated..."></textarea>
-                                    <div class="textarea-limit-indicator">512 chars</div>
+                                    <textarea id="animationPrompt" class="art-deco-textarea video-prompt-input" placeholder="Describe how you want the card to be animated..." oninput="updateCharCount('animationPrompt', 'animationCharCount', 512)"></textarea>
+                                    <div id="animationCharCount" class="textarea-limit-indicator">0/512</div>
                                     <button class="textarea-clear-btn" onclick="clearTextarea('animationPrompt')">CLEAR</button>
                                 </div>
                             </div>
@@ -1604,12 +1604,39 @@
     </script>
 
     <script>
+        // Update character count function
+        function updateCharCount(textareaId, counterId, maxChars) {
+            const textarea = document.getElementById(textareaId);
+            const counter = document.getElementById(counterId);
+            if (textarea && counter) {
+                const currentLength = textarea.value.length;
+                counter.textContent = `${currentLength}/${maxChars}`;
+                
+                // Change color if approaching limit
+                if (currentLength > maxChars * 0.9) {
+                    counter.style.color = '#ff6b6b'; // Red when near limit
+                } else if (currentLength > maxChars * 0.7) {
+                    counter.style.color = '#ffa500'; // Orange when getting close
+                } else {
+                    counter.style.color = 'var(--text-cream)'; // Normal color
+                }
+            }
+        }
+
         // Clear textarea function
         function clearTextarea(textareaId) {
             const textarea = document.getElementById(textareaId);
             if (textarea) {
                 textarea.value = '';
                 textarea.focus();
+                
+                // Reset character counter
+                if (textareaId === 'promptInput') {
+                    updateCharCount('promptInput', 'promptCharCount', 1024);
+                } else if (textareaId === 'animationPrompt') {
+                    updateCharCount('animationPrompt', 'animationCharCount', 512);
+                }
+                
                 console.log(`✅ Cleared textarea: ${textareaId}`);
             } else {
                 console.warn(`⚠️ Textarea not found: ${textareaId}`);
