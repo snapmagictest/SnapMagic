@@ -13,4 +13,9 @@ export interface DeploymentInputs {
   novaLiteModel: string;
   cardTemplate?: any;
   limits?: any;
+  app?: {
+    features?: {
+      print?: boolean;
+    };
+  };
 }
