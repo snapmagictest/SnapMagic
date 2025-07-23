@@ -536,10 +536,16 @@
             width: 100%;
         }
 
+        .textarea-controls {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 10px;
+            margin-top: -2px;
+            margin-right: 2px;
+        }
+
         .textarea-clear-btn {
-            position: absolute;
-            bottom: 10px;
-            right: 8px;
             background: rgba(212, 175, 55, 0.2);
             border: 1px solid rgba(212, 175, 55, 0.4);
             border-radius: 4px;
@@ -548,21 +554,16 @@
             padding: 2px 6px;
             cursor: pointer;
             transition: all 0.2s ease;
-            z-index: 10;
             font-weight: bold;
         }
 
         .textarea-limit-indicator {
-            position: absolute;
-            bottom: 10px;
-            right: 70px;
             background: rgba(139, 69, 19, 0.2);
             border: 1px solid rgba(139, 69, 19, 0.4);
             border-radius: 4px;
             color: var(--text-cream);
             font-size: 0.65rem;
             padding: 2px 5px;
-            z-index: 10;
             font-weight: bold;
             opacity: 0.8;
         }
@@ -1188,8 +1189,10 @@
                 <div id="promptInputArea" class="hidden">
                     <div class="textarea-container">
                         <textarea id="promptInput" class="art-deco-textarea" placeholder="Enter your prompt here..." maxlength="1024"></textarea>
-                        <div id="promptCharCount" class="textarea-limit-indicator">0/1024</div>
-                        <button class="textarea-clear-btn" id="promptClearBtn">CLEAR</button>
+                        <div class="textarea-controls">
+                            <div id="promptCharCount" class="textarea-limit-indicator">0/1024</div>
+                            <button class="textarea-clear-btn" id="promptClearBtn">CLEAR</button>
+                        </div>
                     </div>
                     
                     <!-- Hidden buttons for original functionality -->
@@ -1271,8 +1274,10 @@
                                 <div class="prompt-prefix">Animation Description:</div>
                                 <div class="textarea-container">
                                     <textarea id="animationPrompt" class="art-deco-textarea video-prompt-input" placeholder="Describe how you want the card to be animated..." maxlength="512"></textarea>
-                                    <div id="animationCharCount" class="textarea-limit-indicator">0/512</div>
-                                    <button class="textarea-clear-btn" id="animationClearBtn">CLEAR</button>
+                                    <div class="textarea-controls">
+                                        <div id="animationCharCount" class="textarea-limit-indicator">0/512</div>
+                                        <button class="textarea-clear-btn" id="animationClearBtn">CLEAR</button>
+                                    </div>
                                 </div>
                             </div>
                             
@@ -1625,38 +1630,61 @@
     </script>
 
     <script>
-        // Better approach: Dynamic character counting with event listeners
+        // Better approach: Dynamic character counting that works with ALL text changes
         document.addEventListener('DOMContentLoaded', function() {
+            
+            // Function to update character count (can be called from anywhere)
+            function updateCharacterCount(textarea, counter) {
+                if (textarea && counter) {
+                    const currentLength = textarea.value.length;
+                    const maxLength = textarea.getAttribute('maxlength');
+                    counter.textContent = `${currentLength}/${maxLength}`;
+                    
+                    // Color coding
+                    if (currentLength > maxLength * 0.9) {
+                        counter.style.color = '#ff6b6b'; // Red
+                    } else if (currentLength > maxLength * 0.7) {
+                        counter.style.color = '#ffa500'; // Orange
+                    } else {
+                        counter.style.color = 'var(--text-cream)'; // Normal
+                    }
+                }
+            }
+            
             // Setup for main prompt textarea
             const promptTextarea = document.getElementById('promptInput');
             const promptCharCount = document.getElementById('promptCharCount');
             const promptClearBtn = document.getElementById('promptClearBtn');
             
             if (promptTextarea && promptCharCount && promptClearBtn) {
-                const promptMaxLength = promptTextarea.getAttribute('maxlength');
-                
-                // Character count event listener
+                // Manual typing event listener
                 promptTextarea.addEventListener('input', function() {
-                    const currentLength = this.value.length;
-                    promptCharCount.textContent = `${currentLength}/${promptMaxLength}`;
-                    
-                    // Color coding
-                    if (currentLength > promptMaxLength * 0.9) {
-                        promptCharCount.style.color = '#ff6b6b'; // Red
-                    } else if (currentLength > promptMaxLength * 0.7) {
-                        promptCharCount.style.color = '#ffa500'; // Orange
-                    } else {
-                        promptCharCount.style.color = 'var(--text-cream)'; // Normal
-                    }
+                    updateCharacterCount(this, promptCharCount);
                 });
+                
+                // Watch for programmatic changes (like from generate prompt)
+                const promptObserver = new MutationObserver(function() {
+                    updateCharacterCount(promptTextarea, promptCharCount);
+                });
+                
+                // Also watch for value changes via property
+                let lastValue = promptTextarea.value;
+                setInterval(function() {
+                    if (promptTextarea.value !== lastValue) {
+                        lastValue = promptTextarea.value;
+                        updateCharacterCount(promptTextarea, promptCharCount);
+                    }
+                }, 100);
                 
                 // Clear button event listener
                 promptClearBtn.addEventListener('click', function() {
                     promptTextarea.value = '';
-                    promptCharCount.textContent = `0/${promptMaxLength}`;
-                    promptCharCount.style.color = 'var(--text-cream)';
+                    updateCharacterCount(promptTextarea, promptCharCount);
                     promptTextarea.focus();
                 });
+                
+                // Initial count
+                updateCharacterCount(promptTextarea, promptCharCount);
             }
             
             // Setup for animation prompt textarea
@@ -1665,31 +1693,40 @@
             const animationClearBtn = document.getElementById('animationClearBtn');
             
             if (animationTextarea && animationCharCount && animationClearBtn) {
-                const animationMaxLength = animationTextarea.getAttribute('maxlength');
-                
-                // Character count event listener
+                // Manual typing event listener
                 animationTextarea.addEventListener('input', function() {
-                    const currentLength = this.value.length;
-                    animationCharCount.textContent = `${currentLength}/${animationMaxLength}`;
-                    
-                    // Color coding
-                    if (currentLength > animationMaxLength * 0.9) {
-                        animationCharCount.style.color = '#ff6b6b'; // Red
-                    } else if (currentLength > animationMaxLength * 0.7) {
-                        animationCharCount.style.color = '#ffa500'; // Orange
-                    } else {
-                        animationCharCount.style.color = 'var(--text-cream)'; // Normal
-                    }
+                    updateCharacterCount(this, animationCharCount);
                 });
+                
+                // Watch for programmatic changes
+                let lastAnimationValue = animationTextarea.value;
+                setInterval(function() {
+                    if (animationTextarea.value !== lastAnimationValue) {
+                        lastAnimationValue = animationTextarea.value;
+                        updateCharacterCount(animationTextarea, animationCharCount);
+                    }
+                }, 100);
                 
                 // Clear button event listener
                 animationClearBtn.addEventListener('click', function() {
                     animationTextarea.value = '';
-                    animationCharCount.textContent = `0/${animationMaxLength}`;
-                    animationCharCount.style.color = 'var(--text-cream)';
+                    updateCharacterCount(animationTextarea, animationCharCount);
                     animationTextarea.focus();
                 });
+                
+                // Initial count
+                updateCharacterCount(animationTextarea, animationCharCount);
             }
+            
+            // Global function for external calls
+            window.updateTextareaCharCount = function(textareaId) {
+                const textarea = document.getElementById(textareaId);
+                if (textareaId === 'promptInput') {
+                    updateCharacterCount(textarea, promptCharCount);
+                } else if (textareaId === 'animationPrompt') {
+                    updateCharacterCount(textarea, animationCharCount);
+                }
+            };
         });
     </script>
 
