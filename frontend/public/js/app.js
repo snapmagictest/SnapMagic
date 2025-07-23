@@ -418,10 +418,25 @@ class SnapMagicApp {
             console.warn('⚠️ Print button element not found');
         }
         
+        // Configure print usage display visibility
+        const printUsageItem = document.querySelector('.usage-item:has(#printUsage)');
+        if (printUsageItem) {
+            if (printEnabled) {
+                console.log('✅ Print feature enabled - showing print usage');
+                printUsageItem.style.display = '';
+            } else {
+                console.log('❌ Print feature disabled - hiding print usage');
+                printUsageItem.style.display = 'none';
+            }
+        } else {
+            console.warn('⚠️ Print usage element not found');
+        }
+        
         console.log('🔧 Optional features configured:', {
             printConfigValue: window.SNAPMAGIC_CONFIG?.PRINT_ENABLED,
             printEnabled: printEnabled,
-            printButtonVisible: printBtn ? printBtn.style.display !== 'none' : false
+            printButtonVisible: printBtn ? printBtn.style.display !== 'none' : false,
+            printUsageVisible: printUsageItem ? printUsageItem.style.display !== 'none' : false
         });
     }
 
