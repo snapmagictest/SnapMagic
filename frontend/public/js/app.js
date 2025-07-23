@@ -346,13 +346,13 @@ class SnapMagicApp {
             createAnotherVideoBtn: document.getElementById('createAnotherVideoBtn'),
             backToCardBtn: document.getElementById('backToCardBtn'),
             
-            // Video gallery elements
-            videoSelectedCard: document.getElementById('videoSelectedCard'),
-            videoGalleryNavigation: document.getElementById('videoGalleryNavigation'),
-            videoGalleryInfo: document.getElementById('videoGalleryInfo'),
-            videoGalleryNumbers: document.getElementById('videoGalleryNumbers'),
-            videoGalleryPrevBtn: document.getElementById('videoGalleryPrevBtn'),
-            videoGalleryNextBtn: document.getElementById('videoGalleryNextBtn'),
+            // Video gallery elements (removed - no longer needed)
+            // videoSelectedCard: document.getElementById('videoSelectedCard'),
+            // videoGalleryNavigation: document.getElementById('videoGalleryNavigation'),
+            // videoGalleryInfo: document.getElementById('videoGalleryInfo'),
+            // videoGalleryNumbers: document.getElementById('videoGalleryNumbers'),
+            // videoGalleryPrevBtn: document.getElementById('videoGalleryPrevBtn'),
+            // videoGalleryNextBtn: document.getElementById('videoGalleryNextBtn'),
             generateAnimationPromptBtn: document.getElementById('generateAnimationPromptBtn'),
             optimizeAnimationPromptBtn: document.getElementById('optimizeAnimationPromptBtn'),
             
@@ -447,8 +447,20 @@ class SnapMagicApp {
         // Gallery navigation
         this.setupGalleryNavigation();
         
-        // Video gallery navigation
-        this.setupVideoGalleryNavigation();
+        // Video gallery navigation (removed - no longer needed)
+        // this.setupVideoGalleryNavigation();
+        
+        // AI prompt generation buttons (moved from removed setupVideoGalleryNavigation)
+        const generateAnimationPromptBtn = document.getElementById('generateAnimationPromptBtn');
+        const optimizeAnimationPromptBtn = document.getElementById('optimizeAnimationPromptBtn');
+        
+        if (generateAnimationPromptBtn) {
+            generateAnimationPromptBtn.addEventListener('click', () => this.handleGenerateAnimationPrompt());
+        }
+        
+        if (optimizeAnimationPromptBtn) {
+            optimizeAnimationPromptBtn.addEventListener('click', () => this.handleOptimizeAnimationPrompt());
+        }
         
         // Video generation
         this.elements.generateVideoBtn.addEventListener('click', () => this.handleGenerateVideo());
@@ -665,7 +677,7 @@ class SnapMagicApp {
                     totalCards: 0
                 };
                 this.hideGalleryNavigation();
-                this.hideVideoGalleryNavigation();
+                // this.hideVideoGalleryNavigation(); // Removed - no longer needed
                 this.generatedCardData = null;
                 
                 // Clear result container
@@ -2498,7 +2510,9 @@ class SnapMagicApp {
 
     /**
      * Setup video gallery navigation event listeners
+     * REMOVED - No longer needed since video card selection section was removed
      */
+    /*
     setupVideoGalleryNavigation() {
         // Video gallery navigation buttons
         const prevBtn = document.getElementById('videoGalleryPrevBtn');
@@ -2524,6 +2538,7 @@ class SnapMagicApp {
             optimizeAnimationPromptBtn.addEventListener('click', () => this.handleOptimizeAnimationPrompt());
         }
     }
+    */
 
     /**
      * Navigate video gallery (previous/next)
@@ -2541,7 +2556,9 @@ class SnapMagicApp {
 
     /**
      * Show specific card from video gallery
+     * REMOVED - No longer needed since video card selection section was removed
      */
+    /*
     showVideoCardFromGallery(cardIndex) {
         if (cardIndex < 0 || cardIndex >= this.userGallery.totalCards) return;
         
@@ -2569,14 +2586,18 @@ class SnapMagicApp {
         
         console.log('✅ Video card switched - ready for animation');
     }
+    */
 
     /**
      * Jump directly to specific card number in video gallery
+     * REMOVED - No longer needed since video card selection section was removed
      */
+    /*
     jumpToVideoCard(cardNumber) {
         const cardIndex = cardNumber - 1; // Convert to 0-based index
         this.showVideoCardFromGallery(cardIndex);
     }
+    */
 
     /**
      * Update video gallery navigation display
@@ -2613,23 +2634,29 @@ class SnapMagicApp {
 
     /**
      * Show video gallery navigation (when user has multiple cards)
+     * REMOVED - No longer needed since video card selection section was removed
      */
+    /*
     showVideoGalleryNavigation() {
         const galleryNav = document.getElementById('videoGalleryNavigation');
         if (galleryNav && this.userGallery.totalCards > 1) {
             galleryNav.classList.remove('hidden');
         }
     }
+    */
 
     /**
      * Hide video gallery navigation
+     * REMOVED - No longer needed since video card selection section was removed
      */
+    /*
     hideVideoGalleryNavigation() {
         const galleryNav = document.getElementById('videoGalleryNavigation');
         if (galleryNav) {
             galleryNav.classList.add('hidden');
         }
     }
+    */
 
     /**
      * Initialize video tab with gallery
@@ -2638,8 +2665,8 @@ class SnapMagicApp {
         if (this.userGallery.totalCards > 0) {
             // Show the most recent card by default
             this.userGallery.currentIndex = this.userGallery.totalCards - 1;
-            this.showVideoCardFromGallery(this.userGallery.currentIndex);
-            this.showVideoGalleryNavigation();
+            // this.showVideoCardFromGallery(this.userGallery.currentIndex); // Removed - no longer needed
+            // this.showVideoGalleryNavigation(); // Removed - no longer needed
             
             console.log(`🎬 Video gallery initialized with ${this.userGallery.totalCards} cards`);
         }

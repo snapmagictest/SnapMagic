@@ -739,35 +739,6 @@
         }
 
         /* Video Section Styles */
-        .video-card-selection {
-            background: var(--glass-black);
-            backdrop-filter: blur(16px);
-            border-radius: 16px;
-            padding: 2rem;
-            margin-bottom: 2rem;
-            border: 1px solid var(--glass-border);
-        }
-
-        .video-card-display {
-            display: flex;
-            justify-content: center;
-            margin-bottom: 1.5rem;
-        }
-
-        .video-card-image {
-            max-width: 300px;
-            max-height: 400px;
-            border-radius: 12px;
-            box-shadow: var(--shadow-gold);
-            border: 2px solid var(--glass-border);
-            transition: all 0.3s ease;
-        }
-
-        .video-card-image:hover {
-            transform: scale(1.02);
-            border-color: var(--art-deco-gold);
-        }
-
         .video-prompt-section {
             background: var(--glass-black);
             backdrop-filter: blur(16px);
@@ -1220,28 +1191,6 @@
                 <div id="videoSection">
                     <!-- Video Controls -->
                     <div id="videoControls" class="hidden">
-                        <!-- Video Card Gallery Section -->
-                        <div class="video-card-selection">
-                            <h3 class="section-subtitle">Select Card to Animate</h3>
-                            
-                            <!-- Selected Card Display -->
-                            <div id="videoCardDisplay" class="video-card-display">
-                                <img id="videoSelectedCard" src="" alt="Selected Card" class="video-card-image">
-                            </div>
-                            
-                            <!-- Video Gallery Navigation -->
-                            <div id="videoGalleryNavigation" class="gallery-navigation hidden">
-                                <div class="gallery-controls">
-                                    <button id="videoGalleryPrevBtn" class="gallery-btn">◀</button>
-                                    <span id="videoGalleryInfo" class="gallery-info">Card 1 of 1</span>
-                                    <button id="videoGalleryNextBtn" class="gallery-btn">▶</button>
-                                </div>
-                                <div id="videoGalleryNumbers" class="gallery-numbers">
-                                    <!-- Dynamic number buttons will be inserted here -->
-                                </div>
-                            </div>
-                        </div>
-                        
                         <!-- Animation Prompt Section -->
                         <div class="video-prompt-section">
                             <div class="video-prompt-container">
