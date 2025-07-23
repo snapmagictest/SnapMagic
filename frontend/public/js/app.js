@@ -2523,28 +2523,6 @@ class SnapMagicApp {
         if (optimizeAnimationPromptBtn) {
             optimizeAnimationPromptBtn.addEventListener('click', () => this.handleOptimizeAnimationPrompt());
         }
-        
-        // Enable/disable animation optimize button based on text input - COPY EXACT WORKING PATTERN
-        const animationPromptElement = document.getElementById('animationPrompt');
-        if (animationPromptElement) {
-            const updateAnimationOptimizeButton = () => {
-                const optimizeBtn = document.getElementById('optimizeAnimationPromptBtn');
-                if (optimizeBtn) {
-                    const hasMinText = animationPromptElement.value.trim().length >= 10;
-                    optimizeBtn.disabled = !hasMinText;
-                    if (hasMinText) {
-                        optimizeBtn.classList.remove('disabled');
-                    } else {
-                        optimizeBtn.classList.add('disabled');
-                    }
-                }
-            };
-            
-            animationPromptElement.addEventListener('input', updateAnimationOptimizeButton);
-            
-            // Initialize based on current text content
-            updateAnimationOptimizeButton();
-        }
     }
 
     /**
