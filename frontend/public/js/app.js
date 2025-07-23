@@ -1047,7 +1047,16 @@ class SnapMagicApp {
         const promptInput = this.elements.promptInput;
         const userPrompt = promptInput.value.trim();
         
-        // Button workflow prevents this scenario - no validation needed
+        // Validation: Check if prompt exists and is at least 10 characters
+        if (!userPrompt) {
+            this.showError('Please enter a prompt to optimize first.');
+            return;
+        }
+        
+        if (userPrompt.length < 10) {
+            this.showError('Prompt must be at least 10 characters long to optimize.');
+            return;
+        }
         
         try {
             // Show loading state
