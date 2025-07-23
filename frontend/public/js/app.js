@@ -332,11 +332,6 @@ class SnapMagicApp {
             enterCompetitionBtn: document.getElementById('enterCompetitionBtn'),
             shareLinkedInBtn: document.getElementById('shareLinkedInBtn'),
             
-            // Usage limits display
-            cardUsage: document.getElementById('cardUsage'),
-            videoUsage: document.getElementById('videoUsage'),
-            printUsage: document.getElementById('printUsage'),
-            
             // Video generation
             videoSection: document.getElementById('videoSection'),
             videoControls: document.getElementById('videoControls'),
@@ -791,34 +786,33 @@ class SnapMagicApp {
     }
 
     displayUsageLimits() {
-        if (this.elements.cardUsage && this.elements.videoUsage && this.elements.printUsage) {
-            // Use the remaining counts directly from backend
-            const cardRemaining = this.usageLimits.cards.total - this.usageLimits.cards.used;
-            const videoRemaining = this.usageLimits.videos.total - this.usageLimits.videos.used;
-            const printRemaining = this.usageLimits.prints.total - this.usageLimits.prints.used;
-            
-            console.log('🎯 Displaying usage limits:', { cardRemaining, videoRemaining, printRemaining });
-            
-            // Update card usage display
-            this.elements.cardUsage.innerHTML = `<span class="usage-count ${this.getUsageClass(cardRemaining, this.usageLimits.cards.total)}">${cardRemaining} of ${this.usageLimits.cards.total} remaining</span>`;
-            
-            // Update video usage display  
-            this.elements.videoUsage.innerHTML = `<span class="usage-count ${this.getUsageClass(videoRemaining, this.usageLimits.videos.total)}">${videoRemaining} of ${this.usageLimits.videos.total} remaining</span>`;
-            
-            // Update print usage display
-            this.elements.printUsage.innerHTML = `<span class="usage-count ${this.getUsageClass(printRemaining, this.usageLimits.prints.total)}">${printRemaining} of ${this.usageLimits.prints.total} remaining</span>`;
-            
-            // Update button states
-            this.updateButtonStates(cardRemaining, videoRemaining, printRemaining);
-            
-            console.log('✅ Usage limits displayed successfully');
-        } else {
-            console.error('❌ Usage limit elements not found:', {
-                cardUsage: !!this.elements.cardUsage,
-                videoUsage: !!this.elements.videoUsage,
-                printUsage: !!this.elements.printUsage
-            });
+        // Calculate remaining counts
+        const cardRemaining = this.usageLimits.cards.total - this.usageLimits.cards.used;
+        const videoRemaining = this.usageLimits.videos.total - this.usageLimits.videos.used;
+        const printRemaining = this.usageLimits.prints.total - this.usageLimits.prints.used;
+        
+        console.log('🎯 Updating button text with usage limits:', { cardRemaining, videoRemaining, printRemaining });
+        
+        // Update Generate Card button text
+        if (this.elements.generateBtn) {
+            this.elements.generateBtn.innerHTML = `🎨 Generate Trading Card (${cardRemaining} of ${this.usageLimits.cards.total} remaining)`;
         }
+        
+        // Update Generate Video button text
+        const generateVideoBtn = document.getElementById('generateVideoBtn');
+        if (generateVideoBtn) {
+            generateVideoBtn.innerHTML = `🎬 Generate Video (${videoRemaining} of ${this.usageLimits.videos.total} remaining)`;
+        }
+        
+        // Update Print button text (if print is enabled)
+        if (this.elements.printBtn) {
+            this.elements.printBtn.innerHTML = `🖨️ Save for Print (${printRemaining} of ${this.usageLimits.prints.total} remaining)`;
+        }
+        
+        // Update button states
+        this.updateButtonStates(cardRemaining, videoRemaining, printRemaining);
+        
+        console.log('✅ Button text updated with usage limits successfully');
     }
 
     getUsageClass(remaining, total) {
@@ -836,7 +830,7 @@ class SnapMagicApp {
                 this.elements.generateBtn.innerHTML = '🚫 Card Limit Reached';
             } else {
                 this.elements.generateBtn.disabled = false;
-                this.elements.generateBtn.innerHTML = '🎨 Generate Trading Card';
+                this.elements.generateBtn.innerHTML = `🎨 Generate Trading Card (${cardRemaining} of ${this.usageLimits.cards.total} remaining)`;
             }
         }
         
@@ -847,7 +841,19 @@ class SnapMagicApp {
                 this.elements.createVideoBtn.innerHTML = '🚫 Video Limit Reached';
             } else {
                 this.elements.createVideoBtn.disabled = false;
-                this.elements.createVideoBtn.innerHTML = '🎬 Create Video';
+                this.elements.createVideoBtn.innerHTML = `🎬 Create Video (${videoRemaining} of ${this.usageLimits.videos.total} remaining)`;
+            }
+        }
+        
+        // Update generate video button (different from create video)
+        const generateVideoBtn = document.getElementById('generateVideoBtn');
+        if (generateVideoBtn) {
+            if (videoRemaining <= 0) {
+                generateVideoBtn.disabled = true;
+                generateVideoBtn.innerHTML = '🚫 Video Limit Reached';
+            } else {
+                generateVideoBtn.disabled = false;
+                generateVideoBtn.innerHTML = `🎬 Generate Video (${videoRemaining} of ${this.usageLimits.videos.total} remaining)`;
             }
         }
         
@@ -858,16 +864,9 @@ class SnapMagicApp {
                 this.elements.printBtn.innerHTML = '🚫 Print Used';
             } else {
                 this.elements.printBtn.disabled = false;
-                this.elements.printBtn.innerHTML = '🖨️ Save for Print';
+                this.elements.printBtn.innerHTML = `🖨️ Save for Print (${printRemaining} of ${this.usageLimits.prints.total} remaining)`;
             }
         }
-    }
-
-    initializeUsageLimits() {
-        // Set initial display
-        this.elements.cardUsage.innerHTML = `<span class="usage-count success">${this.usageLimits.cards.total} of ${this.usageLimits.cards.total} remaining</span>`;
-        this.elements.videoUsage.innerHTML = `<span class="usage-count success">${this.usageLimits.videos.total} of ${this.usageLimits.videos.total} remaining</span>`;
-        this.elements.printUsage.innerHTML = `<span class="usage-count success">${this.usageLimits.prints.total} of ${this.usageLimits.prints.total} remaining</span>`;
     }
 
     // Print Card Handler
