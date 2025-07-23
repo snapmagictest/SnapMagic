@@ -497,6 +497,50 @@ class SnapMagicApp {
         
         // Don't call initializeUsageLimits() here - login already set correct limits
         console.log('📱 Main app displayed - usage limits already set from login');
+        
+        // Initialize animation button workflow after main app is visible
+        this.initializeAnimationButtonWorkflow();
+    }
+
+    /**
+     * Initialize animation button workflow after main app is visible
+     */
+    initializeAnimationButtonWorkflow() {
+        console.log('🎬 Initializing animation button workflow...');
+        
+        // Get animation prompt elements
+        const animationPromptElement = document.getElementById('animationPrompt');
+        const optimizeAnimationPromptBtn = document.getElementById('optimizeAnimationPromptBtn');
+        
+        if (animationPromptElement && optimizeAnimationPromptBtn) {
+            console.log('🔧 Setting up animation optimize button workflow');
+            
+            const updateAnimationOptimizeButton = () => {
+                const hasMinText = animationPromptElement.value.trim().length >= 10;
+                console.log(`🔧 Animation prompt length: ${animationPromptElement.value.trim().length}, hasMinText: ${hasMinText}`);
+                optimizeAnimationPromptBtn.disabled = !hasMinText;
+                if (hasMinText) {
+                    optimizeAnimationPromptBtn.classList.remove('disabled');
+                    console.log('✅ Animation optimize button enabled');
+                } else {
+                    optimizeAnimationPromptBtn.classList.add('disabled');
+                    console.log('❌ Animation optimize button disabled');
+                }
+            };
+            
+            // Add event listener for text input
+            animationPromptElement.addEventListener('input', updateAnimationOptimizeButton);
+            
+            // Initialize based on current text content
+            updateAnimationOptimizeButton();
+            
+            console.log('✅ Animation button workflow initialized successfully');
+        } else {
+            console.error('❌ Animation prompt elements not found:', {
+                animationPromptElement: !!animationPromptElement,
+                optimizeAnimationPromptBtn: !!optimizeAnimationPromptBtn
+            });
+        }
     }
 
     // Tab Management
@@ -2524,33 +2568,7 @@ class SnapMagicApp {
             optimizeAnimationPromptBtn.addEventListener('click', () => this.handleOptimizeAnimationPrompt());
         }
         
-        // Enable/disable animation optimize button based on text input - with null checks
-        const animationPromptElement = document.getElementById('animationPrompt');
-        if (animationPromptElement && optimizeAnimationPromptBtn) {
-            console.log('🔧 Setting up animation optimize button workflow');
-            const updateAnimationOptimizeButton = () => {
-                const hasMinText = animationPromptElement.value.trim().length >= 10;
-                console.log(`🔧 Animation prompt length: ${animationPromptElement.value.trim().length}, hasMinText: ${hasMinText}`);
-                optimizeAnimationPromptBtn.disabled = !hasMinText;
-                if (hasMinText) {
-                    optimizeAnimationPromptBtn.classList.remove('disabled');
-                    console.log('✅ Animation optimize button enabled');
-                } else {
-                    optimizeAnimationPromptBtn.classList.add('disabled');
-                    console.log('❌ Animation optimize button disabled');
-                }
-            };
-            
-            animationPromptElement.addEventListener('input', updateAnimationOptimizeButton);
-            
-            // Initialize based on current text content
-            updateAnimationOptimizeButton();
-        } else {
-            console.error('❌ Animation prompt elements not found:', {
-                animationPromptElement: !!animationPromptElement,
-                optimizeAnimationPromptBtn: !!optimizeAnimationPromptBtn
-            });
-        }
+        // Animation button workflow will be initialized after login in initializeAnimationButtonWorkflow()
     }
 
     /**
