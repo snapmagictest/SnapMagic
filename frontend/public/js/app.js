@@ -497,84 +497,6 @@ class SnapMagicApp {
         
         // Don't call initializeUsageLimits() here - login already set correct limits
         console.log('📱 Main app displayed - usage limits already set from login');
-        
-        // Initialize animation button workflow after main app is visible
-        this.initializeAnimationButtonWorkflow();
-    }
-
-    /**
-     * Initialize animation button workflow after main app is visible
-     */
-    initializeAnimationButtonWorkflow() {
-        console.log('🎬 Initializing animation button workflow...');
-        
-        // Add a small delay to ensure DOM elements are fully rendered
-        setTimeout(() => {
-            // Get animation prompt elements
-            const animationPromptElement = document.getElementById('animationPrompt');
-            const optimizeAnimationPromptBtn = document.getElementById('optimizeAnimationPromptBtn');
-            
-            console.log('🔍 Checking for animation elements:', {
-                animationPromptElement: !!animationPromptElement,
-                optimizeAnimationPromptBtn: !!optimizeAnimationPromptBtn,
-                animationPromptVisible: animationPromptElement ? animationPromptElement.offsetParent !== null : false,
-                optimizeButtonVisible: optimizeAnimationPromptBtn ? optimizeAnimationPromptBtn.offsetParent !== null : false
-            });
-            
-            if (animationPromptElement && optimizeAnimationPromptBtn) {
-                console.log('🔧 Setting up animation optimize button workflow');
-                
-                // Remove any existing event listeners to avoid duplicates
-                const newAnimationPromptElement = animationPromptElement.cloneNode(true);
-                animationPromptElement.parentNode.replaceChild(newAnimationPromptElement, animationPromptElement);
-                
-                const updateAnimationOptimizeButton = () => {
-                    const hasMinText = newAnimationPromptElement.value.trim().length >= 10;
-                    console.log(`🔧 Animation prompt length: ${newAnimationPromptElement.value.trim().length}, hasMinText: ${hasMinText}`);
-                    optimizeAnimationPromptBtn.disabled = !hasMinText;
-                    if (hasMinText) {
-                        optimizeAnimationPromptBtn.classList.remove('disabled');
-                        optimizeAnimationPromptBtn.style.opacity = '1';
-                        optimizeAnimationPromptBtn.style.cursor = 'pointer';
-                        console.log('✅ Animation optimize button enabled');
-                    } else {
-                        optimizeAnimationPromptBtn.classList.add('disabled');
-                        optimizeAnimationPromptBtn.style.opacity = '0.5';
-                        optimizeAnimationPromptBtn.style.cursor = 'not-allowed';
-                        console.log('❌ Animation optimize button disabled');
-                    }
-                };
-                
-                // Add event listener for text input
-                newAnimationPromptElement.addEventListener('input', updateAnimationOptimizeButton);
-                newAnimationPromptElement.addEventListener('keyup', updateAnimationOptimizeButton);
-                newAnimationPromptElement.addEventListener('paste', () => {
-                    setTimeout(updateAnimationOptimizeButton, 10); // Small delay for paste event
-                });
-                
-                // Initialize based on current text content
-                updateAnimationOptimizeButton();
-                
-                console.log('✅ Animation button workflow initialized successfully');
-            } else {
-                console.error('❌ Animation prompt elements not found after delay:', {
-                    animationPromptElement: !!animationPromptElement,
-                    optimizeAnimationPromptBtn: !!optimizeAnimationPromptBtn
-                });
-                
-                // Try to find elements in the entire document
-                const allTextareas = document.querySelectorAll('textarea');
-                const allButtons = document.querySelectorAll('button');
-                console.log('🔍 All textareas found:', Array.from(allTextareas).map(t => t.id || t.className));
-                console.log('🔍 All buttons found:', Array.from(allButtons).map(b => b.id || b.textContent?.trim()));
-                
-                // Try again with a longer delay
-                setTimeout(() => {
-                    console.log('🔄 Retrying animation button initialization...');
-                    this.initializeAnimationButtonWorkflow();
-                }, 1000);
-            }
-        }, 500); // 500ms delay to ensure DOM is ready
     }
 
     // Tab Management
@@ -611,12 +533,6 @@ class SnapMagicApp {
             this.elements.videoControls.classList.add('hidden');
             this.elements.videoResult.classList.add('hidden');
         }
-        
-        // Initialize animation button workflow when video tab is shown
-        console.log('🎬 Video tab updated - initializing animation button workflow');
-        setTimeout(() => {
-            this.initializeAnimationButtonWorkflow();
-        }, 200); // Small delay to ensure elements are fully rendered
     }
 
     // Authentication
@@ -2608,7 +2524,27 @@ class SnapMagicApp {
             optimizeAnimationPromptBtn.addEventListener('click', () => this.handleOptimizeAnimationPrompt());
         }
         
-        // Animation button workflow will be initialized after login in initializeAnimationButtonWorkflow()
+        // Enable/disable animation optimize button based on text input - COPY EXACT WORKING PATTERN
+        const animationPromptElement = document.getElementById('animationPrompt');
+        if (animationPromptElement) {
+            const updateAnimationOptimizeButton = () => {
+                const optimizeBtn = document.getElementById('optimizeAnimationPromptBtn');
+                if (optimizeBtn) {
+                    const hasMinText = animationPromptElement.value.trim().length >= 10;
+                    optimizeBtn.disabled = !hasMinText;
+                    if (hasMinText) {
+                        optimizeBtn.classList.remove('disabled');
+                    } else {
+                        optimizeBtn.classList.add('disabled');
+                    }
+                }
+            };
+            
+            animationPromptElement.addEventListener('input', updateAnimationOptimizeButton);
+            
+            // Initialize based on current text content
+            updateAnimationOptimizeButton();
+        }
     }
 
     /**
