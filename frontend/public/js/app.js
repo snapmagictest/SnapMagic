@@ -517,28 +517,40 @@ class SnapMagicApp {
             console.log('🔍 Checking for animation elements:', {
                 animationPromptElement: !!animationPromptElement,
                 optimizeAnimationPromptBtn: !!optimizeAnimationPromptBtn,
-                animationPromptVisible: animationPromptElement ? !animationPromptElement.offsetParent === null : false,
-                optimizeButtonVisible: optimizeAnimationPromptBtn ? !optimizeAnimationPromptBtn.offsetParent === null : false
+                animationPromptVisible: animationPromptElement ? animationPromptElement.offsetParent !== null : false,
+                optimizeButtonVisible: optimizeAnimationPromptBtn ? optimizeAnimationPromptBtn.offsetParent !== null : false
             });
             
             if (animationPromptElement && optimizeAnimationPromptBtn) {
                 console.log('🔧 Setting up animation optimize button workflow');
                 
+                // Remove any existing event listeners to avoid duplicates
+                const newAnimationPromptElement = animationPromptElement.cloneNode(true);
+                animationPromptElement.parentNode.replaceChild(newAnimationPromptElement, animationPromptElement);
+                
                 const updateAnimationOptimizeButton = () => {
-                    const hasMinText = animationPromptElement.value.trim().length >= 10;
-                    console.log(`🔧 Animation prompt length: ${animationPromptElement.value.trim().length}, hasMinText: ${hasMinText}`);
+                    const hasMinText = newAnimationPromptElement.value.trim().length >= 10;
+                    console.log(`🔧 Animation prompt length: ${newAnimationPromptElement.value.trim().length}, hasMinText: ${hasMinText}`);
                     optimizeAnimationPromptBtn.disabled = !hasMinText;
                     if (hasMinText) {
                         optimizeAnimationPromptBtn.classList.remove('disabled');
+                        optimizeAnimationPromptBtn.style.opacity = '1';
+                        optimizeAnimationPromptBtn.style.cursor = 'pointer';
                         console.log('✅ Animation optimize button enabled');
                     } else {
                         optimizeAnimationPromptBtn.classList.add('disabled');
+                        optimizeAnimationPromptBtn.style.opacity = '0.5';
+                        optimizeAnimationPromptBtn.style.cursor = 'not-allowed';
                         console.log('❌ Animation optimize button disabled');
                     }
                 };
                 
                 // Add event listener for text input
-                animationPromptElement.addEventListener('input', updateAnimationOptimizeButton);
+                newAnimationPromptElement.addEventListener('input', updateAnimationOptimizeButton);
+                newAnimationPromptElement.addEventListener('keyup', updateAnimationOptimizeButton);
+                newAnimationPromptElement.addEventListener('paste', () => {
+                    setTimeout(updateAnimationOptimizeButton, 10); // Small delay for paste event
+                });
                 
                 // Initialize based on current text content
                 updateAnimationOptimizeButton();
@@ -553,8 +565,14 @@ class SnapMagicApp {
                 // Try to find elements in the entire document
                 const allTextareas = document.querySelectorAll('textarea');
                 const allButtons = document.querySelectorAll('button');
-                console.log('🔍 All textareas found:', Array.from(allTextareas).map(t => t.id));
-                console.log('🔍 All buttons found:', Array.from(allButtons).map(b => b.id));
+                console.log('🔍 All textareas found:', Array.from(allTextareas).map(t => t.id || t.className));
+                console.log('🔍 All buttons found:', Array.from(allButtons).map(b => b.id || b.textContent?.trim()));
+                
+                // Try again with a longer delay
+                setTimeout(() => {
+                    console.log('🔄 Retrying animation button initialization...');
+                    this.initializeAnimationButtonWorkflow();
+                }, 1000);
             }
         }, 500); // 500ms delay to ensure DOM is ready
     }
@@ -593,6 +611,12 @@ class SnapMagicApp {
             this.elements.videoControls.classList.add('hidden');
             this.elements.videoResult.classList.add('hidden');
         }
+        
+        // Initialize animation button workflow when video tab is shown
+        console.log('🎬 Video tab updated - initializing animation button workflow');
+        setTimeout(() => {
+            this.initializeAnimationButtonWorkflow();
+        }, 200); // Small delay to ensure elements are fully rendered
     }
 
     // Authentication
