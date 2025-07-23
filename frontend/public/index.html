@@ -498,6 +498,27 @@
             transition: all 0.3s ease;
         }
 
+        /* Native search input styling for clear button */
+        .art-deco-search-input {
+            width: 100%;
+            height: 120px;
+            padding: 1.5rem;
+            background: var(--glass-black);
+            border: 2px solid var(--glass-border);
+            border-radius: 12px;
+            color: var(--text-cream);
+            font-family: var(--font-body);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            -webkit-appearance: none;
+        }
+
+        /* Style the native clear button */
+        .art-deco-search-input::-webkit-search-cancel-button {
+            -webkit-appearance: searchfield-cancel-button;
+            cursor: pointer;
+        }
+
         .art-deco-textarea:focus {
             outline: none;
             border-color: var(--art-deco-gold);
@@ -1166,9 +1187,9 @@
                 <!-- Prompt Input Area (hidden initially) -->
                 <div id="promptInputArea" class="hidden">
                     <div class="textarea-container">
-                        <textarea id="promptInput" class="art-deco-textarea" placeholder="Enter your prompt here..." oninput="updateCharCount('promptInput', 'promptCharCount', 1024)"></textarea>
+                        <textarea id="promptInput" class="art-deco-textarea" placeholder="Enter your prompt here..." maxlength="1024"></textarea>
                         <div id="promptCharCount" class="textarea-limit-indicator">0/1024</div>
-                        <button class="textarea-clear-btn" onclick="clearTextarea('promptInput')">CLEAR</button>
+                        <button class="textarea-clear-btn" id="promptClearBtn">CLEAR</button>
                     </div>
                     
                     <!-- Hidden buttons for original functionality -->
@@ -1249,9 +1270,9 @@
                             <div class="video-prompt-container">
                                 <div class="prompt-prefix">Animation Description:</div>
                                 <div class="textarea-container">
-                                    <textarea id="animationPrompt" class="art-deco-textarea video-prompt-input" placeholder="Describe how you want the card to be animated..." oninput="updateCharCount('animationPrompt', 'animationCharCount', 512)"></textarea>
+                                    <textarea id="animationPrompt" class="art-deco-textarea video-prompt-input" placeholder="Describe how you want the card to be animated..." maxlength="512"></textarea>
                                     <div id="animationCharCount" class="textarea-limit-indicator">0/512</div>
-                                    <button class="textarea-clear-btn" onclick="clearTextarea('animationPrompt')">CLEAR</button>
+                                    <button class="textarea-clear-btn" id="animationClearBtn">CLEAR</button>
                                 </div>
                             </div>
                             
@@ -1604,44 +1625,72 @@
     </script>
 
     <script>
-        // Update character count function
-        function updateCharCount(textareaId, counterId, maxChars) {
-            const textarea = document.getElementById(textareaId);
-            const counter = document.getElementById(counterId);
-            if (textarea && counter) {
-                const currentLength = textarea.value.length;
-                counter.textContent = `${currentLength}/${maxChars}`;
+        // Better approach: Dynamic character counting with event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            // Setup for main prompt textarea
+            const promptTextarea = document.getElementById('promptInput');
+            const promptCharCount = document.getElementById('promptCharCount');
+            const promptClearBtn = document.getElementById('promptClearBtn');
+            
+            if (promptTextarea && promptCharCount && promptClearBtn) {
+                const promptMaxLength = promptTextarea.getAttribute('maxlength');
                 
-                // Change color if approaching limit
-                if (currentLength > maxChars * 0.9) {
-                    counter.style.color = '#ff6b6b'; // Red when near limit
-                } else if (currentLength > maxChars * 0.7) {
-                    counter.style.color = '#ffa500'; // Orange when getting close
-                } else {
-                    counter.style.color = 'var(--text-cream)'; // Normal color
-                }
+                // Character count event listener
+                promptTextarea.addEventListener('input', function() {
+                    const currentLength = this.value.length;
+                    promptCharCount.textContent = `${currentLength}/${promptMaxLength}`;
+                    
+                    // Color coding
+                    if (currentLength > promptMaxLength * 0.9) {
+                        promptCharCount.style.color = '#ff6b6b'; // Red
+                    } else if (currentLength > promptMaxLength * 0.7) {
+                        promptCharCount.style.color = '#ffa500'; // Orange
+                    } else {
+                        promptCharCount.style.color = 'var(--text-cream)'; // Normal
+                    }
+                });
+                
+                // Clear button event listener
+                promptClearBtn.addEventListener('click', function() {
+                    promptTextarea.value = '';
+                    promptCharCount.textContent = `0/${promptMaxLength}`;
+                    promptCharCount.style.color = 'var(--text-cream)';
+                    promptTextarea.focus();
+                });
             }
-        }
-
-        // Clear textarea function
-        function clearTextarea(textareaId) {
-            const textarea = document.getElementById(textareaId);
-            if (textarea) {
-                textarea.value = '';
-                textarea.focus();
+            
+            // Setup for animation prompt textarea
+            const animationTextarea = document.getElementById('animationPrompt');
+            const animationCharCount = document.getElementById('animationCharCount');
+            const animationClearBtn = document.getElementById('animationClearBtn');
+            
+            if (animationTextarea && animationCharCount && animationClearBtn) {
+                const animationMaxLength = animationTextarea.getAttribute('maxlength');
                 
-                // Reset character counter
-                if (textareaId === 'promptInput') {
-                    updateCharCount('promptInput', 'promptCharCount', 1024);
-                } else if (textareaId === 'animationPrompt') {
-                    updateCharCount('animationPrompt', 'animationCharCount', 512);
-                }
+                // Character count event listener
+                animationTextarea.addEventListener('input', function() {
+                    const currentLength = this.value.length;
+                    animationCharCount.textContent = `${currentLength}/${animationMaxLength}`;
+                    
+                    // Color coding
+                    if (currentLength > animationMaxLength * 0.9) {
+                        animationCharCount.style.color = '#ff6b6b'; // Red
+                    } else if (currentLength > animationMaxLength * 0.7) {
+                        animationCharCount.style.color = '#ffa500'; // Orange
+                    } else {
+                        animationCharCount.style.color = 'var(--text-cream)'; // Normal
+                    }
+                });
                 
-                console.log(`✅ Cleared textarea: ${textareaId}`);
-            } else {
-                console.warn(`⚠️ Textarea not found: ${textareaId}`);
+                // Clear button event listener
+                animationClearBtn.addEventListener('click', function() {
+                    animationTextarea.value = '';
+                    animationCharCount.textContent = `0/${animationMaxLength}`;
+                    animationCharCount.style.color = 'var(--text-cream)';
+                    animationTextarea.focus();
+                });
             }
-        }
+        });
     </script>
 
     <script>
