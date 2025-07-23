@@ -508,39 +508,55 @@ class SnapMagicApp {
     initializeAnimationButtonWorkflow() {
         console.log('🎬 Initializing animation button workflow...');
         
-        // Get animation prompt elements
-        const animationPromptElement = document.getElementById('animationPrompt');
-        const optimizeAnimationPromptBtn = document.getElementById('optimizeAnimationPromptBtn');
-        
-        if (animationPromptElement && optimizeAnimationPromptBtn) {
-            console.log('🔧 Setting up animation optimize button workflow');
+        // Add a small delay to ensure DOM elements are fully rendered
+        setTimeout(() => {
+            // Get animation prompt elements
+            const animationPromptElement = document.getElementById('animationPrompt');
+            const optimizeAnimationPromptBtn = document.getElementById('optimizeAnimationPromptBtn');
             
-            const updateAnimationOptimizeButton = () => {
-                const hasMinText = animationPromptElement.value.trim().length >= 10;
-                console.log(`🔧 Animation prompt length: ${animationPromptElement.value.trim().length}, hasMinText: ${hasMinText}`);
-                optimizeAnimationPromptBtn.disabled = !hasMinText;
-                if (hasMinText) {
-                    optimizeAnimationPromptBtn.classList.remove('disabled');
-                    console.log('✅ Animation optimize button enabled');
-                } else {
-                    optimizeAnimationPromptBtn.classList.add('disabled');
-                    console.log('❌ Animation optimize button disabled');
-                }
-            };
-            
-            // Add event listener for text input
-            animationPromptElement.addEventListener('input', updateAnimationOptimizeButton);
-            
-            // Initialize based on current text content
-            updateAnimationOptimizeButton();
-            
-            console.log('✅ Animation button workflow initialized successfully');
-        } else {
-            console.error('❌ Animation prompt elements not found:', {
+            console.log('🔍 Checking for animation elements:', {
                 animationPromptElement: !!animationPromptElement,
-                optimizeAnimationPromptBtn: !!optimizeAnimationPromptBtn
+                optimizeAnimationPromptBtn: !!optimizeAnimationPromptBtn,
+                animationPromptVisible: animationPromptElement ? !animationPromptElement.offsetParent === null : false,
+                optimizeButtonVisible: optimizeAnimationPromptBtn ? !optimizeAnimationPromptBtn.offsetParent === null : false
             });
-        }
+            
+            if (animationPromptElement && optimizeAnimationPromptBtn) {
+                console.log('🔧 Setting up animation optimize button workflow');
+                
+                const updateAnimationOptimizeButton = () => {
+                    const hasMinText = animationPromptElement.value.trim().length >= 10;
+                    console.log(`🔧 Animation prompt length: ${animationPromptElement.value.trim().length}, hasMinText: ${hasMinText}`);
+                    optimizeAnimationPromptBtn.disabled = !hasMinText;
+                    if (hasMinText) {
+                        optimizeAnimationPromptBtn.classList.remove('disabled');
+                        console.log('✅ Animation optimize button enabled');
+                    } else {
+                        optimizeAnimationPromptBtn.classList.add('disabled');
+                        console.log('❌ Animation optimize button disabled');
+                    }
+                };
+                
+                // Add event listener for text input
+                animationPromptElement.addEventListener('input', updateAnimationOptimizeButton);
+                
+                // Initialize based on current text content
+                updateAnimationOptimizeButton();
+                
+                console.log('✅ Animation button workflow initialized successfully');
+            } else {
+                console.error('❌ Animation prompt elements not found after delay:', {
+                    animationPromptElement: !!animationPromptElement,
+                    optimizeAnimationPromptBtn: !!optimizeAnimationPromptBtn
+                });
+                
+                // Try to find elements in the entire document
+                const allTextareas = document.querySelectorAll('textarea');
+                const allButtons = document.querySelectorAll('button');
+                console.log('🔍 All textareas found:', Array.from(allTextareas).map(t => t.id));
+                console.log('🔍 All buttons found:', Array.from(allButtons).map(b => b.id));
+            }
+        }, 500); // 500ms delay to ensure DOM is ready
     }
 
     // Tab Management
