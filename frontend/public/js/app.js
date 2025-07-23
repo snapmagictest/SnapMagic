@@ -328,7 +328,6 @@ class SnapMagicApp {
             downloadBtn: document.getElementById('downloadBtn'),
             printBtn: document.getElementById('printBtn'),
             createAnotherBtn: document.getElementById('createAnotherBtn'),
-            enterCompetitionBtn: document.getElementById('enterCompetitionBtn'),
             shareLinkedInBtn: document.getElementById('shareLinkedInBtn'),
             
             // Video generation
@@ -481,8 +480,7 @@ class SnapMagicApp {
             updateOptimizeButton();
         }
         
-        // Competition and sharing
-        this.elements.enterCompetitionBtn.addEventListener('click', () => this.handleEnterCompetition());
+        // Sharing
         this.elements.shareLinkedInBtn.addEventListener('click', () => this.handleShareLinkedIn());
         
         // Gallery navigation
@@ -2124,17 +2122,6 @@ class SnapMagicApp {
     }
 
     // Competition Feature Handlers
-    handleEnterCompetition() {
-        console.log('🏆 Opening competition entry modal');
-        if (!this.generatedCardData) {
-            this.showError('Please generate a card first before entering the competition!');
-            return;
-        }
-        
-        this.elements.competitionModal.classList.remove('hidden');
-        this.elements.phoneInput.focus();
-    }
-
     handleCompetitionCancel() {
         console.log('❌ Competition entry cancelled');
         this.elements.competitionModal.classList.add('hidden');
