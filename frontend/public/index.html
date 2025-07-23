@@ -516,8 +516,8 @@
 
         .textarea-clear-btn {
             position: absolute;
-            bottom: 8px;
-            right: 8px;
+            bottom: 4px;
+            right: 4px;
             background: rgba(212, 175, 55, 0.2);
             border: 1px solid rgba(212, 175, 55, 0.4);
             border-radius: 4px;
@@ -528,6 +528,21 @@
             transition: all 0.2s ease;
             z-index: 10;
             font-weight: bold;
+        }
+
+        .textarea-limit-indicator {
+            position: absolute;
+            bottom: 4px;
+            right: 50px;
+            background: rgba(139, 69, 19, 0.2);
+            border: 1px solid rgba(139, 69, 19, 0.4);
+            border-radius: 4px;
+            color: var(--text-cream);
+            font-size: 0.65rem;
+            padding: 2px 5px;
+            z-index: 10;
+            font-weight: bold;
+            opacity: 0.8;
         }
 
         .textarea-clear-btn:hover {
@@ -1151,6 +1166,7 @@
                 <div id="promptInputArea" class="hidden">
                     <div class="textarea-container">
                         <textarea id="promptInput" class="art-deco-textarea" placeholder="Enter your prompt here..."></textarea>
+                        <div class="textarea-limit-indicator">512 chars</div>
                         <button class="textarea-clear-btn" onclick="clearTextarea('promptInput')">CLEAR</button>
                     </div>
                     
@@ -1233,6 +1249,7 @@
                                 <div class="prompt-prefix">Animation Description:</div>
                                 <div class="textarea-container">
                                     <textarea id="animationPrompt" class="art-deco-textarea video-prompt-input" placeholder="Describe how you want the card to be animated..."></textarea>
+                                    <div class="textarea-limit-indicator">256 chars</div>
                                     <button class="textarea-clear-btn" onclick="clearTextarea('animationPrompt')">CLEAR</button>
                                 </div>
                             </div>
