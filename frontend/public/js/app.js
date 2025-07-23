@@ -284,6 +284,9 @@ class SnapMagicApp {
         // Get DOM elements
         this.getElements();
         
+        // Configure optional features
+        this.configureOptionalFeatures();
+        
         // Setup event listeners
         this.setupEventListeners();
         
@@ -390,6 +393,34 @@ class SnapMagicApp {
             printSuccessModal: document.getElementById('printSuccessModal'),
             printSuccessOkBtn: document.getElementById('printSuccessOkBtn')
         };
+    }
+
+    /**
+     * Configure optional features based on configuration
+     */
+    configureOptionalFeatures() {
+        console.log('🔧 Configuring optional features...');
+        
+        // Configure print button visibility
+        const printEnabled = window.SNAPMAGIC_CONFIG?.PRINT_ENABLED === true || window.SNAPMAGIC_CONFIG?.PRINT_ENABLED === 'true';
+        const printBtn = document.getElementById('printBtn');
+        
+        if (printBtn) {
+            if (printEnabled) {
+                console.log('✅ Print feature enabled - showing print button');
+                printBtn.style.display = '';
+            } else {
+                console.log('❌ Print feature disabled - hiding print button');
+                printBtn.style.display = 'none';
+            }
+        } else {
+            console.warn('⚠️ Print button element not found');
+        }
+        
+        console.log('🔧 Optional features configured:', {
+            printEnabled: printEnabled,
+            printButtonVisible: printBtn ? printBtn.style.display !== 'none' : false
+        });
     }
 
     setupEventListeners() {

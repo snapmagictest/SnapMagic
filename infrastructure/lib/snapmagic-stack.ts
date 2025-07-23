@@ -66,6 +66,15 @@ frontend:
         - echo "Verifying template replacement worked:"
         - if grep -q "PLACEHOLDER_TEMPLATE_CONFIG" public/index.html; then echo "ERROR: Template placeholder still exists!"; exit 1; fi
         - echo "✅ Template config replacement successful"
+        - echo "Configuring Print Feature..."
+        - echo "SNAPMAGIC_PRINT_ENABLED is set to: $SNAPMAGIC_PRINT_ENABLED"
+        - echo "Before print feature replacement:"
+        - grep -n "PLACEHOLDER_PRINT_ENABLED" public/index.html || echo "Could not find print placeholder"
+        - sed -i "s|PLACEHOLDER_PRINT_ENABLED|$SNAPMAGIC_PRINT_ENABLED|g" public/index.html
+        - echo "After print feature replacement:"
+        - echo "Verifying print feature replacement worked:"
+        - if grep -q "PLACEHOLDER_PRINT_ENABLED" public/index.html; then echo "ERROR: Print placeholder still exists!"; exit 1; fi
+        - echo "✅ Print feature replacement successful"
     build:
       commands:
         - echo "Frontend is already built - copying static files"
@@ -344,6 +353,10 @@ frontend:
         {
           name: 'SNAPMAGIC_API_URL',
           value: snapMagicApiGateway.url
+        },
+        {
+          name: 'SNAPMAGIC_PRINT_ENABLED',
+          value: String(inputs.app?.features?.print || false)
         },
         {
           name: 'SNAPMAGIC_TEMPLATE_CONFIG',
