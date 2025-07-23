@@ -419,7 +419,7 @@ class SnapMagicApp {
         document.getElementById('optimizePromptBtn').addEventListener('click', () => this.handleOptimizePrompt());
         
         // Enable/disable optimize button based on text input - with null checks
-        const userPromptElement = document.getElementById('userPrompt');
+        const userPromptElement = this.elements.promptInput; // Use correct element reference
         if (userPromptElement) {
             const updateOptimizeButton = () => {
                 const optimizeBtn = document.getElementById('optimizePromptBtn');
