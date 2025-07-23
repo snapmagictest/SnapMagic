@@ -70,7 +70,7 @@ frontend:
         - echo "SNAPMAGIC_PRINT_ENABLED is set to: $SNAPMAGIC_PRINT_ENABLED"
         - echo "Before print feature replacement:"
         - grep -n "PLACEHOLDER_PRINT_ENABLED" public/index.html || echo "Could not find print placeholder"
-        - sed -i "s|PLACEHOLDER_PRINT_ENABLED|$SNAPMAGIC_PRINT_ENABLED|g" public/index.html
+        - sed -i "s|'PLACEHOLDER_PRINT_ENABLED'|$SNAPMAGIC_PRINT_ENABLED|g" public/index.html
         - echo "After print feature replacement:"
         - echo "Verifying print feature replacement worked:"
         - if grep -q "PLACEHOLDER_PRINT_ENABLED" public/index.html; then echo "ERROR: Print placeholder still exists!"; exit 1; fi

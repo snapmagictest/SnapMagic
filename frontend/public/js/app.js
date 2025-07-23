@@ -402,7 +402,8 @@ class SnapMagicApp {
         console.log('🔧 Configuring optional features...');
         
         // Configure print button visibility
-        const printEnabled = window.SNAPMAGIC_CONFIG?.PRINT_ENABLED === true || window.SNAPMAGIC_CONFIG?.PRINT_ENABLED === 'true';
+        const printEnabled = window.SNAPMAGIC_CONFIG?.PRINT_ENABLED === true || 
+                            window.SNAPMAGIC_CONFIG?.PRINT_ENABLED === 'true';
         const printBtn = document.getElementById('printBtn');
         
         if (printBtn) {
@@ -418,6 +419,7 @@ class SnapMagicApp {
         }
         
         console.log('🔧 Optional features configured:', {
+            printConfigValue: window.SNAPMAGIC_CONFIG?.PRINT_ENABLED,
             printEnabled: printEnabled,
             printButtonVisible: printBtn ? printBtn.style.display !== 'none' : false
         });
