@@ -643,9 +643,10 @@
         }
 
         .card-display {
-            max-width: 450px;
+            /* EXPAND SPACE 4: Fill SPACE 3 as much as possible */
+            max-width: calc(100% - 1rem); /* <-- --> Fill width minus small margin */
             width: 100%;
-            margin: 0 auto 1rem;
+            margin: 0.5rem auto; /* ^up Minimize top margin, center horizontally */
             position: relative;
             /* Prevent blank canvas on oversized screens */
             min-width: 300px;
@@ -669,34 +670,34 @@
 
         /* Trading Card Gallery Responsive Design */
         
-        /* Large Desktop (≥1200px) - Comfortable layout */
+        /* Large Desktop (≥1200px) - Fill SPACE 3 completely */
         @media (min-width: 1200px) {
             .main-container {
                 max-width: 1200px;
             }
             .card-display {
-                max-width: 450px;
+                max-width: calc(100% - 1rem); /* Fill SPACE 3 <-- --> */
             }
         }
         
-        /* Tablet (768px-1199px) - Medium layout */
+        /* Tablet (768px-1199px) - Fill SPACE 3 completely */
         @media (max-width: 1199px) and (min-width: 768px) {
             .main-container {
                 max-width: 100%;
                 padding: 90px 2rem 2rem;
             }
             .card-display {
-                max-width: 400px;
+                max-width: calc(100% - 1rem); /* Fill SPACE 3 <-- --> */
             }
         }
         
-        /* Mobile (≤767px) - Compact layout with proper containment */
+        /* Mobile (≤767px) - Fill SPACE 3 completely with proper containment */
         @media (max-width: 767px) {
             .main-container {
                 padding: 80px 1rem 1rem;
             }
             .card-display {
-                max-width: calc(100vw - 6rem); /* Account for main + art-deco + gallery padding */
+                max-width: calc(100% - 0.5rem); /* Fill SPACE 3 <-- --> on mobile */
                 min-width: 280px;
             }
             .art-deco-section {
@@ -710,7 +711,7 @@
         .result-section img,
         .result-image {
             width: 100%;
-            max-width: 420px; /* Increased to match bigger card size */
+            max-width: calc(100% - 1rem); /* Fill available space <-- --> */
             border-radius: 15px;
             margin-bottom: 0; /* SPACE 5: Minimize bottom margin to get close to SPACE 4 */
             transition: all 0.4s ease;

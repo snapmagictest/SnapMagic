@@ -1284,9 +1284,9 @@ class SnapMagicApp {
         }
 
         .snapmagic-card {
-            /* BIGGER trading card dimensions - actual size increase */
+            /* MAXIMIZE card within expanded SPACE 4 */
             width: 100%;
-            max-width: 420px; /* Increased from 350px - 20% bigger */
+            max-width: calc(100% - 1rem); /* Fill SPACE 4 <-- --> minus small margin */
             /* Fixed aspect ratio for consistent trading card appearance */
             aspect-ratio: 5/8;
             position: relative;
@@ -1613,26 +1613,27 @@ class SnapMagicApp {
             object-fit: contain;
         }
 
-        /* Trading Card Responsive Sizing - BIGGER Dimensions */
+        /* Trading Card Responsive Sizing - MAXIMIZE within SPACE 4 */
         
-        /* Large Desktop (≥1200px) - BIGGER cards in 450px gallery */
+        /* Large Desktop (≥1200px) - Fill expanded SPACE 4 */
         @media (min-width: 1200px) {
             .snapmagic-card {
-                max-width: 420px; /* Increased from 350px - 20% bigger */
+                max-width: calc(100% - 1rem); /* Fill available SPACE 4 <-- --> */
             }
         }
         
-        /* Tablet (768px-1199px) - BIGGER cards in 400px gallery */
+        /* Tablet (768px-1199px) - Fill expanded SPACE 4 */
         @media (max-width: 1199px) and (min-width: 768px) {
             .snapmagic-card {
-                max-width: 380px; /* Increased from 320px - 19% bigger */
+                max-width: calc(100% - 1rem); /* Fill available SPACE 4 <-- --> */
             }
         }
         
-        /* Mobile (≤767px) - BIGGER cards within calculated gallery width */
+        /* Mobile (≤767px) - Fill expanded SPACE 4 with containment */
         @media (max-width: 767px) {
             .snapmagic-card {
-                max-width: min(320px, calc(100vw - 8rem)); /* Increased from 280px - 14% bigger */
+                max-width: calc(100% - 0.5rem); /* Fill available SPACE 4 <-- --> */
+                min-width: 280px; /* Ensure readability on tiny screens */
             }
         }
 
