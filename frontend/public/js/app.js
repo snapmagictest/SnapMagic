@@ -1119,107 +1119,122 @@ class SnapMagicApp {
     async displayGeneratedCard(data, userName = '') {
         const novaImageBase64 = data.result; // Raw Nova Canvas image
         const userPrompt = this.elements.promptInput.value.trim();
+        const aiImageSrc = `data:image/png;base64,${novaImageBase64}`;
         
         try {
-            console.log('🎴 Starting card display process...');
+            console.log('🎴 Creating holographic trading card...');
             
-            // Check if Premium Template System is available
-            if (typeof window.PremiumTemplateSystem === 'undefined') {
-                console.warn('⚠️ Premium Template System not loaded, using fallback');
-                throw new Error('Premium Template System not available');
-            }
+            // Create the beautiful holographic card directly
+            const cardHTML = this.createHolographicCard(aiImageSrc, userName, userPrompt);
             
-            console.log('🎴 Initializing Premium Template System...');
-            
-            // Initialize PREMIUM template system
-            if (!this.premiumTemplateSystem) {
-                this.premiumTemplateSystem = new window.PremiumTemplateSystem();
-                await this.premiumTemplateSystem.init();
-            }
-            
-            // Extract creator info from userName or use defaults
-            const creatorInfo = this.parseCreatorInfo(userName);
-            
-            console.log(`🎨 Generating premium card for: ${creatorInfo.name} (${creatorInfo.title})`);
-            
-            // Generate premium trading card with real data
-            const premiumResult = await this.premiumTemplateSystem.generatePremiumCard(
-                `data:image/png;base64,${novaImageBase64}`,
-                creatorInfo.name,
-                creatorInfo.title,
-                userPrompt
-            );
-            
-            if (premiumResult.success) {
-                console.log('✅ Premium card generated successfully!');
-                console.log('📊 Card metadata:', premiumResult.metadata);
-                
-                // Store the premium card data
-                this.generatedCardData = {
-                    ...data,
-                    novaImageBase64: novaImageBase64,
-                    premiumCardHTML: premiumResult.cardHTML,
-                    premiumImageData: premiumResult.premiumImageData,
-                    finalImageSrc: premiumResult.premiumImageData,
-                    metadata: premiumResult.metadata
-                };
-                
-                // Add to user's gallery
-                this.addCardToGallery(this.generatedCardData);
-                
-                // Store the premium card in S3
-                const base64Data = premiumResult.premiumImageData.replace(/^data:image\/png;base64,/, '');
-                await this.storeFinalCardInS3(base64Data, userPrompt, userName);
-                
-                // Display the premium card HTML directly for interactive effects
-                this.elements.resultContainer.innerHTML = premiumResult.cardHTML;
-                
-                console.log('🎯 Premium card displayed with holographic effects!');
-                
-            } else {
-                throw new Error(premiumResult.error);
-            }
-            
-            this.elements.resultActions.classList.remove('hidden');
-            
-        } catch (error) {
-            console.error('❌ Premium card generation failed:', error);
-            console.log('🔄 Falling back to basic card display...');
-            
-            // Fallback to basic display with enhanced styling
-            const imageSrc = data.imageSrc || `data:image/png;base64,${data.result}`;
-            
-            // Store basic card data
+            // Store the card data
             this.generatedCardData = {
                 ...data,
                 novaImageBase64: novaImageBase64,
-                finalImageSrc: imageSrc
+                finalImageSrc: aiImageSrc,
+                cardHTML: cardHTML
             };
             
             // Add to user's gallery
             this.addCardToGallery(this.generatedCardData);
             
-            // Display with enhanced styling
+            // Store in S3
+            await this.storeFinalCardInS3(novaImageBase64, userPrompt, userName);
+            
+            // Display the holographic card
+            this.elements.resultContainer.innerHTML = cardHTML;
+            
+            console.log('✅ Holographic card displayed successfully!');
+            
+        } catch (error) {
+            console.error('❌ Card display failed:', error);
+            
+            // Simple fallback
+            const imageSrc = data.imageSrc || `data:image/png;base64,${data.result}`;
             this.elements.resultContainer.innerHTML = `
-                <div style="max-width: 400px; margin: 20px auto; border-radius: 15px; overflow: hidden; 
-                           box-shadow: 0 10px 30px rgba(0,0,0,0.3); border: 2px solid rgba(255,153,0,0.3);">
-                    <img src="${imageSrc}" alt="Generated Trading Card" class="result-image" 
-                         style="width: 100%; height: auto; display: block;">
-                </div>
-                <p class="error-text" style="color: #ff6b6b; text-align: center; margin-top: 10px;">
-                    Premium template unavailable. Showing AI-generated image with enhanced styling.
-                </p>
+                <img src="${imageSrc}" alt="Generated Trading Card" class="result-image">
             `;
             
-            this.elements.resultActions.classList.remove('hidden');
-            
-            // Store the raw Nova Canvas image as fallback
-            try {
-                await this.storeFinalCardInS3(novaImageBase64, userPrompt, userName);
-            } catch (storageError) {
-                console.warn('⚠️ Failed to store fallback card in S3:', storageError);
-            }
+            this.generatedCardData = { ...data, finalImageSrc: imageSrc };
+            this.addCardToGallery(this.generatedCardData);
+            await this.storeFinalCardInS3(novaImageBase64, userPrompt, userName);
         }
+        
+        this.elements.resultActions.classList.remove('hidden');
+    }
+    
+    /**
+     * Create holographic trading card with Nova image
+     */
+    createHolographicCard(aiImageSrc, userName, userPrompt) {
+        // Parse creator info
+        const creatorName = userName || 'AWS User';
+        const creatorTitle = 'Cloud Enthusiast';
+        
+        // Discover logos (simple check)
+        const logoElements = this.createLogoElements();
+        
+        return `
+        <div class="snapmagic-card animated" id="holoCard">
+            <style>
+                ${this.getCardCSS()}
+            </style>
+            
+            <div class="card-content">
+                <!-- 1. Powered by AWS Header -->
+                <div class="powered-by-aws">
+                    ⚡ Powered by AWS ⚡
+                </div>
+
+                <!-- 2. AI Generated Image -->
+                <div class="card-image">
+                    <img src="${aiImageSrc}" alt="AI Generated Trading Card" 
+                         style="width: 100%; height: 100%; object-fit: contain; border-radius: 8px; 
+                                image-rendering: -webkit-optimize-contrast; image-rendering: crisp-edges;">
+                </div>
+
+                <!-- 3. Event Name -->
+                <div class="event-name">
+                    AWS re:Invent 2024
+                </div>
+
+                <!-- 4. Logo and Creator Section -->
+                <div class="card-footer">
+                    <div class="event-logo" title="AWS">
+                        <img src="/powered-by-aws-white.png" alt="AWS" onerror="this.parentElement.innerHTML='AWS'">
+                    </div>
+                    <div class="bedrock-logo" title="Amazon Bedrock">
+                        <img src="/bedrock-logo.svg" alt="Bedrock" onerror="this.parentElement.innerHTML='BR'">
+                    </div>
+                    <div class="creator-info">
+                        <div class="creator-name">${creatorName}</div>
+                        <div class="creator-title">${creatorTitle}</div>
+                    </div>
+                </div>
+
+                <!-- 5. Footer with Customer Logos -->
+                <div class="powered-by-aws-footer">
+                    ${logoElements}
+                </div>
+            </div>
+        </div>`;
+    }
+    
+    /**
+     * Create footer logo elements
+     */
+    createLogoElements() {
+        // Simple logo check - try 1.png, 2.png, 3.png
+        const logos = [];
+        for (let i = 1; i <= 3; i++) {
+            logos.push(`
+                <div class="footer-logo" title="Logo ${i}">
+                    <img src="/logos/${i}.png" alt="Logo ${i}" onerror="this.style.display='none'">
+                </div>
+            `);
+        }
+        
+        return logos.join('') || '<div class="no-logos-text">⚡ Powered by AWS ⚡</div>';
     }
     
     /**
@@ -1247,6 +1262,375 @@ class SnapMagicApp {
             name: userName.trim(),
             title: 'Cloud Enthusiast'
         };
+    }
+    
+    /**
+     * Get the holographic card CSS (from our perfected template)
+     */
+    getCardCSS() {
+        return `
+        :root {
+            --aws-orange: #FF9900;
+            --aws-blue: #4B9CD3;
+            --aws-dark: #232F3E;
+            --holo-color1: #FF9900;
+            --holo-color2: #4B9CD3;
+            --holo-color3: #DAA520;
+            --holo-color4: #E67E22;
+            --holo-color5: #FF7F50;
+        }
+
+        .snapmagic-card {
+            width: 300px;
+            height: 480px;
+            position: relative;
+            overflow: hidden;
+            border-radius: 15px;
+            background: linear-gradient(145deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            border: 2px solid rgba(255, 153, 0, 0.3);
+            cursor: pointer;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            margin: 20px auto;
+        }
+
+        .snapmagic-card.animated {
+            box-shadow: 
+                -5px -5px 5px -5px var(--holo-color3), 
+                5px 5px 5px -5px var(--holo-color2), 
+                0 55px 35px -20px rgba(0, 0, 0, 0.5);
+            animation: autoFloat 8s ease-in-out infinite;
+        }
+
+        @keyframes autoFloat {
+            0%, 100% {
+                transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg);
+                box-shadow: 
+                    -5px -5px 5px -5px var(--holo-color3), 
+                    5px 5px 5px -5px var(--holo-color2), 
+                    0 55px 35px -20px rgba(0, 0, 0, 0.5);
+            }
+            25% {
+                transform: rotateX(2deg) rotateY(-3deg) rotateZ(0.5deg);
+                box-shadow: 
+                    -15px -15px 20px -15px var(--holo-color4), 
+                    15px 15px 20px -15px var(--holo-color1), 
+                    0 0 8px 2px rgba(255,100,50,0.3),
+                    0 55px 35px -20px rgba(0, 0, 0, 0.5);
+            }
+            50% {
+                transform: rotateX(-1deg) rotateY(4deg) rotateZ(-0.3deg);
+                box-shadow: 
+                    -10px -10px 15px -10px var(--holo-color5), 
+                    10px 10px 15px -10px var(--holo-color2), 
+                    0 0 10px 3px rgba(255,69,0,0.4),
+                    0 55px 35px -20px rgba(0, 0, 0, 0.5);
+            }
+            75% {
+                transform: rotateX(3deg) rotateY(2deg) rotateZ(0.8deg);
+                box-shadow: 
+                    -15px -15px 20px -15px var(--holo-color1), 
+                    15px 15px 20px -15px var(--holo-color2), 
+                    0 0 4px 1px rgba(220,20,60,0.08),
+                    0 55px 35px -20px rgba(0, 0, 0, 0.5);
+            }
+        }
+
+        .snapmagic-card.animated:before,
+        .snapmagic-card.animated:after {
+            content: "";
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            top: 0;
+            background-repeat: no-repeat;
+            pointer-events: none;
+        }
+
+        .snapmagic-card.animated:before {
+            background-size: 300% 300%;
+            background-image: linear-gradient(
+                115deg,
+                transparent 0%,
+                var(--holo-color4) 15%,
+                var(--holo-color1) 25%,
+                var(--holo-color5) 35%,
+                transparent 47%,
+                transparent 53%,
+                var(--holo-color2) 65%,
+                var(--holo-color3) 75%,
+                var(--holo-color4) 85%,
+                transparent 100%
+            );
+            opacity: .3;
+            filter: brightness(.7) contrast(1.2);
+            z-index: 1;
+            animation: autoGradientSweep 6s ease-in-out infinite;
+        }
+
+        .snapmagic-card.animated:after {
+            opacity: 1;
+            background-image: 
+                linear-gradient(125deg, 
+                    #FFD70020 10%, 
+                    #FFA50025 20%, 
+                    #FF8C0018 30%, 
+                    #ffff0025 40%, 
+                    #DAA52010 50%, 
+                    #00ff8a15 60%, 
+                    #00cfff30 70%, 
+                    #FFB84D25 80%, 
+                    #cc4cfa35 90%);
+            background-size: 160%;
+            background-blend-mode: overlay;
+            z-index: 2;
+            filter: brightness(1.1) contrast(1.1);
+            mix-blend-mode: color-dodge;
+            opacity: .3;
+            animation: autoSparkleMove 10s ease-in-out infinite;
+        }
+
+        @keyframes autoGradientSweep {
+            0%, 100% {
+                background-position: 0% 0%;
+                opacity: 0.3;
+                filter: brightness(.7) contrast(1.2);
+            }
+            20% {
+                background-position: 100% 100%;
+                opacity: 0.5;
+                filter: brightness(.9) contrast(1.4);
+            }
+            40% {
+                background-position: 0% 100%;
+                opacity: 0.4;
+                filter: brightness(.6) contrast(1.1);
+            }
+            60% {
+                background-position: 100% 0%;
+                opacity: 0.6;
+                filter: brightness(1) contrast(1.5);
+            }
+            80% {
+                background-position: 50% 50%;
+                opacity: 0.4;
+                filter: brightness(.6) contrast(1.0);
+            }
+        }
+
+        @keyframes autoSparkleMove {
+            0%, 100% {
+                background-position: 50% 50%;
+                opacity: 0.3;
+                filter: brightness(1.1) contrast(1.1);
+            }
+            15% {
+                background-position: 30% 70%;
+                opacity: 0.4;
+                filter: brightness(1.3) contrast(1.3);
+            }
+            30% {
+                background-position: 70% 30%;
+                opacity: 0.2;
+                filter: brightness(.9) contrast(.9);
+            }
+            45% {
+                background-position: 20% 40%;
+                opacity: 0.8;
+                filter: brightness(1.1) contrast(1.1);
+            }
+            60% {
+                background-position: 80% 60%;
+                opacity: 0.3;
+                filter: brightness(1) contrast(1);
+            }
+            75% {
+                background-position: 40% 80%;
+                opacity: 0.4;
+                filter: brightness(1.2) contrast(1.2);
+            }
+            90% {
+                background-position: 60% 20%;
+                opacity: 0.5;
+                filter: brightness(0.9) contrast(0.9);
+            }
+        }
+
+        .card-content {
+            position: relative;
+            z-index: 3;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            color: white;
+            padding: 15px;
+        }
+
+        .powered-by-aws {
+            text-align: center;
+            padding: 8px 0;
+            background: 
+                radial-gradient(ellipse at top, #4a5568 0%, #2d3748 30%, #1a202c 60%, #000000 100%),
+                linear-gradient(45deg, transparent 30%, rgba(113, 128, 150, 0.1) 50%, transparent 70%),
+                linear-gradient(-45deg, transparent 30%, rgba(113, 128, 150, 0.1) 50%, transparent 70%);
+            background-size: 100% 100%, 20px 20px, 20px 20px;
+            background-position: center, 0 0, 10px 10px;
+            margin: -15px -15px 15px -15px;
+            font-size: 12px;
+            font-weight: bold;
+            color: white;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.6);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card-image {
+            flex: 1;
+            background: #2a2a3e;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            position: relative;
+            overflow: hidden;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 200px;
+        }
+
+        .event-name {
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: var(--aws-orange);
+            text-shadow: 0 0 5px rgba(255, 153, 0, 0.3);
+            line-height: 1.2;
+        }
+
+        .card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            margin-bottom: 0px;
+        }
+
+        .event-logo, .bedrock-logo {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(145deg, rgba(255,255,255,0.3), rgba(255,255,255,0.1));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: white;
+            font-weight: bold;
+            border: 1px solid rgba(255,255,255,0.3);
+            transition: all 0.3s ease;
+            box-shadow: 
+                3px 3px 8px rgba(0,0,0,0.5),
+                -2px -2px 6px rgba(255,255,255,0.15),
+                inset 1px 1px 3px rgba(255,255,255,0.2),
+                inset -1px -1px 3px rgba(0,0,0,0.2);
+        }
+
+        .bedrock-logo {
+            margin-left: 8px;
+            font-size: 10px;
+        }
+
+        .event-logo img, .bedrock-logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+        }
+
+        .creator-info {
+            text-align: right;
+            flex: 1;
+            margin-left: 15px;
+        }
+
+        .creator-name {
+            font-size: 14px;
+            font-weight: bold;
+            color: white;
+            margin-bottom: 2px;
+        }
+
+        .creator-title {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .powered-by-aws-footer {
+            text-align: center;
+            padding: 3px 0 7px 0;
+            background: 
+                radial-gradient(ellipse at bottom, #4a5568 0%, #2d3748 30%, #1a202c 60%, #000000 100%),
+                linear-gradient(45deg, transparent 30%, rgba(113, 128, 150, 0.1) 50%, transparent 70%),
+                linear-gradient(-45deg, transparent 30%, rgba(113, 128, 150, 0.1) 50%, transparent 70%);
+            background-size: 100% 100%, 20px 20px, 20px 20px;
+            background-position: center, 0 0, 10px 10px;
+            margin: 5px -15px 5px -15px;
+            font-size: 12px;
+            font-weight: bold;
+            color: white;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            min-height: auto;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .footer-logo {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(145deg, rgba(255,255,255,0.3), rgba(255,255,255,0.1));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: white;
+            font-weight: bold;
+            border: 1px solid rgba(255,255,255,0.3);
+            transition: all 0.3s ease;
+            box-shadow: 
+                3px 3px 8px rgba(0,0,0,0.5),
+                -2px -2px 6px rgba(255,255,255,0.15),
+                inset 1px 1px 3px rgba(255,255,255,0.2),
+                inset -1px -1px 3px rgba(0,0,0,0.2);
+        }
+
+        .footer-logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+        }
+
+        .no-logos-text {
+            font-size: 12px;
+            color: white;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        `;
     }
 
     async handleDownloadCard() {
