@@ -1284,8 +1284,11 @@ class SnapMagicApp {
         }
 
         .snapmagic-card {
-            width: 375px;
-            height: 600px;
+            /* Responsive sizing - scales with viewport */
+            width: min(375px, 90vw);
+            height: min(600px, 85vh);
+            max-width: 375px;
+            max-height: 600px;
             position: relative;
             overflow: hidden;
             border-radius: 15px;
@@ -1611,6 +1614,95 @@ class SnapMagicApp {
             color: white;
             text-transform: uppercase;
             letter-spacing: 1px;
+        }
+
+        /* Responsive Design for Mobile */
+        @media (max-width: 480px) {
+            .snapmagic-card {
+                width: 95vw;
+                height: auto;
+                min-height: 70vh;
+                max-height: 85vh;
+                margin: 10px auto;
+            }
+            
+            .event-logo, .bedrock-logo {
+                width: 40px;
+                height: 40px;
+            }
+            
+            .footer-logo {
+                width: 36px;
+                height: 36px;
+            }
+            
+            .event-name {
+                font-size: 16px;
+            }
+            
+            .creator-name {
+                font-size: 13px;
+            }
+            
+            .creator-title {
+                font-size: 10px;
+            }
+        }
+
+        /* Tablet optimization */
+        @media (max-width: 768px) and (min-width: 481px) {
+            .snapmagic-card {
+                width: min(350px, 85vw);
+                height: min(560px, 80vh);
+            }
+            
+            .event-logo, .bedrock-logo {
+                width: 45px;
+                height: 45px;
+            }
+            
+            .footer-logo {
+                width: 40px;
+                height: 40px;
+            }
+        }
+
+        /* Large screens - full size */
+        @media (min-width: 769px) {
+            .snapmagic-card {
+                width: 375px;
+                height: 600px;
+            }
+            
+            .event-logo, .bedrock-logo {
+                width: 50px;
+                height: 50px;
+            }
+            
+            .footer-logo {
+                width: 45px;
+                height: 45px;
+            }
+        }
+
+        /* CRITICAL: Override result-section CSS that breaks card dimensions */
+        .result-section .snapmagic-card {
+            width: min(375px, 90vw) !important;
+            height: min(600px, 85vh) !important;
+            max-width: 375px !important;
+            max-height: 600px !important;
+            margin: 20px auto !important;
+            border: 2px solid rgba(255, 153, 0, 0.3) !important;
+            border-image: none !important;
+            box-shadow: -5px -5px 5px -5px var(--holo-color3), 5px 5px 5px -5px var(--holo-color2), 0 55px 35px -20px rgba(0, 0, 0, 0.5) !important;
+        }
+
+        .result-section .snapmagic-card img {
+            width: auto !important;
+            max-width: 100% !important;
+            border: none !important;
+            border-image: none !important;
+            box-shadow: none !important;
         }
         `;
     }
