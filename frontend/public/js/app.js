@@ -1533,21 +1533,9 @@ class SnapMagicApp {
         .event-logo, .bedrock-logo {
             width: 40px;
             height: 40px;
-            background: linear-gradient(145deg, rgba(255,255,255,0.3), rgba(255,255,255,0.1));
-            border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 12px;
-            color: white;
-            font-weight: bold;
-            border: 1px solid rgba(255,255,255,0.3);
-            transition: all 0.3s ease;
-            box-shadow: 
-                3px 3px 8px rgba(0,0,0,0.5),
-                -2px -2px 6px rgba(255,255,255,0.15),
-                inset 1px 1px 3px rgba(255,255,255,0.2),
-                inset -1px -1px 3px rgba(0,0,0,0.2);
         }
 
         .bedrock-logo {
@@ -1558,8 +1546,7 @@ class SnapMagicApp {
         .event-logo img, .bedrock-logo img {
             width: 100%;
             height: 100%;
-            object-fit: cover;
-            border-radius: 50%;
+            object-fit: contain;
         }
 
         .creator-info {
