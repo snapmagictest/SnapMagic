@@ -2742,14 +2742,20 @@ class SnapMagicApp {
         // Load the selected card data
         this.generatedCardData = this.userGallery.cards[cardIndex];
         
-        // Update the display (same as current system)
-        const finalImageSrc = this.generatedCardData.finalImageSrc || 
-                              this.generatedCardData.imageSrc || 
-                              `data:image/png;base64,${this.generatedCardData.result}`;
+        // Get the AI image for template recreation
+        const aiImageSrc = this.generatedCardData.finalImageSrc || 
+                          this.generatedCardData.imageSrc || 
+                          `data:image/png;base64,${this.generatedCardData.result}`;
         
-        this.elements.resultContainer.innerHTML = `
-            <img src="${finalImageSrc}" alt="Generated Trading Card" class="result-image">
-        `;
+        // Extract user info from stored data (if available)
+        const userName = this.generatedCardData.userName || this.generatedCardData.user_name || 'AWS User';
+        const userPrompt = this.generatedCardData.prompt || this.generatedCardData.userPrompt || 'AI Generated Card';
+        
+        // CRITICAL FIX: Use the same template system as new cards
+        const cardHTML = this.createHolographicCard(aiImageSrc, userName, userPrompt);
+        
+        // Display with full template (same as new cards)
+        this.elements.resultContainer.innerHTML = cardHTML;
         
         // Show action buttons for gallery cards (same as newly generated cards)
         this.elements.resultActions.classList.remove('hidden');
@@ -2757,7 +2763,7 @@ class SnapMagicApp {
         // Update gallery navigation display
         this.updateGalleryDisplay();
         
-        console.log('✅ Card switched - all buttons now act on this displayed card');
+        console.log('✅ Gallery card displayed with full template - consistent with new cards');
     }
 
     /**
@@ -2863,11 +2869,20 @@ class SnapMagicApp {
                 if (this.userGallery.totalCards > 0) {
                     this.generatedCardData = this.userGallery.cards[this.userGallery.currentIndex];
                     
-                    // Update the display
-                    const finalImageSrc = this.generatedCardData.finalImageSrc || this.generatedCardData.imageSrc;
-                    this.elements.resultContainer.innerHTML = `
-                        <img src="${finalImageSrc}" alt="Generated Trading Card" class="result-image">
-                    `;
+                    // Get the AI image for template recreation
+                    const aiImageSrc = this.generatedCardData.finalImageSrc || 
+                                      this.generatedCardData.imageSrc || 
+                                      `data:image/png;base64,${this.generatedCardData.result}`;
+                    
+                    // Extract user info from stored data (if available)
+                    const userName = this.generatedCardData.userName || this.generatedCardData.user_name || 'AWS User';
+                    const userPrompt = this.generatedCardData.prompt || this.generatedCardData.userPrompt || 'AI Generated Card';
+                    
+                    // CRITICAL FIX: Use the same template system as new cards
+                    const cardHTML = this.createHolographicCard(aiImageSrc, userName, userPrompt);
+                    
+                    // Display with full template (same as new cards)
+                    this.elements.resultContainer.innerHTML = cardHTML;
                     
                     // Show action buttons for loaded gallery cards
                     this.elements.resultActions.classList.remove('hidden');
