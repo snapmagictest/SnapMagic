@@ -1198,23 +1198,26 @@ class SnapMagicApp {
                     AWS re:Invent 2024
                 </div>
 
-                <!-- 4. Logo and Creator Section -->
-                <div class="card-footer">
-                    <div class="event-logo" title="AWS">
-                        <img src="/powered-by-aws-white.png" alt="AWS" onerror="this.parentElement.innerHTML='AWS'">
+                <!-- Bottom section container -->
+                <div class="card-bottom-section">
+                    <!-- 4. Logo and Creator Section -->
+                    <div class="card-footer">
+                        <div class="event-logo" title="AWS">
+                            <img src="/powered-by-aws-white.png" alt="AWS" onerror="this.parentElement.innerHTML='AWS'">
+                        </div>
+                        <div class="bedrock-logo" title="Amazon Bedrock">
+                            <img src="/bedrock-logo.svg" alt="Bedrock" onerror="this.parentElement.innerHTML='BR'">
+                        </div>
+                        <div class="creator-info">
+                            <div class="creator-name">${creatorName}</div>
+                            <div class="creator-title">${creatorTitle}</div>
+                        </div>
                     </div>
-                    <div class="bedrock-logo" title="Amazon Bedrock">
-                        <img src="/bedrock-logo.svg" alt="Bedrock" onerror="this.parentElement.innerHTML='BR'">
-                    </div>
-                    <div class="creator-info">
-                        <div class="creator-name">${creatorName}</div>
-                        <div class="creator-title">${creatorTitle}</div>
-                    </div>
-                </div>
 
-                <!-- 5. Footer with Customer Logos -->
-                <div class="powered-by-aws-footer">
-                    ${logoElements}
+                    <!-- 5. Footer with Customer Logos -->
+                    <div class="powered-by-aws-footer">
+                        ${logoElements}
+                    </div>
                 </div>
             </div>
         </div>`;
@@ -1465,6 +1468,7 @@ class SnapMagicApp {
             flex-direction: column;
             color: white;
             padding: 15px;
+            justify-content: space-between;
         }
 
         .powered-by-aws {
@@ -1509,6 +1513,10 @@ class SnapMagicApp {
             color: var(--aws-orange);
             text-shadow: 0 0 5px rgba(255, 153, 0, 0.3);
             line-height: 1.2;
+        }
+
+        .card-bottom-section {
+            margin-top: auto;
         }
 
         .card-footer {
