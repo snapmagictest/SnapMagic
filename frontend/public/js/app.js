@@ -1290,6 +1290,10 @@ class SnapMagicApp {
             /* Fixed aspect ratio for consistent trading card appearance */
             aspect-ratio: 5/8;
             position: relative;
+            /* Ensure proper centering within gallery */
+            margin: 0 auto;
+            /* Prevent overflow from gallery */
+            box-sizing: border-box;
             overflow: hidden;
             border-radius: 15px;
             background: linear-gradient(145deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
@@ -1609,26 +1613,26 @@ class SnapMagicApp {
             object-fit: contain;
         }
 
-        /* Trading Card Responsive Sizing - Fixed Dimensions */
+        /* Trading Card Responsive Sizing - Gallery Contained */
         
-        /* Large Desktop (≥1200px) - Comfortable viewing size */
+        /* Large Desktop (≥1200px) - Fits within 450px gallery */
         @media (min-width: 1200px) {
             .snapmagic-card {
-                max-width: 350px;
+                max-width: 350px; /* Fits comfortably in 450px gallery */
             }
         }
         
-        /* Tablet (768px-1199px) - Medium trading card */
+        /* Tablet (768px-1199px) - Fits within 400px gallery */
         @media (max-width: 1199px) and (min-width: 768px) {
             .snapmagic-card {
-                max-width: 320px;
+                max-width: 320px; /* Fits comfortably in 400px gallery */
             }
         }
         
-        /* Mobile (≤767px) - Fits within gallery */
+        /* Mobile (≤767px) - Fits within calculated gallery width */
         @media (max-width: 767px) {
             .snapmagic-card {
-                max-width: min(280px, 85vw);
+                max-width: min(280px, calc(100vw - 8rem)); /* Never exceeds gallery bounds */
             }
         }
 

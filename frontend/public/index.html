@@ -635,10 +635,37 @@
             border-radius: 16px;
             padding: 2rem;
             border: 2px solid var(--glass-border);
+            /* Ensure proper containment */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
         }
 
-        /* Progressive Web App Responsive Design */
-        
+        .card-display {
+            max-width: 450px;
+            width: 100%;
+            margin: 0 auto 1rem;
+            position: relative;
+            /* Prevent blank canvas on oversized screens */
+            min-width: 300px;
+            /* Ensure proper centering within gallery */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Result Section Styling */
+        .result-section {
+            text-align: center;
+            margin: 1rem 0;
+            /* Ensure cards stay within gallery bounds */
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
         /* Trading Card Gallery Responsive Design */
         
         /* Large Desktop (≥1200px) - Comfortable layout */
@@ -662,14 +689,14 @@
             }
         }
         
-        /* Mobile (≤767px) - Compact layout with proper margins */
+        /* Mobile (≤767px) - Compact layout with proper containment */
         @media (max-width: 767px) {
             .main-container {
                 padding: 80px 1rem 1rem;
             }
             .card-display {
-                max-width: 95vw;
-                min-width: 300px;
+                max-width: calc(100vw - 6rem); /* Account for main + art-deco + gallery padding */
+                min-width: 280px;
             }
             .art-deco-section {
                 padding: 1rem;
@@ -677,21 +704,6 @@
             .card-gallery {
                 padding: 1rem;
             }
-        }
-
-        .card-display {
-            max-width: 450px;
-            width: 100%;
-            margin: 0 auto 1rem;
-            position: relative;
-            /* Prevent blank canvas on oversized screens */
-            min-width: 300px;
-        }
-
-        /* Result Section Styling */
-        .result-section {
-            text-align: center;
-            margin: 1rem 0;
         }
 
         .result-section img,
