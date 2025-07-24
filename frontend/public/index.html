@@ -639,54 +639,54 @@
 
         /* Progressive Web App Responsive Design */
         
-        /* Large Desktop (≥1400px) - Full size */
+        /* Large Desktop (≥1400px) - Viewport constrained */
         @media (min-width: 1400px) {
             .main-container {
                 max-width: 1400px;
             }
             .card-display {
-                max-width: 800px;
+                max-width: min(800px, 85vw);
             }
         }
         
-        /* Desktop (1200px-1399px) - Slightly smaller */
+        /* Desktop (1200px-1399px) - Balanced */
         @media (max-width: 1399px) and (min-width: 1200px) {
             .main-container {
                 max-width: 1200px;
             }
             .card-display {
-                max-width: 700px;
+                max-width: min(700px, 85vw);
             }
         }
         
-        /* Tablet Landscape (992px-1199px) - Medium size */
+        /* Tablet Landscape (992px-1199px) - Viewport optimized */
         @media (max-width: 1199px) and (min-width: 992px) {
             .main-container {
                 max-width: 100%;
                 padding: 90px 2rem 2rem;
             }
             .card-display {
-                max-width: 600px;
+                max-width: min(600px, 85vw);
             }
         }
         
-        /* Tablet Portrait (768px-991px) - Smaller */
+        /* Tablet Portrait (768px-991px) - Screen fit */
         @media (max-width: 991px) and (min-width: 768px) {
             .main-container {
                 padding: 90px 1.5rem 2rem;
             }
             .card-display {
-                max-width: 500px;
+                max-width: min(500px, 85vw);
             }
         }
         
-        /* Mobile Large (481px-767px) - Compact */
+        /* Mobile Large (481px-767px) - Screen optimized */
         @media (max-width: 767px) and (min-width: 481px) {
             .main-container {
                 padding: 80px 1rem 1rem;
             }
             .card-display {
-                max-width: 400px;
+                max-width: min(400px, 90vw);
             }
             .art-deco-section {
                 padding: 1.5rem;
@@ -696,7 +696,7 @@
             }
         }
         
-        /* Mobile Small (≤480px) - Minimal */
+        /* Mobile Small (≤480px) - Full screen friendly */
         @media (max-width: 480px) {
             .main-container {
                 padding: 80px 0.5rem 1rem;
@@ -728,7 +728,9 @@
         .result-section img,
         .result-image {
             width: 100%;
-            max-width: 800px;
+            max-width: min(800px, 90vw);
+            max-height: 85vh;
+            object-fit: contain;
             border-radius: 15px;
             margin-bottom: 1.5rem;
             transition: all 0.4s ease;

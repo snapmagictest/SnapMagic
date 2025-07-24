@@ -1284,10 +1284,12 @@ class SnapMagicApp {
         }
 
         .snapmagic-card {
-            /* Use EXACT same responsive approach as .result-image */
+            /* Viewport-aware responsive sizing - ensures full card visibility */
             width: 100%;
-            max-width: 800px;
-            /* Add proper aspect ratio like working template (300:480 = 5:8) */
+            max-width: min(800px, 90vw);
+            /* Height constraint to prevent scrolling - card fits in viewport */
+            max-height: min(calc(90vw * 8/5), 85vh);
+            /* Maintain aspect ratio but allow flexibility for viewport constraints */
             aspect-ratio: 5/8;
             position: relative;
             overflow: hidden;
@@ -1609,47 +1611,53 @@ class SnapMagicApp {
             object-fit: contain;
         }
 
-        /* Progressive Web App Responsive Card Sizing */
+        /* Progressive Web App Responsive Card Sizing - Viewport Aware */
         
-        /* Large Desktop (≥1400px) - Full size cards */
+        /* Large Desktop (≥1400px) - Constrained by viewport */
         @media (min-width: 1400px) {
             .snapmagic-card {
-                max-width: 800px;
+                max-width: min(800px, 85vw);
+                max-height: min(calc(85vw * 8/5), 80vh);
             }
         }
         
-        /* Desktop (1200px-1399px) - Slightly smaller cards */
+        /* Desktop (1200px-1399px) - Balanced sizing */
         @media (max-width: 1399px) and (min-width: 1200px) {
             .snapmagic-card {
-                max-width: 700px;
+                max-width: min(700px, 85vw);
+                max-height: min(calc(85vw * 8/5), 80vh);
             }
         }
         
-        /* Tablet Landscape (992px-1199px) - Medium cards */
+        /* Tablet Landscape (992px-1199px) - Viewport optimized */
         @media (max-width: 1199px) and (min-width: 992px) {
             .snapmagic-card {
-                max-width: 600px;
+                max-width: min(600px, 85vw);
+                max-height: min(calc(85vw * 8/5), 75vh);
             }
         }
         
-        /* Tablet Portrait (768px-991px) - Smaller cards */
+        /* Tablet Portrait (768px-991px) - Fit to screen */
         @media (max-width: 991px) and (min-width: 768px) {
             .snapmagic-card {
-                max-width: 500px;
+                max-width: min(500px, 85vw);
+                max-height: min(calc(85vw * 8/5), 70vh);
             }
         }
         
-        /* Mobile Large (481px-767px) - Compact cards */
+        /* Mobile Large (481px-767px) - Screen optimized */
         @media (max-width: 767px) and (min-width: 481px) {
             .snapmagic-card {
-                max-width: 400px;
+                max-width: min(400px, 90vw);
+                max-height: min(calc(90vw * 8/5), 65vh);
             }
         }
         
-        /* Mobile Small (≤480px) - Minimal cards */
+        /* Mobile Small (≤480px) - Full screen friendly */
         @media (max-width: 480px) {
             .snapmagic-card {
                 max-width: 95vw;
+                max-height: min(calc(95vw * 8/5), 60vh);
             }
         }
 
