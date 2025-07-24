@@ -1121,66 +1121,67 @@ class SnapMagicApp {
         const userPrompt = this.elements.promptInput.value.trim();
         
         try {
-            // Initialize ENHANCED template system if not already done
-            if (!this.templateSystem) {
-                this.templateSystem = new window.SnapMagicEnhancedTemplateSystem();
-                // Wait for template configuration to load
-                await new Promise(resolve => {
-                    const checkConfig = () => {
-                        if (this.templateSystem.templateConfig) {
-                            resolve();
-                        } else {
-                            setTimeout(checkConfig, 100);
-                        }
-                    };
-                    checkConfig();
-                });
+            console.log('🎴 Initializing Premium Template System...');
+            
+            // Initialize PREMIUM template system
+            if (!this.premiumTemplateSystem) {
+                this.premiumTemplateSystem = new window.PremiumTemplateSystem();
+                await this.premiumTemplateSystem.init();
             }
             
-            // Set the user name in template config
-            this.templateSystem.templateConfig.userName = userName;
-            console.log('👤 Template userName set to:', userName || 'No name (AWS logo)');
+            // Extract creator info from userName or use defaults
+            const creatorInfo = this.parseCreatorInfo(userName);
             
-            // Get selected template from template selector
-            const selectedTemplate = window.snapMagicTemplateSelector ? 
-                window.snapMagicTemplateSelector.getCurrentTemplate() : 'cardtemplate';
+            console.log(`🎨 Generating premium card for: ${creatorInfo.name} (${creatorInfo.title})`);
             
-            console.log(`🎴 Compositing trading card with template: ${selectedTemplate}`);
+            // Generate premium trading card with real data
+            const premiumResult = await this.premiumTemplateSystem.generatePremiumCard(
+                `data:image/png;base64,${novaImageBase64}`,
+                creatorInfo.name,
+                creatorInfo.title,
+                userPrompt
+            );
             
-            // Create final trading card with selected template
-            const finalCardBase64 = this.templateSystem.createTradingCardWithTemplate ? 
-                await this.templateSystem.createTradingCardWithTemplate(novaImageBase64, userPrompt, selectedTemplate) :
-                await this.templateSystem.createTradingCard(novaImageBase64, userPrompt);
-            const finalImageSrc = `data:image/png;base64,${finalCardBase64}`;
-            
-            // Store both Nova image and final card
-            this.generatedCardData = {
-                ...data,
-                novaImageBase64: novaImageBase64,
-                finalCardBase64: finalCardBase64,
-                finalImageSrc: finalImageSrc
-            };
-            
-            // Add to user's gallery
-            this.addCardToGallery(this.generatedCardData);
-            
-            // Store the final composited card in S3 (what user actually downloads)
-            await this.storeFinalCardInS3(finalCardBase64, userPrompt, userName);
-            
-            // Display the final composed card
-            this.elements.resultContainer.innerHTML = `
-                <img src="${finalImageSrc}" alt="Generated Trading Card" class="result-image">
-            `;
+            if (premiumResult.success) {
+                console.log('✅ Premium card generated successfully!');
+                console.log('📊 Card metadata:', premiumResult.metadata);
+                
+                // Store the premium card data
+                this.generatedCardData = {
+                    ...data,
+                    novaImageBase64: novaImageBase64,
+                    premiumCardHTML: premiumResult.cardHTML,
+                    premiumImageData: premiumResult.premiumImageData,
+                    finalImageSrc: premiumResult.premiumImageData,
+                    metadata: premiumResult.metadata
+                };
+                
+                // Add to user's gallery
+                this.addCardToGallery(this.generatedCardData);
+                
+                // Store the premium card in S3
+                const base64Data = premiumResult.premiumImageData.replace(/^data:image\/png;base64,/, '');
+                await this.storeFinalCardInS3(base64Data, userPrompt, userName);
+                
+                // Display the premium card HTML directly for interactive effects
+                this.elements.resultContainer.innerHTML = premiumResult.cardHTML;
+                
+                console.log('🎯 Premium card displayed with holographic effects!');
+                
+            } else {
+                throw new Error(premiumResult.error);
+            }
             
             this.elements.resultActions.classList.remove('hidden');
             
         } catch (error) {
-            console.error('❌ Template composition failed:', error);
-            // Fallback to raw Nova Canvas image
+            console.error('❌ Premium card generation failed:', error);
+            
+            // Fallback to basic display
             const imageSrc = data.imageSrc || `data:image/png;base64,${data.result}`;
             this.elements.resultContainer.innerHTML = `
                 <img src="${imageSrc}" alt="Generated Trading Card" class="result-image">
-                <p class="error-text">Template composition failed. Showing raw AI-generated image.</p>
+                <p class="error-text">Premium template failed. Showing AI-generated image.</p>
             `;
             this.elements.resultActions.classList.remove('hidden');
             
@@ -1191,6 +1192,33 @@ class SnapMagicApp {
                 console.warn('⚠️ Failed to store fallback card in S3:', storageError);
             }
         }
+    }
+    
+    /**
+     * Parse creator info from userName or use defaults
+     */
+    parseCreatorInfo(userName) {
+        if (!userName || userName.trim() === '') {
+            return {
+                name: 'AWS User',
+                title: 'Cloud Enthusiast'
+            };
+        }
+        
+        // If userName contains a pipe separator, split into name and title
+        if (userName.includes('|')) {
+            const [name, title] = userName.split('|').map(s => s.trim());
+            return {
+                name: name || 'AWS User',
+                title: title || 'Cloud Enthusiast'
+            };
+        }
+        
+        // Otherwise, use userName as name with default title
+        return {
+            name: userName.trim(),
+            title: 'Cloud Enthusiast'
+        };
     }
 
     async handleDownloadCard() {
