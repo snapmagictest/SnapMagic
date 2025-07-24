@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SnapMagic Trading Card Template</title>
+    <style>
+        :root {
+            --aws-orange: #FF9900;
+            --aws-blue: #4B9CD3;
+            --aws-dark: #232F3E;
+            --holo-color1: var(--aws-orange);
+            --holo-color2: var(--aws-blue);
+        }
+
+        body {
+            margin: 0;
+            padding: 50px;
+            background: linear-gradient(135deg, #232F3E 0%, #161E2D 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .card-container {
+            perspective: 750px;
+        }
+
+        .snapmagic-card {
+            width: 300px;
+            height: 420px;
+            position: relative;
+            overflow: hidden;
+            border-radius: 15px;
+            background: linear-gradient(145deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            box-shadow: 
+                -5px -5px 5px -5px var(--holo-color1), 
+                5px 5px 5px -5px var(--holo-color2), 
+                0 55px 35px -20px rgba(0, 0, 0, 0.5);
+            transition: transform 0.5s ease, box-shadow 0.2s ease;
+            cursor: pointer;
+            border: 2px solid rgba(255, 153, 0, 0.3);
+        }
+
+        .snapmagic-card:hover {
+            box-shadow: 
+                -20px -20px 30px -25px var(--holo-color1), 
+                20px 20px 30px -25px var(--holo-color2), 
+                -7px -7px 10px -5px var(--holo-color1), 
+                7px 7px 10px -5px var(--holo-color2), 
+                0 0 13px 4px rgba(255,255,255,0.3),
+                0 55px 35px -20px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Holographic Effects */
+        .snapmagic-card:before,
+        .snapmagic-card:after {
+            content: "";
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            top: 0;
+            background-repeat: no-repeat;
+            opacity: .5;
+            mix-blend-mode: color-dodge;
+            transition: all .33s ease;
+            pointer-events: none;
+        }
+
+        .snapmagic-card:before {
+            background-position: 50% 50%;
+            background-size: 300% 300%;
+            background-image: linear-gradient(
+                115deg,
+                transparent 0%,
+                var(--holo-color1) 25%,
+                transparent 47%,
+                transparent 53%,
+                var(--holo-color2) 75%,
+                transparent 100%
+            );
+            opacity: .5;
+            filter: brightness(.5) contrast(1);
+            z-index: 1;
+        }
+
+        .snapmagic-card:after {
+            opacity: 1;
+            background-image: 
+                url("https://assets.codepen.io/13471/sparkles.gif"), 
+                url("https://assets.codepen.io/13471/holo.png"), 
+                linear-gradient(125deg, #ff008450 15%, #fca40040 30%, #ffff0030 40%, #00ff8a20 60%, #00cfff40 70%, #cc4cfa50 85%);
+            background-position: 50% 50%;
+            background-size: 160%;
+            background-blend-mode: overlay;
+            z-index: 2;
+            filter: brightness(1) contrast(1);
+            transition: all .33s ease;
+            mix-blend-mode: color-dodge;
+            opacity: .75;
+        }
+
+        .snapmagic-card:hover:after {
+            filter: brightness(1) contrast(1);
+            opacity: 1;
+        }
+
+        .snapmagic-card:hover:before {
+            background-image: linear-gradient(
+                110deg,
+                transparent 25%,
+                var(--holo-color1) 48%,
+                var(--holo-color2) 52%,
+                transparent 75%
+            );
+            background-position: 50% 50%;
+            background-size: 250% 250%;
+            opacity: .88;
+            filter: brightness(.66) contrast(1.33);
+        }
+
+        /* Card Content Layout */
+        .card-content {
+            position: relative;
+            z-index: 3;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            color: white;
+            padding: 15px;
+        }
+
+        /* 1. Powered by AWS Header */
+        .powered-by-aws {
+            text-align: center;
+            padding: 8px 0;
+            background: linear-gradient(90deg, var(--aws-orange), var(--aws-blue));
+            margin: -15px -15px 15px -15px;
+            font-size: 12px;
+            font-weight: bold;
+            color: white;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 2px 10px rgba(255, 153, 0, 0.3);
+        }
+
+        /* 2. AI Generated Image */
+        .card-image {
+            flex: 1;
+            background: #2a2a3e;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            position: relative;
+            overflow: hidden;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 200px;
+        }
+
+        .card-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+
+        .image-placeholder {
+            color: rgba(255, 255, 255, 0.5);
+            text-align: center;
+            font-size: 14px;
+        }
+
+        /* 3. Event Name */
+        .event-name {
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: var(--aws-orange);
+            text-shadow: 0 0 10px rgba(255, 153, 0, 0.5);
+            line-height: 1.2;
+        }
+
+        /* 4. Bottom Section: Logo and Creator */
+        .card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .event-logo {
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: white;
+            font-weight: bold;
+        }
+
+        .event-logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+        }
+
+        .creator-info {
+            text-align: right;
+            flex: 1;
+            margin-left: 15px;
+        }
+
+        .creator-name {
+            font-size: 14px;
+            font-weight: bold;
+            color: white;
+            margin-bottom: 2px;
+        }
+
+        .creator-title {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        /* Hover Style Injection */
+        .hover-style {
+            /* Dynamic styles will be injected here */
+        }
+
+        /* Demo themes */
+        .demo-controls {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px;
+            border-radius: 10px;
+            color: white;
+            font-size: 12px;
+        }
+
+        .demo-controls button {
+            background: var(--aws-orange);
+            border: none;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 2px;
+            font-size: 11px;
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-controls">
+        <div>Demo Controls:</div>
+        <button onclick="changeContent('reinvent')">re:Invent</button>
+        <button onclick="changeContent('summit')">Summit</button>
+        <button onclick="changeContent('workshop')">Workshop</button>
+    </div>
+
+    <div class="card-container">
+        <div class="snapmagic-card" id="holoCard">
+            <div class="card-content">
+                <!-- 1. Powered by AWS Header -->
+                <div class="powered-by-aws">
+                    ⚡ Powered by AWS ⚡
+                </div>
+
+                <!-- 2. AI Generated Image -->
+                <div class="card-image" id="cardImage">
+                    <div class="image-placeholder">
+                        🎨 AI Generated Image<br>
+                        <small>(Your Bedrock Nova Canvas image goes here)</small>
+                    </div>
+                </div>
+
+                <!-- 3. Event Name -->
+                <div class="event-name" id="eventName">
+                    AWS re:Invent 2024
+                </div>
+
+                <!-- 4. Logo and Creator Name -->
+                <div class="card-footer">
+                    <div class="event-logo" id="eventLogo">
+                        AWS
+                    </div>
+                    <div class="creator-info">
+                        <div class="creator-name" id="creatorName">John Smith</div>
+                        <div class="creator-title" id="creatorTitle">Cloud Solutions Architect</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style class="hover-style"></style>
+
+    <script>
+        // Holographic effect
+        const card = document.getElementById('holoCard');
+        const hoverStyle = document.querySelector('.hover-style');
+
+        card.addEventListener('mousemove', function(e) {
+            const rect = card.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            const w = rect.width;
+            const h = rect.height;
+
+            const px = Math.abs(Math.floor(100 / w * x) - 100);
+            const py = Math.abs(Math.floor(100 / h * y) - 100);
+            const pa = (50 - px) + (50 - py);
+
+            const lp = 50 + (px - 50) / 1.5;
+            const tp = 50 + (py - 50) / 1.5;
+            const px_spark = 50 + (px - 50) / 7;
+            const py_spark = 50 + (py - 50) / 7;
+            const p_opc = 20 + (Math.abs(pa) * 1.5);
+
+            const ty = ((tp - 50) / 2) * -1;
+            const tx = ((lp - 50) / 1.5) * 0.5;
+
+            card.style.transform = `rotateX(${ty}deg) rotateY(${tx}deg)`;
+
+            hoverStyle.innerHTML = `
+                #holoCard:hover:before { 
+                    background-position: ${lp}% ${tp}%;
+                }
+                #holoCard:hover:after { 
+                    background-position: ${px_spark}% ${py_spark}%;
+                    opacity: ${Math.min(p_opc / 100, 1)};
+                }
+            `;
+        });
+
+        card.addEventListener('mouseleave', function() {
+            card.style.transform = '';
+            hoverStyle.innerHTML = '';
+        });
+
+        // Demo content changer
+        function changeContent(type) {
+            const eventName = document.getElementById('eventName');
+            const creatorName = document.getElementById('creatorName');
+            const creatorTitle = document.getElementById('creatorTitle');
+            const eventLogo = document.getElementById('eventLogo');
+
+            switch(type) {
+                case 'reinvent':
+                    eventName.textContent = 'AWS re:Invent 2024';
+                    creatorName.textContent = 'Sarah Johnson';
+                    creatorTitle.textContent = 'Senior Solutions Architect';
+                    eventLogo.textContent = 'AWS';
+                    break;
+                case 'summit':
+                    eventName.textContent = 'AWS Summit London';
+                    creatorName.textContent = 'Mike Chen';
+                    creatorTitle.textContent = 'Cloud Engineer';
+                    eventLogo.textContent = 'UK';
+                    break;
+                case 'workshop':
+                    eventName.textContent = 'Serverless Workshop';
+                    creatorName.textContent = 'Alex Rivera';
+                    creatorTitle.textContent = 'DevOps Specialist';
+                    eventLogo.textContent = 'λ';
+                    break;
+            }
+        }
+    </script>
+</body>
+</html>
