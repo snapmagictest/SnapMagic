@@ -1290,7 +1290,7 @@ class SnapMagicApp {
             /* Fixed aspect ratio for consistent trading card appearance */
             aspect-ratio: 5/8;
             position: relative;
-            /* Ensure proper centering within gallery */
+            /* SPACE 5: Minimize margins to get close to SPACE 4 boundaries */
             margin: 0 auto;
             /* Prevent overflow from gallery */
             box-sizing: border-box;

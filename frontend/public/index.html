@@ -658,12 +658,13 @@
         /* Result Section Styling */
         .result-section {
             text-align: center;
-            margin: 1rem 0;
+            margin: 0; /* SPACE 5: Minimize top margin to get close to SPACE 4 top */
             /* Ensure cards stay within gallery bounds */
             width: 100%;
             display: flex;
             flex-direction: column;
             align-items: center;
+            padding: 0; /* SPACE 5: Remove padding to get close to SPACE 4 sides */
         }
 
         /* Trading Card Gallery Responsive Design */
@@ -711,7 +712,7 @@
             width: 100%;
             max-width: 350px;
             border-radius: 15px;
-            margin-bottom: 1.5rem;
+            margin-bottom: 0; /* SPACE 5: Minimize bottom margin to get close to SPACE 4 */
             transition: all 0.4s ease;
             position: relative;
             
