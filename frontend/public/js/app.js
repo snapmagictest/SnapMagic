@@ -1183,7 +1183,7 @@ class SnapMagicApp {
             <div class="card-content">
                 <!-- 1. Powered by AWS Header -->
                 <div class="powered-by-aws">
-                    ⚡ Powered by AWS ⚡
+                    <img src="/powered-by-aws-white-horizontal.png" alt="Powered by AWS" style="height: 20px; width: auto;">
                 </div>
 
                 <!-- 2. AI Generated Image -->
@@ -1589,7 +1589,7 @@ class SnapMagicApp {
                 linear-gradient(-45deg, transparent 30%, rgba(113, 128, 150, 0.1) 50%, transparent 70%);
             background-size: 100% 100%, 20px 20px, 20px 20px;
             background-position: center, 0 0, 10px 10px;
-            margin: 5px -15px 5px -15px;
+            margin: 5px -15px 0px -15px;
             font-size: 12px;
             font-weight: bold;
             color: white;
@@ -1608,28 +1608,15 @@ class SnapMagicApp {
         .footer-logo {
             width: 36px;
             height: 36px;
-            background: linear-gradient(145deg, rgba(255,255,255,0.3), rgba(255,255,255,0.1));
-            border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 12px;
-            color: white;
-            font-weight: bold;
-            border: 1px solid rgba(255,255,255,0.3);
-            transition: all 0.3s ease;
-            box-shadow: 
-                3px 3px 8px rgba(0,0,0,0.5),
-                -2px -2px 6px rgba(255,255,255,0.15),
-                inset 1px 1px 3px rgba(255,255,255,0.2),
-                inset -1px -1px 3px rgba(0,0,0,0.2);
         }
 
         .footer-logo img {
             width: 100%;
             height: 100%;
-            object-fit: cover;
-            border-radius: 50%;
+            object-fit: contain;
         }
 
         .no-logos-text {
