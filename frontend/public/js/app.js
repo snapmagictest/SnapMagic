@@ -1284,8 +1284,8 @@ class SnapMagicApp {
         }
 
         .snapmagic-card {
-            width: 300px;
-            height: 480px;
+            width: 375px;
+            height: 600px;
             position: relative;
             overflow: hidden;
             border-radius: 15px;
@@ -1531,8 +1531,8 @@ class SnapMagicApp {
         }
 
         .event-logo, .bedrock-logo {
-            width: 40px;
-            height: 40px;
+            width: 50px;
+            height: 50px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -1593,8 +1593,8 @@ class SnapMagicApp {
         }
 
         .footer-logo {
-            width: 36px;
-            height: 36px;
+            width: 45px;
+            height: 45px;
             display: flex;
             align-items: center;
             justify-content: center;
