@@ -1286,7 +1286,7 @@ class SnapMagicApp {
         .snapmagic-card {
             /* Use EXACT same responsive approach as .result-image */
             width: 100%;
-            max-width: 400px;
+            max-width: 600px;
             /* Add proper aspect ratio like working template (300:480 = 5:8) */
             aspect-ratio: 5/8;
             position: relative;
