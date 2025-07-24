@@ -1470,20 +1470,20 @@ class SnapMagicApp {
             display: flex;
             flex-direction: column;
             color: white;
-            padding: 15px;
+            padding: 12px;
             justify-content: space-between;
         }
 
         .powered-by-aws {
             text-align: center;
-            padding: 8px 0;
+            padding: 6px 0;
             background: 
                 radial-gradient(ellipse at top, #4a5568 0%, #2d3748 30%, #1a202c 60%, #000000 100%),
                 linear-gradient(45deg, transparent 30%, rgba(113, 128, 150, 0.1) 50%, transparent 70%),
                 linear-gradient(-45deg, transparent 30%, rgba(113, 128, 150, 0.1) 50%, transparent 70%);
             background-size: 100% 100%, 20px 20px, 20px 20px;
             background-position: center, 0 0, 10px 10px;
-            margin: -15px -15px 15px -15px;
+            margin: -12px -12px 12px -12px;
             font-size: 12px;
             font-weight: bold;
             color: white;
@@ -1498,21 +1498,21 @@ class SnapMagicApp {
             flex: 1;
             background: #2a2a3e;
             border-radius: 10px;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
             position: relative;
             overflow: hidden;
             border: 2px solid rgba(255, 255, 255, 0.1);
             display: flex;
             align-items: center;
             justify-content: center;
-            min-height: 200px;
+            min-height: 180px;
         }
 
         .event-name {
             text-align: center;
-            font-size: 18px;
+            font-size: 16px;
             font-weight: bold;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             color: var(--aws-orange);
             text-shadow: 0 0 5px rgba(255, 153, 0, 0.3);
             line-height: 1.2;
@@ -1559,27 +1559,27 @@ class SnapMagicApp {
         }
 
         .creator-name {
-            font-size: 14px;
+            font-size: 13px;
             font-weight: bold;
             color: white;
-            margin-bottom: 2px;
+            margin-bottom: 1px;
         }
 
         .creator-title {
-            font-size: 11px;
+            font-size: 10px;
             color: rgba(255, 255, 255, 0.7);
         }
 
         .powered-by-aws-footer {
             text-align: center;
-            padding: 3px 0 7px 0;
+            padding: 2px 0 5px 0;
             background: 
                 radial-gradient(ellipse at bottom, #4a5568 0%, #2d3748 30%, #1a202c 60%, #000000 100%),
                 linear-gradient(45deg, transparent 30%, rgba(113, 128, 150, 0.1) 50%, transparent 70%),
                 linear-gradient(-45deg, transparent 30%, rgba(113, 128, 150, 0.1) 50%, transparent 70%);
             background-size: 100% 100%, 20px 20px, 20px 20px;
             background-position: center, 0 0, 10px 10px;
-            margin: 5px -15px -15px -15px;
+            margin: 4px -12px -12px -12px;
             font-size: 12px;
             font-weight: bold;
             color: white;
