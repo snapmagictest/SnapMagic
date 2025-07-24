@@ -1121,6 +1121,14 @@ class SnapMagicApp {
         const userPrompt = this.elements.promptInput.value.trim();
         
         try {
+            console.log('🎴 Starting card display process...');
+            
+            // Check if Premium Template System is available
+            if (typeof window.PremiumTemplateSystem === 'undefined') {
+                console.warn('⚠️ Premium Template System not loaded, using fallback');
+                throw new Error('Premium Template System not available');
+            }
+            
             console.log('🎴 Initializing Premium Template System...');
             
             // Initialize PREMIUM template system
@@ -1176,13 +1184,33 @@ class SnapMagicApp {
             
         } catch (error) {
             console.error('❌ Premium card generation failed:', error);
+            console.log('🔄 Falling back to basic card display...');
             
-            // Fallback to basic display
+            // Fallback to basic display with enhanced styling
             const imageSrc = data.imageSrc || `data:image/png;base64,${data.result}`;
+            
+            // Store basic card data
+            this.generatedCardData = {
+                ...data,
+                novaImageBase64: novaImageBase64,
+                finalImageSrc: imageSrc
+            };
+            
+            // Add to user's gallery
+            this.addCardToGallery(this.generatedCardData);
+            
+            // Display with enhanced styling
             this.elements.resultContainer.innerHTML = `
-                <img src="${imageSrc}" alt="Generated Trading Card" class="result-image">
-                <p class="error-text">Premium template failed. Showing AI-generated image.</p>
+                <div style="max-width: 400px; margin: 20px auto; border-radius: 15px; overflow: hidden; 
+                           box-shadow: 0 10px 30px rgba(0,0,0,0.3); border: 2px solid rgba(255,153,0,0.3);">
+                    <img src="${imageSrc}" alt="Generated Trading Card" class="result-image" 
+                         style="width: 100%; height: auto; display: block;">
+                </div>
+                <p class="error-text" style="color: #ff6b6b; text-align: center; margin-top: 10px;">
+                    Premium template unavailable. Showing AI-generated image with enhanced styling.
+                </p>
             `;
+            
             this.elements.resultActions.classList.remove('hidden');
             
             // Store the raw Nova Canvas image as fallback
