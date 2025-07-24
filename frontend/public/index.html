@@ -303,7 +303,7 @@
 
         /* Main Container */
         .main-container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
             padding: 90px 1rem 2rem;
         }
@@ -637,8 +637,84 @@
             border: 2px solid var(--glass-border);
         }
 
+        /* Progressive Web App Responsive Design */
+        
+        /* Large Desktop (≥1400px) - Full size */
+        @media (min-width: 1400px) {
+            .main-container {
+                max-width: 1400px;
+            }
+            .card-display {
+                max-width: 800px;
+            }
+        }
+        
+        /* Desktop (1200px-1399px) - Slightly smaller */
+        @media (max-width: 1399px) and (min-width: 1200px) {
+            .main-container {
+                max-width: 1200px;
+            }
+            .card-display {
+                max-width: 700px;
+            }
+        }
+        
+        /* Tablet Landscape (992px-1199px) - Medium size */
+        @media (max-width: 1199px) and (min-width: 992px) {
+            .main-container {
+                max-width: 100%;
+                padding: 90px 2rem 2rem;
+            }
+            .card-display {
+                max-width: 600px;
+            }
+        }
+        
+        /* Tablet Portrait (768px-991px) - Smaller */
+        @media (max-width: 991px) and (min-width: 768px) {
+            .main-container {
+                padding: 90px 1.5rem 2rem;
+            }
+            .card-display {
+                max-width: 500px;
+            }
+        }
+        
+        /* Mobile Large (481px-767px) - Compact */
+        @media (max-width: 767px) and (min-width: 481px) {
+            .main-container {
+                padding: 80px 1rem 1rem;
+            }
+            .card-display {
+                max-width: 400px;
+            }
+            .art-deco-section {
+                padding: 1.5rem;
+            }
+            .card-gallery {
+                padding: 1.5rem;
+            }
+        }
+        
+        /* Mobile Small (≤480px) - Minimal */
+        @media (max-width: 480px) {
+            .main-container {
+                padding: 80px 0.5rem 1rem;
+            }
+            .card-display {
+                max-width: 95vw;
+            }
+            .art-deco-section {
+                padding: 1rem;
+                margin-bottom: 1rem;
+            }
+            .card-gallery {
+                padding: 1rem;
+            }
+        }
+
         .card-display {
-            max-width: 600px;
+            max-width: 800px;
             margin: 0 auto 1rem;
             position: relative;
         }
@@ -652,7 +728,7 @@
         .result-section img,
         .result-image {
             width: 100%;
-            max-width: 600px;
+            max-width: 800px;
             border-radius: 15px;
             margin-bottom: 1.5rem;
             transition: all 0.4s ease;

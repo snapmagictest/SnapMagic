@@ -1286,7 +1286,7 @@ class SnapMagicApp {
         .snapmagic-card {
             /* Use EXACT same responsive approach as .result-image */
             width: 100%;
-            max-width: 600px;
+            max-width: 800px;
             /* Add proper aspect ratio like working template (300:480 = 5:8) */
             aspect-ratio: 5/8;
             position: relative;
@@ -1607,6 +1607,50 @@ class SnapMagicApp {
             width: 100%;
             height: 100%;
             object-fit: contain;
+        }
+
+        /* Progressive Web App Responsive Card Sizing */
+        
+        /* Large Desktop (≥1400px) - Full size cards */
+        @media (min-width: 1400px) {
+            .snapmagic-card {
+                max-width: 800px;
+            }
+        }
+        
+        /* Desktop (1200px-1399px) - Slightly smaller cards */
+        @media (max-width: 1399px) and (min-width: 1200px) {
+            .snapmagic-card {
+                max-width: 700px;
+            }
+        }
+        
+        /* Tablet Landscape (992px-1199px) - Medium cards */
+        @media (max-width: 1199px) and (min-width: 992px) {
+            .snapmagic-card {
+                max-width: 600px;
+            }
+        }
+        
+        /* Tablet Portrait (768px-991px) - Smaller cards */
+        @media (max-width: 991px) and (min-width: 768px) {
+            .snapmagic-card {
+                max-width: 500px;
+            }
+        }
+        
+        /* Mobile Large (481px-767px) - Compact cards */
+        @media (max-width: 767px) and (min-width: 481px) {
+            .snapmagic-card {
+                max-width: 400px;
+            }
+        }
+        
+        /* Mobile Small (≤480px) - Minimal cards */
+        @media (max-width: 480px) {
+            .snapmagic-card {
+                max-width: 95vw;
+            }
         }
 
         .no-logos-text {
