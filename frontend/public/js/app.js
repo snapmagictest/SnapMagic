@@ -1284,9 +1284,9 @@ class SnapMagicApp {
         }
 
         .snapmagic-card {
-            /* Fixed trading card dimensions - maintains card effect */
+            /* BIGGER trading card dimensions - actual size increase */
             width: 100%;
-            max-width: 350px;
+            max-width: 420px; /* Increased from 350px - 20% bigger */
             /* Fixed aspect ratio for consistent trading card appearance */
             aspect-ratio: 5/8;
             position: relative;
@@ -1613,26 +1613,26 @@ class SnapMagicApp {
             object-fit: contain;
         }
 
-        /* Trading Card Responsive Sizing - Gallery Contained */
+        /* Trading Card Responsive Sizing - BIGGER Dimensions */
         
-        /* Large Desktop (≥1200px) - Fits within 450px gallery */
+        /* Large Desktop (≥1200px) - BIGGER cards in 450px gallery */
         @media (min-width: 1200px) {
             .snapmagic-card {
-                max-width: 350px; /* Fits comfortably in 450px gallery */
+                max-width: 420px; /* Increased from 350px - 20% bigger */
             }
         }
         
-        /* Tablet (768px-1199px) - Fits within 400px gallery */
+        /* Tablet (768px-1199px) - BIGGER cards in 400px gallery */
         @media (max-width: 1199px) and (min-width: 768px) {
             .snapmagic-card {
-                max-width: 320px; /* Fits comfortably in 400px gallery */
+                max-width: 380px; /* Increased from 320px - 19% bigger */
             }
         }
         
-        /* Mobile (≤767px) - Fits within calculated gallery width */
+        /* Mobile (≤767px) - BIGGER cards within calculated gallery width */
         @media (max-width: 767px) {
             .snapmagic-card {
-                max-width: min(280px, calc(100vw - 8rem)); /* Never exceeds gallery bounds */
+                max-width: min(320px, calc(100vw - 8rem)); /* Increased from 280px - 14% bigger */
             }
         }
 
