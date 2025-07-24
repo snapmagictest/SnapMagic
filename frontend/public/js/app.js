@@ -1121,9 +1121,9 @@ class SnapMagicApp {
         const userPrompt = this.elements.promptInput.value.trim();
         
         try {
-            // Initialize template system if not already done
+            // Initialize ENHANCED template system if not already done
             if (!this.templateSystem) {
-                this.templateSystem = new window.SnapMagicTemplateSystem();
+                this.templateSystem = new window.SnapMagicEnhancedTemplateSystem();
                 // Wait for template configuration to load
                 await new Promise(resolve => {
                     const checkConfig = () => {
