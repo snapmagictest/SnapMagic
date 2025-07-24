@@ -1589,7 +1589,7 @@ class SnapMagicApp {
                 linear-gradient(-45deg, transparent 30%, rgba(113, 128, 150, 0.1) 50%, transparent 70%);
             background-size: 100% 100%, 20px 20px, 20px 20px;
             background-position: center, 0 0, 10px 10px;
-            margin: 5px -15px 0px -15px;
+            margin: 5px -15px -15px -15px;
             font-size: 12px;
             font-weight: bold;
             color: white;
