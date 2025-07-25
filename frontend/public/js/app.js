@@ -1200,14 +1200,8 @@ class SnapMagicApp {
 
                 <!-- Bottom section container -->
                 <div class="card-bottom-section">
-                    <!-- 4. Logo and Creator Section -->
+                    <!-- 4. Creator Section -->
                     <div class="card-footer">
-                        <div class="event-logo" title="AWS">
-                            <img src="/powered-by-aws-white.png" alt="AWS" onerror="this.parentElement.innerHTML='AWS'">
-                        </div>
-                        <div class="bedrock-logo" title="Amazon Bedrock">
-                            <img src="/bedrock-logo.svg" alt="Bedrock" onerror="this.parentElement.innerHTML='BR'">
-                        </div>
                         <div class="creator-info">
                             <div class="creator-name">${creatorName}</div>
                             <div class="creator-title">${creatorTitle}</div>
@@ -1537,29 +1531,9 @@ class SnapMagicApp {
             margin-bottom: 0px;
         }
 
-        .event-logo, .bedrock-logo {
-            width: 50px;
-            height: 50px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .bedrock-logo {
-            margin-left: 8px;
-            font-size: 10px;
-        }
-
-        .event-logo img, .bedrock-logo img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-        }
-
         .creator-info {
-            text-align: right;
+            text-align: center;
             flex: 1;
-            margin-left: 15px;
         }
 
         .creator-name {
