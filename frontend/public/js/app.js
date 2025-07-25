@@ -1584,7 +1584,7 @@ class SnapMagicApp {
             background: rgba(255, 255, 255, 0.05);
             border-radius: 8px;
             border: 1px solid rgba(255, 255, 255, 0.2);
-            margin-bottom: 0px;
+            margin-bottom: 6px;
             
             /* 3D Etched/Inset Effect */
             box-shadow: 
