@@ -531,6 +531,25 @@ class SnapMagicApp {
         this.elements.createAnotherVideoBtn.addEventListener('click', () => this.handleCreateAnotherVideo());
         this.elements.backToCardBtn.addEventListener('click', () => this.switchTab('card-generation'));
         
+        // Legacy video generation buttons
+        const generateVideoBtn2 = document.getElementById('generateVideoBtn2');
+        const downloadVideoBtn2 = document.getElementById('downloadVideoBtn2');
+        const createAnotherVideoBtn2 = document.getElementById('createAnotherVideoBtn2');
+        const backToCardBtn2 = document.getElementById('backToCardBtn2');
+        
+        if (generateVideoBtn2) {
+            generateVideoBtn2.addEventListener('click', () => this.handleGenerateVideo());
+        }
+        if (downloadVideoBtn2) {
+            downloadVideoBtn2.addEventListener('click', () => this.handleDownloadVideo());
+        }
+        if (createAnotherVideoBtn2) {
+            createAnotherVideoBtn2.addEventListener('click', () => this.handleCreateAnotherVideo());
+        }
+        if (backToCardBtn2) {
+            backToCardBtn2.addEventListener('click', () => this.switchTab('card-generation'));
+        }
+        
         // Video prompt character count and clear button
         if (this.elements.videoPrompt) {
             this.elements.videoPrompt.addEventListener('input', () => this.updateVideoCharCount());
@@ -2199,10 +2218,25 @@ class SnapMagicApp {
 
     handleCreateAnotherVideo() {
         console.log('🔄 Creating another video');
-        this.elements.videoResult.classList.add('hidden');
-        this.elements.videoControls.classList.remove('hidden');
-        this.elements.animationPrompt.value = '';
-        this.elements.animationPrompt.focus();
+        
+        // Hide video result
+        if (this.elements.videoResult) {
+            this.elements.videoResult.classList.add('hidden');
+        }
+        
+        // Show appropriate controls
+        if (this.elements.videoControls) {
+            this.elements.videoControls.classList.remove('hidden');
+        }
+        
+        // Clear and focus appropriate prompt field
+        if (this.elements.animationPrompt) {
+            this.elements.animationPrompt.value = '';
+            this.elements.animationPrompt.focus();
+        } else if (this.elements.videoPrompt) {
+            this.elements.videoPrompt.value = '';
+            this.elements.videoPrompt.focus();
+        }
     }
 
     // New Video System Methods
