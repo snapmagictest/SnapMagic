@@ -1741,12 +1741,13 @@ class SnapMagicApp {
                 console.log('🎬 Using final card image for video generation');
             }
             
-            // Nova Canvas now generates 1280x720 images directly - no letterboxing needed!
-            console.log('🎯 Using 1280x720 Nova Canvas image directly for Nova Reel');
+            // Nova Canvas generates 1280x720 images - convert to JPEG for Nova Reel
+            console.log('🎯 Converting 1280x720 Nova Canvas image to JPEG for Nova Reel');
+            const jpegImage = await this.convertImageToJPEG(imageForVideo);
             
             const requestBody = {
                 action: 'generate_video',
-                card_image: imageForVideo.replace(/^data:image\/[^;]+;base64,/, ''), // Remove data URL prefix
+                card_image: jpegImage, // Send JPEG format as required by Nova Reel
                 animation_prompt: animationPrompt
             };
             
@@ -1791,6 +1792,63 @@ class SnapMagicApp {
         } finally {
             this.elements.generateVideoBtn.disabled = false;
         }
+    }
+
+    /**
+     * Convert image to JPEG format for Nova Reel compatibility
+     * Nova Reel requires JPEG format specifically
+     */
+    async convertImageToJPEG(imageBase64) {
+        return new Promise((resolve, reject) => {
+            try {
+                console.log('🔄 Converting image to JPEG format for Nova Reel...');
+                
+                // Create canvas for format conversion
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                
+                // Load the image
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+                
+                img.onload = function() {
+                    console.log(`📏 Image dimensions: ${img.width}x${img.height}`);
+                    
+                    // Set canvas to image dimensions (should be 1280x720)
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    
+                    // Fill with white background (JPEG doesn't support transparency)
+                    ctx.fillStyle = '#FFFFFF';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    
+                    // Draw the image
+                    ctx.drawImage(img, 0, 0);
+                    
+                    // Convert to JPEG format (quality 1.0 for best quality)
+                    const jpegBase64 = canvas.toDataURL('image/jpeg', 1.0).split(',')[1];
+                    
+                    console.log('✅ Image converted to JPEG format');
+                    console.log(`📊 JPEG Base64 length: ${jpegBase64.length} characters`);
+                    resolve(jpegBase64);
+                };
+                
+                img.onerror = function() {
+                    console.error('❌ Failed to load image for JPEG conversion');
+                    reject(new Error('Failed to load image for JPEG conversion'));
+                };
+                
+                // Set image source (add data URL prefix if needed)
+                const imageData = imageBase64.startsWith('data:image/') 
+                    ? imageBase64 
+                    : `data:image/png;base64,${imageBase64}`;
+                img.src = imageData;
+                
+            } catch (error) {
+                console.error('❌ JPEG conversion error:', error);
+                reject(error);
+            }
+        });
     }
 
     /**
