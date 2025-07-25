@@ -1602,7 +1602,7 @@ class SnapMagicApp {
         }
 
         .partner-logo {
-            margin-left: clamp(8px, 1.5vw, 12px);
+            margin-left: clamp(4px, 0.8vw, 6px);
         }
 
         .customer-logo img, .partner-logo img {
