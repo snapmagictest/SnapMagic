@@ -2252,7 +2252,8 @@ class SnapMagicApp {
                 },
                 body: JSON.stringify({
                     action: 'generate_animation_prompt',
-                    cardData: cardData
+                    card_image: cardData.imageBase64 || cardData.image_base64,
+                    original_prompt: cardData.prompt || cardData.originalPrompt || ''
                 })
             });
 
@@ -2262,8 +2263,8 @@ class SnapMagicApp {
 
             const result = await response.json();
             
-            if (result.success && result.prompt) {
-                this.elements.videoPrompt.value = result.prompt;
+            if (result.success && result.animation_prompt) {
+                this.elements.videoPrompt.value = result.animation_prompt;
                 this.updateVideoCharCount();
                 console.log('✅ Video prompt generated successfully');
             } else {
@@ -2286,11 +2287,18 @@ class SnapMagicApp {
             return;
         }
 
+        if (!this.generatedCardData) {
+            this.showError('Please generate a card first');
+            return;
+        }
+
         try {
             this.showProcessing('Optimizing animation prompt...');
             
             const apiBaseUrl = window.SNAPMAGIC_CONFIG.API_URL;
             const endpoint = `${apiBaseUrl}api/transform-card`;
+            
+            const cardData = await this.ensureCardDataForActions();
             
             const response = await fetch(endpoint, {
                 method: 'POST',
@@ -2300,7 +2308,9 @@ class SnapMagicApp {
                 },
                 body: JSON.stringify({
                     action: 'optimize_animation_prompt',
-                    prompt: currentPrompt
+                    user_prompt: currentPrompt,
+                    card_image: cardData.imageBase64 || cardData.image_base64,
+                    original_prompt: cardData.prompt || cardData.originalPrompt || ''
                 })
             });
 
@@ -2310,8 +2320,8 @@ class SnapMagicApp {
 
             const result = await response.json();
             
-            if (result.success && result.optimizedPrompt) {
-                this.elements.videoPrompt.value = result.optimizedPrompt;
+            if (result.success && result.optimized_prompt) {
+                this.elements.videoPrompt.value = result.optimized_prompt;
                 this.updateVideoCharCount();
                 console.log('✅ Video prompt optimized successfully');
             } else {
