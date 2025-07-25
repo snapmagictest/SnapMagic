@@ -1186,8 +1186,9 @@ class SnapMagicApp {
                 <!-- 2. AI Generated Image -->
                 <div class="card-image">
                     <img src="${aiImageSrc}" alt="AI Generated Trading Card" 
-                         style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px; 
-                                image-rendering: -webkit-optimize-contrast; image-rendering: crisp-edges;">
+                         style="width: 100%; height: 100%; object-fit: fill; border-radius: 8px; 
+                                image-rendering: -webkit-optimize-contrast; image-rendering: crisp-edges; 
+                                max-width: 100%; max-height: 100%;">
                 </div>
 
                 <!-- 3. Event Name -->
@@ -1558,8 +1559,10 @@ class SnapMagicApp {
             display: flex;
             align-items: center;
             justify-content: center;
-            min-height: clamp(180px, 30vw, 280px); /* Optimized for 16:9 aspect ratio */
-            aspect-ratio: 16/9; /* Match Nova Canvas 1280x720 output */
+            min-height: clamp(180px, 30vw, 280px);
+            max-height: clamp(180px, 30vw, 280px);
+            aspect-ratio: 16/9;
+            width: 100%;
         }
 
         .event-name {
