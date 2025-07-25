@@ -1574,7 +1574,7 @@ class SnapMagicApp {
         }
 
         .card-bottom-section {
-            margin-top: auto;
+            margin-top: clamp(8px, 1.5vw, 12px);
         }
 
         .card-footer {
