@@ -1200,8 +1200,14 @@ class SnapMagicApp {
 
                 <!-- Bottom section container -->
                 <div class="card-bottom-section">
-                    <!-- 4. Creator Section -->
+                    <!-- 4. Customer/Partner Logos and Creator Section -->
                     <div class="card-footer">
+                        <div class="customer-logo" title="Customer Logo">
+                            <img src="/logos/1.png" alt="Customer" onerror="this.style.display='none'">
+                        </div>
+                        <div class="partner-logo" title="Partner Logo">
+                            <img src="/logos/2.png" alt="Partner" onerror="this.style.display='none'">
+                        </div>
                         <div class="creator-info">
                             <div class="creator-name">${creatorName}</div>
                             <div class="creator-title">${creatorTitle}</div>
@@ -1218,18 +1224,16 @@ class SnapMagicApp {
     }
     
     /**
-     * Create footer logo elements
+     * Create footer logo elements (only logo 3 since 1 and 2 are used above)
      */
     createLogoElements() {
-        // Simple logo check - try 1.png, 2.png, 3.png
+        // Only use logo 3.png since 1.png and 2.png are used for customer/partner
         const logos = [];
-        for (let i = 1; i <= 3; i++) {
-            logos.push(`
-                <div class="footer-logo" title="Logo ${i}">
-                    <img src="/logos/${i}.png" alt="Logo ${i}" onerror="this.style.display='none'">
-                </div>
-            `);
-        }
+        logos.push(`
+            <div class="footer-logo" title="Logo 3">
+                <img src="/logos/3.png" alt="Logo 3" onerror="this.style.display='none'">
+            </div>
+        `);
         
         return logos.join('') || '<div class="no-logos-text">⚡ Powered by AWS ⚡</div>';
     }
@@ -1531,9 +1535,28 @@ class SnapMagicApp {
             margin-bottom: 0px;
         }
 
+        .customer-logo, .partner-logo {
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .partner-logo {
+            margin-left: 8px;
+        }
+
+        .customer-logo img, .partner-logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
         .creator-info {
-            text-align: center;
+            text-align: right;
             flex: 1;
+            margin-left: 15px;
         }
 
         .creator-name {
