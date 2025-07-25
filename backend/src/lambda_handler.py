@@ -769,11 +769,23 @@ def handle_generate_animation_prompt(event):
         
         # Get request body
         body = json.loads(event.get('body', '{}'))
-        card_image_base64 = body.get('card_image', '').strip()
+        
+        # Try multiple possible field names for card image
+        card_image_base64 = (
+            body.get('card_image', '') or 
+            body.get('image_base64', '') or 
+            body.get('imageBase64', '') or 
+            body.get('result', '')
+        ).strip()
+        
         original_prompt = body.get('original_prompt', '').strip()
         
+        logger.info(f"🔍 Request body keys: {list(body.keys())}")
+        logger.info(f"🖼️ Card image length: {len(card_image_base64)} characters")
+        
         if not card_image_base64:
-            return create_error_response("Please provide a card image", 400)
+            logger.error(f"❌ No card image found in request body. Available keys: {list(body.keys())}")
+            return create_error_response("Please provide a card image. Make sure you have generated a card first.", 400)
         
         logger.info(f"🔍 Analyzing card for animation prompt generation...")
         logger.info(f"📝 Original prompt: {original_prompt[:50]}...")
@@ -810,15 +822,24 @@ def handle_generate_animation_prompt(event):
             # Decode base64 image data for Nova Lite
             image_bytes = base64.b64decode(card_image_base64)
             logger.info(f"🖼️ Image decoded successfully, size: {len(image_bytes)} bytes")
+            
+            # Detect image format from header bytes
+            image_format = "png"  # Default
+            if image_bytes.startswith(b'\xff\xd8\xff'):
+                image_format = "jpeg"
+            elif image_bytes.startswith(b'\x89PNG'):
+                image_format = "png"
+            elif image_bytes.startswith(b'GIF'):
+                image_format = "gif"
+            elif image_bytes.startswith(b'RIFF') and b'WEBP' in image_bytes[:12]:
+                image_format = "webp"
+            
+            logger.info(f"🎨 Detected image format: {image_format}")
+            
         except Exception as decode_error:
             logger.error(f"❌ Failed to decode base64 image: {str(decode_error)}")
-            # Fallback to simple prompt if image decode fails
-            animation_prompt = "From frame 1, the character immediately steps forward with eyes instantly glowing, magical energy rapidly swirling around them"
-            return create_success_response({
-                'success': True,
-                'animation_prompt': animation_prompt,
-                'original_prompt': original_prompt
-            })
+            logger.error(f"❌ Image data preview: {card_image_base64[:100]}...")
+            return create_error_response("Invalid image data. Please ensure the card image is properly encoded.", 400)
         
         try:
             # Use Converse API with image
@@ -826,6 +847,7 @@ def handle_generate_animation_prompt(event):
             nova_lite_model = os.environ.get('NOVA_LITE_MODEL', 'amazon.nova-lite-v1:0')
             
             logger.info(f"🤖 Calling Nova Lite model: {nova_lite_model}")
+            logger.info(f"🖼️ Image bytes size: {len(image_bytes)}")
             
             response = bedrock_client.converse(
                 modelId=nova_lite_model,
@@ -838,7 +860,7 @@ def handle_generate_animation_prompt(event):
                             },
                             {
                                 "image": {
-                                    "format": "png",
+                                    "format": image_format,
                                     "source": {
                                         "bytes": image_bytes
                                     }
@@ -858,7 +880,14 @@ def handle_generate_animation_prompt(event):
             logger.info(f"✅ Generated animation prompt: {animation_prompt[:100]}...")
             
         except Exception as bedrock_error:
-            logger.error(f"❌ Bedrock error: {str(bedrock_error)}")
+            logger.error(f"❌ Bedrock error details: {str(bedrock_error)}")
+            logger.error(f"❌ Error type: {type(bedrock_error).__name__}")
+            
+            # Check if it's a model access issue
+            if "AccessDeniedException" in str(bedrock_error) or "ValidationException" in str(bedrock_error):
+                logger.error("🚫 Nova Lite model access denied - check Bedrock model permissions")
+                return create_error_response("Nova Lite model access not available. Please ensure Amazon Nova Lite model access is granted in AWS Bedrock console.", 400)
+            
             # Fallback to simple prompt if Bedrock fails
             animation_prompt = "From frame 1, the character immediately steps forward with eyes instantly glowing, magical energy rapidly swirling around them"
             logger.info("🔄 Using fallback animation prompt due to Bedrock error")
@@ -1045,7 +1074,9 @@ def lambda_handler(event, context):
         elif '/api/transform-card' in request_path:
             # Check body for specific action (card generation vs video generation vs video status vs override)
             body_action = body.get('action', '').lower()
-            if body_action == 'generate_video':
+            if body_action == 'login':
+                action = 'login'
+            elif body_action == 'generate_video':
                 action = 'generate_video'
             elif body_action == 'get_video_status':
                 action = 'get_video_status'
