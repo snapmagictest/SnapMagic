@@ -1254,9 +1254,9 @@
                 </div>
             </section>
 
-            <!-- Results Section -->
+            <!-- Card Results Section -->
             <section class="art-deco-section">
-                <h2 class="section-title">Your Creations</h2>
+                <h2 class="section-title">Your Card Creations</h2>
                 
                 <!-- Card Gallery -->
                 <div id="cardGallery" class="card-gallery hidden">
@@ -1296,52 +1296,81 @@
             <section class="art-deco-section">
                 <h2 class="section-title">Animate Selected Card</h2>
                 
-                <div id="videoSection">
-                    <!-- Video Controls -->
-                    <div id="videoControls" class="hidden">
-                        <!-- Animation Prompt Section -->
-                        <div class="video-prompt-section">
-                            <div class="video-prompt-container">
-                                <div class="textarea-container">
-                                    <textarea id="animationPrompt" class="art-deco-textarea" placeholder="Describe how you want the card to be animated..." maxlength="512"></textarea>
-                                    <div class="textarea-controls">
-                                        <div id="animationCharCount" class="textarea-limit-indicator">0/512</div>
-                                        <button class="textarea-clear-btn" id="animationClearBtn">CLEAR</button>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- AI Prompt Generation -->
-                            <div class="prompt-flow-buttons">
-                                <button id="generateAnimationPromptBtn" class="art-deco-btn">
-                                    🎭 Generate AI Prompt
-                                </button>
-                                <button id="optimizeAnimationPromptBtn" class="art-deco-btn">
-                                    ⚡ Optimize My Prompt
-                                </button>
-                            </div>
-                            
-                            <button id="generateVideoBtn" class="art-deco-btn" style="margin-top: 1rem;">🎬 Generate Video (2 min wait)</button>
+                <div class="prompt-options">
+                    <div class="prompt-card" onclick="selectVideoPromptOption('generate')">
+                        <div class="prompt-card-icon">🎭</div>
+                        <h3 class="prompt-card-title">Generate AI Prompt</h3>
+                        <p class="prompt-card-description">Let AI create an animation prompt based on your selected card</p>
+                    </div>
+                    
+                    <div class="prompt-card" onclick="selectVideoPromptOption('create')">
+                        <div class="prompt-card-icon">✍️</div>
+                        <h3 class="prompt-card-title">Create Your Own</h3>
+                        <p class="prompt-card-description">Write your own custom animation description</p>
+                    </div>
+                    
+                    <div class="prompt-card" onclick="selectVideoPromptOption('optimize')">
+                        <div class="prompt-card-icon">⚡</div>
+                        <h3 class="prompt-card-title">Optimize Existing</h3>
+                        <p class="prompt-card-description">Improve and enhance your animation prompt</p>
+                    </div>
+                </div>
+                
+                <!-- Video Prompt Input -->
+                <div id="videoPromptInput" class="prompt-input-section hidden">
+                    <div class="textarea-container">
+                        <textarea id="videoPrompt" class="art-deco-textarea" placeholder="Describe your animation..." maxlength="512"></textarea>
+                        <div class="textarea-controls">
+                            <div id="videoCharCount" class="textarea-limit-indicator">0/512</div>
+                            <button class="textarea-clear-btn" id="videoClearBtn">CLEAR</button>
                         </div>
                     </div>
                     
-                    <!-- Video Result -->
-                    <div id="videoResult" class="hidden">
-                        <video id="videoPlayer" class="video-player" controls>
-                            <source id="videoSource" src="" type="video/mp4">
-                            Your browser does not support the video tag.
-                        </video>
-                        <div class="result-actions">
-                            <button id="downloadVideoBtn" class="art-deco-btn">💾 Download Video</button>
-                            <button id="createAnotherVideoBtn" class="art-deco-btn">🔄 Create Another Video</button>
+                    <div style="text-align: center; margin-top: 1rem;">
+                        <button id="generateVideoBtn" class="art-deco-btn">🎬 Generate Video (2 min wait)</button>
+                    </div>
+                </div>
+                
+                <!-- No Card Selected Placeholder -->
+                <div id="noCardSelectedVideo" style="text-align: center; color: var(--text-cream); padding: 2rem;">
+                    <p style="font-size: 1.1rem; opacity: 0.7;">Generate a card first to enable video animation</p>
+                    <button id="backToCardBtn" class="art-deco-btn" style="margin-top: 1rem;">🎴 Go to Card Creation</button>
+                </div>
+            </section>
+
+            <!-- Video Results Section -->
+            <section class="art-deco-section">
+                <h2 class="section-title">Your Video Creations</h2>
+                
+                <!-- Video Gallery -->
+                <div id="videoGallery" class="card-gallery hidden">
+                    <div class="card-display">
+                        <div id="videoResultContainer" class="result-section">
+                            <!-- Generated video will appear here -->
                         </div>
                     </div>
                     
-                    <!-- Placeholder when no card selected -->
-                    <div id="noCardSelected" style="text-align: center; color: var(--text-cream); padding: 2rem;">
-                        <p style="font-size: 1.1rem; opacity: 0.7;">Generate a card first to enable video animation</p>
-                        <button id="backToCardBtn" class="art-deco-btn" style="margin-top: 1rem;">🎴 Go to Card Creation</button>
+                    <!-- Video Gallery Navigation -->
+                    <div id="videoGalleryNavigation" class="gallery-navigation hidden">
+                        <div class="gallery-controls-modern">
+                            <button id="videoGalleryPrevBtn" class="gallery-arrow gallery-arrow-left">‹</button>
+                            <div id="videoGalleryDots" class="gallery-dots">
+                                <!-- Dynamic dot indicators will be inserted here -->
+                            </div>
+                            <button id="videoGalleryNextBtn" class="gallery-arrow gallery-arrow-right">›</button>
+                        </div>
                     </div>
+                    
+                    <!-- Video Action Buttons -->
+                    <div id="videoResultActions" class="result-actions hidden">
+                        <button id="downloadVideoBtn" class="art-deco-btn">💾 Download Video</button>
+                        <button id="createAnotherVideoBtn" class="art-deco-btn">🔄 Create Another Video</button>
+                    </div>
+                </div>
+                
+                <!-- Placeholder when no videos -->
+                <div id="noVideosPlaceholder" style="text-align: center; color: var(--text-cream); padding: 2rem;">
+                    <p style="font-size: 1.2rem; opacity: 0.7;">Videos will appear here</p>
                 </div>
             </section>
         </div>
@@ -1517,6 +1546,90 @@
                     // Trigger the existing optimize prompt functionality
                     if (window.snapMagicApp) {
                         window.snapMagicApp.handleOptimizePrompt().then(() => {
+                            // Reset card after completion
+                            optimizeCard.style.opacity = '1';
+                            optimizeCard.style.pointerEvents = 'auto';
+                            optimizeCardTitle.textContent = optimizeOriginalTitle;
+                        }).catch(() => {
+                            // Reset card on error
+                            optimizeCard.style.opacity = '1';
+                            optimizeCard.style.pointerEvents = 'auto';
+                            optimizeCardTitle.textContent = optimizeOriginalTitle;
+                        });
+                    }
+                    break;
+            }
+        }
+
+        // Video prompt selection function (mirrors card system)
+        function selectVideoPromptOption(mode) {
+            const inputArea = document.getElementById('videoPromptInput');
+            const textarea = document.getElementById('videoPrompt');
+            
+            // Show input area
+            if (inputArea) {
+                inputArea.classList.remove('hidden');
+            }
+            
+            // Handle different modes
+            switch(mode) {
+                case 'generate':
+                    if (textarea) {
+                        textarea.placeholder = 'AI will generate an animation prompt based on your selected card...';
+                        textarea.value = '';
+                    }
+                    
+                    // Show progress on the card
+                    const generateCard = event.target.closest('.prompt-card');
+                    const cardTitle = generateCard.querySelector('.prompt-card-title');
+                    const originalTitle = cardTitle.textContent;
+                    
+                    // Disable card and show progress
+                    generateCard.style.opacity = '0.6';
+                    generateCard.style.pointerEvents = 'none';
+                    cardTitle.textContent = 'Generating...';
+                    
+                    // Trigger video prompt generation
+                    if (window.snapMagicApp) {
+                        window.snapMagicApp.handleGenerateVideoPrompt().then(() => {
+                            // Reset card after completion
+                            generateCard.style.opacity = '1';
+                            generateCard.style.pointerEvents = 'auto';
+                            cardTitle.textContent = originalTitle;
+                        }).catch(() => {
+                            // Reset card on error
+                            generateCard.style.opacity = '1';
+                            generateCard.style.pointerEvents = 'auto';
+                            cardTitle.textContent = originalTitle;
+                        });
+                    }
+                    break;
+                case 'create':
+                    if (textarea) {
+                        textarea.placeholder = 'Describe how you want your card to be animated...';
+                        textarea.focus();
+                    }
+                    break;
+                case 'optimize':
+                    // Validate prompt before optimizing
+                    if (!textarea || !textarea.value.trim()) {
+                        alert('Please enter an animation prompt to optimize first');
+                        return;
+                    }
+                    
+                    // Show progress on the card
+                    const optimizeCard = event.target.closest('.prompt-card');
+                    const optimizeCardTitle = optimizeCard.querySelector('.prompt-card-title');
+                    const optimizeOriginalTitle = optimizeCardTitle.textContent;
+                    
+                    // Disable card and show progress
+                    optimizeCard.style.opacity = '0.6';
+                    optimizeCard.style.pointerEvents = 'none';
+                    optimizeCardTitle.textContent = 'Optimizing...';
+                    
+                    // Trigger video prompt optimization
+                    if (window.snapMagicApp) {
+                        window.snapMagicApp.handleOptimizeVideoPrompt().then(() => {
                             // Reset card after completion
                             optimizeCard.style.opacity = '1';
                             optimizeCard.style.pointerEvents = 'auto';

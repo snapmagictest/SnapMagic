@@ -25,6 +25,13 @@ class SnapMagicApp {
             totalCards: 0 // Total cards in user's session
         };
         
+        // Gallery system for user's videos
+        this.videoGallery = {
+            videos: [], // Array of user's generated videos
+            currentIndex: 0, // Currently displayed video index
+            totalVideos: 0 // Total videos in user's session
+        };
+        
         // Usage tracking
         this.usageLimits = {
             cards: { used: 0, total: 5 },
@@ -330,17 +337,34 @@ class SnapMagicApp {
             createAnotherBtn: document.getElementById('createAnotherBtn'),
             shareLinkedInBtn: document.getElementById('shareLinkedInBtn'),
             
-            // Video generation
+            // Video generation elements
+            videoPromptInput: document.getElementById('videoPromptInput'),
+            videoPrompt: document.getElementById('videoPrompt'),
+            videoCharCount: document.getElementById('videoCharCount'),
+            videoClearBtn: document.getElementById('videoClearBtn'),
+            generateVideoBtn: document.getElementById('generateVideoBtn'),
+            noCardSelectedVideo: document.getElementById('noCardSelectedVideo'),
+            backToCardBtn: document.getElementById('backToCardBtn'),
+            
+            // Video gallery elements
+            videoGallery: document.getElementById('videoGallery'),
+            videoResultContainer: document.getElementById('videoResultContainer'),
+            videoGalleryNavigation: document.getElementById('videoGalleryNavigation'),
+            videoGalleryPrevBtn: document.getElementById('videoGalleryPrevBtn'),
+            videoGalleryNextBtn: document.getElementById('videoGalleryNextBtn'),
+            videoGalleryDots: document.getElementById('videoGalleryDots'),
+            videoResultActions: document.getElementById('videoResultActions'),
+            downloadVideoBtn: document.getElementById('downloadVideoBtn'),
+            createAnotherVideoBtn: document.getElementById('createAnotherVideoBtn'),
+            noVideosPlaceholder: document.getElementById('noVideosPlaceholder'),
+            
+            // Legacy video elements (for compatibility)
             videoSection: document.getElementById('videoSection'),
             videoControls: document.getElementById('videoControls'),
             videoResult: document.getElementById('videoResult'),
             animationPrompt: document.getElementById('animationPrompt'),
-            generateVideoBtn: document.getElementById('generateVideoBtn'),
             videoPlayer: document.getElementById('videoPlayer'),
             videoSource: document.getElementById('videoSource'),
-            downloadVideoBtn: document.getElementById('downloadVideoBtn'),
-            createAnotherVideoBtn: document.getElementById('createAnotherVideoBtn'),
-            backToCardBtn: document.getElementById('backToCardBtn'),
             
             // Video gallery elements (removed - no longer needed)
             // videoSelectedCard: document.getElementById('videoSelectedCard'),
@@ -506,6 +530,17 @@ class SnapMagicApp {
         this.elements.downloadVideoBtn.addEventListener('click', () => this.handleDownloadVideo());
         this.elements.createAnotherVideoBtn.addEventListener('click', () => this.handleCreateAnotherVideo());
         this.elements.backToCardBtn.addEventListener('click', () => this.switchTab('card-generation'));
+        
+        // Video prompt character count and clear button
+        if (this.elements.videoPrompt) {
+            this.elements.videoPrompt.addEventListener('input', () => this.updateVideoCharCount());
+        }
+        if (this.elements.videoClearBtn) {
+            this.elements.videoClearBtn.addEventListener('click', () => this.clearVideoPrompt());
+        }
+        
+        // Video gallery navigation
+        this.setupVideoGalleryNavigation();
         
         // Name input modal event listeners
         this.elements.nameConfirmBtn.addEventListener('click', () => this.handleNameConfirm());
@@ -1701,7 +1736,8 @@ class SnapMagicApp {
 
     // Video Generation
     async handleGenerateVideo() {
-        const userPrompt = this.elements.animationPrompt.value.trim();
+        // Try new video prompt first, fallback to legacy animation prompt
+        const userPrompt = (this.elements.videoPrompt?.value || this.elements.animationPrompt?.value || '').trim();
         
         if (!userPrompt) {
             this.showError('Please describe your action for the video');
@@ -1714,7 +1750,6 @@ class SnapMagicApp {
 
         if (!this.generatedCardData) {
             this.showError('Please generate a trading card first');
-            this.switchTab('card-generation');
             return;
         }
 
@@ -2102,20 +2137,50 @@ class SnapMagicApp {
             return;
         }
         
-        // Set video source and show result container
-        this.elements.videoSource.src = videoSrc;
-        this.elements.videoPlayer.load();
+        // Set video source and show result container (legacy support)
+        if (this.elements.videoSource && this.elements.videoPlayer) {
+            this.elements.videoSource.src = videoSrc;
+            this.elements.videoPlayer.load();
+        }
         
-        // Hide controls, show result
-        this.elements.videoControls.classList.add('hidden');
-        this.elements.videoResult.classList.remove('hidden');
+        // Hide controls, show result (legacy support)
+        if (this.elements.videoControls) {
+            this.elements.videoControls.classList.add('hidden');
+        }
+        if (this.elements.videoResult) {
+            this.elements.videoResult.classList.remove('hidden');
+        }
         
-        console.log('✅ Video displayed successfully');
+        // Add video to new gallery system
+        const videoData = {
+            videoUrl: videoSrc,
+            timestamp: Date.now(),
+            prompt: (this.elements.videoPrompt?.value || this.elements.animationPrompt?.value || '').trim()
+        };
+        
+        this.addVideoToGallery(videoData);
+        
+        console.log('✅ Video displayed successfully and added to gallery');
     }
 
     handleDownloadVideo() {
-        const videoUrl = this.elements.videoSource.src;
-        if (!videoUrl) return;
+        // Try to get video URL from current gallery video or legacy video source
+        let videoUrl;
+        
+        if (this.videoGallery.totalVideos > 0) {
+            const currentVideo = this.videoGallery.videos[this.videoGallery.currentIndex];
+            videoUrl = currentVideo?.videoUrl;
+        }
+        
+        // Fallback to legacy video source
+        if (!videoUrl && this.elements.videoSource) {
+            videoUrl = this.elements.videoSource.src;
+        }
+        
+        if (!videoUrl) {
+            this.showError('No video available to download');
+            return;
+        }
         
         const link = document.createElement('a');
         link.href = videoUrl;
@@ -2133,6 +2198,220 @@ class SnapMagicApp {
         this.elements.videoControls.classList.remove('hidden');
         this.elements.animationPrompt.value = '';
         this.elements.animationPrompt.focus();
+    }
+
+    // New Video System Methods
+    updateVideoCharCount() {
+        const videoPrompt = this.elements.videoPrompt;
+        const videoCharCount = this.elements.videoCharCount;
+        
+        if (videoPrompt && videoCharCount) {
+            const currentLength = videoPrompt.value.length;
+            const maxLength = videoPrompt.getAttribute('maxlength') || 512;
+            videoCharCount.textContent = `${currentLength}/${maxLength}`;
+            
+            // Color coding for character limit
+            if (currentLength > maxLength * 0.9) {
+                videoCharCount.style.color = '#ff6b6b';
+            } else if (currentLength > maxLength * 0.7) {
+                videoCharCount.style.color = '#ffa726';
+            } else {
+                videoCharCount.style.color = 'var(--text-cream)';
+            }
+        }
+    }
+
+    clearVideoPrompt() {
+        if (this.elements.videoPrompt) {
+            this.elements.videoPrompt.value = '';
+            this.updateVideoCharCount();
+        }
+    }
+
+    async handleGenerateVideoPrompt() {
+        console.log('🎭 Generating video prompt from selected card');
+        
+        if (!this.generatedCardData) {
+            this.showError('Please generate a card first');
+            return;
+        }
+
+        try {
+            this.showProcessing('Generating animation prompt...');
+            
+            const apiBaseUrl = window.SNAPMAGIC_CONFIG.API_URL;
+            const endpoint = `${apiBaseUrl}api/generate-prompt`;
+            
+            const cardData = await this.ensureCardDataForActions();
+            
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.authToken}`
+                },
+                body: JSON.stringify({
+                    type: 'video',
+                    cardData: cardData
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const result = await response.json();
+            
+            if (result.success && result.prompt) {
+                this.elements.videoPrompt.value = result.prompt;
+                this.updateVideoCharCount();
+                console.log('✅ Video prompt generated successfully');
+            } else {
+                throw new Error(result.error || 'Failed to generate video prompt');
+            }
+        } catch (error) {
+            console.error('❌ Video prompt generation failed:', error);
+            this.showError(`Failed to generate video prompt: ${error.message}`);
+        } finally {
+            this.hideProcessing();
+        }
+    }
+
+    async handleOptimizeVideoPrompt() {
+        console.log('⚡ Optimizing video prompt');
+        
+        const currentPrompt = this.elements.videoPrompt.value.trim();
+        if (!currentPrompt) {
+            this.showError('Please enter a video prompt to optimize');
+            return;
+        }
+
+        try {
+            this.showProcessing('Optimizing animation prompt...');
+            
+            const apiBaseUrl = window.SNAPMAGIC_CONFIG.API_URL;
+            const endpoint = `${apiBaseUrl}api/optimize-prompt`;
+            
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.authToken}`
+                },
+                body: JSON.stringify({
+                    type: 'video',
+                    prompt: currentPrompt
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const result = await response.json();
+            
+            if (result.success && result.optimizedPrompt) {
+                this.elements.videoPrompt.value = result.optimizedPrompt;
+                this.updateVideoCharCount();
+                console.log('✅ Video prompt optimized successfully');
+            } else {
+                throw new Error(result.error || 'Failed to optimize video prompt');
+            }
+        } catch (error) {
+            console.error('❌ Video prompt optimization failed:', error);
+            this.showError(`Failed to optimize video prompt: ${error.message}`);
+        } finally {
+            this.hideProcessing();
+        }
+    }
+
+    setupVideoGalleryNavigation() {
+        if (this.elements.videoGalleryPrevBtn) {
+            this.elements.videoGalleryPrevBtn.addEventListener('click', () => this.navigateVideoGallery('prev'));
+        }
+        if (this.elements.videoGalleryNextBtn) {
+            this.elements.videoGalleryNextBtn.addEventListener('click', () => this.navigateVideoGallery('next'));
+        }
+    }
+
+    navigateVideoGallery(direction) {
+        if (this.videoGallery.totalVideos === 0) return;
+        
+        if (direction === 'prev' && this.videoGallery.currentIndex > 0) {
+            this.videoGallery.currentIndex--;
+        } else if (direction === 'next' && this.videoGallery.currentIndex < this.videoGallery.totalVideos - 1) {
+            this.videoGallery.currentIndex++;
+        }
+        
+        this.updateVideoGalleryDisplay();
+    }
+
+    updateVideoGalleryDisplay() {
+        if (this.videoGallery.totalVideos === 0) {
+            this.elements.videoGallery.classList.add('hidden');
+            this.elements.noVideosPlaceholder.style.display = 'block';
+            return;
+        }
+
+        this.elements.videoGallery.classList.remove('hidden');
+        this.elements.noVideosPlaceholder.style.display = 'none';
+        
+        const currentVideo = this.videoGallery.videos[this.videoGallery.currentIndex];
+        if (currentVideo) {
+            this.displayVideoInGallery(currentVideo);
+        }
+        
+        this.updateVideoGalleryNavigation();
+    }
+
+    displayVideoInGallery(videoData) {
+        this.elements.videoResultContainer.innerHTML = `
+            <video class="video-player" controls style="width: 100%; max-width: 100%; border-radius: 12px;">
+                <source src="${videoData.videoUrl}" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+        `;
+        
+        this.elements.videoResultActions.classList.remove('hidden');
+        this.elements.videoGalleryNavigation.classList.remove('hidden');
+    }
+
+    updateVideoGalleryNavigation() {
+        // Update navigation buttons
+        if (this.elements.videoGalleryPrevBtn) {
+            this.elements.videoGalleryPrevBtn.disabled = this.videoGallery.currentIndex === 0;
+        }
+        if (this.elements.videoGalleryNextBtn) {
+            this.elements.videoGalleryNextBtn.disabled = this.videoGallery.currentIndex === this.videoGallery.totalVideos - 1;
+        }
+        
+        // Update dots
+        this.updateVideoGalleryDots();
+    }
+
+    updateVideoGalleryDots() {
+        if (!this.elements.videoGalleryDots) return;
+        
+        this.elements.videoGalleryDots.innerHTML = '';
+        
+        for (let i = 0; i < this.videoGallery.totalVideos; i++) {
+            const dot = document.createElement('div');
+            dot.className = `gallery-dot ${i === this.videoGallery.currentIndex ? 'active' : ''}`;
+            dot.addEventListener('click', () => {
+                this.videoGallery.currentIndex = i;
+                this.updateVideoGalleryDisplay();
+            });
+            this.elements.videoGalleryDots.appendChild(dot);
+        }
+    }
+
+    addVideoToGallery(videoData) {
+        this.videoGallery.videos.push(videoData);
+        this.videoGallery.totalVideos = this.videoGallery.videos.length;
+        this.videoGallery.currentIndex = this.videoGallery.totalVideos - 1; // Show newest video
+        
+        this.updateVideoGalleryDisplay();
+        console.log(`📹 Video added to gallery. Total: ${this.videoGallery.totalVideos}`);
     }
 
     // Utility Methods
