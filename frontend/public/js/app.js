@@ -2313,10 +2313,41 @@ class SnapMagicApp {
         try {
             this.showProcessing('Generating animation prompt...');
             
+            console.log('🔍 DEBUG: Current card data structure:', {
+                keys: Object.keys(this.generatedCardData),
+                hasResult: !!this.generatedCardData.result,
+                hasFinalImageSrc: !!this.generatedCardData.finalImageSrc,
+                hasImageSrc: !!this.generatedCardData.imageSrc,
+                resultLength: this.generatedCardData.result ? this.generatedCardData.result.length : 'N/A'
+            });
+            
             const apiBaseUrl = window.SNAPMAGIC_CONFIG.API_URL;
             const endpoint = `${apiBaseUrl}api/transform-card`;
             
+            console.log('🔍 DEBUG: API endpoint:', endpoint);
+            console.log('🔍 DEBUG: Auth token exists:', !!this.authToken);
+            
             const cardData = await this.ensureCardDataForActions();
+            
+            console.log('🔍 DEBUG: Card data after ensureCardDataForActions:', {
+                keys: Object.keys(cardData),
+                hasResult: !!cardData.result,
+                resultLength: cardData.result ? cardData.result.length : 'N/A',
+                resultPreview: cardData.result ? cardData.result.substring(0, 50) + '...' : 'N/A'
+            });
+            
+            const requestPayload = {
+                action: 'generate_animation_prompt',
+                card_image: cardData.result || cardData.finalImageBase64 || cardData.imageBase64 || cardData.image_base64,
+                original_prompt: cardData.prompt || cardData.originalPrompt || ''
+            };
+            
+            console.log('🔍 DEBUG: Request payload:', {
+                action: requestPayload.action,
+                hasCardImage: !!requestPayload.card_image,
+                cardImageLength: requestPayload.card_image ? requestPayload.card_image.length : 'N/A',
+                originalPrompt: requestPayload.original_prompt
+            });
             
             const response = await fetch(endpoint, {
                 method: 'POST',
@@ -2324,18 +2355,21 @@ class SnapMagicApp {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${this.authToken}`
                 },
-                body: JSON.stringify({
-                    action: 'generate_animation_prompt',
-                    card_image: cardData.result || cardData.finalImageBase64 || cardData.imageBase64 || cardData.image_base64,
-                    original_prompt: cardData.prompt || cardData.originalPrompt || ''
-                })
+                body: JSON.stringify(requestPayload)
             });
 
+            console.log('🔍 DEBUG: Response status:', response.status);
+            console.log('🔍 DEBUG: Response ok:', response.ok);
+
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                const errorText = await response.text();
+                console.error('❌ DEBUG: Response error text:', errorText);
+                throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
             }
 
             const result = await response.json();
+            
+            console.log('🔍 DEBUG: Response result:', result);
             
             if (result.success && result.animation_prompt) {
                 this.elements.videoPrompt.value = result.animation_prompt;
@@ -2346,6 +2380,7 @@ class SnapMagicApp {
             }
         } catch (error) {
             console.error('❌ Video prompt generation failed:', error);
+            console.error('❌ Error stack:', error.stack);
             this.showError(`Failed to generate video prompt: ${error.message}`);
         } finally {
             this.hideProcessing();
@@ -3185,8 +3220,23 @@ class SnapMagicApp {
     async convertImageUrlToBase64(imageUrl) {
         try {
             console.log('🔄 Converting image URL to base64 for processing...');
+            console.log('🔗 Image URL:', imageUrl);
             
+            // Check if URL is already base64 data
+            if (imageUrl.startsWith('data:image/')) {
+                console.log('✅ URL is already base64 data, extracting...');
+                const base64 = imageUrl.split(',')[1];
+                return base64;
+            }
+            
+            console.log('📡 Fetching image from URL...');
             const response = await fetch(imageUrl);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            
+            console.log('✅ Image fetched successfully, converting to blob...');
             const blob = await response.blob();
             
             return new Promise((resolve, reject) => {
@@ -3194,14 +3244,23 @@ class SnapMagicApp {
                 reader.onload = () => {
                     // Remove the data:image/png;base64, prefix to get just the base64 data
                     const base64 = reader.result.split(',')[1];
+                    console.log('✅ Image converted to base64, length:', base64.length);
                     resolve(base64);
                 };
-                reader.onerror = reject;
+                reader.onerror = (error) => {
+                    console.error('❌ FileReader error:', error);
+                    reject(error);
+                };
                 reader.readAsDataURL(blob);
             });
         } catch (error) {
             console.error('❌ Failed to convert image URL to base64:', error);
-            throw error;
+            console.error('❌ Error details:', {
+                message: error.message,
+                type: error.constructor.name,
+                url: imageUrl
+            });
+            throw new Error(`Image conversion failed: ${error.message}`);
         }
     }
 
@@ -3222,15 +3281,27 @@ class SnapMagicApp {
         if (this.generatedCardData.finalImageSrc || this.generatedCardData.imageSrc) {
             console.log('✅ Using finalImageSrc (styled card) - same as working gallery method');
             
-            const imageUrl = this.generatedCardData.finalImageSrc || this.generatedCardData.imageSrc;
-            const base64Data = await this.convertImageUrlToBase64(imageUrl);
-            
-            // Create a complete card data object with base64
-            return {
-                ...this.generatedCardData,
-                result: base64Data,
-                finalImageBase64: base64Data
-            };
+            try {
+                const imageUrl = this.generatedCardData.finalImageSrc || this.generatedCardData.imageSrc;
+                const base64Data = await this.convertImageUrlToBase64(imageUrl);
+                
+                // Create a complete card data object with base64
+                return {
+                    ...this.generatedCardData,
+                    result: base64Data,
+                    finalImageBase64: base64Data
+                };
+            } catch (conversionError) {
+                console.error('❌ Image URL conversion failed:', conversionError);
+                console.log('🔄 Falling back to raw result data...');
+                
+                // Fallback: try to use raw result if available
+                if (this.generatedCardData.result && this.generatedCardData.result.length > 100) {
+                    return this.generatedCardData;
+                }
+                
+                throw new Error(`Cannot access card image. URL conversion failed: ${conversionError.message}`);
+            }
         }
 
         // Priority 2: Fallback to raw result if no styled version available
