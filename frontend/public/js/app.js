@@ -1449,7 +1449,7 @@ class SnapMagicApp {
             display: flex;
             flex-direction: column;
             color: white;
-            padding: 12px;
+            padding: clamp(10px, 2vw, 16px);
             justify-content: space-between;
         }
 
@@ -1457,8 +1457,8 @@ class SnapMagicApp {
         .bulk-head-header {
             position: relative;
             margin: -12px -12px 8px -12px;
-            padding: 16px 20px;
-            min-height: 40px;
+            padding: clamp(12px, 2.5vw, 20px) clamp(16px, 3vw, 24px);
+            min-height: clamp(32px, 6vw, 48px);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -1476,7 +1476,7 @@ class SnapMagicApp {
             border-left: 2px solid rgba(255, 255, 255, 0.25);
             border-right: 1px solid rgba(0, 0, 0, 0.3);
             border-bottom: 2px solid rgba(0, 0, 0, 0.4);
-            border-radius: 12px 12px 8px 8px;
+            border-radius: clamp(8px, 2vw, 12px) clamp(8px, 2vw, 12px) clamp(6px, 1.5vw, 8px) clamp(6px, 1.5vw, 8px);
             
             /* Deep 3D Shadow System */
             box-shadow: 
@@ -1499,7 +1499,7 @@ class SnapMagicApp {
         
         /* Popping Logo with Shine */
         .popping-logo {
-            height: 28px !important;
+            height: clamp(20px, 4vw, 32px) !important;
             width: auto !important;
             max-width: 100% !important;
             object-fit: contain !important;
@@ -1550,22 +1550,22 @@ class SnapMagicApp {
         .card-image {
             flex: 1;
             background: #2a2a3e;
-            border-radius: 10px;
-            margin-bottom: 12px;
+            border-radius: clamp(8px, 1.5vw, 12px);
+            margin-bottom: clamp(8px, 2vw, 16px);
             position: relative;
             overflow: hidden;
             border: 2px solid rgba(255, 255, 255, 0.1);
             display: flex;
             align-items: center;
             justify-content: center;
-            min-height: 280px; /* Increased from 180px to fill footer space */
+            min-height: clamp(200px, 35vw, 320px); /* Responsive height */
         }
 
         .event-name {
             text-align: center;
-            font-size: 16px;
+            font-size: clamp(14px, 2.5vw, 18px);
             font-weight: bold;
-            margin-bottom: 8px;
+            margin-bottom: clamp(6px, 1.2vw, 10px);
             color: var(--aws-orange);
             text-shadow: 0 0 5px rgba(255, 153, 0, 0.3);
             line-height: 1.2;
@@ -1593,15 +1593,15 @@ class SnapMagicApp {
         }
 
         .customer-logo, .partner-logo {
-            width: 50px;
-            height: 50px;
+            width: clamp(40px, 8vw, 60px);
+            height: clamp(40px, 8vw, 60px);
             display: flex;
             align-items: center;
             justify-content: center;
         }
 
         .partner-logo {
-            margin-left: 8px;
+            margin-left: clamp(6px, 1.2vw, 10px);
         }
 
         .customer-logo img, .partner-logo img {
@@ -1613,18 +1613,18 @@ class SnapMagicApp {
         .creator-info {
             text-align: right;
             flex: 1;
-            margin-left: 15px;
+            margin-left: clamp(10px, 2vw, 18px);
         }
 
         .creator-name {
-            font-size: 13px;
+            font-size: clamp(11px, 2vw, 15px);
             font-weight: bold;
             color: white;
             margin-bottom: 1px;
         }
 
         .creator-title {
-            font-size: 10px;
+            font-size: clamp(9px, 1.5vw, 12px);
             color: rgba(255, 255, 255, 0.7);
         }
 
