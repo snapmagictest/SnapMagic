@@ -1549,7 +1549,6 @@ class SnapMagicApp {
         }
 
         .card-image {
-            flex: 1;
             background: #2a2a3e;
             border-radius: clamp(8px, 1.5vw, 12px);
             margin-bottom: clamp(8px, 2vw, 16px);
@@ -1559,10 +1558,9 @@ class SnapMagicApp {
             display: flex;
             align-items: center;
             justify-content: center;
-            min-height: clamp(180px, 30vw, 280px);
-            max-height: clamp(180px, 30vw, 280px);
-            aspect-ratio: 16/9;
+            height: clamp(200px, 35vw, 300px);
             width: 100%;
+            aspect-ratio: 16/9;
         }
 
         .event-name {
@@ -1798,46 +1796,42 @@ class SnapMagicApp {
     }
 
     /**
-     * Convert image to JPEG format for Nova Reel compatibility
-     * Nova Reel requires JPEG format specifically
+     * Convert Nova Canvas PNG to JPEG format for Nova Reel compatibility
+     * Simple format conversion without letterboxing (image is already 1280x720)
      */
     async convertImageToJPEG(imageBase64) {
         return new Promise((resolve, reject) => {
             try {
-                console.log('🔄 Converting image to JPEG format for Nova Reel...');
+                console.log('🔄 Converting Nova Canvas PNG to JPEG for Nova Reel...');
                 
                 // Create canvas for format conversion
                 const canvas = document.createElement('canvas');
                 const ctx = canvas.getContext('2d');
                 
-                // Load the image
+                // Load the 1280x720 Nova Canvas image
                 const img = new Image();
                 img.crossOrigin = 'anonymous';
                 
                 img.onload = function() {
-                    console.log(`📏 Image dimensions: ${img.width}x${img.height}`);
+                    console.log(`📏 Nova Canvas image: ${img.width}x${img.height}`);
                     
-                    // Set canvas to image dimensions (should be 1280x720)
+                    // Set canvas to exact image dimensions (should be 1280x720)
                     canvas.width = img.width;
                     canvas.height = img.height;
                     
-                    // Fill with white background (JPEG doesn't support transparency)
-                    ctx.fillStyle = '#FFFFFF';
-                    ctx.fillRect(0, 0, canvas.width, canvas.height);
-                    
-                    // Draw the image
+                    // Draw the image directly (no letterboxing needed)
                     ctx.drawImage(img, 0, 0);
                     
                     // Convert to JPEG format (quality 1.0 for best quality)
                     const jpegBase64 = canvas.toDataURL('image/jpeg', 1.0).split(',')[1];
                     
-                    console.log('✅ Image converted to JPEG format');
+                    console.log('✅ PNG→JPEG conversion complete');
                     console.log(`📊 JPEG Base64 length: ${jpegBase64.length} characters`);
                     resolve(jpegBase64);
                 };
                 
                 img.onerror = function() {
-                    console.error('❌ Failed to load image for JPEG conversion');
+                    console.error('❌ Failed to load Nova Canvas image for JPEG conversion');
                     reject(new Error('Failed to load image for JPEG conversion'));
                 };
                 
