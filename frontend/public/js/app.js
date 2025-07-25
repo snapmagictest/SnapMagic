@@ -1178,21 +1178,26 @@ class SnapMagicApp {
             </style>
             
             <div class="card-content">
-                <!-- 1. AI Generated Image -->
+                <!-- 1. 3D Bulk Head Header -->
+                <div class="bulk-head-header">
+                    <img src="/powered-by-aws-white-horizontal.png" alt="Powered by AWS" class="popping-logo">
+                </div>
+
+                <!-- 2. AI Generated Image -->
                 <div class="card-image">
                     <img src="${aiImageSrc}" alt="AI Generated Trading Card" 
                          style="width: 100%; height: 100%; object-fit: contain; border-radius: 8px; 
                                 image-rendering: -webkit-optimize-contrast; image-rendering: crisp-edges;">
                 </div>
 
-                <!-- 2. Event Name -->
+                <!-- 3. Event Name -->
                 <div class="event-name">
                     AWS re:Invent 2024
                 </div>
 
                 <!-- Bottom section container -->
                 <div class="card-bottom-section">
-                    <!-- 3. Customer/Partner Logos and Creator Section -->
+                    <!-- 4. Customer/Partner Logos and Creator Section -->
                     <div class="card-footer">
                         <div class="customer-logo" title="Customer Logo">
                             <img src="/logos/1.png" alt="Customer" onerror="this.style.display='none'">
@@ -1446,6 +1451,100 @@ class SnapMagicApp {
             color: white;
             padding: 12px;
             justify-content: space-between;
+        }
+
+        /* 3D Bulk Head Header with Popping Logo */
+        .bulk-head-header {
+            position: relative;
+            margin: -12px -12px 16px -12px;
+            padding: 16px 20px;
+            min-height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            
+            /* 3D Bulk Head Background */
+            background: 
+                linear-gradient(135deg, #4a5568 0%, #2d3748 25%, #1a202c 50%, #0f1419 75%, #000000 100%),
+                radial-gradient(ellipse at top left, rgba(255, 255, 255, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at bottom right, rgba(255, 153, 0, 0.1) 0%, transparent 50%);
+            background-blend-mode: normal, overlay, multiply;
+            
+            /* 3D Bulk Effect */
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-top: 2px solid rgba(255, 255, 255, 0.3);
+            border-left: 2px solid rgba(255, 255, 255, 0.25);
+            border-right: 1px solid rgba(0, 0, 0, 0.3);
+            border-bottom: 2px solid rgba(0, 0, 0, 0.4);
+            border-radius: 12px 12px 8px 8px;
+            
+            /* Deep 3D Shadow System */
+            box-shadow: 
+                inset 2px 2px 6px rgba(255, 255, 255, 0.1),     /* Inner highlight */
+                inset -2px -2px 6px rgba(0, 0, 0, 0.3),         /* Inner shadow */
+                0 4px 8px rgba(0, 0, 0, 0.4),                   /* Outer shadow */
+                0 8px 16px rgba(0, 0, 0, 0.2),                  /* Depth shadow */
+                0 0 20px rgba(255, 153, 0, 0.15);               /* AWS glow */
+            
+            /* Subtle texture overlay */
+            background-image: 
+                repeating-linear-gradient(
+                    45deg,
+                    transparent,
+                    transparent 2px,
+                    rgba(255, 255, 255, 0.02) 2px,
+                    rgba(255, 255, 255, 0.02) 4px
+                );
+        }
+        
+        /* Popping Logo with Shine */
+        .popping-logo {
+            height: 28px !important;
+            width: auto !important;
+            max-width: 100% !important;
+            object-fit: contain !important;
+            
+            /* 3D Popping Effect */
+            transform: translateZ(10px) scale(1.05);
+            filter: 
+                drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3))
+                drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2))
+                brightness(1.1)
+                contrast(1.1);
+            
+            /* Shine Animation */
+            position: relative;
+            animation: logoShine 3s ease-in-out infinite;
+        }
+        
+        /* Shine Animation Keyframes */
+        @keyframes logoShine {
+            0%, 100% {
+                filter: 
+                    drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3))
+                    drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2))
+                    brightness(1.1)
+                    contrast(1.1);
+            }
+            50% {
+                filter: 
+                    drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3))
+                    drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2))
+                    drop-shadow(0 0 12px rgba(255, 255, 255, 0.4))
+                    brightness(1.2)
+                    contrast(1.15);
+            }
+        }
+        
+        /* Hover Enhancement */
+        .bulk-head-header:hover .popping-logo {
+            transform: translateZ(15px) scale(1.08);
+            filter: 
+                drop-shadow(0 3px 6px rgba(0, 0, 0, 0.4))
+                drop-shadow(0 6px 12px rgba(0, 0, 0, 0.3))
+                drop-shadow(0 0 16px rgba(255, 255, 255, 0.5))
+                brightness(1.25)
+                contrast(1.2);
         }
 
         .card-image {
