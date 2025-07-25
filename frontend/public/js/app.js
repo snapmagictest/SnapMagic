@@ -886,6 +886,8 @@ class SnapMagicApp {
         
         // Update generate video button (different from create video)
         const generateVideoBtn = document.getElementById('generateVideoBtn');
+        const generateVideoBtn2 = document.getElementById('generateVideoBtn2');
+        
         if (generateVideoBtn) {
             if (videoRemaining <= 0) {
                 generateVideoBtn.disabled = true;
@@ -893,6 +895,16 @@ class SnapMagicApp {
             } else {
                 generateVideoBtn.disabled = false;
                 generateVideoBtn.innerHTML = `🎬 Generate Video (${videoRemaining} of ${this.usageLimits.videos.total} remaining)`;
+            }
+        }
+        
+        if (generateVideoBtn2) {
+            if (videoRemaining <= 0) {
+                generateVideoBtn2.disabled = true;
+                generateVideoBtn2.innerHTML = '🚫 Video Limit Reached';
+            } else {
+                generateVideoBtn2.disabled = false;
+                generateVideoBtn2.innerHTML = `🎬 Generate Video (${videoRemaining} of ${this.usageLimits.videos.total} remaining)`;
             }
         }
         
@@ -1779,7 +1791,16 @@ class SnapMagicApp {
 
         try {
             this.showProcessing('Creating your animated video... This takes about 2 minutes.');
-            this.elements.generateVideoBtn.disabled = true;
+            
+            // Disable both video generation buttons
+            if (this.elements.generateVideoBtn) {
+                this.elements.generateVideoBtn.disabled = true;
+            }
+            const generateVideoBtn2 = document.getElementById('generateVideoBtn2');
+            if (generateVideoBtn2) {
+                generateVideoBtn2.disabled = true;
+            }
+            
             this.videoGenerationInProgress = true;
             
             const apiBaseUrl = window.SNAPMAGIC_CONFIG.API_URL;
@@ -1849,7 +1870,14 @@ class SnapMagicApp {
             this.showError('Video generation failed. Please check your connection and try again.');
             this.videoGenerationInProgress = false;
         } finally {
-            this.elements.generateVideoBtn.disabled = false;
+            // Re-enable both video generation buttons
+            if (this.elements.generateVideoBtn) {
+                this.elements.generateVideoBtn.disabled = false;
+            }
+            const generateVideoBtn2 = document.getElementById('generateVideoBtn2');
+            if (generateVideoBtn2) {
+                generateVideoBtn2.disabled = false;
+            }
         }
     }
 
