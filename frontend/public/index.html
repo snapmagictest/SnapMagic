@@ -1331,6 +1331,17 @@
                     </div>
                 </div>
                 
+                <!-- Legacy Animation Prompt (for compatibility) -->
+                <div id="legacyVideoPrompt" class="prompt-input-section hidden">
+                    <div class="textarea-container">
+                        <textarea id="animationPrompt" class="art-deco-textarea" placeholder="Describe how you want the card to be animated..." maxlength="512"></textarea>
+                        <div class="textarea-controls">
+                            <div id="animationCharCount" class="textarea-limit-indicator">0/512</div>
+                            <button class="textarea-clear-btn" id="animationClearBtn">CLEAR</button>
+                        </div>
+                    </div>
+                </div>
+                
                 <!-- No Card Selected Placeholder -->
                 <div id="noCardSelectedVideo" style="text-align: center; color: var(--text-cream); padding: 2rem;">
                     <p style="font-size: 1.1rem; opacity: 0.7;">Generate a card first to enable video animation</p>

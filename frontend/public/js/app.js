@@ -1736,8 +1736,13 @@ class SnapMagicApp {
 
     // Video Generation
     async handleGenerateVideo() {
-        // Try new video prompt first, fallback to legacy animation prompt
-        const userPrompt = (this.elements.videoPrompt?.value || this.elements.animationPrompt?.value || '').trim();
+        // Use videoPrompt if available (new system), otherwise use animationPrompt (legacy)
+        let userPrompt = '';
+        if (this.elements.videoPrompt && this.elements.videoPrompt.value.trim()) {
+            userPrompt = this.elements.videoPrompt.value.trim();
+        } else if (this.elements.animationPrompt && this.elements.animationPrompt.value.trim()) {
+            userPrompt = this.elements.animationPrompt.value.trim();
+        }
         
         if (!userPrompt) {
             this.showError('Please describe your action for the video');
