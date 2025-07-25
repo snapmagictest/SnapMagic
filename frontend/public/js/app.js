@@ -1178,26 +1178,21 @@ class SnapMagicApp {
             </style>
             
             <div class="card-content">
-                <!-- 1. Powered by AWS Header -->
-                <div class="powered-by-aws">
-                    <img src="/powered-by-aws-white-horizontal.png" alt="Powered by AWS" style="height: 20px; width: auto;">
-                </div>
-
-                <!-- 2. AI Generated Image -->
+                <!-- 1. AI Generated Image -->
                 <div class="card-image">
                     <img src="${aiImageSrc}" alt="AI Generated Trading Card" 
                          style="width: 100%; height: 100%; object-fit: contain; border-radius: 8px; 
                                 image-rendering: -webkit-optimize-contrast; image-rendering: crisp-edges;">
                 </div>
 
-                <!-- 3. Event Name -->
+                <!-- 2. Event Name -->
                 <div class="event-name">
                     AWS re:Invent 2024
                 </div>
 
                 <!-- Bottom section container -->
                 <div class="card-bottom-section">
-                    <!-- 4. Customer/Partner Logos and Creator Section -->
+                    <!-- 3. Customer/Partner Logos and Creator Section -->
                     <div class="card-footer">
                         <div class="customer-logo" title="Customer Logo">
                             <img src="/logos/1.png" alt="Customer" onerror="this.style.display='none'">
@@ -1451,26 +1446,6 @@ class SnapMagicApp {
             color: white;
             padding: 12px;
             justify-content: space-between;
-        }
-
-        .powered-by-aws {
-            text-align: center;
-            padding: 6px 0;
-            background: 
-                radial-gradient(ellipse at top, #4a5568 0%, #2d3748 30%, #1a202c 60%, #000000 100%),
-                linear-gradient(45deg, transparent 30%, rgba(113, 128, 150, 0.1) 50%, transparent 70%),
-                linear-gradient(-45deg, transparent 30%, rgba(113, 128, 150, 0.1) 50%, transparent 70%);
-            background-size: 100% 100%, 20px 20px, 20px 20px;
-            background-position: center, 0 0, 10px 10px;
-            margin: -12px -12px 12px -12px;
-            font-size: 12px;
-            font-weight: bold;
-            color: white;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.6);
-            position: relative;
-            overflow: hidden;
         }
 
         .card-image {
