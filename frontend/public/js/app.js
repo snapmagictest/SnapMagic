@@ -1593,20 +1593,22 @@ class SnapMagicApp {
         }
 
         .customer-logo, .partner-logo {
-            width: clamp(40px, 8vw, 60px);
-            height: clamp(40px, 8vw, 60px);
+            height: clamp(35px, 6vw, 50px);
+            width: auto;
+            max-width: clamp(60px, 10vw, 80px);
             display: flex;
             align-items: center;
             justify-content: center;
         }
 
         .partner-logo {
-            margin-left: clamp(6px, 1.2vw, 10px);
+            margin-left: clamp(8px, 1.5vw, 12px);
         }
 
         .customer-logo img, .partner-logo img {
-            width: 100%;
             height: 100%;
+            width: auto;
+            max-width: 100%;
             object-fit: contain;
         }
 
