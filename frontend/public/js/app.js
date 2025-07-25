@@ -1510,6 +1510,12 @@ class SnapMagicApp {
             border-radius: 8px;
             border: 1px solid rgba(255, 255, 255, 0.2);
             margin-bottom: 0px;
+            
+            /* 3D Etched/Inset Effect */
+            box-shadow: 
+                inset 2px 2px 4px rgba(0, 0, 0, 0.6),     /* Top-left inner shadow (dark) */
+                inset -2px -2px 4px rgba(255, 255, 255, 0.1), /* Bottom-right inner highlight */
+                inset 0 0 8px rgba(0, 0, 0, 0.3);         /* Overall inner depth */
         }
 
         .customer-logo, .partner-logo {
