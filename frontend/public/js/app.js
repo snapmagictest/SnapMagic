@@ -2240,7 +2240,7 @@ class SnapMagicApp {
             this.showProcessing('Generating animation prompt...');
             
             const apiBaseUrl = window.SNAPMAGIC_CONFIG.API_URL;
-            const endpoint = `${apiBaseUrl}api/generate-prompt`;
+            const endpoint = `${apiBaseUrl}api/transform-card`;
             
             const cardData = await this.ensureCardDataForActions();
             
@@ -2251,7 +2251,7 @@ class SnapMagicApp {
                     'Authorization': `Bearer ${this.authToken}`
                 },
                 body: JSON.stringify({
-                    type: 'video',
+                    action: 'generate_animation_prompt',
                     cardData: cardData
                 })
             });
@@ -2290,7 +2290,7 @@ class SnapMagicApp {
             this.showProcessing('Optimizing animation prompt...');
             
             const apiBaseUrl = window.SNAPMAGIC_CONFIG.API_URL;
-            const endpoint = `${apiBaseUrl}api/optimize-prompt`;
+            const endpoint = `${apiBaseUrl}api/transform-card`;
             
             const response = await fetch(endpoint, {
                 method: 'POST',
@@ -2299,7 +2299,7 @@ class SnapMagicApp {
                     'Authorization': `Bearer ${this.authToken}`
                 },
                 body: JSON.stringify({
-                    type: 'video',
+                    action: 'optimize_animation_prompt',
                     prompt: currentPrompt
                 })
             });
