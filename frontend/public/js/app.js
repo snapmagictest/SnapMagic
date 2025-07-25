@@ -1615,7 +1615,7 @@ class SnapMagicApp {
         .creator-info {
             text-align: right;
             flex: 1;
-            margin-left: clamp(10px, 2vw, 18px);
+            margin-left: clamp(6px, 1vw, 10px);
         }
 
         .creator-name {
