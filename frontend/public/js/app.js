@@ -2303,6 +2303,13 @@ class SnapMagicApp {
             return;
         }
 
+        // Ensure videoPrompt element exists
+        if (!this.elements.videoPrompt) {
+            console.error('❌ videoPrompt element not found');
+            this.showError('Video prompt input not available');
+            return;
+        }
+
         try {
             this.showProcessing('Generating animation prompt...');
             
@@ -2347,6 +2354,13 @@ class SnapMagicApp {
 
     async handleOptimizeVideoPrompt() {
         console.log('⚡ Optimizing video prompt');
+        
+        // Ensure videoPrompt element exists
+        if (!this.elements.videoPrompt) {
+            console.error('❌ videoPrompt element not found');
+            this.showError('Video prompt input not available');
+            return;
+        }
         
         const currentPrompt = this.elements.videoPrompt.value.trim();
         if (!currentPrompt) {
