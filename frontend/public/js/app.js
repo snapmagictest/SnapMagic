@@ -1456,7 +1456,7 @@ class SnapMagicApp {
         /* 3D Bulk Head Header with Popping Logo */
         .bulk-head-header {
             position: relative;
-            margin: -12px -12px 2px -12px;
+            margin: -12px -12px 6px -12px;
             padding: clamp(12px, 2.5vw, 20px) clamp(16px, 3vw, 24px);
             min-height: clamp(32px, 6vw, 48px);
             display: flex;
@@ -1550,7 +1550,7 @@ class SnapMagicApp {
         .card-image {
             background: #2a2a3e;
             border-radius: clamp(8px, 1.5vw, 12px);
-            margin-bottom: 2px;
+            margin-bottom: 6px;
             position: relative;
             overflow: hidden;
             border: 2px solid rgba(255, 255, 255, 0.1);
@@ -1566,14 +1566,14 @@ class SnapMagicApp {
             text-align: center;
             font-size: clamp(14px, 2.5vw, 18px);
             font-weight: bold;
-            margin-bottom: 2px;
+            margin-bottom: 6px;
             color: var(--aws-orange);
             text-shadow: 0 0 5px rgba(255, 153, 0, 0.3);
             line-height: 1.2;
         }
 
         .card-bottom-section {
-            margin-top: 2px;
+            margin-top: 6px;
         }
 
         .card-footer {
