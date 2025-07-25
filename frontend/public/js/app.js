@@ -1264,7 +1264,7 @@ class SnapMagicApp {
             width: 100%;
             max-width: calc(100% - 1rem); /* Fill SPACE 4 <-- --> minus small margin */
             /* Fixed aspect ratio for consistent trading card appearance */
-            aspect-ratio: 5/7.5;
+            aspect-ratio: 5/6.5;
             position: relative;
             /* SPACE 5: Minimize margins to get close to SPACE 4 boundaries */
             margin: 0 auto;
