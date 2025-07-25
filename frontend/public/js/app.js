@@ -1171,9 +1171,6 @@ class SnapMagicApp {
         const creatorName = userName || 'AWS User';
         const creatorTitle = 'Cloud Enthusiast';
         
-        // Discover logos (simple check)
-        const logoElements = this.createLogoElements();
-        
         return `
         <div class="snapmagic-card animated" id="holoCard">
             <style>
@@ -1213,29 +1210,9 @@ class SnapMagicApp {
                             <div class="creator-title">${creatorTitle}</div>
                         </div>
                     </div>
-
-                    <!-- 5. Footer with Customer Logos -->
-                    <div class="powered-by-aws-footer">
-                        ${logoElements}
-                    </div>
                 </div>
             </div>
         </div>`;
-    }
-    
-    /**
-     * Create footer logo elements (only logo 3 since 1 and 2 are used above)
-     */
-    createLogoElements() {
-        // Only use logo 3.png since 1.png and 2.png are used for customer/partner
-        const logos = [];
-        logos.push(`
-            <div class="footer-logo" title="Logo 3">
-                <img src="/logos/3.png" alt="Logo 3" onerror="this.style.display='none'">
-            </div>
-        `);
-        
-        return logos.join('') || '<div class="no-logos-text">⚡ Powered by AWS ⚡</div>';
     }
     
     /**
@@ -1507,7 +1484,7 @@ class SnapMagicApp {
             display: flex;
             align-items: center;
             justify-content: center;
-            min-height: 180px;
+            min-height: 280px; /* Increased from 180px to fill footer space */
         }
 
         .event-name {
@@ -1569,45 +1546,6 @@ class SnapMagicApp {
         .creator-title {
             font-size: 10px;
             color: rgba(255, 255, 255, 0.7);
-        }
-
-        .powered-by-aws-footer {
-            text-align: center;
-            padding: 2px 0 5px 0;
-            background: 
-                radial-gradient(ellipse at bottom, #4a5568 0%, #2d3748 30%, #1a202c 60%, #000000 100%),
-                linear-gradient(45deg, transparent 30%, rgba(113, 128, 150, 0.1) 50%, transparent 70%),
-                linear-gradient(-45deg, transparent 30%, rgba(113, 128, 150, 0.1) 50%, transparent 70%);
-            background-size: 100% 100%, 20px 20px, 20px 20px;
-            background-position: center, 0 0, 10px 10px;
-            margin: 4px -12px -12px -12px;
-            font-size: 12px;
-            font-weight: bold;
-            color: white;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.6);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 20px;
-            min-height: auto;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .footer-logo {
-            width: 45px;
-            height: 45px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .footer-logo img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
         }
 
         /* Trading Card Responsive Sizing - MAXIMIZE within SPACE 4 */
