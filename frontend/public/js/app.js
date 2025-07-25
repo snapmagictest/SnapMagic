@@ -1451,7 +1451,6 @@ class SnapMagicApp {
             flex-direction: column;
             color: white;
             padding: clamp(10px, 2vw, 16px);
-            justify-content: space-between;
         }
 
         /* 3D Bulk Head Header with Popping Logo */
