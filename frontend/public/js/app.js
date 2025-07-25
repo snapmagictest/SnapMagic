@@ -1180,7 +1180,7 @@ class SnapMagicApp {
             <div class="card-content">
                 <!-- 1. 3D Bulk Head Header -->
                 <div class="bulk-head-header">
-                    <img src="/powered-by-aws-white.png" alt="Powered by AWS" class="popping-logo">
+                    <img src="/powered-by-aws-white-horizontal.png" alt="Powered by AWS" class="popping-logo">
                 </div>
 
                 <!-- 2. AI Generated Image -->
