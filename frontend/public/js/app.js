@@ -2326,7 +2326,7 @@ class SnapMagicApp {
                 },
                 body: JSON.stringify({
                     action: 'generate_animation_prompt',
-                    card_image: cardData.imageBase64 || cardData.image_base64,
+                    card_image: cardData.result || cardData.finalImageBase64 || cardData.imageBase64 || cardData.image_base64,
                     original_prompt: cardData.prompt || cardData.originalPrompt || ''
                 })
             });
@@ -2390,7 +2390,7 @@ class SnapMagicApp {
                 body: JSON.stringify({
                     action: 'optimize_animation_prompt',
                     user_prompt: currentPrompt,
-                    card_image: cardData.imageBase64 || cardData.image_base64,
+                    card_image: cardData.result || cardData.finalImageBase64 || cardData.imageBase64 || cardData.image_base64,
                     original_prompt: cardData.prompt || cardData.originalPrompt || ''
                 })
             });
