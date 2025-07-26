@@ -699,6 +699,9 @@ class SnapMagicApp {
                 // Load existing cards from previous sessions
                 await this.loadExistingCards();
                 
+                // Load existing videos from previous sessions
+                await this.loadExistingVideos();
+                
                 this.hideProcessing();
                 this.showMainApp();
                 
@@ -2115,7 +2118,7 @@ class SnapMagicApp {
                 this.videoProgress = null;
                 
                 this.hideProcessing();
-                this.displayGeneratedVideo(result.video_url);
+                this.displayGeneratedVideo(result.video_url, result); // Pass complete result data
                 this.videoGenerationInProgress = false;
             } else if (result.success && (result.status === 'IN_PROGRESS' || result.status === 'PROCESSING')) {
                 console.log(`⏳ Video still processing, will check again in 10 seconds (attempt ${retryCount + 1}/${MAX_RETRIES})`);
@@ -2175,8 +2178,10 @@ class SnapMagicApp {
         console.log('📢 Status update:', message);
     }
 
-    displayGeneratedVideo(videoUrl) {
+    displayGeneratedVideo(videoUrl, videoResult = null) {
         console.log('🎥 Displaying video result...');
+        console.log('🎥 Video URL:', videoUrl);
+        console.log('🎥 Video Result:', videoResult);
         
         // Set video source (prefer URL for better performance)
         let videoSrc;
@@ -2203,13 +2208,24 @@ class SnapMagicApp {
             this.elements.videoResult.classList.remove('hidden');
         }
         
-        // Add video to new gallery system
+        // Create complete video data for gallery
         const videoData = {
-            videoUrl: videoSrc,
+            video_url: videoSrc,
+            videoUrl: videoSrc, // Alias for compatibility
+            finalVideoSrc: videoSrc,
+            animation_prompt: (this.elements.videoPrompt?.value || this.elements.animationPrompt?.value || '').trim(),
+            prompt: (this.elements.videoPrompt?.value || this.elements.animationPrompt?.value || '').trim(), // Alias
             timestamp: Date.now(),
-            prompt: (this.elements.videoPrompt?.value || this.elements.animationPrompt?.value || '').trim()
+            success: true,
+            // Include backend data if available
+            ...(videoResult && videoResult.storage ? {
+                key: videoResult.storage.s3_key,
+                video_number: videoResult.storage.video_number,
+                session_id: videoResult.storage.session_id
+            } : {})
         };
         
+        console.log('🎬 Adding video to gallery:', videoData);
         this.addVideoToGallery(videoData);
         
         console.log('✅ Video displayed successfully and added to gallery');
@@ -3375,6 +3391,48 @@ class SnapMagicApp {
         } catch (error) {
             console.error('❌ Error loading existing cards:', error);
             // Don't show error to user - just continue without loading cards
+        }
+    }
+
+    /**
+     * Load existing videos from S3 for current session - EXACTLY LIKE CARDS
+     */
+    async loadExistingVideos() {
+        try {
+            console.log('📹 Loading existing videos from session...');
+            
+            const apiBaseUrl = window.SNAPMAGIC_CONFIG.API_URL;
+            const response = await fetch(`${apiBaseUrl}api/transform-card`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.authToken}`,
+                    'X-Device-ID': this.deviceId
+                },
+                body: JSON.stringify({ action: 'load_session_videos' })
+            });
+
+            const data = await response.json();
+            
+            if (data.success && data.videos && data.videos.length > 0) {
+                console.log(`✅ Found ${data.videos.length} existing videos`);
+                
+                // Load videos into gallery (newest first, so reverse to show oldest first in gallery)
+                this.videoGallery.videos = data.videos.reverse();
+                this.videoGallery.totalVideos = data.videos.length;
+                this.videoGallery.currentIndex = this.videoGallery.totalVideos - 1; // Show newest video
+                
+                // Update video gallery display
+                this.updateVideoGalleryDisplay();
+                
+                console.log(`🎬 Loaded ${this.videoGallery.totalVideos} videos into gallery`);
+                console.log(`🎬 Displaying most recent video (${this.videoGallery.currentIndex + 1} of ${this.videoGallery.totalVideos})`);
+            } else {
+                console.log('📭 No existing videos found for this session');
+            }
+        } catch (error) {
+            console.error('❌ Error loading existing videos:', error);
+            // Don't show error to user - just continue without loading videos
         }
     }
 
