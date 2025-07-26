@@ -2489,30 +2489,53 @@ class SnapMagicApp {
     }
 
     updateVideoGalleryDisplay() {
+        console.log(`🎬 updateVideoGalleryDisplay called - ${this.videoGallery.totalVideos} videos`);
+        
         if (this.videoGallery.totalVideos === 0) {
-            this.elements.videoGallery.classList.add('hidden');
-            this.elements.noVideosPlaceholder.style.display = 'block';
+            console.log('📭 No videos - hiding gallery');
+            if (this.elements.videoGallery) this.elements.videoGallery.classList.add('hidden');
+            if (this.elements.noVideosPlaceholder) this.elements.noVideosPlaceholder.style.display = 'block';
             return;
         }
 
-        this.elements.videoGallery.classList.remove('hidden');
-        this.elements.noVideosPlaceholder.style.display = 'none';
+        console.log('🎬 Showing video gallery with videos');
+        
+        // CRITICAL: Show the video gallery container
+        if (this.elements.videoGallery) {
+            this.elements.videoGallery.classList.remove('hidden');
+            console.log('✅ Video gallery container made visible');
+        }
+        
+        // Hide the placeholder
+        if (this.elements.noVideosPlaceholder) {
+            this.elements.noVideosPlaceholder.style.display = 'none';
+        }
         
         // Update video counter display - LIKE CARD GALLERY
         const videoGalleryCounter = document.getElementById('videoGalleryCounter');
         if (videoGalleryCounter) {
-            videoGalleryCounter.textContent = `Video ${this.videoGallery.currentIndex + 1} of ${this.videoGallery.totalVideos}`;
+            const counterText = `Video ${this.videoGallery.currentIndex + 1} of ${this.videoGallery.totalVideos}`;
+            videoGalleryCounter.textContent = counterText;
+            console.log(`✅ Video counter updated: ${counterText}`);
+        } else {
+            console.error('❌ videoGalleryCounter element not found');
         }
         
         // Show gallery info
         const videoGalleryInfo = document.getElementById('videoGalleryInfo');
         if (videoGalleryInfo) {
             videoGalleryInfo.style.display = 'block';
+            console.log('✅ Video gallery info made visible');
+        } else {
+            console.error('❌ videoGalleryInfo element not found');
         }
         
         const currentVideo = this.videoGallery.videos[this.videoGallery.currentIndex];
         if (currentVideo) {
+            console.log('🎥 Displaying current video:', currentVideo);
             this.displayVideoInGallery(currentVideo);
+        } else {
+            console.error('❌ No current video found');
         }
         
         this.updateVideoGalleryNavigation();
@@ -3437,6 +3460,8 @@ class SnapMagicApp {
             console.log('📹 Loading existing videos from session...');
             
             const apiBaseUrl = window.SNAPMAGIC_CONFIG.API_URL;
+            console.log('🔗 API Base URL:', apiBaseUrl);
+            
             const response = await fetch(`${apiBaseUrl}api/transform-card`, {
                 method: 'POST',
                 headers: {
@@ -3447,7 +3472,9 @@ class SnapMagicApp {
                 body: JSON.stringify({ action: 'load_session_videos' })
             });
 
+            console.log('📡 Response status:', response.status);
             const data = await response.json();
+            console.log('📦 Response data:', data);
             
             if (data.success && data.videos && data.videos.length > 0) {
                 console.log(`✅ Found ${data.videos.length} existing videos`);
@@ -3457,13 +3484,21 @@ class SnapMagicApp {
                 this.videoGallery.totalVideos = data.videos.length;
                 this.videoGallery.currentIndex = this.videoGallery.totalVideos - 1; // Show newest video
                 
+                console.log('🎬 Video gallery state:', {
+                    totalVideos: this.videoGallery.totalVideos,
+                    currentIndex: this.videoGallery.currentIndex,
+                    videos: this.videoGallery.videos
+                });
+                
                 // Update video gallery display
+                console.log('🔄 Calling updateVideoGalleryDisplay...');
                 this.updateVideoGalleryDisplay();
                 
                 console.log(`🎬 Loaded ${this.videoGallery.totalVideos} videos into gallery`);
                 console.log(`🎬 Displaying most recent video (${this.videoGallery.currentIndex + 1} of ${this.videoGallery.totalVideos})`);
             } else {
                 console.log('📭 No existing videos found for this session');
+                console.log('📊 Response details:', data);
             }
         } catch (error) {
             console.error('❌ Error loading existing videos:', error);
