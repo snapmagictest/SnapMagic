@@ -3675,39 +3675,6 @@ class SnapMagicApp {
     */
 
     /**
-     * Update video gallery navigation display
-     */
-    updateVideoGalleryDisplay() {
-        const galleryInfo = document.getElementById('videoGalleryInfo');
-        const galleryNumbers = document.getElementById('videoGalleryNumbers');
-        const prevBtn = document.getElementById('videoGalleryPrevBtn');
-        const nextBtn = document.getElementById('videoGalleryNextBtn');
-        
-        if (!galleryInfo || !galleryNumbers) return;
-        
-        // Update info text
-        galleryInfo.textContent = `Card ${this.userGallery.currentIndex + 1} of ${this.userGallery.totalCards}`;
-        
-        // Update number buttons
-        galleryNumbers.innerHTML = '';
-        for (let i = 0; i < this.userGallery.totalCards; i++) {
-            const btn = document.createElement('button');
-            btn.className = `gallery-num ${i === this.userGallery.currentIndex ? 'active' : ''}`;
-            btn.textContent = i + 1;
-            btn.addEventListener('click', () => this.jumpToVideoCard(i + 1));
-            galleryNumbers.appendChild(btn);
-        }
-        
-        // Update prev/next button states
-        if (prevBtn) {
-            prevBtn.disabled = this.userGallery.currentIndex === 0;
-        }
-        if (nextBtn) {
-            nextBtn.disabled = this.userGallery.currentIndex === this.userGallery.totalCards - 1;
-        }
-    }
-
-    /**
      * Show video gallery navigation (when user has multiple cards)
      * REMOVED - No longer needed since video card selection section was removed
      */
