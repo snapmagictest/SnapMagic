@@ -2639,23 +2639,15 @@ class SnapMagicApp {
             this.elements.videoGalleryNextBtn.disabled = this.videoGallery.currentIndex === this.videoGallery.totalVideos - 1;
         }
         
-        // Update number buttons - LIKE CARD GALLERY
+        // VIDEO CAROUSEL SHOULD ONLY HAVE DOTS (NOT NUMBERS)
+        // Remove number buttons - video gallery uses dots only
         const videoGalleryNumbers = document.getElementById('videoGalleryNumbers');
         if (videoGalleryNumbers) {
-            videoGalleryNumbers.innerHTML = '';
-            for (let i = 0; i < this.videoGallery.totalVideos; i++) {
-                const btn = document.createElement('button');
-                btn.className = `gallery-num ${i === this.videoGallery.currentIndex ? 'active' : ''}`;
-                btn.textContent = i + 1;
-                btn.addEventListener('click', () => {
-                    this.videoGallery.currentIndex = i;
-                    this.updateVideoGalleryDisplay();
-                });
-                videoGalleryNumbers.appendChild(btn);
-            }
+            videoGalleryNumbers.innerHTML = ''; // Clear any numbers
+            videoGalleryNumbers.style.display = 'none'; // Hide numbers section
         }
         
-        // Update dots
+        // Update dots (this is what video carousel should show)
         this.updateVideoGalleryDots();
     }
 
