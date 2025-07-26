@@ -282,26 +282,64 @@ class SnapMagicApp {
     }
 
     init() {
-        console.log('🎴 SnapMagic App Initializing...');
-        console.log('🔧 Configuration:', window.SNAPMAGIC_CONFIG);
-        
-        // Start localStorage persistence monitoring
-        this.startLocalStorageMonitoring();
-        
-        // Get DOM elements
-        this.getElements();
-        
-        // Configure optional features
-        this.configureOptionalFeatures();
-        
-        // Setup event listeners
-        this.setupEventListeners();
-        
-        // Show login screen after loading
-        setTimeout(() => {
-            this.hideLoading();
-            this.showLogin();
-        }, 2000);
+        try {
+            console.log('🎴 SnapMagic App Initializing...');
+            console.log('🔧 Configuration:', window.SNAPMAGIC_CONFIG);
+            
+            // Start localStorage persistence monitoring
+            console.log('📊 Starting localStorage monitoring...');
+            this.startLocalStorageMonitoring();
+            
+            // Get DOM elements
+            console.log('🔍 Getting DOM elements...');
+            this.getElements();
+            console.log('✅ DOM elements retrieved successfully');
+            
+            // Configure optional features
+            console.log('⚙️ Configuring optional features...');
+            this.configureOptionalFeatures();
+            console.log('✅ Optional features configured successfully');
+            
+            // Setup event listeners
+            console.log('🎧 Setting up event listeners...');
+            this.setupEventListeners();
+            console.log('✅ Event listeners setup successfully');
+            
+            // Show login screen after loading
+            console.log('⏱️ Scheduling login screen display in 2 seconds...');
+            setTimeout(() => {
+                console.log('🔓 Showing login screen...');
+                this.hideLoading();
+                this.showLogin();
+                console.log('✅ Login screen should now be visible');
+            }, 2000);
+            
+            console.log('🎉 App initialization completed successfully');
+            
+        } catch (error) {
+            console.error('💥 CRITICAL ERROR during app initialization:', error);
+            console.error('Stack trace:', error.stack);
+            
+            // Force show login screen even if there's an error
+            setTimeout(() => {
+                console.log('🚨 Emergency login screen display due to init error');
+                try {
+                    this.hideLoading();
+                    this.showLogin();
+                } catch (emergencyError) {
+                    console.error('💀 Even emergency login failed:', emergencyError);
+                    // Show a basic error message
+                    document.body.innerHTML = `
+                        <div style="color: white; background: black; padding: 20px; text-align: center;">
+                            <h1>SnapMagic Initialization Error</h1>
+                            <p>Error: ${error.message}</p>
+                            <p>Please refresh the page or check the console for details.</p>
+                            <button onclick="location.reload()" style="padding: 10px 20px; margin-top: 20px;">Reload Page</button>
+                        </div>
+                    `;
+                }
+            }, 1000);
+        }
     }
 
     getElements() {
