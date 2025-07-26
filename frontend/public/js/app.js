@@ -3494,6 +3494,13 @@ class SnapMagicApp {
                 console.log('🔄 Calling updateVideoGalleryDisplay...');
                 this.updateVideoGalleryDisplay();
                 
+                // CRITICAL: Also ensure video tab shows the gallery if it's currently active
+                const videoTab = document.querySelector('[data-tab="video-generation"]');
+                if (videoTab && videoTab.classList.contains('active')) {
+                    console.log('🎬 Video tab is active - ensuring gallery is visible');
+                    this.updateVideoGalleryDisplay();
+                }
+                
                 console.log(`🎬 Loaded ${this.videoGallery.totalVideos} videos into gallery`);
                 console.log(`🎬 Displaying most recent video (${this.videoGallery.currentIndex + 1} of ${this.videoGallery.totalVideos})`);
             } else {
@@ -3728,13 +3735,27 @@ class SnapMagicApp {
      * Initialize video tab with gallery
      */
     initializeVideoGallery() {
+        console.log('🎬 initializeVideoGallery called');
+        console.log('📊 Video gallery state:', {
+            totalVideos: this.videoGallery.totalVideos,
+            totalCards: this.userGallery.totalCards,
+            videos: this.videoGallery.videos
+        });
+        
+        // CRITICAL FIX: Check if we have existing videos and show them
+        if (this.videoGallery.totalVideos > 0) {
+            console.log(`🎬 Found ${this.videoGallery.totalVideos} existing videos - showing gallery`);
+            this.updateVideoGalleryDisplay();
+        } else {
+            console.log('📭 No existing videos found');
+        }
+        
         if (this.userGallery.totalCards > 0) {
             // Show the most recent card by default
             this.userGallery.currentIndex = this.userGallery.totalCards - 1;
-            // this.showVideoCardFromGallery(this.userGallery.currentIndex); // Removed - no longer needed
-            // this.showVideoGalleryNavigation(); // Removed - no longer needed
-            
             console.log(`🎬 Video gallery initialized with ${this.userGallery.totalCards} cards`);
+        } else {
+            console.log('📭 No cards available for video generation');
         }
     }
 
