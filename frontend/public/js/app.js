@@ -2498,6 +2498,18 @@ class SnapMagicApp {
         this.elements.videoGallery.classList.remove('hidden');
         this.elements.noVideosPlaceholder.style.display = 'none';
         
+        // Update video counter display - LIKE CARD GALLERY
+        const videoGalleryCounter = document.getElementById('videoGalleryCounter');
+        if (videoGalleryCounter) {
+            videoGalleryCounter.textContent = `Video ${this.videoGallery.currentIndex + 1} of ${this.videoGallery.totalVideos}`;
+        }
+        
+        // Show gallery info
+        const videoGalleryInfo = document.getElementById('videoGalleryInfo');
+        if (videoGalleryInfo) {
+            videoGalleryInfo.style.display = 'block';
+        }
+        
         const currentVideo = this.videoGallery.videos[this.videoGallery.currentIndex];
         if (currentVideo) {
             this.displayVideoInGallery(currentVideo);
@@ -2519,12 +2531,35 @@ class SnapMagicApp {
     }
 
     updateVideoGalleryNavigation() {
+        // Show navigation if we have more than 1 video
+        if (this.elements.videoGalleryNavigation && this.videoGallery.totalVideos > 1) {
+            this.elements.videoGalleryNavigation.classList.remove('hidden');
+        } else if (this.elements.videoGalleryNavigation) {
+            this.elements.videoGalleryNavigation.classList.add('hidden');
+        }
+        
         // Update navigation buttons
         if (this.elements.videoGalleryPrevBtn) {
             this.elements.videoGalleryPrevBtn.disabled = this.videoGallery.currentIndex === 0;
         }
         if (this.elements.videoGalleryNextBtn) {
             this.elements.videoGalleryNextBtn.disabled = this.videoGallery.currentIndex === this.videoGallery.totalVideos - 1;
+        }
+        
+        // Update number buttons - LIKE CARD GALLERY
+        const videoGalleryNumbers = document.getElementById('videoGalleryNumbers');
+        if (videoGalleryNumbers) {
+            videoGalleryNumbers.innerHTML = '';
+            for (let i = 0; i < this.videoGallery.totalVideos; i++) {
+                const btn = document.createElement('button');
+                btn.className = `gallery-num ${i === this.videoGallery.currentIndex ? 'active' : ''}`;
+                btn.textContent = i + 1;
+                btn.addEventListener('click', () => {
+                    this.videoGallery.currentIndex = i;
+                    this.updateVideoGalleryDisplay();
+                });
+                videoGalleryNumbers.appendChild(btn);
+            }
         }
         
         // Update dots
