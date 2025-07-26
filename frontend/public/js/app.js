@@ -2581,14 +2581,11 @@ class SnapMagicApp {
             this.elements.noVideosPlaceholder.style.display = 'none';
         }
         
-        // Update video counter display - LIKE CARD GALLERY
+        // Hide video counter text - dots already show position
         const videoGalleryCounter = document.getElementById('videoGalleryCounter');
         if (videoGalleryCounter) {
-            const counterText = `Video ${this.videoGallery.currentIndex + 1} of ${this.videoGallery.totalVideos}`;
-            videoGalleryCounter.textContent = counterText;
-            console.log(`✅ Video counter updated: ${counterText}`);
-        } else {
-            console.error('❌ videoGalleryCounter element not found');
+            videoGalleryCounter.style.display = 'none'; // Hide "Video X of Y" text
+            console.log('✅ Video counter text hidden (dots show position instead)');
         }
         
         // Show gallery info
