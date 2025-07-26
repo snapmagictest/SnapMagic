@@ -1088,6 +1088,8 @@ def lambda_handler(event, context):
                 action = 'enter_competition'
             elif body_action == 'load_session_cards':
                 action = 'load_session_cards'
+            elif body_action == 'load_session_videos':
+                action = 'load_session_videos'
             elif body_action == 'generate_prompt':
                 action = 'generate_prompt'
             elif body_action == 'optimize_prompt':
@@ -1869,6 +1871,90 @@ def lambda_handler(event, context):
             except Exception as e:
                 logger.error(f"❌ Error loading session cards: {str(e)}")
                 return create_error_response('Failed to load session cards', 500)
+
+        # ========================================
+        # LOAD SESSION VIDEOS ENDPOINT - EXACTLY LIKE CARDS
+        # ========================================
+        elif action == 'load_session_videos':
+            username = token_payload.get('username', 'unknown')
+            
+            # Get client IP
+            request_headers = event.get('headers', {})
+            client_ip = get_client_ip(request_headers)
+            
+            # Get current override number
+            current_override = get_current_override_number(client_ip)
+            session_id_for_files = create_standard_session_id(client_ip, current_override)
+            
+            logger.info(f"🎬 Loading session videos for: {session_id_for_files}")
+            
+            try:
+                # Import boto3 and create S3 client
+                import boto3
+                s3_client = boto3.client('s3')
+                
+                # Use video bucket instead of card bucket
+                video_bucket_name = os.environ.get('VIDEO_BUCKET_NAME')
+                
+                if not video_bucket_name:
+                    logger.error("❌ VIDEO_BUCKET_NAME environment variable not set")
+                    return create_error_response("Video bucket not configured", 500)
+                
+                # List all videos for this session: videos/{IP}_override{N}_*
+                videos_prefix = f"videos/{client_ip}_override{current_override}_"
+                logger.info(f"🔍 Searching for videos with prefix: {videos_prefix}")
+                
+                response = s3_client.list_objects_v2(
+                    Bucket=video_bucket_name,
+                    Prefix=videos_prefix
+                )
+                
+                videos = []
+                if 'Contents' in response:
+                    # Sort by last modified (newest first)
+                    sorted_objects = sorted(response['Contents'], key=lambda x: x['LastModified'], reverse=True)
+                    
+                    for obj in sorted_objects:
+                        # Generate presigned URL for secure access (1 hour expiration)
+                        try:
+                            presigned_url = s3_client.generate_presigned_url(
+                                'get_object',
+                                Params={'Bucket': video_bucket_name, 'Key': obj['Key']},
+                                ExpiresIn=3600  # 1 hour
+                            )
+                        except Exception as e:
+                            logger.error(f"❌ Failed to generate presigned URL for {obj['Key']}: {str(e)}")
+                            continue
+                        
+                        # Extract video metadata from filename if possible
+                        filename = obj['Key'].split('/')[-1]
+                        
+                        # Create video data compatible with frontend gallery
+                        video_data = {
+                            'video_url': presigned_url,
+                            'videoUrl': presigned_url,  # Alias for compatibility
+                            'finalVideoSrc': presigned_url,
+                            's3_key': obj['Key'],
+                            'filename': filename,
+                            'timestamp': obj['LastModified'].isoformat(),
+                            'size': obj['Size'],
+                            'animation_prompt': 'Video from previous session',  # Default prompt
+                            'success': True
+                        }
+                        videos.append(video_data)
+                
+                logger.info(f"✅ Found {len(videos)} videos for session")
+                
+                return create_success_response({
+                    'success': True,
+                    'videos': videos,
+                    'session_id': session_id_for_files,
+                    'total': len(videos)
+                })
+                
+            except Exception as e:
+                logger.error(f"❌ Error loading session videos: {str(e)}")
+                return create_error_response('Failed to load session videos', 500)
 
         # ========================================
         # GENERATE PROMPT ENDPOINT
