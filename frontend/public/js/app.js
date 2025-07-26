@@ -3616,20 +3616,6 @@ class SnapMagicApp {
     */
 
     /**
-     * Navigate video gallery (previous/next)
-     */
-    navigateVideoGallery(direction) {
-        if (this.userGallery.totalCards <= 1) return;
-        
-        const newIndex = this.userGallery.currentIndex + direction;
-        
-        // Check bounds
-        if (newIndex >= 0 && newIndex < this.userGallery.totalCards) {
-            this.showVideoCardFromGallery(newIndex);
-        }
-    }
-
-    /**
      * Show specific card from video gallery
      * REMOVED - No longer needed since video card selection section was removed
      */
