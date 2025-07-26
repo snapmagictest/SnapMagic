@@ -640,40 +640,6 @@ class SnapMagicApp {
             this.elements.videoControls.classList.add('hidden');
             this.elements.videoResult.classList.add('hidden');
         }
-        
-        // FORCE SHOW VIDEO GALLERY UI FOR DEBUGGING
-        console.log('🔧 FORCING VIDEO GALLERY UI TO BE VISIBLE FOR DEBUGGING');
-        const videoGallery = document.getElementById('videoGallery');
-        const videoGalleryInfo = document.getElementById('videoGalleryInfo');
-        const videoGalleryCounter = document.getElementById('videoGalleryCounter');
-        const noVideosPlaceholder = document.getElementById('noVideosPlaceholder');
-        
-        if (videoGallery) {
-            videoGallery.classList.remove('hidden');
-            videoGallery.style.display = 'block';
-            console.log('✅ Video gallery container forced visible');
-        }
-        
-        if (videoGalleryInfo) {
-            videoGalleryInfo.style.display = 'block';
-            console.log('✅ Video gallery info forced visible');
-        }
-        
-        if (videoGalleryCounter) {
-            videoGalleryCounter.textContent = 'DEBUG: Video Gallery UI Test';
-            videoGalleryCounter.style.display = 'block';
-            videoGalleryCounter.style.color = 'red';
-            videoGalleryCounter.style.fontSize = '20px';
-            console.log('✅ Video gallery counter forced visible with debug text');
-        }
-        
-        if (noVideosPlaceholder) {
-            noVideosPlaceholder.style.display = 'none';
-            console.log('✅ No videos placeholder hidden');
-        }
-        
-        console.log('🎯 If you can see "DEBUG: Video Gallery UI Test" in red, the UI elements work');
-        console.log('🎯 If you can\\'t see it, there\\'s a CSS or DOM issue');
     }
 
     // Authentication
