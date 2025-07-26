@@ -1296,8 +1296,29 @@
             <section class="art-deco-section">
                 <h2 class="section-title">Generate Video from Card</h2>
                 
+                <!-- 3 Prompt Options (RESTORED - These were working 100%) -->
+                <div class="prompt-options">
+                    <div class="prompt-card" onclick="selectVideoPromptOption('generate')">
+                        <div class="prompt-card-icon">🎭</div>
+                        <h3 class="prompt-card-title">Generate AI Prompt</h3>
+                        <p class="prompt-card-description">Let AI create an animation prompt based on your selected card</p>
+                    </div>
+                    
+                    <div class="prompt-card" onclick="selectVideoPromptOption('create')">
+                        <div class="prompt-card-icon">✍️</div>
+                        <h3 class="prompt-card-title">Create Your Own</h3>
+                        <p class="prompt-card-description">Write your own custom animation description</p>
+                    </div>
+                    
+                    <div class="prompt-card" onclick="selectVideoPromptOption('optimize')">
+                        <div class="prompt-card-icon">⚡</div>
+                        <h3 class="prompt-card-title">Optimize Existing</h3>
+                        <p class="prompt-card-description">Improve and enhance your animation prompt</p>
+                    </div>
+                </div>
+                
                 <!-- Video Prompt Input -->
-                <div id="videoPromptInput" class="prompt-input-section">
+                <div id="videoPromptInput" class="prompt-input-section hidden">
                     <div class="textarea-container">
                         <textarea id="videoPrompt" class="art-deco-textarea" placeholder="Describe your animation..." maxlength="512"></textarea>
                         <div class="textarea-controls">
