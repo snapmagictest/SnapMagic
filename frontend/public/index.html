@@ -1292,6 +1292,32 @@
                 </div>
             </section>
 
+            <!-- Video Generation Section -->
+            <section class="art-deco-section">
+                <h2 class="section-title">Generate Video from Card</h2>
+                
+                <!-- Video Prompt Input -->
+                <div id="videoPromptInput" class="prompt-input-section">
+                    <div class="textarea-container">
+                        <textarea id="videoPrompt" class="art-deco-textarea" placeholder="Describe your animation..." maxlength="512"></textarea>
+                        <div class="textarea-controls">
+                            <div id="videoCharCount" class="textarea-limit-indicator">0/512</div>
+                            <button class="textarea-clear-btn" id="videoClearBtn">CLEAR</button>
+                        </div>
+                    </div>
+                    
+                    <div style="text-align: center; margin-top: 1rem;">
+                        <button id="generateVideoBtn" class="art-deco-btn">🎬 Generate Video (2 min wait)</button>
+                    </div>
+                </div>
+                
+                <!-- No Card Selected Placeholder -->
+                <div id="noCardSelectedVideo" class="hidden" style="text-align: center; color: var(--text-cream); padding: 2rem;">
+                    <p style="font-size: 1.1rem; opacity: 0.7;">Generate a card first to enable video animation</p>
+                    <button id="backToCardBtn" class="art-deco-btn" style="margin-top: 1rem;">🎴 Go to Card Creation</button>
+                </div>
+            </section>
+
             <!-- Essential Video Elements (hidden but needed by JavaScript) -->
             <div id="videoSection" class="hidden"></div>
             <div id="videoControls" class="hidden">
