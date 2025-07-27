@@ -33,7 +33,7 @@ class HolographicCanvasRenderer {
     }
 
     /**
-     * Initialize canvas with card dimensions - MAXIMUM CLARITY
+     * Initialize canvas with card dimensions - NORMALIZED FOR 2MB FILE SIZE
      */
     initCanvas(width = 366, height = 477) {
         this.cardWidth = width;
@@ -41,8 +41,8 @@ class HolographicCanvasRenderer {
         
         this.canvas = document.createElement('canvas');
         
-        // CRITICAL: Use higher resolution for crisp text and logos
-        const pixelRatio = window.devicePixelRatio || 2;
+        // CRITICAL: Normalize pixel ratio for consistent 2MB file sizes across all devices
+        const pixelRatio = 1; // Force 1x ratio for all devices to ensure 2MB max
         this.canvas.width = width * pixelRatio;
         this.canvas.height = height * pixelRatio;
         this.canvas.style.width = width + 'px';
@@ -68,13 +68,13 @@ class HolographicCanvasRenderer {
         this.ctx.lineJoin = 'round';
         this.ctx.miterLimit = 10;
         
-        console.log('🎨 MAXIMUM CLARITY canvas initialized:', { 
+        console.log('🎨 NORMALIZED canvas initialized for 2MB target:', { 
             width, 
             height, 
-            pixelRatio,
+            pixelRatio: 1,
             actualWidth: this.canvas.width,
             actualHeight: this.canvas.height,
-            textOptimization: 'Maximum Quality'
+            target: '2MB file size'
         });
         return this.canvas;
     }
@@ -708,17 +708,18 @@ class HolographicCanvasRenderer {
     }
 
     /**
-     * Generate animated GIF from canvas frames
+     * Generate animated GIF from canvas frames - OPTIMIZED FOR 2MB FILE SIZE
      */
     async generateAnimatedGIF(cardData, options = {}) {
         const settings = {
-            frames: 30,
-            framerate: 15,
-            quality: 1,
+            frames: 25,      // Optimized: 25 frames for 2MB target (vs 30)
+            framerate: 15,   // Standard web GIF framerate
+            quality: 3,      // Optimized: quality 3 for 2MB target (vs 1)
             ...options
         };
         
-        console.log('🎬 Starting canvas-based animated GIF generation...');
+        console.log('🎬 Starting OPTIMIZED animated GIF generation for 2MB target...');
+        console.log('⭐ Settings:', settings);
         
         // Load all required images
         await this.loadImages(cardData);
@@ -726,20 +727,21 @@ class HolographicCanvasRenderer {
         // Initialize canvas
         this.initCanvas();
         
-        // Generate frames
+        // Generate frames with progress tracking
         const frames = [];
         for (let frame = 0; frame < settings.frames; frame++) {
-            console.log(`🎨 Rendering frame ${frame + 1}/${settings.frames}`);
+            const progress = Math.round((frame / settings.frames) * 100);
+            console.log(`🎨 Rendering frame ${frame + 1}/${settings.frames} (${progress}%) - targeting 2MB`);
             
             // Render card at this animation frame
             this.renderCard(frame, settings.frames, cardData);
             
-            // Capture frame
-            const frameDataURL = this.canvas.toDataURL('image/png');
+            // Capture frame at optimized quality for 2MB target
+            const frameDataURL = this.canvas.toDataURL('image/png', 0.8); // Slightly compressed
             frames.push(frameDataURL);
         }
         
-        console.log('🎬 All frames rendered, creating GIF...');
+        console.log('🎬 All frames rendered for 2MB target, creating GIF...');
         
         // Create GIF using existing gif.js system
         return await this.createGIFFromFrames(frames, settings);
