@@ -10,33 +10,59 @@
 
 ## 🚀 What is SnapMagic?
 
-SnapMagic revolutionizes event engagement by generating professional trading cards and videos using Amazon Bedrock's Nova Canvas and Nova Reel models. Built for AWS events like re:Invent, customer summits, and partner gatherings.
+SnapMagic revolutionizes event engagement by generating **fully AI-created trading cards** and videos using Amazon Bedrock's Nova Canvas and Nova Reel models. Built for AWS events like re:Invent, customer summits, and partner gatherings.
 
 ## 🎯 Key Features
 
-- **🎨 AI-Powered Generation**: Amazon Bedrock Nova Canvas creates stunning trading cards
+- **🎨 Pure AI Generation**: Amazon Bedrock Nova Canvas creates complete trading cards from text prompts
 - **🎬 Video Creation**: Nova Reel brings cards to life with animated videos  
 - **⚡ Serverless Architecture**: Zero server management, infinite scalability
 - **🔐 Event-Ready Auth**: JWT-based authentication with demo credentials
 - **📱 Mobile Optimized**: Works seamlessly on all devices
-- **💾 Instant Download**: High-quality PNG and MP4 exports
+- **💾 Instant Download**: High-quality PNG downloads of AI-generated cards
 - **🏗️ Well-Architected**: Built following all 6 AWS pillars
 
 ## 🏗️ Architecture
 
 ```
-Frontend (Vanilla JS) → API Gateway → Lambda (Python) → Bedrock → S3
+Frontend (Vanilla JS) → API Gateway → Lambda (Python) → Bedrock Nova Canvas → S3
                                    ↓
                               CloudWatch Logs
 ```
 
 ### Core AWS Services
-- **Amazon Bedrock**: Nova Canvas (image) + Nova Reel (video) generation
+- **Amazon Bedrock Nova Canvas**: Pure text-to-image AI generation (1280×720)
+- **Amazon Bedrock Nova Reel**: Video generation from AI cards
 - **AWS Lambda**: Serverless compute for card/video processing
 - **API Gateway**: RESTful API with CORS support
-- **Amazon S3**: Asset storage and static website hosting
+- **Amazon S3**: Generated card and video storage
 - **AWS Amplify**: Frontend deployment and hosting
 - **CloudWatch**: Monitoring and logging
+
+## 🎨 **How It Actually Works**
+
+### **Card Generation Flow**
+1. **User Input**: User enters a text prompt (e.g., "AWS Solutions Architect with cloud infrastructure")
+2. **Nova Canvas**: Amazon Bedrock Nova Canvas generates a complete 1280×720 trading card image
+3. **Base64 Return**: Backend returns the AI-generated card as base64 data
+4. **Frontend Display**: Frontend displays the AI-generated card directly
+5. **Download**: User can download the AI-generated card as PNG
+
+### **Video Generation Flow**
+1. **AI Card Input**: Uses the AI-generated card from Nova Canvas
+2. **Nova Reel**: Amazon Bedrock Nova Reel animates the card
+3. **MP4 Output**: Returns animated video of the trading card
+
+### **Current Data Flow**
+```javascript
+// What we actually have:
+this.generatedCardData = {
+    result: "base64_image_data_from_nova_canvas",
+    imageSrc: "data:image/png;base64,base64_data",
+    prompt: "user_original_prompt",
+    // ... other metadata
+}
+```
 
 ## 📁 Project Structure
 
@@ -47,57 +73,61 @@ SnapMagic/
 │   └── src/                        # Source code
 │       ├── lambda_handler.py       # Main Lambda handler
 │       ├── auth_simple.py          # JWT authentication
-│       ├── card_generator.py       # Bedrock Nova Canvas integration
-│       ├── video_generator.py      # Bedrock Nova Reel integration
-│       ├── finalpink.png           # Card template image
-│       └── exact_mask.png          # Inpainting mask
+│       ├── card_generator.py       # Nova Canvas AI generation
+│       └── video_generator.py      # Nova Reel video generation
 ├── 📁 frontend/
 │   ├── package.json                # Node.js dependencies
 │   └── public/                     # Static files
 │       ├── index.html              # Main application page
 │       ├── js/                     # JavaScript files
-│       └── finalpink.png           # Card template
+│       └── logos/                  # Event logos (1.png, 2.png, etc.)
 ├── 📁 infrastructure/
 │   ├── bin/                        # CDK entry points
-│   │   ├── snapmagic.ts            # Main CDK app
-│   │   └── destroy.ts              # Cleanup script
 │   ├── lib/                        # CDK constructs
-│   │   └── snapmagic-stack.ts      # Main infrastructure stack
 │   ├── cdk.json                    # CDK configuration
 │   ├── package.json                # Node.js dependencies
 │   └── tsconfig.json               # TypeScript configuration
 ├── amplify.yml                     # AWS Amplify build config
 ├── secrets.json.example            # Example secrets file
-├── LICENSE                         # MIT License
-├── CONTRIBUTING.md                 # Contribution guidelines
-├── SECURITY.md                     # Security policy
-├── CODE_OF_CONDUCT.md              # Community standards
 └── README.md                       # This file
 ```
 
-## 🚀 Quick Start Guide
+## 🎯 **Current Capabilities**
 
-### 📋 Prerequisites (Complete BEFORE Deployment)
+### ✅ **What Works Now**
+- **AI Card Generation**: Complete trading cards generated by Nova Canvas
+- **Text-to-Image**: Pure AI generation from user prompts
+- **High Quality**: 1280×720 resolution optimized for Nova Reel
+- **PNG Download**: Static download of AI-generated cards
+- **Video Generation**: Nova Reel animation of AI cards
+- **Event Branding**: Logo system for event customization
 
-#### 1. **System Requirements**
-```bash
-# Required software versions
-- AWS CLI v2+ (configured with admin permissions)
-- Node.js 18+ and npm
-- Python 3.9+
-- AWS CDK v2 (install globally: npm install -g aws-cdk)
-```
+### 🚧 **What We're Working On**
+- **Animated GIF Downloads**: Creating animated versions of AI-generated cards
+- **Social Media Optimization**: LinkedIn-ready animated formats
+- **Print Quality**: 300 DPI versions for physical printing
 
-#### 2. **AWS Account Setup**
-- ✅ **AWS Account** with administrative permissions
-- ✅ **AWS CLI configured** with your credentials (`aws configure`)
-- ✅ **Region**: Must use **us-east-1** (N. Virginia) - Nova models only available here
+## 🎨 **AI Generation Details**
 
-#### 3. **🔑 CRITICAL: Amazon Bedrock Model Access**
+### **Nova Canvas Configuration**
+- **Model**: `amazon.nova-canvas-v1:0`
+- **Task Type**: `TEXT_IMAGE` (pure AI generation)
+- **Dimensions**: 1280×720 (Nova Reel compatible)
+- **Quality**: Premium
+- **CFG Scale**: 7.0
 
-**⚠️ MUST COMPLETE FIRST - Deployment will fail without this!**
+### **Generation Process**
+1. User prompt → Nova Canvas
+2. AI generates complete trading card
+3. Returns base64 image data
+4. Frontend displays AI creation
+5. User downloads PNG
 
-1. **Open AWS Console** → Navigate to **Amazon Bedrock**
+### **No Templates Used**
+- **Pure AI**: Cards are 100% generated by Nova Canvas
+- **No Overlays**: No template compositing or overlays
+- **Creative Freedom**: Nova Canvas has full creative control
+- **Unique Results**: Every card is completely unique
 2. **Select Region**: Switch to **us-east-1** (N. Virginia)
 3. **Go to Model Access** (left sidebar)
 4. **Request Access** to these models:
