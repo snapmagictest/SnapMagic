@@ -2797,10 +2797,43 @@ class SnapMagicApp {
     // ========================================
     
     /**
-     * Generate animated GIF from actual CSS card using HTML2Canvas capture
+     * Generate animated GIF using canvas-based holographic card renderer
      */
     async generateAnimatedCardGIF(cardData) {
-        console.log('🎬 Starting animated GIF generation using HTML2Canvas capture...');
+        console.log('🎬 Starting canvas-based animated GIF generation...');
+        
+        try {
+            // Initialize holographic canvas renderer
+            const renderer = new HolographicCanvasRenderer();
+            
+            // Generate animated GIF with all holographic effects preserved
+            const gifBlob = await renderer.generateAnimatedGIF(cardData, {
+                frames: 30,      // Full 30 frames for smooth animation
+                framerate: 15,   // 15 FPS
+                quality: 1       // Highest quality
+            });
+            
+            console.log('✅ Canvas-based animated GIF created:', { 
+                size: Math.round(gifBlob.size / 1024) + 'KB',
+                method: 'Canvas Rendering'
+            });
+            
+            return gifBlob;
+            
+        } catch (error) {
+            console.error('❌ Canvas-based animated GIF generation failed:', error);
+            
+            // Fallback to HTML2Canvas method if canvas fails
+            console.log('⚠️ Falling back to HTML2Canvas method...');
+            return await this.generateAnimatedCardGIFHTML2Canvas(cardData);
+        }
+    }
+
+    /**
+     * Fallback: Generate animated GIF using HTML2Canvas (original method)
+     */
+    async generateAnimatedCardGIFHTML2Canvas(cardData) {
+        console.log('🎬 Starting fallback animated GIF generation using HTML2Canvas...');
         
         try {
             // Load HTML2Canvas library
@@ -2892,16 +2925,16 @@ class SnapMagicApp {
                 }
             });
             
-            console.log('🎬 All frames captured, creating GIF...');
+            console.log('🎬 All fallback frames captured, creating GIF...');
             
             // Create GIF from captured frames
             const gifBlob = await this.createGIFFromFrames(frames, frameDuration);
             
-            console.log('✅ Animated GIF created from CSS capture:', { size: gifBlob.size });
+            console.log('✅ Fallback animated GIF created:', { size: gifBlob.size });
             return gifBlob;
             
         } catch (error) {
-            console.error('❌ Animated GIF generation failed:', error);
+            console.error('❌ Fallback HTML2Canvas animated GIF generation failed:', error);
             throw error;
         }
     }
