@@ -3113,12 +3113,12 @@ class SnapMagicApp {
     }
     
     /**
-     * Create GIF from frame images using gif.js library
+     * Create GIF from frame images using local gif.js library
      */
     async createGIFFromFrames(frames, frameDuration) {
         console.log('🎬 Creating GIF from', frames.length, 'frames...');
         
-        // Load gif.js library dynamically
+        // Load gif.js library from local file
         await this.loadGifJSLibrary();
         
         return new Promise((resolve, reject) => {
@@ -3127,7 +3127,7 @@ class SnapMagicApp {
                 quality: 8, // Higher quality for print-ready output
                 width: 400,
                 height: 600,
-                workerScript: 'https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.worker.js',
+                workerScript: '/gif.worker.js', // Use local worker file
                 comment: 'SnapMagic Animated Trading Card - 300 DPI Print Quality'
             });
             
@@ -3161,7 +3161,7 @@ class SnapMagicApp {
     }
     
     /**
-     * Load gif.js library dynamically
+     * Load gif.js library from local file
      */
     async loadGifJSLibrary() {
         if (window.GIF) {
@@ -3170,13 +3170,13 @@ class SnapMagicApp {
         
         return new Promise((resolve, reject) => {
             const script = document.createElement('script');
-            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.min.js';
+            script.src = '/gif.min.js'; // Use local file instead of CDN
             script.onload = () => {
-                console.log('✅ gif.js library loaded');
+                console.log('✅ gif.js library loaded from local file');
                 resolve();
             };
             script.onerror = () => {
-                reject(new Error('Failed to load gif.js library'));
+                reject(new Error('Failed to load local gif.js library'));
             };
             document.head.appendChild(script);
         });
