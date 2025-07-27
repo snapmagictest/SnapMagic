@@ -1841,29 +1841,36 @@ class SnapMagicApp {
         // Navigate to card generation tab if not already there
         this.switchTab('card-generation');
         
-        // Scroll to the prompt input area
+        // IMPORTANT: Show the prompt input area (it's hidden on login)
         const promptInputArea = document.getElementById('promptInputArea');
+        if (promptInputArea) {
+            promptInputArea.classList.remove('hidden');
+        }
+        
+        // Scroll to the prompt input area
         if (promptInputArea) {
             promptInputArea.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
         
-        // Add yellow highlight effect to the prompt input
+        // Add yellow border highlight effect to the prompt input
         const promptInput = this.elements.promptInput;
         if (promptInput) {
             // Clear any existing text (user can decide what to do)
             promptInput.value = '';
             
-            // Add yellow highlight
-            promptInput.style.backgroundColor = '#ffff99';
-            promptInput.style.transition = 'background-color 0.3s ease';
+            // Add yellow border highlight (not background)
+            promptInput.style.border = '3px solid #ffff00';
+            promptInput.style.boxShadow = '0 0 10px rgba(255, 255, 0, 0.5)';
+            promptInput.style.transition = 'border 0.3s ease, box-shadow 0.3s ease';
             
             // Focus the input
             promptInput.focus();
             
-            // Remove highlight after 2 seconds
+            // Remove highlight after 3 seconds
             setTimeout(() => {
-                promptInput.style.backgroundColor = '';
-            }, 2000);
+                promptInput.style.border = '';
+                promptInput.style.boxShadow = '';
+            }, 3000);
         }
     }
 
@@ -2365,8 +2372,13 @@ class SnapMagicApp {
         // Navigate to video generation tab if not already there
         this.switchTab('video-generation');
         
-        // Scroll to the video prompt input area
+        // IMPORTANT: Show the video prompt input area (it's hidden on login)
         const videoPromptInputArea = document.getElementById('videoPromptInput');
+        if (videoPromptInputArea) {
+            videoPromptInputArea.classList.remove('hidden');
+        }
+        
+        // Scroll to the video prompt input area
         if (videoPromptInputArea) {
             videoPromptInputArea.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
@@ -2378,17 +2390,19 @@ class SnapMagicApp {
             // Clear any existing text (user can decide what to do)
             videoPromptElement.value = '';
             
-            // Add yellow highlight effect
-            videoPromptElement.style.backgroundColor = '#ffff99';
-            videoPromptElement.style.transition = 'background-color 0.3s ease';
+            // Add yellow border highlight effect (not background)
+            videoPromptElement.style.border = '3px solid #ffff00';
+            videoPromptElement.style.boxShadow = '0 0 10px rgba(255, 255, 0, 0.5)';
+            videoPromptElement.style.transition = 'border 0.3s ease, box-shadow 0.3s ease';
             
             // Focus the input
             videoPromptElement.focus();
             
-            // Remove highlight after 2 seconds
+            // Remove highlight after 3 seconds
             setTimeout(() => {
-                videoPromptElement.style.backgroundColor = '';
-            }, 2000);
+                videoPromptElement.style.border = '';
+                videoPromptElement.style.boxShadow = '';
+            }, 3000);
         }
         
         // Hide video result if showing
