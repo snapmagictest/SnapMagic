@@ -3939,12 +3939,12 @@ class SnapMagicApp {
                     </div>
 
                     <div class="linkedin-buttons">
-                        <button id="downloadForLinkedIn" class="btn btn-primary">📥 Download Card</button>
-                        <button id="shareToLinkedIn" class="btn btn-linkedin disabled" disabled>📱 Share on LinkedIn</button>
+                        <button id="downloadForLinkedIn" class="art-deco-btn">📥 Download Card</button>
+                        <button id="shareToLinkedIn" class="art-deco-btn disabled" disabled>📱 Share on LinkedIn</button>
                     </div>
                     
                     <div class="modal-buttons">
-                        <button id="cancelLinkedInSharing" class="btn btn-secondary">Cancel</button>
+                        <button id="cancelLinkedInSharing" class="art-deco-btn">Cancel</button>
                     </div>
                 </div>
             </div>
