@@ -1833,9 +1833,38 @@ class SnapMagicApp {
     }
 
     handleCreateAnother() {
-        console.log('🔄 Creating another card');
-        this.clearResults();
-        this.elements.promptInput.focus();
+        console.log('🔄 Creating another card - preserving gallery');
+        
+        // DON'T call clearResults() - this was removing the gallery!
+        // Instead, just navigate to the card input section
+        
+        // Navigate to card generation tab if not already there
+        this.switchTab('card-generation');
+        
+        // Scroll to the prompt input area
+        const promptInputArea = document.getElementById('promptInputArea');
+        if (promptInputArea) {
+            promptInputArea.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        
+        // Add yellow highlight effect to the prompt input
+        const promptInput = this.elements.promptInput;
+        if (promptInput) {
+            // Clear any existing text (user can decide what to do)
+            promptInput.value = '';
+            
+            // Add yellow highlight
+            promptInput.style.backgroundColor = '#ffff99';
+            promptInput.style.transition = 'background-color 0.3s ease';
+            
+            // Focus the input
+            promptInput.focus();
+            
+            // Remove highlight after 2 seconds
+            setTimeout(() => {
+                promptInput.style.backgroundColor = '';
+            }, 2000);
+        }
     }
 
     // Video Generation
@@ -2331,25 +2360,45 @@ class SnapMagicApp {
     }
 
     handleCreateAnotherVideo() {
-        console.log('🔄 Creating another video');
+        console.log('🔄 Creating another video - preserving gallery');
         
-        // Hide video result
+        // Navigate to video generation tab if not already there
+        this.switchTab('video-generation');
+        
+        // Scroll to the video prompt input area
+        const videoPromptInputArea = document.getElementById('videoPromptInput');
+        if (videoPromptInputArea) {
+            videoPromptInputArea.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        
+        // Find the correct video prompt input (try both possible elements)
+        let videoPromptElement = this.elements.videoPrompt || this.elements.animationPrompt;
+        
+        if (videoPromptElement) {
+            // Clear any existing text (user can decide what to do)
+            videoPromptElement.value = '';
+            
+            // Add yellow highlight effect
+            videoPromptElement.style.backgroundColor = '#ffff99';
+            videoPromptElement.style.transition = 'background-color 0.3s ease';
+            
+            // Focus the input
+            videoPromptElement.focus();
+            
+            // Remove highlight after 2 seconds
+            setTimeout(() => {
+                videoPromptElement.style.backgroundColor = '';
+            }, 2000);
+        }
+        
+        // Hide video result if showing
         if (this.elements.videoResult) {
             this.elements.videoResult.classList.add('hidden');
         }
         
-        // Show appropriate controls
+        // Show video controls if hidden
         if (this.elements.videoControls) {
             this.elements.videoControls.classList.remove('hidden');
-        }
-        
-        // Clear and focus appropriate prompt field
-        if (this.elements.animationPrompt) {
-            this.elements.animationPrompt.value = '';
-            this.elements.animationPrompt.focus();
-        } else if (this.elements.videoPrompt) {
-            this.elements.videoPrompt.value = '';
-            this.elements.videoPrompt.focus();
         }
     }
 
