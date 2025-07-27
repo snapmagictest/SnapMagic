@@ -2942,7 +2942,7 @@ class SnapMagicApp {
     }
     
     showNameConfirmModal(name) {
-        this.elements.namePreview.textContent = name ? name.toUpperCase() : 'AWS Logo (no name entered)';
+        this.elements.namePreview.textContent = name ? name.toUpperCase() : 'NOVA';
         this.elements.nameConfirmModal.classList.remove('hidden');
     }
     
