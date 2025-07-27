@@ -233,12 +233,6 @@ dist
 
 # Gatsby files
 .cache/
-public
-# But allow our mandatory AWS logo
-!frontend/public/powered-by-aws-white.png
-# Allow gif.js library files for animated GIF generation
-!frontend/public/gif.min.js
-!frontend/public/gif.worker.js
 
 # Storybook build outputs
 .out
