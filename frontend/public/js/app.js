@@ -1273,12 +1273,15 @@ class SnapMagicApp {
             // Create the beautiful holographic card directly
             const cardHTML = this.createHolographicCard(aiImageSrc, userName, userPrompt);
             
-            // Store the card data
+            // Store the card data with proper user name mapping
             this.generatedCardData = {
                 ...data,
                 novaImageBase64: novaImageBase64,
                 finalImageSrc: aiImageSrc,
-                cardHTML: cardHTML
+                cardHTML: cardHTML,
+                userName: userName,      // Store as userName for consistency
+                user_name: userName,     // Also store as user_name for API compatibility
+                prompt: userPrompt       // Store the prompt
             };
             
             // Add to user's gallery
@@ -2801,6 +2804,13 @@ class SnapMagicApp {
      */
     async generateAnimatedCardGIF(cardData) {
         console.log('🎬 Starting canvas-based animated GIF generation...');
+        console.log('🔍 DEBUG: cardData structure for canvas:', {
+            keys: Object.keys(cardData),
+            userName: cardData.userName,
+            user_name: cardData.user_name,
+            prompt: cardData.prompt,
+            hasResult: !!cardData.result
+        });
         
         try {
             // Initialize holographic canvas renderer

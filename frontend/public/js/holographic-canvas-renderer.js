@@ -410,107 +410,152 @@ class HolographicCanvasRenderer {
     }
 
     /**
-     * Draw footer content (logos and creator info) - MAXIMUM CLARITY
+     * Draw footer content (logos and creator info) - FIXED POSITIONING & USER NAME
      */
     drawFooterContent(ctx, footerY, footerHeight, cardData) {
         const margin = Math.max(10, this.cardWidth * 0.027);
-        const logoSize = Math.max(35, footerHeight * 0.7);
+        const maxLogoHeight = Math.max(35, footerHeight * 0.7);
         
-        let currentX = margin + 10;
+        // FIXED: Get actual user name from cardData
+        console.log('🔍 DEBUG: cardData for name extraction:', {
+            userName: cardData.userName,
+            user_name: cardData.user_name,
+            name: cardData.name,
+            prompt: cardData.prompt
+        });
         
-        // Draw customer logo (1.png) with MAXIMUM quality
+        // Try multiple possible name fields
+        const creatorName = cardData.userName || 
+                           cardData.user_name || 
+                           cardData.name || 
+                           (cardData.prompt && this.extractNameFromPrompt(cardData.prompt)) ||
+                           'NOVA';
+        const creatorTitle = 'Creator';
+        
+        console.log('✅ Using creator name:', creatorName);
+        
+        // FIXED: Calculate proper logo layout with proportional sizing
+        const footerContentWidth = this.cardWidth - 2 * margin - 20; // Available width
+        const creatorTextWidth = 120; // Reserve space for creator text
+        const availableLogoWidth = footerContentWidth - creatorTextWidth;
+        
+        let leftX = margin + 10;
+        
+        // Draw customer logo (1.png) - LEFT SIDE with proper proportions
         if (this.images.customerLogo) {
             ctx.save();
-            
-            // CRITICAL: Disable smoothing for pixel-perfect 1.png logo
             ctx.imageSmoothingEnabled = false;
             
-            // Calculate proper aspect ratio for 1.png
             const logo = this.images.customerLogo;
             const aspectRatio = logo.width / logo.height;
-            const logoWidth = logoSize * aspectRatio;
-            const logoHeight = logoSize;
             
-            // Pixel-perfect positioning for 1.png
-            const pixelPerfectX = Math.round(currentX);
-            const pixelPerfectY = Math.round(footerY + 10);
-            const pixelPerfectWidth = Math.round(logoWidth);
-            const pixelPerfectHeight = Math.round(logoHeight);
+            // Calculate proportional size - limit width to prevent oversizing
+            let logoWidth = maxLogoHeight * aspectRatio;
+            let logoHeight = maxLogoHeight;
             
-            ctx.drawImage(logo, pixelPerfectX, pixelPerfectY, pixelPerfectWidth, pixelPerfectHeight);
+            // If logo is too wide, scale it down proportionally
+            const maxLogoWidth = availableLogoWidth * 0.4; // Max 40% of available space
+            if (logoWidth > maxLogoWidth) {
+                logoWidth = maxLogoWidth;
+                logoHeight = logoWidth / aspectRatio;
+            }
+            
+            // Position on left side
+            const logoX = Math.round(leftX);
+            const logoY = Math.round(footerY + (footerHeight - logoHeight) / 2);
+            
+            ctx.drawImage(logo, logoX, logoY, Math.round(logoWidth), Math.round(logoHeight));
             ctx.restore();
             
-            currentX += logoWidth + 6;
+            leftX += logoWidth + 8; // Add spacing after first logo
         }
         
-        // Draw partner logo (2.png) with MAXIMUM quality
+        // Draw partner logo (2.png) - NEXT TO 1.png with proper proportions
         if (this.images.partnerLogo) {
             ctx.save();
-            
-            // CRITICAL: Disable smoothing for crisp logo rendering
             ctx.imageSmoothingEnabled = false;
             
             const logo = this.images.partnerLogo;
             const aspectRatio = logo.width / logo.height;
-            const logoWidth = logoSize * aspectRatio;
-            const logoHeight = logoSize;
             
-            // Ensure pixel-perfect positioning
-            const pixelPerfectX = Math.round(currentX);
-            const pixelPerfectY = Math.round(footerY + 10);
-            const pixelPerfectWidth = Math.round(logoWidth);
-            const pixelPerfectHeight = Math.round(logoHeight);
+            // Calculate proportional size
+            let logoWidth = maxLogoHeight * aspectRatio;
+            let logoHeight = maxLogoHeight;
             
-            ctx.drawImage(logo, pixelPerfectX, pixelPerfectY, pixelPerfectWidth, pixelPerfectHeight);
+            // If logo is too wide, scale it down proportionally
+            const maxLogoWidth = availableLogoWidth * 0.4; // Max 40% of available space
+            if (logoWidth > maxLogoWidth) {
+                logoWidth = maxLogoWidth;
+                logoHeight = logoWidth / aspectRatio;
+            }
+            
+            // Position next to customer logo
+            const logoX = Math.round(leftX);
+            const logoY = Math.round(footerY + (footerHeight - logoHeight) / 2);
+            
+            ctx.drawImage(logo, logoX, logoY, Math.round(logoWidth), Math.round(logoHeight));
             ctx.restore();
         }
         
-        // Draw creator info with MAXIMUM text clarity
-        const creatorName = cardData.userName || 'NOVA';
-        const creatorTitle = 'Creator';
-        
+        // Draw creator info with ACTUAL USER NAME - RIGHT SIDE
         ctx.save();
         
-        // ENHANCED text rendering settings
         ctx.textAlign = 'right';
         ctx.textBaseline = 'alphabetic';
-        
-        // CRITICAL: Enhanced text rendering for maximum clarity
         ctx.textRenderingOptimization = 'optimizeQuality';
         
         // Creator name with MAXIMUM clarity
-        const nameSize = Math.max(12, this.cardWidth * 0.033); // Slightly larger for clarity
+        const nameSize = Math.max(12, this.cardWidth * 0.033);
         ctx.font = `bold ${nameSize}px "Segoe UI", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif`;
-        ctx.fillStyle = '#FFFFFF'; // Pure white for maximum contrast
+        ctx.fillStyle = '#FFFFFF';
         
         // Add subtle text stroke for extra clarity
         ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
         ctx.lineWidth = 0.5;
         
-        // Pixel-perfect text positioning for creator name
+        // Position on right side
         const textX = Math.round(this.cardWidth - margin - 10);
-        const nameY = Math.round(footerY + 26); // Slightly adjusted for better positioning
+        const nameY = Math.round(footerY + 26);
         
-        // Draw text with stroke for extra clarity
+        // Draw actual user name
         ctx.strokeText(creatorName, textX, nameY);
         ctx.fillText(creatorName, textX, nameY);
         
-        // Creator title with MAXIMUM clarity
-        const titleSize = Math.max(10, this.cardWidth * 0.027); // Slightly larger for clarity
+        // Creator title
+        const titleSize = Math.max(10, this.cardWidth * 0.027);
         ctx.font = `${titleSize}px "Segoe UI", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif`;
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.85)'; // Slightly more opaque for clarity
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
         
-        // Lighter stroke for title
         ctx.strokeStyle = 'rgba(0, 0, 0, 0.2)';
         ctx.lineWidth = 0.3;
         
-        const titleY = Math.round(footerY + 46); // Pixel-perfect positioning
+        const titleY = Math.round(footerY + 46);
         
-        // Draw title with stroke for extra clarity
         ctx.strokeText(creatorTitle, textX, titleY);
         ctx.fillText(creatorTitle, textX, titleY);
         
         ctx.restore();
+    }
+
+    /**
+     * Extract name from prompt if no explicit name provided
+     */
+    extractNameFromPrompt(prompt) {
+        // Simple extraction - look for common patterns
+        const patterns = [
+            /my name is ([a-zA-Z\s]+)/i,
+            /i am ([a-zA-Z\s]+)/i,
+            /call me ([a-zA-Z\s]+)/i
+        ];
+        
+        for (const pattern of patterns) {
+            const match = prompt.match(pattern);
+            if (match && match[1]) {
+                return match[1].trim();
+            }
+        }
+        
+        return null;
     }
 
     /**
