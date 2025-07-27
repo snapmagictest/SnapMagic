@@ -438,9 +438,11 @@ class HolographicCanvasRenderer {
         
         // CRITICAL: ALWAYS FORCE UPPERCASE for consistent display
         creatorName = creatorName.toUpperCase();
-        const creatorTitle = 'Creator';
         
-        console.log('✅ Using creator name:', creatorName);
+        // INTELLIGENT TEXT SPLITTING: Split at space for better layout
+        const nameLines = this.intelligentNameSplit(creatorName);
+        
+        console.log('✅ Using creator name:', creatorName, 'Split into lines:', nameLines);
         
         // FIXED: Calculate proper logo layout with proportional sizing
         const footerContentWidth = this.cardWidth - 2 * margin - 20; // Available width
@@ -523,11 +525,34 @@ class HolographicCanvasRenderer {
         
         // Position on right side
         const textX = Math.round(this.cardWidth - margin - 10);
-        const nameY = Math.round(footerY + 26);
         
-        // Draw actual user name
-        ctx.strokeText(creatorName, textX, nameY);
-        ctx.fillText(creatorName, textX, nameY);
+        // INTELLIGENT NAME DRAWING: Use smart line splitting
+        if (nameLines.hasMultipleLines) {
+            // Two lines: First name and surname
+            const line1Y = Math.round(footerY + 22); // Slightly higher for two lines
+            const line2Y = Math.round(footerY + 38); // Second line
+            
+            // Draw first name (line 1)
+            ctx.strokeText(nameLines.line1, textX, line1Y);
+            ctx.fillText(nameLines.line1, textX, line1Y);
+            
+            // Draw surname (line 2)
+            ctx.strokeText(nameLines.line2, textX, line2Y);
+            ctx.fillText(nameLines.line2, textX, line2Y);
+            
+            // Adjust title position for two-line name
+            var titleY = Math.round(footerY + 52);
+        } else {
+            // Single line: Draw normally
+            const nameY = Math.round(footerY + 26);
+            ctx.strokeText(nameLines.line1, textX, nameY);
+            ctx.fillText(nameLines.line1, textX, nameY);
+            
+            // Normal title position
+            var titleY = Math.round(footerY + 46);
+        }
+        
+        const creatorTitle = 'Creator';
         
         // Creator title
         const titleSize = Math.max(10, this.cardWidth * 0.027);
@@ -537,12 +562,38 @@ class HolographicCanvasRenderer {
         ctx.strokeStyle = 'rgba(0, 0, 0, 0.2)';
         ctx.lineWidth = 0.3;
         
-        const titleY = Math.round(footerY + 46);
-        
+        // Use the titleY calculated above (adjusted for single/double line)
         ctx.strokeText(creatorTitle, textX, titleY);
         ctx.fillText(creatorTitle, textX, titleY);
         
         ctx.restore();
+    }
+
+    /**
+     * Intelligent name splitting for better layout
+     * If name has space, split at space (first name / surname)
+     * If no space, keep as single line
+     */
+    intelligentNameSplit(name) {
+        // If name contains space, split at LAST space (handles middle names)
+        if (name.includes(' ')) {
+            const lastSpaceIndex = name.lastIndexOf(' ');
+            const firstName = name.substring(0, lastSpaceIndex).trim();
+            const lastName = name.substring(lastSpaceIndex + 1).trim();
+            
+            return {
+                hasMultipleLines: true,
+                line1: firstName,
+                line2: lastName
+            };
+        }
+        
+        // Single word - no splitting
+        return {
+            hasMultipleLines: false,
+            line1: name,
+            line2: ''
+        };
     }
 
     /**

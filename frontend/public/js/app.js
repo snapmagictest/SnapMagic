@@ -660,9 +660,27 @@ class SnapMagicApp {
             }
         });
 
-        // Real-time character counting and validation
+        // Real-time character counting and validation with HARD LIMIT
         this.elements.nameInput.addEventListener('input', (e) => {
+            // CRITICAL: Hard stop at 25 characters - prevent further typing
+            if (e.target.value.length > 25) {
+                e.target.value = e.target.value.substring(0, 25);
+            }
             this.updateNameCharacterCount();
+        });
+
+        // Prevent typing beyond 25 characters on keypress
+        this.elements.nameInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                this.handleNameConfirm();
+                return;
+            }
+            
+            // HARD LIMIT: Stop typing at 25 characters
+            if (e.target.value.length >= 25 && e.key !== 'Backspace' && e.key !== 'Delete') {
+                e.preventDefault();
+                return false;
+            }
         });
 
         // Initialize character counter
