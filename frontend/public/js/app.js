@@ -2940,11 +2940,11 @@ class SnapMagicApp {
         return new Promise((resolve, reject) => {
             const gif = new GIF({
                 workers: 2,
-                quality: 8, // Higher quality for print-ready output
+                quality: 1, // Highest quality possible (1 = best quality)
                 // Removed: width: 400 - let it use natural card size
                 // Removed: height: 600 - let it use natural card size
                 workerScript: '/gif.worker.js', // Use local worker file
-                comment: 'SnapMagic Animated Trading Card - Natural Size'
+                comment: 'SnapMagic Animated Trading Card - Highest Quality'
             });
             
             let loadedFrames = 0;
