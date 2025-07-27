@@ -432,9 +432,12 @@ class HolographicCanvasRenderer {
                             'NOVA';
         
         // CRITICAL: Enforce 25-character limit for generation and download
-        const creatorName = rawCreatorName.length > 25 ? 
-                           rawCreatorName.substring(0, 25) + '...' : 
-                           rawCreatorName;
+        let creatorName = rawCreatorName.length > 25 ? 
+                         rawCreatorName.substring(0, 25) + '...' : 
+                         rawCreatorName;
+        
+        // CRITICAL: ALWAYS FORCE UPPERCASE for consistent display
+        creatorName = creatorName.toUpperCase();
         const creatorTitle = 'Creator';
         
         console.log('✅ Using creator name:', creatorName);

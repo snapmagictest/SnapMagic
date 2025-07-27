@@ -1325,8 +1325,8 @@ class SnapMagicApp {
      * Create holographic trading card with Nova image
      */
     createHolographicCard(aiImageSrc, userName, userPrompt) {
-        // Parse creator info
-        const creatorName = userName || 'NOVA';
+        // Parse creator info and FORCE UPPERCASE
+        const creatorName = (userName || 'NOVA').toUpperCase(); // ALWAYS UPPERCASE
         const creatorTitle = 'Creator';
         
         return `
@@ -1782,6 +1782,8 @@ class SnapMagicApp {
             font-weight: bold;
             color: white;
             margin-bottom: 1px;
+            text-transform: uppercase; /* FORCE UPPERCASE */
+            letter-spacing: 0.5px; /* Better spacing for uppercase */
         }
 
         .creator-title {
