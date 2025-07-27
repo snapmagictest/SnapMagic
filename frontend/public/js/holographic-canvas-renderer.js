@@ -33,22 +33,40 @@ class HolographicCanvasRenderer {
     }
 
     /**
-     * Initialize canvas with card dimensions
+     * Initialize canvas with card dimensions - ENHANCED FOR CLARITY
      */
     initCanvas(width = 366, height = 477) {
         this.cardWidth = width;
         this.cardHeight = height;
         
         this.canvas = document.createElement('canvas');
-        this.canvas.width = width;
-        this.canvas.height = height;
+        
+        // CRITICAL: Use higher resolution for crisp text and logos
+        const pixelRatio = window.devicePixelRatio || 2;
+        this.canvas.width = width * pixelRatio;
+        this.canvas.height = height * pixelRatio;
+        this.canvas.style.width = width + 'px';
+        this.canvas.style.height = height + 'px';
+        
         this.ctx = this.canvas.getContext('2d');
+        
+        // Scale context to match pixel ratio for crisp rendering
+        this.ctx.scale(pixelRatio, pixelRatio);
         
         // Enable high-quality rendering
         this.ctx.imageSmoothingEnabled = true;
         this.ctx.imageSmoothingQuality = 'high';
         
-        console.log('🎨 Canvas initialized:', { width, height });
+        // Improve text rendering
+        this.ctx.textRenderingOptimization = 'optimizeQuality';
+        
+        console.log('🎨 High-resolution canvas initialized:', { 
+            width, 
+            height, 
+            pixelRatio,
+            actualWidth: this.canvas.width,
+            actualHeight: this.canvas.height
+        });
         return this.canvas;
     }
 
@@ -250,7 +268,7 @@ class HolographicCanvasRenderer {
     }
 
     /**
-     * Draw AWS logo with animated shine effect
+     * Draw AWS logo with animated shine effect - ENHANCED CLARITY
      */
     drawAWSLogoWithShine(ctx, animationTime, headerMargin, headerHeight) {
         const logo = this.images.awsLogo;
@@ -266,6 +284,10 @@ class HolographicCanvasRenderer {
         
         // Apply shine filter effect
         ctx.save();
+        
+        // CRITICAL: Disable smoothing for crisp logo
+        ctx.imageSmoothingEnabled = false;
+        
         ctx.filter = `brightness(${shineIntensity}) contrast(1.15)`;
         
         // Add drop shadow
@@ -273,7 +295,13 @@ class HolographicCanvasRenderer {
         ctx.shadowBlur = 4;
         ctx.shadowOffsetY = 2;
         
-        ctx.drawImage(logo, logoX, logoY, logoWidth, logoHeight);
+        // Pixel-perfect positioning
+        const pixelPerfectX = Math.round(logoX);
+        const pixelPerfectY = Math.round(logoY);
+        const pixelPerfectWidth = Math.round(logoWidth);
+        const pixelPerfectHeight = Math.round(logoHeight);
+        
+        ctx.drawImage(logo, pixelPerfectX, pixelPerfectY, pixelPerfectWidth, pixelPerfectHeight);
         
         ctx.restore();
     }
@@ -309,25 +337,31 @@ class HolographicCanvasRenderer {
     }
 
     /**
-     * Draw event name
+     * Draw event name - ENHANCED TEXT CLARITY
      */
     drawEventName(ctx) {
         const eventName = 'AWS re:Invent 2024';
         const fontSize = Math.max(14, this.cardWidth * 0.04);
         
-        ctx.font = `bold ${fontSize}px "Segoe UI", Tahoma, Geneva, Verdana, sans-serif`;
+        ctx.save();
+        
+        // Enhanced font rendering
+        ctx.font = `bold ${fontSize}px "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif`;
         ctx.fillStyle = this.colors.awsOrange;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         
-        // Add text shadow
+        // Add text shadow for better visibility
         ctx.shadowColor = 'rgba(255, 153, 0, 0.3)';
         ctx.shadowBlur = 5;
         
-        const textY = this.cardHeight - 90;
-        ctx.fillText(eventName, this.cardWidth / 2, textY);
+        // Pixel-perfect text positioning
+        const textX = Math.round(this.cardWidth / 2);
+        const textY = Math.round(this.cardHeight - 90);
         
-        ctx.shadowColor = 'transparent';
+        ctx.fillText(eventName, textX, textY);
+        
+        ctx.restore();
     }
 
     /**
@@ -367,7 +401,7 @@ class HolographicCanvasRenderer {
     }
 
     /**
-     * Draw footer content (logos and creator info)
+     * Draw footer content (logos and creator info) - ENHANCED CLARITY
      */
     drawFooterContent(ctx, footerY, footerHeight, cardData) {
         const margin = Math.max(10, this.cardWidth * 0.027);
@@ -375,34 +409,77 @@ class HolographicCanvasRenderer {
         
         let currentX = margin + 10;
         
-        // Draw customer logo
+        // Draw customer logo with enhanced quality
         if (this.images.customerLogo) {
-            ctx.drawImage(this.images.customerLogo, currentX, footerY + 10, logoSize, logoSize);
-            currentX += logoSize + 6;
+            ctx.save();
+            
+            // Disable smoothing for pixel-perfect logos
+            ctx.imageSmoothingEnabled = false;
+            
+            // Calculate proper aspect ratio
+            const logo = this.images.customerLogo;
+            const aspectRatio = logo.width / logo.height;
+            const logoWidth = logoSize * aspectRatio;
+            const logoHeight = logoSize;
+            
+            ctx.drawImage(logo, currentX, footerY + 10, logoWidth, logoHeight);
+            ctx.restore();
+            
+            currentX += logoWidth + 6;
         }
         
-        // Draw partner logo
+        // Draw partner logo (2.png) with MAXIMUM quality
         if (this.images.partnerLogo) {
-            ctx.drawImage(this.images.partnerLogo, currentX, footerY + 10, logoSize, logoSize);
+            ctx.save();
+            
+            // CRITICAL: Disable smoothing for crisp logo rendering
+            ctx.imageSmoothingEnabled = false;
+            
+            const logo = this.images.partnerLogo;
+            const aspectRatio = logo.width / logo.height;
+            const logoWidth = logoSize * aspectRatio;
+            const logoHeight = logoSize;
+            
+            // Ensure pixel-perfect positioning
+            const pixelPerfectX = Math.round(currentX);
+            const pixelPerfectY = Math.round(footerY + 10);
+            const pixelPerfectWidth = Math.round(logoWidth);
+            const pixelPerfectHeight = Math.round(logoHeight);
+            
+            ctx.drawImage(logo, pixelPerfectX, pixelPerfectY, pixelPerfectWidth, pixelPerfectHeight);
+            ctx.restore();
         }
         
-        // Draw creator info (right-aligned)
+        // Draw creator info with enhanced text quality
         const creatorName = cardData.userName || 'NOVA';
         const creatorTitle = 'Creator';
         
+        ctx.save();
         ctx.textAlign = 'right';
+        ctx.textBaseline = 'alphabetic';
+        
+        // Enhanced text rendering
         ctx.fillStyle = 'white';
         
-        // Creator name
+        // Creator name with crisp rendering
         const nameSize = Math.max(11, this.cardWidth * 0.03);
-        ctx.font = `bold ${nameSize}px "Segoe UI", Tahoma, Geneva, Verdana, sans-serif`;
-        ctx.fillText(creatorName, this.cardWidth - margin - 10, footerY + 25);
+        ctx.font = `bold ${nameSize}px "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif`;
+        
+        // Pixel-perfect text positioning
+        const textX = Math.round(this.cardWidth - margin - 10);
+        const nameY = Math.round(footerY + 25);
+        
+        ctx.fillText(creatorName, textX, nameY);
         
         // Creator title
         const titleSize = Math.max(9, this.cardWidth * 0.025);
-        ctx.font = `${titleSize}px "Segoe UI", Tahoma, Geneva, Verdana, sans-serif`;
+        ctx.font = `${titleSize}px "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif`;
         ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-        ctx.fillText(creatorTitle, this.cardWidth - margin - 10, footerY + 45);
+        
+        const titleY = Math.round(footerY + 45);
+        ctx.fillText(creatorTitle, textX, titleY);
+        
+        ctx.restore();
     }
 
     /**
