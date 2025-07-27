@@ -2857,15 +2857,14 @@ class SnapMagicApp {
                 // Wait a moment for animation state to settle
                 await new Promise(resolve => setTimeout(resolve, 10));
                 
-                // Capture the CSS card at this animation state
+                // Capture the CSS card at this animation state - JUST the card itself
                 const canvas = await html2canvas(cardElement, {
-                    width: cardElement.offsetWidth,
-                    height: cardElement.offsetHeight,
-                    scale: 1, // Use scale 1 for now to avoid sizing issues
-                    useCORS: false, // Disabled to avoid CORS
-                    allowTaint: true, // Allow tainted canvas
-                    backgroundColor: null, // Preserve transparency
-                    logging: false, // Reduce console noise
+                    // Don't specify width/height - let it capture the card's natural size
+                    scale: 1,
+                    useCORS: false,
+                    allowTaint: true,
+                    backgroundColor: null,
+                    logging: false,
                     onclone: (clonedDoc) => {
                         // Ensure animation state is applied in cloned document
                         const clonedCard = clonedDoc.querySelector('.snapmagic-card');
