@@ -160,7 +160,7 @@ cp secrets.json.example secrets.json
     "passwordProtection": {
       "enabled": true,
       "username": "demo",
-      "password": "snapmagic2024"
+      "password": "demo"
     }
   }
 }
