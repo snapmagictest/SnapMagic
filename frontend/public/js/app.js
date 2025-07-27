@@ -1928,22 +1928,29 @@ class SnapMagicApp {
         
         try {
             console.log('🎬 Starting animated GIF download...');
-            console.log('📱 User agent:', navigator.userAgent);
-            console.log('📱 Is mobile:', this.isMobileDevice());
-            
             this.showProcessing('Generating animated GIF...');
             
             // Generate animated GIF
             const gifBlob = await this.generateAnimatedCardGIF(this.generatedCardData);
             
-            // MOBILE-SPECIFIC DOWNLOAD HANDLING
-            if (this.isMobileDevice()) {
-                console.log('📱 Using mobile download method');
-                await this.downloadBlobOnMobile(gifBlob, this.generateGifFilename());
-            } else {
-                console.log('💻 Using desktop download method');
-                this.downloadBlobOnDesktop(gifBlob, this.generateGifFilename());
-            }
+            // SIMPLE WORKING METHOD: Direct blob download (same as working PNG downloads)
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(gifBlob);
+            
+            // Generate filename
+            const eventName = this.templateSystem?.templateConfig?.eventName || 'Event';
+            const sanitizedEventName = eventName.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
+            const today = new Date().toISOString().slice(0, 10);
+            const time = new Date().toTimeString().slice(0, 5).replace(':', '');
+            link.download = `snapmagic-${sanitizedEventName}-animated-card-${today}-${time}.gif`;
+            
+            // Trigger download (same method that works for PNG)
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            // Clean up blob URL
+            URL.revokeObjectURL(link.href);
             
             this.hideProcessing();
             console.log('✅ Animated GIF download completed');
@@ -2930,23 +2937,16 @@ class SnapMagicApp {
             // Initialize holographic canvas renderer
             const renderer = new HolographicCanvasRenderer();
             
-            // MOBILE-SPECIFIC OPTIMIZATIONS
-            const isMobile = this.isMobileDevice();
-            const mobileSettings = {
-                frames: isMobile ? 20 : 30,      // Fewer frames on mobile
-                framerate: 15,                   // Same framerate
-                quality: isMobile ? 5 : 1        // Lower quality on mobile to prevent memory issues
-            };
-            
-            console.log('📱 Using settings:', mobileSettings, 'Mobile:', isMobile);
-            
-            // Generate animated GIF with mobile optimizations
-            const gifBlob = await renderer.generateAnimatedGIF(cardData, mobileSettings);
+            // Generate animated GIF with standard settings (same as working version)
+            const gifBlob = await renderer.generateAnimatedGIF(cardData, {
+                frames: 30,      // Full 30 frames for smooth animation
+                framerate: 15,   // 15 FPS
+                quality: 1       // Highest quality
+            });
             
             console.log('✅ Canvas-based animated GIF created:', { 
                 size: Math.round(gifBlob.size / 1024) + 'KB',
-                method: 'Canvas Rendering',
-                mobile: isMobile
+                method: 'Canvas Rendering'
             });
             
             return gifBlob;
