@@ -2941,10 +2941,10 @@ class SnapMagicApp {
             const gif = new GIF({
                 workers: 2,
                 quality: 8, // Higher quality for print-ready output
-                width: 400,
-                height: 600,
+                // Removed: width: 400 - let it use natural card size
+                // Removed: height: 600 - let it use natural card size
                 workerScript: '/gif.worker.js', // Use local worker file
-                comment: 'SnapMagic Animated Trading Card - 300 DPI Print Quality'
+                comment: 'SnapMagic Animated Trading Card - Natural Size'
             });
             
             let loadedFrames = 0;
