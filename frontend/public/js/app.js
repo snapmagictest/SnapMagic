@@ -2832,7 +2832,7 @@ class SnapMagicApp {
             await new Promise(resolve => setTimeout(resolve, 100));
             
             // Animation settings
-            const totalFrames = 60; // 4 seconds at 15 FPS
+            const totalFrames = 10; // Reduced to 10 frames for testing
             const frameDuration = 67; // ~15 FPS (1000ms / 15fps = 67ms)
             
             // Store original animation state
