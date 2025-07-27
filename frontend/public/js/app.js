@@ -1901,13 +1901,24 @@ class SnapMagicApp {
             // Generate animated GIF
             const gifBlob = await this.generateAnimatedCardGIF(this.generatedCardData);
             
+            // Create download link
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(gifBlob);
+            
             // Generate filename
+            const eventName = this.templateSystem?.templateConfig?.eventName || 'Event';
+            const sanitizedEventName = eventName.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
             const today = new Date().toISOString().slice(0, 10);
             const time = new Date().toTimeString().slice(0, 5).replace(':', '');
-            const filename = `SnapMagic-Animated-Card-${today}-${time}.gif`;
+            link.download = `snapmagic-${sanitizedEventName}-animated-card-${today}-${time}.gif`;
             
-            // Download the GIF
-            this.downloadFile(gifBlob, filename);
+            // Trigger download
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            // Clean up blob URL
+            URL.revokeObjectURL(link.href);
             
             this.hideProcessing();
             console.log('✅ Animated GIF download completed');
