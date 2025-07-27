@@ -1307,8 +1307,8 @@ class SnapMagicApp {
      */
     createHolographicCard(aiImageSrc, userName, userPrompt) {
         // Parse creator info
-        const creatorName = userName || 'AWS User';
-        const creatorTitle = 'Cloud Enthusiast';
+        const creatorName = userName || 'NOVA';
+        const creatorTitle = 'Creator';
         
         return `
         <div class="snapmagic-card animated" id="holoCard">
@@ -1361,8 +1361,8 @@ class SnapMagicApp {
     parseCreatorInfo(userName) {
         if (!userName || userName.trim() === '') {
             return {
-                name: 'AWS User',
-                title: 'Cloud Enthusiast'
+                name: 'NOVA',
+                title: 'Creator'
             };
         }
         
@@ -1370,15 +1370,15 @@ class SnapMagicApp {
         if (userName.includes('|')) {
             const [name, title] = userName.split('|').map(s => s.trim());
             return {
-                name: name || 'AWS User',
-                title: title || 'Cloud Enthusiast'
+                name: name || 'NOVA',
+                title: title || 'Creator'
             };
         }
         
         // Otherwise, use userName as name with default title
         return {
             name: userName.trim(),
-            title: 'Cloud Enthusiast'
+            title: 'Creator'
         };
     }
     
@@ -3321,7 +3321,7 @@ class SnapMagicApp {
                           `data:image/png;base64,${this.generatedCardData.result}`;
         
         // Extract user info from stored data (if available)
-        const userName = this.generatedCardData.userName || this.generatedCardData.user_name || 'AWS User';
+        const userName = this.generatedCardData.userName || this.generatedCardData.user_name || 'NOVA';
         const userPrompt = this.generatedCardData.prompt || this.generatedCardData.userPrompt || 'AI Generated Card';
         
         // CRITICAL FIX: Use the same template system as new cards
@@ -3484,7 +3484,7 @@ class SnapMagicApp {
                                       `data:image/png;base64,${this.generatedCardData.result}`;
                     
                     // Extract user info from stored data (if available)
-                    const userName = this.generatedCardData.userName || this.generatedCardData.user_name || 'AWS User';
+                    const userName = this.generatedCardData.userName || this.generatedCardData.user_name || 'NOVA';
                     const userPrompt = this.generatedCardData.prompt || this.generatedCardData.userPrompt || 'AI Generated Card';
                     
                     // CRITICAL FIX: Use the same template system as new cards
