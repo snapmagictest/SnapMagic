@@ -2797,52 +2797,83 @@ class SnapMagicApp {
     // ========================================
     
     /**
-     * Generate animated GIF from card data using canvas recreation
+     * Generate animated GIF from actual CSS card using HTML2Canvas capture
      */
     async generateAnimatedCardGIF(cardData) {
-        console.log('🎬 Starting animated GIF generation from card data...');
+        console.log('🎬 Starting animated GIF generation using HTML2Canvas capture...');
         
         try {
-            // Create canvas for animation
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
+            // Load HTML2Canvas library
+            await this.loadHTML2CanvasLibrary();
             
-            // Set 300 DPI trading card dimensions (400x600)
-            canvas.width = 400;
-            canvas.height = 600;
+            // Find the actual CSS card element
+            const cardElement = document.querySelector('.snapmagic-card');
+            if (!cardElement) {
+                throw new Error('Card element not found. Please ensure a card is displayed.');
+            }
             
-            console.log('🃏 Canvas created:', { width: canvas.width, height: canvas.height });
+            console.log('🃏 Found CSS card element:', cardElement);
             
             // Animation settings
             const totalFrames = 60; // 4 seconds at 15 FPS
             const frameDuration = 67; // ~15 FPS (1000ms / 15fps = 67ms)
             
-            // Load required images first
-            const images = await this.loadCardImages(cardData);
-            console.log('✅ Card images loaded:', Object.keys(images));
+            // Store original animation state
+            const originalAnimationPlayState = cardElement.style.animationPlayState;
+            const originalAnimationDelay = cardElement.style.animationDelay;
             
-            // Generate frames
+            // Generate frames by capturing CSS animation states
             const frames = [];
             for (let frame = 0; frame < totalFrames; frame++) {
-                console.log(`📸 Generating frame ${frame + 1}/${totalFrames}`);
+                console.log(`📸 Capturing frame ${frame + 1}/${totalFrames}`);
                 
-                // Clear canvas
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                // Set animation to specific frame
+                const animationProgress = frame / totalFrames;
+                const animationDelay = -(animationProgress * 8000); // 8s animation cycle
                 
-                // Draw animated card frame
-                await this.drawAnimatedCardFrame(ctx, cardData, images, frame, totalFrames);
+                cardElement.style.animationPlayState = 'paused';
+                cardElement.style.animationDelay = `${animationDelay}ms`;
                 
-                // Capture frame as image data
-                const imageData = canvas.toDataURL('image/png');
-                frames.push(imageData);
+                // Force reflow to apply animation state
+                cardElement.offsetHeight;
+                
+                // Wait a moment for animation state to settle
+                await new Promise(resolve => setTimeout(resolve, 10));
+                
+                // Capture the CSS card at this animation state
+                const canvas = await html2canvas(cardElement, {
+                    width: cardElement.offsetWidth,
+                    height: cardElement.offsetHeight,
+                    scale: 2, // High resolution for quality
+                    useCORS: true,
+                    allowTaint: true,
+                    backgroundColor: null, // Preserve transparency
+                    logging: false, // Reduce console noise
+                    onclone: (clonedDoc) => {
+                        // Ensure fonts are loaded in cloned document
+                        const clonedCard = clonedDoc.querySelector('.snapmagic-card');
+                        if (clonedCard) {
+                            clonedCard.style.animationPlayState = 'paused';
+                            clonedCard.style.animationDelay = `${animationDelay}ms`;
+                        }
+                    }
+                });
+                
+                // Convert canvas to data URL
+                const frameDataURL = canvas.toDataURL('image/png');
+                frames.push(frameDataURL);
             }
             
-            console.log('🎬 All frames generated, creating GIF...');
+            // Restore original animation state
+            cardElement.style.animationPlayState = originalAnimationPlayState;
+            cardElement.style.animationDelay = originalAnimationDelay;
             
-            // Create GIF from frames
+            console.log('🎬 All frames captured, creating GIF...');
+            
+            // Create GIF from captured frames
             const gifBlob = await this.createGIFFromFrames(frames, frameDuration);
             
-            console.log('✅ Animated GIF created:', { size: gifBlob.size });
+            console.log('✅ Animated GIF created from CSS capture:', { size: gifBlob.size });
             return gifBlob;
             
         } catch (error) {
@@ -2852,275 +2883,25 @@ class SnapMagicApp {
     }
     
     /**
-     * Load all images needed for card animation
+     * Load HTML2Canvas library dynamically
      */
-    async loadCardImages(cardData) {
-        const images = {};
-        
-        // Load AI-generated image
-        if (cardData.result) {
-            images.aiImage = await this.loadImageFromBase64(cardData.result);
+    async loadHTML2CanvasLibrary() {
+        if (window.html2canvas) {
+            return; // Already loaded
         }
         
-        // Load AWS logo
-        try {
-            images.awsLogo = await this.loadImageFromURL('/powered-by-aws-white-horizontal.png');
-        } catch (e) {
-            console.warn('AWS logo not found, skipping');
-        }
-        
-        // Load customer/partner logos
-        for (let i = 1; i <= 6; i++) {
-            try {
-                images[`logo${i}`] = await this.loadImageFromURL(`/logos/${i}.png`);
-            } catch (e) {
-                // Logo doesn't exist, skip
-            }
-        }
-        
-        return images;
-    }
-    
-    /**
-     * Load image from base64 data
-     */
-    async loadImageFromBase64(base64Data) {
         return new Promise((resolve, reject) => {
-            const img = new Image();
-            img.onload = () => resolve(img);
-            img.onerror = reject;
-            img.src = `data:image/png;base64,${base64Data}`;
+            const script = document.createElement('script');
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+            script.onload = () => {
+                console.log('✅ HTML2Canvas library loaded');
+                resolve();
+            };
+            script.onerror = () => {
+                reject(new Error('Failed to load HTML2Canvas library'));
+            };
+            document.head.appendChild(script);
         });
-    }
-    
-    /**
-     * Load image from URL
-     */
-    async loadImageFromURL(url) {
-        return new Promise((resolve, reject) => {
-            const img = new Image();
-            img.onload = () => resolve(img);
-            img.onerror = reject;
-            img.src = url;
-        });
-    }
-    
-    /**
-     * Draw single animated frame of the card
-     */
-    async drawAnimatedCardFrame(ctx, cardData, images, frame, totalFrames) {
-        const progress = frame / totalFrames;
-        
-        // 1. Draw card background with holographic effects
-        this.drawHolographicBackground(ctx, progress);
-        
-        // 2. Draw AWS logo with animation
-        if (images.awsLogo) {
-            this.drawAnimatedAWSLogo(ctx, images.awsLogo, progress);
-        }
-        
-        // 3. Draw AI-generated image with holographic overlay
-        if (images.aiImage) {
-            this.drawAIImageWithHolographicOverlay(ctx, images.aiImage, progress);
-        }
-        
-        // 4. Draw event name with glow effect
-        this.drawAnimatedEventName(ctx, progress);
-        
-        // 5. Draw customer/partner logos
-        this.drawAnimatedLogos(ctx, images, progress);
-        
-        // 6. Draw creator info
-        const creatorInfo = this.parseCreatorInfo(cardData.userName || cardData.user_name);
-        this.drawAnimatedCreatorInfo(ctx, creatorInfo, progress);
-        
-        // 7. Apply overall holographic overlay effects
-        this.applyHolographicOverlay(ctx, progress);
-    }
-    
-    /**
-     * Draw holographic background with animated gradients
-     */
-    drawHolographicBackground(ctx, progress) {
-        // Base card background
-        const gradient = ctx.createLinearGradient(0, 0, ctx.canvas.width, ctx.canvas.height);
-        gradient.addColorStop(0, '#1a1a2e');
-        gradient.addColorStop(0.5, '#16213e');
-        gradient.addColorStop(1, '#0f3460');
-        
-        ctx.fillStyle = gradient;
-        ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-        
-        // Animated holographic border
-        const borderIntensity = Math.sin(progress * Math.PI * 4) * 0.3 + 0.7;
-        ctx.strokeStyle = `rgba(255, 153, 0, ${borderIntensity * 0.6})`;
-        ctx.lineWidth = 3;
-        ctx.strokeRect(2, 2, ctx.canvas.width - 4, ctx.canvas.height - 4);
-    }
-    
-    /**
-     * Draw AWS logo with shimmer animation
-     */
-    drawAnimatedAWSLogo(ctx, awsLogo, progress) {
-        const logoWidth = 120;
-        const logoHeight = 30;
-        const x = (ctx.canvas.width - logoWidth) / 2;
-        const y = 20;
-        
-        // Draw logo
-        ctx.drawImage(awsLogo, x, y, logoWidth, logoHeight);
-        
-        // Add shimmer effect
-        const shimmerX = x + (progress * logoWidth * 2) - logoWidth;
-        const shimmerGradient = ctx.createLinearGradient(shimmerX, y, shimmerX + 40, y);
-        shimmerGradient.addColorStop(0, 'rgba(255, 255, 255, 0)');
-        shimmerGradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.4)');
-        shimmerGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
-        
-        ctx.fillStyle = shimmerGradient;
-        ctx.globalCompositeOperation = 'overlay';
-        ctx.fillRect(x, y, logoWidth, logoHeight);
-        ctx.globalCompositeOperation = 'source-over';
-    }
-    
-    /**
-     * Draw AI image with holographic overlay
-     */
-    drawAIImageWithHolographicOverlay(ctx, aiImage, progress) {
-        const imageWidth = 320;
-        const imageHeight = 240;
-        const x = (ctx.canvas.width - imageWidth) / 2;
-        const y = 80;
-        
-        // Draw AI image
-        ctx.drawImage(aiImage, x, y, imageWidth, imageHeight);
-        
-        // Holographic overlay with moving gradient
-        const gradientProgress = (progress * 2) % 1; // Double speed
-        const gradientX = x + (gradientProgress * imageWidth * 1.5) - (imageWidth * 0.5);
-        
-        const holoGradient = ctx.createLinearGradient(gradientX, y, gradientX + 100, y + imageHeight);
-        holoGradient.addColorStop(0, 'rgba(255, 153, 0, 0)');
-        holoGradient.addColorStop(0.3, 'rgba(75, 156, 211, 0.2)');
-        holoGradient.addColorStop(0.7, 'rgba(218, 165, 32, 0.3)');
-        holoGradient.addColorStop(1, 'rgba(255, 153, 0, 0)');
-        
-        ctx.fillStyle = holoGradient;
-        ctx.globalCompositeOperation = 'overlay';
-        ctx.fillRect(x, y, imageWidth, imageHeight);
-        ctx.globalCompositeOperation = 'source-over';
-        
-        // Add sparkle effects
-        this.drawSparkles(ctx, x, y, imageWidth, imageHeight, progress);
-    }
-    
-    /**
-     * Draw sparkle effects
-     */
-    drawSparkles(ctx, x, y, width, height, progress) {
-        const sparkleCount = 6;
-        
-        for (let i = 0; i < sparkleCount; i++) {
-            const sparkleProgress = (progress + (i * 0.2)) % 1;
-            const sparkleX = x + (sparkleProgress * width);
-            const sparkleY = y + (Math.sin(sparkleProgress * Math.PI * 3 + i) * height * 0.3) + (height * 0.5);
-            const sparkleSize = Math.sin(sparkleProgress * Math.PI) * 3 + 1;
-            const sparkleOpacity = Math.sin(sparkleProgress * Math.PI) * 0.8;
-            
-            ctx.fillStyle = `rgba(255, 255, 255, ${sparkleOpacity})`;
-            ctx.beginPath();
-            ctx.arc(sparkleX, sparkleY, sparkleSize, 0, Math.PI * 2);
-            ctx.fill();
-        }
-    }
-    
-    /**
-     * Draw animated event name
-     */
-    drawAnimatedEventName(ctx, progress) {
-        const text = 'AWS re:Invent 2024';
-        const y = 350;
-        
-        // Glow effect
-        const glowIntensity = Math.sin(progress * Math.PI * 6) * 0.3 + 0.7;
-        
-        ctx.font = 'bold 24px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillStyle = `rgba(255, 153, 0, ${glowIntensity})`;
-        ctx.fillText(text, ctx.canvas.width / 2, y);
-        
-        // Add glow
-        ctx.shadowColor = '#FF9900';
-        ctx.shadowBlur = glowIntensity * 10;
-        ctx.fillStyle = '#FFFFFF';
-        ctx.fillText(text, ctx.canvas.width / 2, y);
-        ctx.shadowBlur = 0;
-    }
-    
-    /**
-     * Draw animated logos
-     */
-    drawAnimatedLogos(ctx, images, progress) {
-        const logoSize = 40;
-        const startX = 50;
-        const y = 450;
-        const spacing = 60;
-        
-        // Draw available logos with subtle animation
-        let logoIndex = 0;
-        for (let i = 1; i <= 6; i++) {
-            if (images[`logo${i}`]) {
-                const x = startX + (logoIndex * spacing);
-                const shimmer = Math.sin(progress * Math.PI * 4 + logoIndex) * 0.2 + 0.8;
-                
-                ctx.globalAlpha = shimmer;
-                ctx.drawImage(images[`logo${i}`], x, y, logoSize, logoSize);
-                ctx.globalAlpha = 1;
-                
-                logoIndex++;
-            }
-        }
-    }
-    
-    /**
-     * Draw animated creator info
-     */
-    drawAnimatedCreatorInfo(ctx, creatorInfo, progress) {
-        const x = ctx.canvas.width - 150;
-        const y = 500;
-        
-        // Holographic text effect
-        const textShimmer = Math.sin(progress * Math.PI * 8) * 0.3 + 0.7;
-        
-        ctx.font = 'bold 16px Arial';
-        ctx.textAlign = 'right';
-        ctx.fillStyle = `rgba(212, 175, 55, ${textShimmer})`;
-        ctx.fillText(creatorInfo.name, x, y);
-        
-        ctx.font = '12px Arial';
-        ctx.fillStyle = `rgba(255, 255, 255, ${textShimmer * 0.8})`;
-        ctx.fillText(creatorInfo.title, x, y + 20);
-    }
-    
-    /**
-     * Apply overall holographic overlay effects
-     */
-    applyHolographicOverlay(ctx, progress) {
-        // Moving holographic gradient across entire card
-        const overlayProgress = (progress * 1.5) % 1;
-        const gradientX = overlayProgress * ctx.canvas.width * 1.5 - ctx.canvas.width * 0.5;
-        
-        const overlayGradient = ctx.createLinearGradient(gradientX, 0, gradientX + 200, ctx.canvas.height);
-        overlayGradient.addColorStop(0, 'rgba(255, 153, 0, 0)');
-        overlayGradient.addColorStop(0.2, 'rgba(75, 156, 211, 0.1)');
-        overlayGradient.addColorStop(0.5, 'rgba(218, 165, 32, 0.15)');
-        overlayGradient.addColorStop(0.8, 'rgba(231, 126, 34, 0.1)');
-        overlayGradient.addColorStop(1, 'rgba(255, 127, 80, 0)');
-        
-        ctx.fillStyle = overlayGradient;
-        ctx.globalCompositeOperation = 'overlay';
-        ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-        ctx.globalCompositeOperation = 'source-over';
     }
     
     /**
