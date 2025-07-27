@@ -1928,29 +1928,22 @@ class SnapMagicApp {
         
         try {
             console.log('🎬 Starting animated GIF download...');
+            console.log('📱 User agent:', navigator.userAgent);
+            console.log('📱 Is mobile:', this.isMobileDevice());
+            
             this.showProcessing('Generating animated GIF...');
             
             // Generate animated GIF
             const gifBlob = await this.generateAnimatedCardGIF(this.generatedCardData);
             
-            // Create download link
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(gifBlob);
-            
-            // Generate filename
-            const eventName = this.templateSystem?.templateConfig?.eventName || 'Event';
-            const sanitizedEventName = eventName.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
-            const today = new Date().toISOString().slice(0, 10);
-            const time = new Date().toTimeString().slice(0, 5).replace(':', '');
-            link.download = `snapmagic-${sanitizedEventName}-animated-card-${today}-${time}.gif`;
-            
-            // Trigger download
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            
-            // Clean up blob URL
-            URL.revokeObjectURL(link.href);
+            // MOBILE-SPECIFIC DOWNLOAD HANDLING
+            if (this.isMobileDevice()) {
+                console.log('📱 Using mobile download method');
+                await this.downloadBlobOnMobile(gifBlob, this.generateGifFilename());
+            } else {
+                console.log('💻 Using desktop download method');
+                this.downloadBlobOnDesktop(gifBlob, this.generateGifFilename());
+            }
             
             this.hideProcessing();
             console.log('✅ Animated GIF download completed');
@@ -1960,6 +1953,98 @@ class SnapMagicApp {
             this.hideProcessing();
             this.showError(`Animated GIF generation failed: ${error.message}`);
         }
+    }
+
+    /**
+     * Detect if user is on mobile device
+     */
+    isMobileDevice() {
+        return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+               (navigator.maxTouchPoints && navigator.maxTouchPoints > 2);
+    }
+
+    /**
+     * Generate consistent filename for GIF downloads
+     */
+    generateGifFilename() {
+        const eventName = this.templateSystem?.templateConfig?.eventName || 'Event';
+        const sanitizedEventName = eventName.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
+        const today = new Date().toISOString().slice(0, 10);
+        const time = new Date().toTimeString().slice(0, 5).replace(':', '');
+        return `snapmagic-${sanitizedEventName}-animated-card-${today}-${time}.gif`;
+    }
+
+    /**
+     * Mobile-optimized blob download
+     */
+    async downloadBlobOnMobile(blob, filename) {
+        try {
+            // Method 1: Try native share API if available
+            if (navigator.share && navigator.canShare && navigator.canShare({ files: [new File([blob], filename, { type: blob.type })] })) {
+                console.log('📱 Using Web Share API');
+                const file = new File([blob], filename, { type: blob.type });
+                await navigator.share({
+                    files: [file],
+                    title: 'SnapMagic Animated Card',
+                    text: 'Check out my animated trading card!'
+                });
+                return;
+            }
+
+            // Method 2: Try direct download with mobile-specific handling
+            console.log('📱 Using mobile blob download');
+            const url = URL.createObjectURL(blob);
+            
+            // Create a more mobile-friendly download approach
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            link.style.display = 'none';
+            
+            // Add to DOM temporarily
+            document.body.appendChild(link);
+            
+            // Trigger download with mobile-specific events
+            if (typeof link.click === 'function') {
+                link.click();
+            } else {
+                // Fallback for older mobile browsers
+                const event = new MouseEvent('click', {
+                    view: window,
+                    bubbles: true,
+                    cancelable: true
+                });
+                link.dispatchEvent(event);
+            }
+            
+            // Clean up
+            setTimeout(() => {
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+            }, 100);
+            
+        } catch (error) {
+            console.error('❌ Mobile download failed:', error);
+            // Fallback to desktop method
+            this.downloadBlobOnDesktop(blob, filename);
+        }
+    }
+
+    /**
+     * Desktop blob download (original method)
+     */
+    downloadBlobOnDesktop(blob, filename) {
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = filename;
+        
+        // Trigger download
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        // Clean up blob URL
+        URL.revokeObjectURL(link.href);
     }
 
     // Video Generation
@@ -2845,16 +2930,23 @@ class SnapMagicApp {
             // Initialize holographic canvas renderer
             const renderer = new HolographicCanvasRenderer();
             
-            // Generate animated GIF with all holographic effects preserved
-            const gifBlob = await renderer.generateAnimatedGIF(cardData, {
-                frames: 30,      // Full 30 frames for smooth animation
-                framerate: 15,   // 15 FPS
-                quality: 1       // Highest quality
-            });
+            // MOBILE-SPECIFIC OPTIMIZATIONS
+            const isMobile = this.isMobileDevice();
+            const mobileSettings = {
+                frames: isMobile ? 20 : 30,      // Fewer frames on mobile
+                framerate: 15,                   // Same framerate
+                quality: isMobile ? 5 : 1        // Lower quality on mobile to prevent memory issues
+            };
+            
+            console.log('📱 Using settings:', mobileSettings, 'Mobile:', isMobile);
+            
+            // Generate animated GIF with mobile optimizations
+            const gifBlob = await renderer.generateAnimatedGIF(cardData, mobileSettings);
             
             console.log('✅ Canvas-based animated GIF created:', { 
                 size: Math.round(gifBlob.size / 1024) + 'KB',
-                method: 'Canvas Rendering'
+                method: 'Canvas Rendering',
+                mobile: isMobile
             });
             
             return gifBlob;
