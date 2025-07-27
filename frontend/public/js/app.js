@@ -450,6 +450,7 @@ class SnapMagicApp {
             // Name input modals
             nameInputModal: document.getElementById('nameInputModal'),
             nameInput: document.getElementById('nameInput'),
+            nameCharCount: document.getElementById('nameCharCount'),
             nameConfirmBtn: document.getElementById('nameConfirmBtn'),
             nameCancelBtn: document.getElementById('nameCancelBtn'),
             nameConfirmModal: document.getElementById('nameConfirmModal'),
@@ -652,12 +653,20 @@ class SnapMagicApp {
         // Print success modal
         this.elements.printSuccessOkBtn.addEventListener('click', () => this.handlePrintSuccessOk());
         
-        // Enter key support for name input
+        // Enter key support for name input with character limit validation
         this.elements.nameInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 this.handleNameConfirm();
             }
         });
+
+        // Real-time character counting and validation
+        this.elements.nameInput.addEventListener('input', (e) => {
+            this.updateNameCharacterCount();
+        });
+
+        // Initialize character counter
+        this.updateNameCharacterCount();
         
     }
 
@@ -3298,11 +3307,51 @@ class SnapMagicApp {
         }, 5000);
     }
     
+    /**
+     * Update name character count display with validation
+     */
+    updateNameCharacterCount() {
+        const nameInput = this.elements.nameInput;
+        const charCount = this.elements.nameCharCount;
+        const confirmBtn = this.elements.nameConfirmBtn;
+        
+        if (!nameInput || !charCount || !confirmBtn) return;
+        
+        const currentLength = nameInput.value.length;
+        const maxLength = 25;
+        const remaining = maxLength - currentLength;
+        
+        // Update counter text
+        if (currentLength === 0) {
+            charCount.textContent = '25 characters max';
+            charCount.className = 'char-count';
+        } else if (remaining > 5) {
+            charCount.textContent = `${remaining} characters remaining`;
+            charCount.className = 'char-count';
+        } else if (remaining > 0) {
+            charCount.textContent = `${remaining} characters remaining`;
+            charCount.className = 'char-count warning';
+        } else {
+            charCount.textContent = 'Character limit reached';
+            charCount.className = 'char-count error';
+        }
+        
+        // Enable/disable confirm button based on length
+        if (currentLength > maxLength) {
+            confirmBtn.disabled = true;
+            confirmBtn.style.opacity = '0.5';
+        } else {
+            confirmBtn.disabled = false;
+            confirmBtn.style.opacity = '1';
+        }
+    }
+
     // Name Input Modal Functions
     showNameInputModal() {
         this.elements.nameInput.value = '';
         this.elements.nameInputModal.classList.remove('hidden');
         this.elements.nameInput.focus();
+        this.updateNameCharacterCount(); // Reset character counter
     }
     
     hideNameInputModal() {
@@ -3320,6 +3369,13 @@ class SnapMagicApp {
     
     handleNameConfirm() {
         const enteredName = this.elements.nameInput.value.trim();
+        
+        // CRITICAL: Enforce 25-character limit for generation and download
+        if (enteredName.length > 25) {
+            this.showError('Name must be 25 characters or less for card generation');
+            return;
+        }
+        
         this.pendingName = enteredName;
         this.hideNameInputModal();
         this.showNameConfirmModal(enteredName);

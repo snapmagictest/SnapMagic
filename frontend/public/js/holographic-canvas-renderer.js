@@ -416,7 +416,7 @@ class HolographicCanvasRenderer {
         const margin = Math.max(10, this.cardWidth * 0.027);
         const maxLogoHeight = Math.max(35, footerHeight * 0.7);
         
-        // FIXED: Get actual user name from cardData
+        // FIXED: Get actual user name from cardData with 25-character limit
         console.log('🔍 DEBUG: cardData for name extraction:', {
             userName: cardData.userName,
             user_name: cardData.user_name,
@@ -424,12 +424,17 @@ class HolographicCanvasRenderer {
             prompt: cardData.prompt
         });
         
-        // Try multiple possible name fields
-        const creatorName = cardData.userName || 
-                           cardData.user_name || 
-                           cardData.name || 
-                           (cardData.prompt && this.extractNameFromPrompt(cardData.prompt)) ||
-                           'NOVA';
+        // Try multiple possible name fields and enforce 25-character limit
+        let rawCreatorName = cardData.userName || 
+                            cardData.user_name || 
+                            cardData.name || 
+                            (cardData.prompt && this.extractNameFromPrompt(cardData.prompt)) ||
+                            'NOVA';
+        
+        // CRITICAL: Enforce 25-character limit for generation and download
+        const creatorName = rawCreatorName.length > 25 ? 
+                           rawCreatorName.substring(0, 25) + '...' : 
+                           rawCreatorName;
         const creatorTitle = 'Creator';
         
         console.log('✅ Using creator name:', creatorName);

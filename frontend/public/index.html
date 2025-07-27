@@ -1070,6 +1070,20 @@
             color: rgba(245, 245, 220, 0.5);
         }
 
+        .char-count {
+            font-size: 0.85rem;
+            color: rgba(245, 245, 220, 0.7);
+            font-style: italic;
+        }
+
+        .char-count.warning {
+            color: #ff9900;
+        }
+
+        .char-count.error {
+            color: #ff4444;
+        }
+
         .name-preview {
             background: var(--glass-gold);
             border: 2px solid var(--glass-border);
@@ -1435,8 +1449,8 @@
     <div id="nameInputModal" class="modal hidden">
         <div class="modal-content">
             <h3>Enter Your Name</h3>
-            <p>Displays your name on the card as the creator.</p>
-            <input type="text" id="nameInput" class="name-input" placeholder="Name (blank = NOVA)" maxlength="50">
+            <p>Displays your name on the card as the creator. <span id="nameCharCount" class="char-count">25 characters max</span></p>
+            <input type="text" id="nameInput" class="name-input" placeholder="Name (blank = NOVA)" maxlength="25">
             <div class="modal-buttons">
                 <button id="nameConfirmBtn" class="art-deco-btn">Continue</button>
                 <button id="nameCancelBtn" class="art-deco-btn">Cancel</button>
