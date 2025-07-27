@@ -33,7 +33,7 @@ class HolographicCanvasRenderer {
     }
 
     /**
-     * Initialize canvas with card dimensions - ENHANCED FOR CLARITY
+     * Initialize canvas with card dimensions - MAXIMUM CLARITY
      */
     initCanvas(width = 366, height = 477) {
         this.cardWidth = width;
@@ -53,19 +53,28 @@ class HolographicCanvasRenderer {
         // Scale context to match pixel ratio for crisp rendering
         this.ctx.scale(pixelRatio, pixelRatio);
         
-        // Enable high-quality rendering
+        // MAXIMUM quality rendering settings
         this.ctx.imageSmoothingEnabled = true;
         this.ctx.imageSmoothingQuality = 'high';
         
-        // Improve text rendering
+        // CRITICAL: Optimize text rendering for maximum clarity
         this.ctx.textRenderingOptimization = 'optimizeQuality';
+        this.ctx.fontKerning = 'normal';
+        this.ctx.fontStretch = 'normal';
+        this.ctx.fontVariantCaps = 'normal';
         
-        console.log('🎨 High-resolution canvas initialized:', { 
+        // Additional quality settings
+        this.ctx.lineCap = 'round';
+        this.ctx.lineJoin = 'round';
+        this.ctx.miterLimit = 10;
+        
+        console.log('🎨 MAXIMUM CLARITY canvas initialized:', { 
             width, 
             height, 
             pixelRatio,
             actualWidth: this.canvas.width,
-            actualHeight: this.canvas.height
+            actualHeight: this.canvas.height,
+            textOptimization: 'Maximum Quality'
         });
         return this.canvas;
     }
@@ -401,7 +410,7 @@ class HolographicCanvasRenderer {
     }
 
     /**
-     * Draw footer content (logos and creator info) - ENHANCED CLARITY
+     * Draw footer content (logos and creator info) - MAXIMUM CLARITY
      */
     drawFooterContent(ctx, footerY, footerHeight, cardData) {
         const margin = Math.max(10, this.cardWidth * 0.027);
@@ -409,20 +418,26 @@ class HolographicCanvasRenderer {
         
         let currentX = margin + 10;
         
-        // Draw customer logo with enhanced quality
+        // Draw customer logo (1.png) with MAXIMUM quality
         if (this.images.customerLogo) {
             ctx.save();
             
-            // Disable smoothing for pixel-perfect logos
+            // CRITICAL: Disable smoothing for pixel-perfect 1.png logo
             ctx.imageSmoothingEnabled = false;
             
-            // Calculate proper aspect ratio
+            // Calculate proper aspect ratio for 1.png
             const logo = this.images.customerLogo;
             const aspectRatio = logo.width / logo.height;
             const logoWidth = logoSize * aspectRatio;
             const logoHeight = logoSize;
             
-            ctx.drawImage(logo, currentX, footerY + 10, logoWidth, logoHeight);
+            // Pixel-perfect positioning for 1.png
+            const pixelPerfectX = Math.round(currentX);
+            const pixelPerfectY = Math.round(footerY + 10);
+            const pixelPerfectWidth = Math.round(logoWidth);
+            const pixelPerfectHeight = Math.round(logoHeight);
+            
+            ctx.drawImage(logo, pixelPerfectX, pixelPerfectY, pixelPerfectWidth, pixelPerfectHeight);
             ctx.restore();
             
             currentX += logoWidth + 6;
@@ -450,33 +465,49 @@ class HolographicCanvasRenderer {
             ctx.restore();
         }
         
-        // Draw creator info with enhanced text quality
+        // Draw creator info with MAXIMUM text clarity
         const creatorName = cardData.userName || 'NOVA';
         const creatorTitle = 'Creator';
         
         ctx.save();
+        
+        // ENHANCED text rendering settings
         ctx.textAlign = 'right';
         ctx.textBaseline = 'alphabetic';
         
-        // Enhanced text rendering
-        ctx.fillStyle = 'white';
+        // CRITICAL: Enhanced text rendering for maximum clarity
+        ctx.textRenderingOptimization = 'optimizeQuality';
         
-        // Creator name with crisp rendering
-        const nameSize = Math.max(11, this.cardWidth * 0.03);
-        ctx.font = `bold ${nameSize}px "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif`;
+        // Creator name with MAXIMUM clarity
+        const nameSize = Math.max(12, this.cardWidth * 0.033); // Slightly larger for clarity
+        ctx.font = `bold ${nameSize}px "Segoe UI", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif`;
+        ctx.fillStyle = '#FFFFFF'; // Pure white for maximum contrast
         
-        // Pixel-perfect text positioning
+        // Add subtle text stroke for extra clarity
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
+        ctx.lineWidth = 0.5;
+        
+        // Pixel-perfect text positioning for creator name
         const textX = Math.round(this.cardWidth - margin - 10);
-        const nameY = Math.round(footerY + 25);
+        const nameY = Math.round(footerY + 26); // Slightly adjusted for better positioning
         
+        // Draw text with stroke for extra clarity
+        ctx.strokeText(creatorName, textX, nameY);
         ctx.fillText(creatorName, textX, nameY);
         
-        // Creator title
-        const titleSize = Math.max(9, this.cardWidth * 0.025);
-        ctx.font = `${titleSize}px "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif`;
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+        // Creator title with MAXIMUM clarity
+        const titleSize = Math.max(10, this.cardWidth * 0.027); // Slightly larger for clarity
+        ctx.font = `${titleSize}px "Segoe UI", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif`;
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.85)'; // Slightly more opaque for clarity
         
-        const titleY = Math.round(footerY + 45);
+        // Lighter stroke for title
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.2)';
+        ctx.lineWidth = 0.3;
+        
+        const titleY = Math.round(footerY + 46); // Pixel-perfect positioning
+        
+        // Draw title with stroke for extra clarity
+        ctx.strokeText(creatorTitle, textX, titleY);
         ctx.fillText(creatorTitle, textX, titleY);
         
         ctx.restore();
