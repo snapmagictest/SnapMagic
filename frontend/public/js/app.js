@@ -2814,6 +2814,23 @@ class SnapMagicApp {
             
             console.log('🃏 Found CSS card element:', cardElement);
             
+            // CRITICAL FIX: Replace S3 image with base64 to avoid CORS
+            const aiImages = cardElement.querySelectorAll('img');
+            const originalSources = [];
+            
+            aiImages.forEach((img, index) => {
+                if (img.src && img.src.includes('s3.amazonaws.com')) {
+                    console.log('🔄 Replacing S3 image with base64 to avoid CORS');
+                    originalSources[index] = img.src; // Store original
+                    if (cardData.result) {
+                        img.src = `data:image/png;base64,${cardData.result}`;
+                    }
+                }
+            });
+            
+            // Wait for image to load
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
             // Animation settings
             const totalFrames = 60; // 4 seconds at 15 FPS
             const frameDuration = 67; // ~15 FPS (1000ms / 15fps = 67ms)
@@ -2844,13 +2861,13 @@ class SnapMagicApp {
                 const canvas = await html2canvas(cardElement, {
                     width: cardElement.offsetWidth,
                     height: cardElement.offsetHeight,
-                    scale: 2, // High resolution for quality
-                    useCORS: true,
-                    allowTaint: true,
+                    scale: 1, // Use scale 1 for now to avoid sizing issues
+                    useCORS: false, // Disabled to avoid CORS
+                    allowTaint: true, // Allow tainted canvas
                     backgroundColor: null, // Preserve transparency
                     logging: false, // Reduce console noise
                     onclone: (clonedDoc) => {
-                        // Ensure fonts are loaded in cloned document
+                        // Ensure animation state is applied in cloned document
                         const clonedCard = clonedDoc.querySelector('.snapmagic-card');
                         if (clonedCard) {
                             clonedCard.style.animationPlayState = 'paused';
@@ -2867,6 +2884,14 @@ class SnapMagicApp {
             // Restore original animation state
             cardElement.style.animationPlayState = originalAnimationPlayState;
             cardElement.style.animationDelay = originalAnimationDelay;
+            
+            // Restore original image sources
+            aiImages.forEach((img, index) => {
+                if (originalSources[index]) {
+                    img.src = originalSources[index];
+                    console.log('🔄 Restored original S3 image source');
+                }
+            });
             
             console.log('🎬 All frames captured, creating GIF...');
             
