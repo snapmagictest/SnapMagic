@@ -3000,13 +3000,12 @@ class SnapMagicApp {
      */
     async generateAnimatedCardGIF(cardData, options = {}) {
         const { 
-            width = 275, 
-            height = 358,
-            frames = 30,
-            framerate = 15
+            frames = 15,     // SPEED: Reduced from 30 → 15 (50% faster)
+            framerate = 10   // SPEED: Reduced from 15 → 10 (smoother with fewer frames)
         } = options;
         
-        console.log(`🎬 Starting canvas-based animated GIF generation (${width}×${height})...`);
+        console.log(`🎬 Starting canvas-based animated GIF generation with natural dimensions...`);
+        console.log(`⚡ SPEED: ${frames} frames @ ${framerate}fps (target: <30 seconds)`);
         console.log('🔍 DEBUG: cardData structure for canvas:', {
             keys: Object.keys(cardData),
             userName: cardData.userName,
@@ -3027,10 +3026,8 @@ class SnapMagicApp {
         // Initialize holographic canvas renderer with configurable dimensions
         const renderer = new HolographicCanvasRenderer();
         
-        // Generate animated GIF with flexible dimensions - NO FALLBACK
+        // Generate animated GIF with natural dimensions - NO FALLBACK
         const gifBlob = await renderer.generateAnimatedGIF(activeCardData, {
-            width,
-            height,
             frames,
             framerate,
             quality: 1 // Maximum quality
@@ -3038,7 +3035,9 @@ class SnapMagicApp {
         
         console.log('✅ Canvas animated GIF created:', { 
             size: Math.round(gifBlob.size / 1024) + 'KB',
-            dimensions: `${width}×${height}`,
+            dimensions: 'Natural card size in 1080×1080 background',
+            frames: frames,
+            framerate: framerate,
             method: 'Canvas-based (no fallback)',
             system: 'Direct HolographicCanvasRenderer'
         });
