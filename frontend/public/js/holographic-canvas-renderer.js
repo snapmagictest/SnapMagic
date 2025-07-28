@@ -13,11 +13,11 @@ class HolographicCanvasRenderer {
         this.images = {};
         this.fonts = {};
         
-        // Animation timing constants (matching your CSS)
-        this.FLOAT_DURATION = 8000;     // 8s autoFloat
-        this.GRADIENT_DURATION = 6000;  // 6s autoGradientSweep  
-        this.SPARKLE_DURATION = 10000;  // 10s autoSparkleMove
-        this.SHINE_DURATION = 3000;     // 3s logoShine
+        // Animation timing constants (SUBTLE: 2x slower for gentle effects)
+        this.FLOAT_DURATION = 16000;    // 16s autoFloat (was 8s)
+        this.GRADIENT_DURATION = 12000; // 12s autoGradientSweep (was 6s)
+        this.SPARKLE_DURATION = 20000;  // 20s autoSparkleMove (was 10s)
+        this.SHINE_DURATION = 6000;     // 6s logoShine (was 3s)
         
         // AWS brand colors (matching your CSS variables)
         this.colors = {
@@ -175,29 +175,29 @@ class HolographicCanvasRenderer {
         let rotateX = 0, rotateY = 0, rotateZ = 0;
         
         if (progress <= 0.25) {
-            // 0% → 25%: rotateX(2deg) rotateY(-3deg) rotateZ(0.5deg)
+            // 0% → 25%: SUBTLE rotation (reduced angles)
             const t = progress / 0.25;
-            rotateX = t * 2;
-            rotateY = t * -3;
-            rotateZ = t * 0.5;
+            rotateX = t * 0.5;   // 0.5° (was 2°)
+            rotateY = t * -0.8;  // -0.8° (was -3°)
+            rotateZ = t * 0.1;   // 0.1° (was 0.5°)
         } else if (progress <= 0.5) {
-            // 25% → 50%: rotateX(-1deg) rotateY(4deg) rotateZ(-0.3deg)
+            // 25% → 50%: SUBTLE rotation
             const t = (progress - 0.25) / 0.25;
-            rotateX = 2 + t * (-1 - 2);
-            rotateY = -3 + t * (4 - (-3));
-            rotateZ = 0.5 + t * (-0.3 - 0.5);
+            rotateX = 0.5 + t * (-0.2 - 0.5);   // -0.2° (was -1°)
+            rotateY = -0.8 + t * (1.0 - (-0.8)); // 1.0° (was 4°)
+            rotateZ = 0.1 + t * (-0.08 - 0.1);   // -0.08° (was -0.3°)
         } else if (progress <= 0.75) {
-            // 50% → 75%: rotateX(3deg) rotateY(2deg) rotateZ(0.8deg)
+            // 50% → 75%: SUBTLE rotation
             const t = (progress - 0.5) / 0.25;
-            rotateX = -1 + t * (3 - (-1));
-            rotateY = 4 + t * (2 - 4);
-            rotateZ = -0.3 + t * (0.8 - (-0.3));
+            rotateX = -0.2 + t * (0.8 - (-0.2));  // 0.8° (was 3°)
+            rotateY = 1.0 + t * (0.5 - 1.0);      // 0.5° (was 2°)
+            rotateZ = -0.08 + t * (0.2 - (-0.08)); // 0.2° (was 0.8°)
         } else {
-            // 75% → 100%: back to rotateX(0deg) rotateY(0deg) rotateZ(0deg)
+            // 75% → 100%: SUBTLE back to start
             const t = (progress - 0.75) / 0.25;
-            rotateX = 3 + t * (0 - 3);
-            rotateY = 2 + t * (0 - 2);
-            rotateZ = 0.8 + t * (0 - 0.8);
+            rotateX = 0.8 + t * (0 - 0.8);
+            rotateY = 0.5 + t * (0 - 0.5);
+            rotateZ = 0.2 + t * (0 - 0.2);
         }
         
         // Apply 3D perspective transform
@@ -236,29 +236,29 @@ class HolographicCanvasRenderer {
         let shadowColor1, shadowColor2, glowIntensity;
         
         if (progress < 0.25) {
-            // 0% → 25%: Default to intense glow
+            // 0% → 25%: SUBTLE glow (reduced intensity)
             const t = progress / 0.25;
             shadowColor1 = this.interpolateColor('#DAA520', '#E67E22', t);
             shadowColor2 = this.interpolateColor('#4B9CD3', '#FF9900', t);
-            glowIntensity = 0.3 + t * 0.4;
+            glowIntensity = 0.15 + t * 0.2; // 0.15 → 0.35 (was 0.3 → 0.7)
         } else if (progress < 0.5) {
-            // 25% → 50%: Intense to medium glow
+            // 25% → 50%: SUBTLE glow
             const t = (progress - 0.25) / 0.25;
             shadowColor1 = this.interpolateColor('#E67E22', '#FF7F50', t);
             shadowColor2 = this.interpolateColor('#FF9900', '#4B9CD3', t);
-            glowIntensity = 0.7 - t * 0.3;
+            glowIntensity = 0.35 - t * 0.15; // 0.35 → 0.2 (was 0.7 → 0.4)
         } else if (progress < 0.75) {
-            // 50% → 75%: Medium to strong glow
+            // 50% → 75%: SUBTLE glow
             const t = (progress - 0.5) / 0.25;
             shadowColor1 = this.interpolateColor('#FF7F50', '#FF9900', t);
             shadowColor2 = this.interpolateColor('#4B9CD3', '#4B9CD3', t);
-            glowIntensity = 0.4 + t * 0.2;
+            glowIntensity = 0.2 + t * 0.1; // 0.2 → 0.3 (was 0.4 → 0.6)
         } else {
-            // 75% → 100%: Strong back to default
+            // 75% → 100%: SUBTLE back to default
             const t = (progress - 0.75) / 0.25;
             shadowColor1 = this.interpolateColor('#FF9900', '#DAA520', t);
             shadowColor2 = this.interpolateColor('#4B9CD3', '#4B9CD3', t);
-            glowIntensity = 0.6 - t * 0.3;
+            glowIntensity = 0.3 - t * 0.15; // 0.3 → 0.15 (was 0.6 → 0.3)
         }
         
         // Draw multiple shadow layers (matching CSS box-shadow)
@@ -723,8 +723,8 @@ class HolographicCanvasRenderer {
         // Create animated gradient (matching autoGradientSweep)
         const gradient = ctx.createLinearGradient(0, 0, this.cardWidth, this.cardHeight);
         
-        // Animate gradient position - FIXED: Clamp offset and ensure all stops are valid
-        const offset = Math.sin(progress * 2 * Math.PI) * 0.2; // Reduced from 0.3 to 0.2
+        // Animate gradient position - SUBTLE: Slower, gentler movement
+        const offset = Math.sin(progress * Math.PI) * 0.1; // Half speed, half range (was 2π * 0.2)
         
         // FIXED: Ensure all color stops stay within 0.0-1.0 range
         gradient.addColorStop(Math.max(0, Math.min(1, 0 + offset)), 'transparent');
@@ -797,8 +797,8 @@ class HolographicCanvasRenderer {
         // Create multi-color gradient (matching CSS ::after)
         const gradient = ctx.createLinearGradient(0, 0, this.cardWidth, this.cardHeight);
         
-        // Animate gradient position (matching autoSparkleMove) - FIXED: Clamp offset
-        const offset = Math.sin(progress * 2 * Math.PI) * 0.2; // Reduced from 0.3 to 0.2
+        // Animate gradient position - SUBTLE: Slower, gentler sparkle movement
+        const offset = Math.sin(progress * Math.PI) * 0.08; // Half speed, smaller range (was 2π * 0.2)
         
         // FIXED: Ensure all color stops stay within 0.0-1.0 range
         gradient.addColorStop(Math.max(0, Math.min(1, 0.1 + offset)), 'rgba(255, 215, 0, 0.125)');

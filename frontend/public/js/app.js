@@ -3000,8 +3000,8 @@ class SnapMagicApp {
      */
     async generateAnimatedCardGIF(cardData, options = {}) {
         const { 
-            frames = 15,     // SPEED: Reduced from 30 → 15 (50% faster)
-            framerate = 10   // SPEED: Reduced from 15 → 10 (smoother with fewer frames)
+            frames = 20,     // SUBTLE: More frames for smoother motion (was 15)
+            framerate = 8    // SUBTLE: Slower playback for gentle effect (was 10)
         } = options;
         
         console.log(`🎬 Starting canvas-based animated GIF generation with natural dimensions...`);
