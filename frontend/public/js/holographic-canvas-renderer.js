@@ -712,38 +712,58 @@ class HolographicCanvasRenderer {
      */
     async generateAnimatedGIF(cardData, options = {}) {
         const settings = {
-            width: 275,      // Default optimized width
-            height: 358,     // Default optimized height  
+            width: 275,      // Card width
+            height: 358,     // Card height
             frames: 30,      // Maximum frames for smoothest animation
             framerate: 15,   // Standard web GIF framerate
             quality: 1,      // Highest quality (1 = best, 10 = worst)
             ...options
         };
         
-        console.log('🎬 Starting FLEXIBLE animated GIF generation...');
+        console.log('🎬 Starting 1080×1080 background animated GIF generation...');
         console.log('⭐ Settings:', settings);
+        console.log(`📐 Output: 1080×1080 with ${settings.width}×${settings.height} card centered`);
         
         // Load all required images
         await this.loadImages(cardData);
         
-        // Initialize canvas with configurable dimensions
-        this.initCanvas(settings.width, settings.height);
+        // Initialize 1080×1080 canvas for background
+        this.initCanvas(1080, 1080);
+        this.cardWidth = settings.width;   // Keep card dimensions for rendering
+        this.cardHeight = settings.height;
+        
+        // Calculate centering offsets
+        const offsetX = (1080 - this.cardWidth) / 2;  // ~402px
+        const offsetY = (1080 - this.cardHeight) / 2; // ~361px
+        
+        console.log(`📍 Card will be centered at offset (${offsetX}, ${offsetY})`);
         
         // Generate frames with progress tracking
         const frames = [];
         for (let frame = 0; frame < settings.frames; frame++) {
             const progress = Math.round((frame / settings.frames) * 100);
-            console.log(`🎨 Rendering frame ${frame + 1}/${settings.frames} (${progress}%) at ${settings.width}×${settings.height}`);
+            console.log(`🎨 Rendering frame ${frame + 1}/${settings.frames} (${progress}%) - ${settings.width}×${settings.height} card in 1080×1080 background`);
             
-            // Render card at this animation frame
+            // Fill black background for entire 1080×1080 canvas
+            this.ctx.fillStyle = '#000000';
+            this.ctx.fillRect(0, 0, 1080, 1080);
+            
+            // Save context and translate to center the card
+            this.ctx.save();
+            this.ctx.translate(offsetX, offsetY);
+            
+            // Render card at centered position (card thinks it's at 0,0 but actually centered)
             this.renderCard(frame, settings.frames, cardData);
             
-            // Capture frame at maximum quality (no compression)
-            const frameDataURL = this.canvas.toDataURL('image/png', 1.0); // Maximum quality
+            // Restore context
+            this.ctx.restore();
+            
+            // Capture frame at maximum quality (1080×1080 with centered card)
+            const frameDataURL = this.canvas.toDataURL('image/png', 1.0);
             frames.push(frameDataURL);
         }
         
-        console.log(`🎬 All frames rendered at ${settings.width}×${settings.height}, creating GIF...`);
+        console.log(`🎬 All frames rendered - ${settings.width}×${settings.height} card centered in 1080×1080 background, creating GIF...`);
         
         // Create GIF using existing gif.js system
         return await this.createGIFFromFrames(frames, settings);
