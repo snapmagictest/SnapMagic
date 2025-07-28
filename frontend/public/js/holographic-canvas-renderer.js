@@ -844,6 +844,13 @@ class HolographicCanvasRenderer {
      * Generate animated GIF from canvas frames - FLEXIBLE PARALLEL SYSTEM
      */
     async generateAnimatedGIF(cardData, options = {}) {
+        // DEBUG: Log what we're starting with
+        console.log('🔍 DEBUG: HolographicCanvasRenderer constructor values:', {
+            'this.cardWidth': this.cardWidth,
+            'this.cardHeight': this.cardHeight
+        });
+        console.log('🔍 DEBUG: Options passed to generateAnimatedGIF:', options);
+        
         // Use natural card dimensions from constructor (366×477)
         const settings = {
             width: this.cardWidth,   // 366px (natural width)
@@ -853,6 +860,12 @@ class HolographicCanvasRenderer {
             quality: 5,              // SPEED: Reduced from 1 → 5 (faster encoding, still good quality)
             ...options
         };
+        
+        console.log('🔍 DEBUG: Final settings after spread:', settings);
+        console.log('🔍 DEBUG: Actual dimensions being used:', {
+            width: settings.width,
+            height: settings.height
+        });
         
         console.log('🚀 Starting OPTIMIZED 1080×1080 animated GIF generation...');
         console.log('⚡ SPEED: 15 frames @ 10fps (target: <30 seconds)');
