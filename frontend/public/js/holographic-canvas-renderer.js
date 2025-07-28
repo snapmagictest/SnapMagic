@@ -712,58 +712,73 @@ class HolographicCanvasRenderer {
      */
     async generateAnimatedGIF(cardData, options = {}) {
         const settings = {
-            width: 275,      // Card width
-            height: 358,     // Card height
-            frames: 30,      // Maximum frames for smoothest animation
-            framerate: 15,   // Standard web GIF framerate
-            quality: 1,      // Highest quality (1 = best, 10 = worst)
+            width: 275,      // Card width (display size)
+            height: 358,     // Card height (display size)
+            frames: 15,      // SPEED: Reduced from 30 → 15 (50% faster)
+            framerate: 10,   // SPEED: Reduced from 15 → 10 (smoother with fewer frames)
+            quality: 5,      // SPEED: Reduced from 1 → 5 (faster encoding, still good quality)
             ...options
         };
         
-        console.log('🎬 Starting 1080×1080 background animated GIF generation...');
+        console.log('🚀 Starting OPTIMIZED 1080×1080 animated GIF generation...');
+        console.log('⚡ SPEED: 15 frames @ 10fps (target: <30 seconds)');
+        console.log('🔍 QUALITY: 2x resolution rendering for crisp logos');
         console.log('⭐ Settings:', settings);
-        console.log(`📐 Output: 1080×1080 with ${settings.width}×${settings.height} card centered`);
         
         // Load all required images
         await this.loadImages(cardData);
         
         // Initialize 1080×1080 canvas for background
         this.initCanvas(1080, 1080);
-        this.cardWidth = settings.width;   // Keep card dimensions for rendering
-        this.cardHeight = settings.height;
         
-        // Calculate centering offsets
-        const offsetX = (1080 - this.cardWidth) / 2;  // ~402px
-        const offsetY = (1080 - this.cardHeight) / 2; // ~361px
+        // QUALITY: Render card at 2x resolution for crisp details
+        this.cardWidth = settings.width * 2;   // 550px (2x resolution)
+        this.cardHeight = settings.height * 2; // 716px (2x resolution)
         
-        console.log(`📍 Card will be centered at offset (${offsetX}, ${offsetY})`);
+        // Calculate centering offsets for 2x card in 1080×1080 canvas
+        const offsetX = (1080 - this.cardWidth) / 2;   // Center 550px card
+        const offsetY = (1080 - this.cardHeight) / 2;  // Center 716px card
+        
+        console.log(`📐 Card: ${this.cardWidth}×${this.cardHeight} (2x resolution) centered at (${offsetX}, ${offsetY})`);
+        
+        // QUALITY: Enhanced rendering settings
+        this.ctx.imageSmoothingEnabled = true;
+        this.ctx.imageSmoothingQuality = 'high';
+        this.ctx.textRenderingOptimization = 'optimizeQuality';
         
         // Generate frames with progress tracking
         const frames = [];
+        const startTime = Date.now();
+        
         for (let frame = 0; frame < settings.frames; frame++) {
             const progress = Math.round((frame / settings.frames) * 100);
-            console.log(`🎨 Rendering frame ${frame + 1}/${settings.frames} (${progress}%) - ${settings.width}×${settings.height} card in 1080×1080 background`);
+            const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+            console.log(`🎨 Frame ${frame + 1}/${settings.frames} (${progress}%) - ${elapsed}s elapsed`);
             
             // Fill black background for entire 1080×1080 canvas
             this.ctx.fillStyle = '#000000';
             this.ctx.fillRect(0, 0, 1080, 1080);
             
-            // Save context and translate to center the card
+            // Save context and translate to center the 2x card
             this.ctx.save();
             this.ctx.translate(offsetX, offsetY);
             
-            // Render card at centered position (card thinks it's at 0,0 but actually centered)
+            // QUALITY: Scale context for 2x rendering (crisp details)
+            this.ctx.scale(2, 2);
+            
+            // Render card at 2x resolution (card thinks it's 275×358 but renders at 550×716)
             this.renderCard(frame, settings.frames, cardData);
             
             // Restore context
             this.ctx.restore();
             
-            // Capture frame at maximum quality (1080×1080 with centered card)
+            // Capture frame at maximum quality (1080×1080 with crisp 2x card)
             const frameDataURL = this.canvas.toDataURL('image/png', 1.0);
             frames.push(frameDataURL);
         }
         
-        console.log(`🎬 All frames rendered - ${settings.width}×${settings.height} card centered in 1080×1080 background, creating GIF...`);
+        const totalTime = ((Date.now() - startTime) / 1000).toFixed(1);
+        console.log(`🎬 All ${settings.frames} frames rendered in ${totalTime}s - creating GIF...`);
         
         // Create GIF using existing gif.js system
         return await this.createGIFFromFrames(frames, settings);
