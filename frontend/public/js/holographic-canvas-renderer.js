@@ -8,8 +8,8 @@ class HolographicCanvasRenderer {
     constructor() {
         this.canvas = null;
         this.ctx = null;
-        this.cardWidth = 550;  // FORCED: 2x size for crisp quality (was 366)
-        this.cardHeight = 716; // FORCED: 2x size for crisp quality (was 477)
+        this.cardWidth = 420;  // OPTIMIZED: Smaller size for better file size (was 550)
+        this.cardHeight = 546; // OPTIMIZED: Maintains perfect 5:6.5 ratio (was 716)
         this.images = {};
         this.fonts = {};
         
@@ -868,8 +868,8 @@ class HolographicCanvasRenderer {
         });
         
         console.log('🚀 Starting OPTIMIZED 1080×1080 animated GIF generation...');
-        console.log('⚡ SPEED: 15 frames @ 10fps (target: <30 seconds)');
-        console.log(`🔍 FORCED: Using 550×716 card dimensions ${settings.width}×${settings.height}`);
+        console.log(`⚡ OPTIMIZED: 7 frames @ 8fps + quality 1 (target: <3MB)`);
+        console.log(`🔍 OPTIMIZED: Using 420×546 card dimensions ${settings.width}×${settings.height}`);
         console.log('⭐ Settings:', settings);
         
         // Load all required images
@@ -878,15 +878,15 @@ class HolographicCanvasRenderer {
         // Initialize 1080×1080 canvas for background
         this.initCanvas(1080, 1080);
         
-        // Use 550×716 card dimensions (2x crisp quality)
-        this.cardWidth = settings.width;   // 550px (2x quality)
-        this.cardHeight = settings.height; // 716px (2x quality)
+        // Use optimized card dimensions (420×546)
+        this.cardWidth = settings.width;   // 420px (optimized size)
+        this.cardHeight = settings.height; // 546px (optimized size)
         
-        // Calculate centering offsets for 550×716 card in 1080×1080 canvas
-        const offsetX = (1080 - this.cardWidth) / 2;   // (1080 - 550) / 2 = 265px
-        const offsetY = (1080 - this.cardHeight) / 2;  // (1080 - 716) / 2 = 182px
+        // Calculate centering offsets for 420×546 card in 1080×1080 canvas
+        const offsetX = (1080 - this.cardWidth) / 2;   // (1080 - 420) / 2 = 330px
+        const offsetY = (1080 - this.cardHeight) / 2;  // (1080 - 546) / 2 = 267px
         
-        console.log(`📐 Card: ${this.cardWidth}×${this.cardHeight} (2x quality) centered at (${offsetX}, ${offsetY})`);
+        console.log(`📐 Card: ${this.cardWidth}×${this.cardHeight} (optimized) centered at (${offsetX}, ${offsetY})`);
         
         // QUALITY: Enhanced rendering settings
         this.ctx.imageSmoothingEnabled = true;
