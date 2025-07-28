@@ -3015,8 +3015,14 @@ class SnapMagicApp {
             hasResult: !!cardData.result
         });
         
-        // Get current active card data (works for new cards and gallery cards)
-        const activeCardData = await this.ensureCardDataForActions();
+        // Use current card data directly - no S3 URL conversion needed for canvas rendering
+        const activeCardData = this.generatedCardData;
+        
+        if (!activeCardData) {
+            throw new Error('No card data available');
+        }
+        
+        console.log('✅ Using card data directly for canvas rendering (no S3 fetch needed)');
         
         // Initialize holographic canvas renderer with configurable dimensions
         const renderer = new HolographicCanvasRenderer();
