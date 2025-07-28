@@ -3006,7 +3006,7 @@ class SnapMagicApp {
             framerate = 15
         } = options;
         
-        console.log(`🎬 Starting PARALLEL SYSTEM canvas-based animated GIF generation (${width}×${height})...`);
+        console.log(`🎬 Starting canvas-based animated GIF generation (${width}×${height})...`);
         console.log('🔍 DEBUG: cardData structure for canvas:', {
             keys: Object.keys(cardData),
             userName: cardData.userName,
@@ -3015,38 +3015,29 @@ class SnapMagicApp {
             hasResult: !!cardData.result
         });
         
-        try {
-            // Get current active card data (works for new cards and gallery cards)
-            const activeCardData = await this.ensureCardDataForActions();
-            
-            // Initialize holographic canvas renderer with configurable dimensions
-            const renderer = new HolographicCanvasRenderer();
-            
-            // Generate animated GIF with flexible dimensions
-            const gifBlob = await renderer.generateAnimatedGIF(activeCardData, {
-                width,
-                height,
-                frames,
-                framerate,
-                quality: 1 // Maximum quality
-            });
-            
-            console.log('✅ PARALLEL SYSTEM canvas animated GIF created:', { 
-                size: Math.round(gifBlob.size / 1024) + 'KB',
-                dimensions: `${width}×${height}`,
-                method: 'Canvas-based (primary)',
-                system: 'Flexible & Gallery Compatible'
-            });
-            
-            return gifBlob;
-            
-        } catch (error) {
-            console.error('❌ PARALLEL SYSTEM canvas generation failed:', error);
-            
-            // Fallback to HTML2Canvas method with same dimensions
-            console.log('⚠️ Falling back to HTML2Canvas method...');
-            return await this.generateAnimatedCardGIFHTML2Canvas(cardData, options);
-        }
+        // Get current active card data (works for new cards and gallery cards)
+        const activeCardData = await this.ensureCardDataForActions();
+        
+        // Initialize holographic canvas renderer with configurable dimensions
+        const renderer = new HolographicCanvasRenderer();
+        
+        // Generate animated GIF with flexible dimensions - NO FALLBACK
+        const gifBlob = await renderer.generateAnimatedGIF(activeCardData, {
+            width,
+            height,
+            frames,
+            framerate,
+            quality: 1 // Maximum quality
+        });
+        
+        console.log('✅ Canvas animated GIF created:', { 
+            size: Math.round(gifBlob.size / 1024) + 'KB',
+            dimensions: `${width}×${height}`,
+            method: 'Canvas-based (no fallback)',
+            system: 'Direct HolographicCanvasRenderer'
+        });
+        
+        return gifBlob;
     }
 
     /**
