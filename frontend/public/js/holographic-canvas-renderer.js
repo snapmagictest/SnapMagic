@@ -712,8 +712,8 @@ class HolographicCanvasRenderer {
      */
     async generateAnimatedGIF(cardData, options = {}) {
         const settings = {
-            width: 275,      // Card width (display size)
-            height: 358,     // Card height (display size)
+            width: 550,      // Card width (larger size)
+            height: 716,     // Card height (larger size)
             frames: 15,      // SPEED: Reduced from 30 → 15 (50% faster)
             framerate: 10,   // SPEED: Reduced from 15 → 10 (smoother with fewer frames)
             quality: 5,      // SPEED: Reduced from 1 → 5 (faster encoding, still good quality)
@@ -722,7 +722,7 @@ class HolographicCanvasRenderer {
         
         console.log('🚀 Starting OPTIMIZED 1080×1080 animated GIF generation...');
         console.log('⚡ SPEED: 15 frames @ 10fps (target: <30 seconds)');
-        console.log('🔍 QUALITY: 2x resolution rendering for crisp logos');
+        console.log('🔍 QUALITY: 550×716 card for crisp details');
         console.log('⭐ Settings:', settings);
         
         // Load all required images
@@ -731,15 +731,15 @@ class HolographicCanvasRenderer {
         // Initialize 1080×1080 canvas for background
         this.initCanvas(1080, 1080);
         
-        // QUALITY: Render card at 2x resolution for crisp details
-        this.cardWidth = settings.width * 2;   // 550px (2x resolution)
-        this.cardHeight = settings.height * 2; // 716px (2x resolution)
+        // Set card dimensions to 550×716 (no scaling needed)
+        this.cardWidth = settings.width;   // 550px
+        this.cardHeight = settings.height; // 716px
         
-        // Calculate centering offsets for 2x card in 1080×1080 canvas
-        const offsetX = (1080 - this.cardWidth) / 2;   // Center 550px card
-        const offsetY = (1080 - this.cardHeight) / 2;  // Center 716px card
+        // Calculate centering offsets for 550×716 card in 1080×1080 canvas
+        const offsetX = (1080 - this.cardWidth) / 2;   // (1080 - 550) / 2 = 265px
+        const offsetY = (1080 - this.cardHeight) / 2;  // (1080 - 716) / 2 = 182px
         
-        console.log(`📐 Card: ${this.cardWidth}×${this.cardHeight} (2x resolution) centered at (${offsetX}, ${offsetY})`);
+        console.log(`📐 Card: ${this.cardWidth}×${this.cardHeight} centered at (${offsetX}, ${offsetY})`);
         
         // QUALITY: Enhanced rendering settings
         this.ctx.imageSmoothingEnabled = true;
@@ -759,20 +759,17 @@ class HolographicCanvasRenderer {
             this.ctx.fillStyle = '#000000';
             this.ctx.fillRect(0, 0, 1080, 1080);
             
-            // Save context and translate to center the 2x card
+            // Save context and translate to center the card
             this.ctx.save();
             this.ctx.translate(offsetX, offsetY);
             
-            // QUALITY: Scale context for 2x rendering (crisp details)
-            this.ctx.scale(2, 2);
-            
-            // Render card at 2x resolution (card thinks it's 275×358 but renders at 550×716)
+            // Render card at 550×716 (no scaling needed)
             this.renderCard(frame, settings.frames, cardData);
             
             // Restore context
             this.ctx.restore();
             
-            // Capture frame at maximum quality (1080×1080 with crisp 2x card)
+            // Capture frame at maximum quality (1080×1080 with centered 550×716 card)
             const frameDataURL = this.canvas.toDataURL('image/png', 1.0);
             frames.push(frameDataURL);
         }
