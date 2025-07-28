@@ -461,9 +461,23 @@ class HolographicCanvasRenderer {
         ctx.shadowColor = 'rgba(255, 153, 0, 0.3)';
         ctx.shadowBlur = 5;
         
-        // Pixel-perfect text positioning
+        // CENTERED: Calculate position between AI image and footer
+        const margin = Math.max(10, this.cardWidth * 0.027);
+        const headerHeight = Math.max(32, this.cardHeight * 0.1);
+        const footerHeight = Math.max(60, this.cardHeight * 0.15);
+        const eventNameHeight = 30;
+        
+        // AI image bottom position
+        const imageY = headerHeight + margin * 2;
+        const imageHeight = this.cardHeight - imageY - footerHeight - eventNameHeight - margin * 2;
+        const imageBottom = imageY + imageHeight;
+        
+        // Footer top position  
+        const footerTop = this.cardHeight - footerHeight - margin;
+        
+        // Center text between image bottom and footer top
         const textX = Math.round(this.cardWidth / 2);
-        const textY = Math.round(this.cardHeight - 90);
+        const textY = Math.round((imageBottom + footerTop) / 2);
         
         ctx.fillText(eventName, textX, textY);
         
