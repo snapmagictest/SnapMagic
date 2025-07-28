@@ -492,66 +492,89 @@ class HolographicCanvasRenderer {
         const footerHeight = 110; // BIGGER: Scaled up for larger card (was 90)
         const footerY = this.cardHeight - footerHeight - margin;
         
-        // Draw 3D INSET footer background with recessed depth
+        // Draw 3D DEEPLY INSET footer background with pronounced recessed depth
         const footerGradient = ctx.createLinearGradient(0, footerY, 0, footerY + footerHeight);
-        footerGradient.addColorStop(0, 'rgba(0, 0, 0, 0.05)'); // INVERTED: Darker top (recessed)
-        footerGradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.02)'); // Mid tone
-        footerGradient.addColorStop(1, 'rgba(255, 255, 255, 0.06)'); // INVERTED: Brighter bottom (raised edge)
+        footerGradient.addColorStop(0, 'rgba(0, 0, 0, 0.15)'); // MUCH DARKER top (deeply recessed)
+        footerGradient.addColorStop(0.3, 'rgba(0, 0, 0, 0.08)'); // Dark transition
+        footerGradient.addColorStop(0.7, 'rgba(255, 255, 255, 0.02)'); // Mid tone
+        footerGradient.addColorStop(1, 'rgba(255, 255, 255, 0.12)'); // MUCH BRIGHTER bottom (raised edge)
         
         ctx.fillStyle = footerGradient;
         this.roundRect(ctx, margin, footerY, this.cardWidth - 2 * margin, footerHeight, 8);
         ctx.fill();
         
-        // INVERTED 3D INSET EFFECT - Dark top-left, bright bottom-right
+        // PRONOUNCED INSET EFFECT - Much stronger contrast
         ctx.save();
         
-        // 1. INVERTED: Dark shadow (top-left edges - recessed into surface)
-        ctx.strokeStyle = 'rgba(0, 0, 0, 0.4)'; // DARK instead of bright
-        ctx.lineWidth = 1;
+        // 1. DEEP DARK shadows (top-left edges - deeply recessed)
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.7)'; // MUCH DARKER for deep recess
+        ctx.lineWidth = 2; // THICKER for more pronounced effect
         ctx.setLineDash([]);
         
-        // Draw top edge shadow (DARK - recessed)
+        // Draw top edge deep shadow (VERY DARK - deeply recessed)
         ctx.beginPath();
         ctx.moveTo(margin + 8, footerY);
         ctx.lineTo(this.cardWidth - margin - 8, footerY);
         ctx.stroke();
         
-        // Draw left edge shadow (DARK - recessed)
+        // Draw left edge deep shadow (VERY DARK - deeply recessed)
         ctx.beginPath();
         ctx.moveTo(margin, footerY + 8);
         ctx.lineTo(margin, footerY + footerHeight - 8);
         ctx.stroke();
         
-        // 2. INVERTED: Bright highlight (bottom-right edges - raised from recess)
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)'; // BRIGHT instead of dark
+        // 1.5. Secondary dark line for extra depth
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.4)';
         ctx.lineWidth = 1;
         
-        // Draw bottom edge highlight (BRIGHT - raised edge)
+        // Secondary top shadow line
+        ctx.beginPath();
+        ctx.moveTo(margin + 8, footerY + 1);
+        ctx.lineTo(this.cardWidth - margin - 8, footerY + 1);
+        ctx.stroke();
+        
+        // Secondary left shadow line
+        ctx.beginPath();
+        ctx.moveTo(margin + 1, footerY + 8);
+        ctx.lineTo(margin + 1, footerY + footerHeight - 8);
+        ctx.stroke();
+        
+        // 2. BRIGHT highlights (bottom-right edges - raised from deep recess)
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)'; // MUCH BRIGHTER for strong contrast
+        ctx.lineWidth = 2; // THICKER for more pronounced effect
+        
+        // Draw bottom edge bright highlight (VERY BRIGHT - raised edge)
         ctx.beginPath();
         ctx.moveTo(margin + 8, footerY + footerHeight);
         ctx.lineTo(this.cardWidth - margin - 8, footerY + footerHeight);
         ctx.stroke();
         
-        // Draw right edge highlight (BRIGHT - raised edge)
+        // Draw right edge bright highlight (VERY BRIGHT - raised edge)
         ctx.beginPath();
         ctx.moveTo(this.cardWidth - margin, footerY + 8);
         ctx.lineTo(this.cardWidth - margin, footerY + footerHeight - 8);
         ctx.stroke();
         
-        // 3. Inner dark line (recessed depth)
-        ctx.strokeStyle = 'rgba(0, 0, 0, 0.2)'; // DARK inner line
-        ctx.lineWidth = 0.5;
-        this.roundRect(ctx, margin + 1, footerY + 1, this.cardWidth - 2 * margin - 2, footerHeight - 2, 7);
+        // 2.5. Secondary bright line for extra highlight
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.lineWidth = 1;
+        
+        // Secondary bottom highlight line
+        ctx.beginPath();
+        ctx.moveTo(margin + 8, footerY + footerHeight - 1);
+        ctx.lineTo(this.cardWidth - margin - 8, footerY + footerHeight - 1);
         ctx.stroke();
         
-        // 4. Outer bright edge for contrast
-        ctx.shadowColor = 'rgba(255, 255, 255, 0.1)';
-        ctx.shadowBlur = 2;
-        ctx.shadowOffsetX = 0;
-        ctx.shadowOffsetY = 0;
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
-        ctx.lineWidth = 0.5;
-        this.roundRect(ctx, margin - 0.5, footerY - 0.5, this.cardWidth - 2 * margin + 1, footerHeight + 1, 8.5);
+        // Secondary right highlight line
+        ctx.beginPath();
+        ctx.moveTo(this.cardWidth - margin - 1, footerY + 8);
+        ctx.lineTo(this.cardWidth - margin - 1, footerY + footerHeight - 8);
+        ctx.stroke();
+        
+        // 3. Inner very dark line (deep recessed depth)
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)'; // MUCH DARKER inner line
+        ctx.lineWidth = 1;
+        this.roundRect(ctx, margin + 2, footerY + 2, this.cardWidth - 2 * margin - 4, footerHeight - 4, 6);
         ctx.stroke();
         
         ctx.restore();
