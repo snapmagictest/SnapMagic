@@ -492,28 +492,68 @@ class HolographicCanvasRenderer {
         const footerHeight = 110; // BIGGER: Scaled up for larger card (was 90)
         const footerY = this.cardHeight - footerHeight - margin;
         
-        // Draw 3D etched footer background
+        // Draw 3D etched footer background with enhanced depth
         const footerGradient = ctx.createLinearGradient(0, footerY, 0, footerY + footerHeight);
-        footerGradient.addColorStop(0, 'rgba(255, 255, 255, 0.05)');
-        footerGradient.addColorStop(1, 'rgba(255, 255, 255, 0.02)');
+        footerGradient.addColorStop(0, 'rgba(255, 255, 255, 0.08)'); // Slightly brighter top
+        footerGradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.03)'); // Mid tone
+        footerGradient.addColorStop(1, 'rgba(0, 0, 0, 0.02)'); // Darker bottom for depth
         
         ctx.fillStyle = footerGradient;
         this.roundRect(ctx, margin, footerY, this.cardWidth - 2 * margin, footerHeight, 8);
         ctx.fill();
         
-        // Add 3D etched effect
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+        // ENHANCED 3D ETCHED EFFECT - Multiple layers for depth
+        ctx.save();
+        
+        // 1. Outer highlight (top-left light edge)
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
         ctx.lineWidth = 1;
+        ctx.setLineDash([]);
+        
+        // Draw top edge highlight
+        ctx.beginPath();
+        ctx.moveTo(margin + 8, footerY);
+        ctx.lineTo(this.cardWidth - margin - 8, footerY);
         ctx.stroke();
         
-        // Draw inset shadow effect
-        ctx.save();
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
-        ctx.shadowBlur = 4;
-        ctx.shadowOffsetX = 2;
-        ctx.shadowOffsetY = 2;
+        // Draw left edge highlight  
+        ctx.beginPath();
+        ctx.moveTo(margin, footerY + 8);
+        ctx.lineTo(margin, footerY + footerHeight - 8);
+        ctx.stroke();
+        
+        // 2. Inner shadow (bottom-right dark edge)
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
+        ctx.lineWidth = 1;
+        
+        // Draw bottom edge shadow
+        ctx.beginPath();
+        ctx.moveTo(margin + 8, footerY + footerHeight);
+        ctx.lineTo(this.cardWidth - margin - 8, footerY + footerHeight);
+        ctx.stroke();
+        
+        // Draw right edge shadow
+        ctx.beginPath();
+        ctx.moveTo(this.cardWidth - margin, footerY + 8);
+        ctx.lineTo(this.cardWidth - margin, footerY + footerHeight - 8);
+        ctx.stroke();
+        
+        // 3. Inner highlight (subtle inner glow)
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+        ctx.lineWidth = 0.5;
         this.roundRect(ctx, margin + 1, footerY + 1, this.cardWidth - 2 * margin - 2, footerHeight - 2, 7);
         ctx.stroke();
+        
+        // 4. Outer shadow for depth
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
+        ctx.shadowBlur = 3;
+        ctx.shadowOffsetX = 1;
+        ctx.shadowOffsetY = 1;
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
+        ctx.lineWidth = 0.5;
+        this.roundRect(ctx, margin - 0.5, footerY - 0.5, this.cardWidth - 2 * margin + 1, footerHeight + 1, 8.5);
+        ctx.stroke();
+        
         ctx.restore();
         
         // Draw logos and creator info
