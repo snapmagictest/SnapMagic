@@ -8,8 +8,8 @@ class HolographicCanvasRenderer {
     constructor() {
         this.canvas = null;
         this.ctx = null;
-        this.cardWidth = 420;  // OPTIMIZED: Smaller size for better file size (was 550)
-        this.cardHeight = 546; // OPTIMIZED: Maintains perfect 5:6.5 ratio (was 716)
+        this.cardWidth = 525;  // INCREASED: 525×683 (zoom level 2 equivalent)
+        this.cardHeight = 683; // INCREASED: Maintains perfect 5:6.5 ratio
         this.images = {};
         this.fonts = {};
         
@@ -421,7 +421,7 @@ class HolographicCanvasRenderer {
         const img = this.images.aiImage;
         const margin = Math.max(10, this.cardWidth * 0.027);
         const headerHeight = Math.max(32, this.cardHeight * 0.1);
-        const footerHeight = 90; // BIGGER: Match increased footer size
+        const footerHeight = 110; // BIGGER: Scaled up for larger card (was 90)
         const eventNameHeight = 30;
         
         const imageY = headerHeight + margin * 2;
@@ -464,7 +464,7 @@ class HolographicCanvasRenderer {
         // CENTERED: Calculate position between AI image and footer
         const margin = Math.max(10, this.cardWidth * 0.027);
         const headerHeight = Math.max(32, this.cardHeight * 0.1);
-        const footerHeight = 90; // BIGGER: Match increased footer size
+        const footerHeight = 110; // BIGGER: Scaled up for larger card (was 90)
         const eventNameHeight = 30;
         
         // AI image bottom position
@@ -489,7 +489,7 @@ class HolographicCanvasRenderer {
      */
     drawCardFooter(ctx, cardData) {
         const margin = Math.max(10, this.cardWidth * 0.027);
-        const footerHeight = 90; // BIGGER: Increased from 60 → 90 (50% larger)
+        const footerHeight = 110; // BIGGER: Scaled up for larger card (was 90)
         const footerY = this.cardHeight - footerHeight - margin;
         
         // Draw 3D etched footer background
@@ -882,8 +882,8 @@ class HolographicCanvasRenderer {
         });
         
         console.log('🚀 Starting OPTIMIZED 1080×1080 animated GIF generation...');
-        console.log(`⚡ OPTIMIZED: 7 frames @ 8fps + quality 1 (target: <3MB)`);
-        console.log(`🔍 OPTIMIZED: Using 420×546 card dimensions ${settings.width}×${settings.height}`);
+        console.log(`⚡ OPTIMIZED: 7 frames @ 8fps + quality 1 (target: ~3.5MB)`);
+        console.log(`🔍 LARGER: Using 525×683 card dimensions ${settings.width}×${settings.height}`);
         console.log('⭐ Settings:', settings);
         
         // Load all required images
@@ -892,15 +892,15 @@ class HolographicCanvasRenderer {
         // Initialize 1080×1080 canvas for background
         this.initCanvas(1080, 1080);
         
-        // Use optimized card dimensions (420×546)
-        this.cardWidth = settings.width;   // 420px (optimized size)
-        this.cardHeight = settings.height; // 546px (optimized size)
+        // Use larger card dimensions (525×683)
+        this.cardWidth = settings.width;   // 525px (larger size)
+        this.cardHeight = settings.height; // 683px (larger size)
         
-        // Calculate centering offsets for 420×546 card in 1080×1080 canvas
-        const offsetX = (1080 - this.cardWidth) / 2;   // (1080 - 420) / 2 = 330px
-        const offsetY = (1080 - this.cardHeight) / 2;  // (1080 - 546) / 2 = 267px
+        // Calculate centering offsets for 525×683 card in 1080×1080 canvas
+        const offsetX = (1080 - this.cardWidth) / 2;   // (1080 - 525) / 2 = 277.5px
+        const offsetY = (1080 - this.cardHeight) / 2;  // (1080 - 683) / 2 = 198.5px
         
-        console.log(`📐 Card: ${this.cardWidth}×${this.cardHeight} (optimized) centered at (${offsetX}, ${offsetY})`);
+        console.log(`📐 Card: ${this.cardWidth}×${this.cardHeight} (larger size) centered at (${offsetX}, ${offsetY})`);
         
         // QUALITY: Enhanced rendering settings
         this.ctx.imageSmoothingEnabled = true;
