@@ -421,7 +421,7 @@ class HolographicCanvasRenderer {
         const img = this.images.aiImage;
         const margin = Math.max(10, this.cardWidth * 0.027);
         const headerHeight = Math.max(32, this.cardHeight * 0.1);
-        const footerHeight = Math.max(60, this.cardHeight * 0.15);
+        const footerHeight = 90; // BIGGER: Match increased footer size
         const eventNameHeight = 30;
         
         const imageY = headerHeight + margin * 2;
@@ -464,7 +464,7 @@ class HolographicCanvasRenderer {
         // CENTERED: Calculate position between AI image and footer
         const margin = Math.max(10, this.cardWidth * 0.027);
         const headerHeight = Math.max(32, this.cardHeight * 0.1);
-        const footerHeight = Math.max(60, this.cardHeight * 0.15);
+        const footerHeight = 90; // BIGGER: Match increased footer size
         const eventNameHeight = 30;
         
         // AI image bottom position
@@ -489,7 +489,7 @@ class HolographicCanvasRenderer {
      */
     drawCardFooter(ctx, cardData) {
         const margin = Math.max(10, this.cardWidth * 0.027);
-        const footerHeight = 60;
+        const footerHeight = 90; // BIGGER: Increased from 60 → 90 (50% larger)
         const footerY = this.cardHeight - footerHeight - margin;
         
         // Draw 3D etched footer background
@@ -525,7 +525,7 @@ class HolographicCanvasRenderer {
      */
     drawFooterContent(ctx, footerY, footerHeight, cardData) {
         const margin = Math.max(10, this.cardWidth * 0.027);
-        const maxLogoHeight = Math.max(35, footerHeight * 0.7);
+        const maxLogoHeight = Math.max(50, footerHeight * 0.75); // BIGGER: Increased from 35 → 50, 0.7 → 0.75
         
         // FIXED: Get actual user name from cardData with 25-character limit
         console.log('🔍 DEBUG: cardData for name extraction:', {
@@ -625,8 +625,8 @@ class HolographicCanvasRenderer {
         ctx.textBaseline = 'alphabetic';
         ctx.textRenderingOptimization = 'optimizeQuality';
         
-        // Creator name with MAXIMUM clarity
-        const nameSize = Math.max(12, this.cardWidth * 0.033);
+        // Creator name with MAXIMUM clarity - BIGGER for larger footer
+        const nameSize = Math.max(16, this.cardWidth * 0.04); // BIGGER: Increased from 12 → 16, 0.033 → 0.04
         ctx.font = `bold ${nameSize}px "Segoe UI", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif`;
         ctx.fillStyle = '#FFFFFF';
         
@@ -637,11 +637,11 @@ class HolographicCanvasRenderer {
         // Position on right side
         const textX = Math.round(this.cardWidth - margin - 10);
         
-        // INTELLIGENT NAME DRAWING: Use smart line splitting
+        // INTELLIGENT NAME DRAWING: Use smart line splitting - ADJUSTED for bigger footer
         if (nameLines.hasMultipleLines) {
-            // Two lines: First name and surname
-            const line1Y = Math.round(footerY + 22); // Slightly higher for two lines
-            const line2Y = Math.round(footerY + 38); // Second line
+            // Two lines: First name and surname - ADJUSTED positions
+            const line1Y = Math.round(footerY + 28); // ADJUSTED: Higher for bigger footer (was 22)
+            const line2Y = Math.round(footerY + 48); // ADJUSTED: Lower for bigger footer (was 38)
             
             // Draw first name (line 1)
             ctx.strokeText(nameLines.line1, textX, line1Y);
@@ -651,22 +651,22 @@ class HolographicCanvasRenderer {
             ctx.strokeText(nameLines.line2, textX, line2Y);
             ctx.fillText(nameLines.line2, textX, line2Y);
             
-            // Adjust title position for two-line name
-            var titleY = Math.round(footerY + 52);
+            // Adjust title position for two-line name - ADJUSTED for bigger footer
+            var titleY = Math.round(footerY + 68); // ADJUSTED: Lower for bigger footer (was 52)
         } else {
-            // Single line: Draw normally
-            const nameY = Math.round(footerY + 26);
+            // Single line: Draw normally - ADJUSTED for bigger footer
+            const nameY = Math.round(footerY + 35); // ADJUSTED: Lower for bigger footer (was 26)
             ctx.strokeText(nameLines.line1, textX, nameY);
             ctx.fillText(nameLines.line1, textX, nameY);
             
-            // Normal title position
-            var titleY = Math.round(footerY + 46);
+            // Normal title position - ADJUSTED for bigger footer
+            var titleY = Math.round(footerY + 58); // ADJUSTED: Lower for bigger footer (was 46)
         }
         
         const creatorTitle = 'Creator';
         
-        // Creator title
-        const titleSize = Math.max(10, this.cardWidth * 0.027);
+        // Creator title - BIGGER for larger footer
+        const titleSize = Math.max(12, this.cardWidth * 0.032); // BIGGER: Increased from 10 → 12, 0.027 → 0.032
         ctx.font = `${titleSize}px "Segoe UI", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif`;
         ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
         
