@@ -1391,6 +1391,77 @@ class SnapMagicApp {
             </div>
         </div>`;
     }
+
+    /**
+     * 🎯 PARALLEL SYSTEM: Create hidden card specifically for GIF generation
+     * Flexible dimensions - easy to change size requirements
+     * Independent of main display system - works with gallery switching
+     */
+    createHiddenCardForGIF(cardData, options = {}) {
+        const { 
+            width = 275, 
+            height = 358,
+            containerId = 'gif-hidden-container'
+        } = options;
+        
+        console.log(`🎬 Creating hidden card for GIF: ${width}×${height}`);
+        
+        // Extract card data (works for new cards and gallery cards)
+        const aiImageSrc = cardData.finalImageSrc || 
+                          cardData.imageSrc || 
+                          `data:image/png;base64,${cardData.result}`;
+        const userName = cardData.userName || cardData.user_name || 'NOVA';
+        const userPrompt = cardData.prompt || cardData.userPrompt || 'AI Generated Card';
+        
+        // Create hidden container with exact dimensions
+        const hiddenContainer = document.createElement('div');
+        hiddenContainer.id = containerId;
+        hiddenContainer.style.position = 'absolute';
+        hiddenContainer.style.left = '-9999px';
+        hiddenContainer.style.top = '-9999px';
+        hiddenContainer.style.width = `${width}px`;
+        hiddenContainer.style.height = `${height}px`;
+        hiddenContainer.style.backgroundColor = 'transparent';
+        hiddenContainer.style.overflow = 'hidden';
+        
+        // Create the exact same card HTML as main system
+        const cardHTML = this.createHolographicCard(aiImageSrc, userName, userPrompt);
+        hiddenContainer.innerHTML = cardHTML;
+        
+        // Force the card to exact dimensions (override responsive CSS)
+        const hiddenCard = hiddenContainer.querySelector('.snapmagic-card');
+        if (hiddenCard) {
+            hiddenCard.style.width = `${width}px`;
+            hiddenCard.style.height = `${height}px`;
+            hiddenCard.style.maxWidth = `${width}px`;
+            hiddenCard.style.maxHeight = `${height}px`;
+            hiddenCard.style.minWidth = `${width}px`;
+            hiddenCard.style.minHeight = `${height}px`;
+            hiddenCard.style.aspectRatio = 'unset'; // Override responsive aspect ratio
+            hiddenCard.style.margin = '0';
+            hiddenCard.style.padding = '0';
+        }
+        
+        // Add to DOM for rendering
+        document.body.appendChild(hiddenContainer);
+        
+        console.log(`✅ Hidden card created: ${width}×${height} with data:`, {
+            userName,
+            hasImage: !!aiImageSrc,
+            prompt: userPrompt.substring(0, 50) + '...'
+        });
+        
+        return {
+            container: hiddenContainer,
+            card: hiddenCard,
+            cleanup: () => {
+                if (document.body.contains(hiddenContainer)) {
+                    document.body.removeChild(hiddenContainer);
+                    console.log('🧹 Hidden card cleaned up');
+                }
+            }
+        };
+    }
     
     /**
      * Parse creator info from userName or use defaults
@@ -2923,8 +2994,19 @@ class SnapMagicApp {
     /**
      * Generate animated GIF using canvas-based holographic card renderer
      */
-    async generateAnimatedCardGIF(cardData) {
-        console.log('🎬 Starting canvas-based animated GIF generation...');
+    /**
+     * 🎯 PARALLEL SYSTEM: Generate animated GIF using canvas-based holographic card renderer
+     * Flexible dimensions, works with gallery switching
+     */
+    async generateAnimatedCardGIF(cardData, options = {}) {
+        const { 
+            width = 275, 
+            height = 358,
+            frames = 30,
+            framerate = 15
+        } = options;
+        
+        console.log(`🎬 Starting PARALLEL SYSTEM canvas-based animated GIF generation (${width}×${height})...`);
         console.log('🔍 DEBUG: cardData structure for canvas:', {
             keys: Object.keys(cardData),
             userName: cardData.userName,
@@ -2934,96 +3016,98 @@ class SnapMagicApp {
         });
         
         try {
-            // Initialize holographic canvas renderer
+            // Get current active card data (works for new cards and gallery cards)
+            const activeCardData = await this.ensureCardDataForActions();
+            
+            // Initialize holographic canvas renderer with configurable dimensions
             const renderer = new HolographicCanvasRenderer();
             
-            // Generate animated GIF with standard settings (same as working version)
-            const gifBlob = await renderer.generateAnimatedGIF(cardData, {
-                frames: 30,      // Full 30 frames for smooth animation
-                framerate: 15,   // 15 FPS
-                quality: 1       // Highest quality
+            // Generate animated GIF with flexible dimensions
+            const gifBlob = await renderer.generateAnimatedGIF(activeCardData, {
+                width,
+                height,
+                frames,
+                framerate,
+                quality: 1 // Maximum quality
             });
             
-            console.log('✅ Canvas-based animated GIF created:', { 
+            console.log('✅ PARALLEL SYSTEM canvas animated GIF created:', { 
                 size: Math.round(gifBlob.size / 1024) + 'KB',
-                method: 'Canvas Rendering'
+                dimensions: `${width}×${height}`,
+                method: 'Canvas-based (primary)',
+                system: 'Flexible & Gallery Compatible'
             });
             
             return gifBlob;
             
         } catch (error) {
-            console.error('❌ Canvas-based animated GIF generation failed:', error);
+            console.error('❌ PARALLEL SYSTEM canvas generation failed:', error);
             
-            // Fallback to HTML2Canvas method if canvas fails
+            // Fallback to HTML2Canvas method with same dimensions
             console.log('⚠️ Falling back to HTML2Canvas method...');
-            return await this.generateAnimatedCardGIFHTML2Canvas(cardData);
+            return await this.generateAnimatedCardGIFHTML2Canvas(cardData, options);
         }
     }
 
     /**
-     * Fallback: Generate animated GIF using HTML2Canvas (original method)
+     * 🎯 PARALLEL SYSTEM: Generate animated GIF using hidden card approach
+     * Flexible dimensions, premium quality, works with gallery switching
      */
-    async generateAnimatedCardGIFHTML2Canvas(cardData) {
-        console.log('🎬 Starting fallback animated GIF generation using HTML2Canvas...');
+    async generateAnimatedCardGIFHTML2Canvas(cardData, options = {}) {
+        const { 
+            width = 275, 
+            height = 358,
+            frames = 30,
+            framerate = 15
+        } = options;
+        
+        console.log(`🎬 Starting PARALLEL SYSTEM animated GIF generation (${width}×${height})...`);
         
         try {
             // Load HTML2Canvas library
             await this.loadHTML2CanvasLibrary();
             
-            // Find the actual CSS card element
-            const cardElement = document.querySelector('.snapmagic-card');
-            if (!cardElement) {
-                throw new Error('Card element not found. Please ensure a card is displayed.');
-            }
+            // Get current active card data (works for new cards and gallery cards)
+            const activeCardData = await this.ensureCardDataForActions();
             
-            console.log('🃏 Found CSS card element:', cardElement);
+            // Create hidden card system for GIF capture
+            const hiddenSystem = this.createHiddenCardForGIF(activeCardData, { width, height });
+            const { container, card, cleanup } = hiddenSystem;
             
-            // CRITICAL FIX: Replace S3 image with base64 to avoid CORS
-            const aiImages = cardElement.querySelectorAll('img');
-            const originalSources = [];
-            
-            aiImages.forEach((img, index) => {
-                if (img.src && img.src.includes('s3.amazonaws.com')) {
-                    console.log('🔄 Replacing S3 image with base64 to avoid CORS');
-                    originalSources[index] = img.src; // Store original
-                    if (cardData.result) {
-                        img.src = `data:image/png;base64,${cardData.result}`;
-                    }
-                }
-            });
-            
-            // Wait for image to load
-            await new Promise(resolve => setTimeout(resolve, 100));
+            // Wait for images and CSS to load in hidden card
+            await new Promise(resolve => setTimeout(resolve, 500));
             
             // Animation settings
-            const totalFrames = 10; // Reduced to 10 frames for testing
-            const frameDuration = 67; // ~15 FPS (1000ms / 15fps = 67ms)
+            const totalFrames = frames;
+            const frameDuration = Math.round(1000 / framerate); // Convert to ms
             
             // Store original animation state
-            const originalAnimationPlayState = cardElement.style.animationPlayState;
-            const originalAnimationDelay = cardElement.style.animationDelay;
+            const originalAnimationPlayState = card.style.animationPlayState;
+            const originalAnimationDelay = card.style.animationDelay;
             
             // Generate frames by capturing CSS animation states
-            const frames = [];
+            const capturedFrames = [];
             for (let frame = 0; frame < totalFrames; frame++) {
-                console.log(`📸 Capturing frame ${frame + 1}/${totalFrames}`);
+                const progress = Math.round((frame / totalFrames) * 100);
+                console.log(`📸 Capturing frame ${frame + 1}/${totalFrames} (${progress}%) at ${width}×${height}`);
                 
                 // Set animation to specific frame
                 const animationProgress = frame / totalFrames;
                 const animationDelay = -(animationProgress * 8000); // 8s animation cycle
                 
-                cardElement.style.animationPlayState = 'paused';
-                cardElement.style.animationDelay = `${animationDelay}ms`;
+                card.style.animationPlayState = 'paused';
+                card.style.animationDelay = `${animationDelay}ms`;
                 
                 // Force reflow to apply animation state
-                cardElement.offsetHeight;
+                card.offsetHeight;
                 
-                // Wait a moment for animation state to settle
-                await new Promise(resolve => setTimeout(resolve, 10));
+                // Wait for animation state to settle
+                await new Promise(resolve => setTimeout(resolve, 50));
                 
-                // Capture the CSS card at this animation state - JUST the card itself
-                const canvas = await html2canvas(cardElement, {
-                    // Don't specify width/height - let it capture the card's natural size
+                // Capture the hidden card at exact dimensions
+                const canvas = await html2canvas(card, {
+                    width: width,
+                    height: height,
                     scale: 1,
                     useCORS: false,
                     allowTaint: true,
@@ -3035,37 +3119,58 @@ class SnapMagicApp {
                         if (clonedCard) {
                             clonedCard.style.animationPlayState = 'paused';
                             clonedCard.style.animationDelay = `${animationDelay}ms`;
+                            // Force exact dimensions in clone
+                            clonedCard.style.width = `${width}px`;
+                            clonedCard.style.height = `${height}px`;
+                            clonedCard.style.aspectRatio = 'unset';
                         }
                     }
                 });
                 
-                // Convert canvas to data URL
-                const frameDataURL = canvas.toDataURL('image/png');
-                frames.push(frameDataURL);
+                // Verify canvas dimensions and resize if needed
+                let finalCanvas = canvas;
+                if (canvas.width !== width || canvas.height !== height) {
+                    console.log(`📏 Resizing canvas from ${canvas.width}×${canvas.height} to ${width}×${height}`);
+                    finalCanvas = document.createElement('canvas');
+                    finalCanvas.width = width;
+                    finalCanvas.height = height;
+                    const ctx = finalCanvas.getContext('2d');
+                    
+                    // Use high-quality scaling
+                    ctx.imageSmoothingEnabled = true;
+                    ctx.imageSmoothingQuality = 'high';
+                    ctx.drawImage(canvas, 0, 0, width, height);
+                }
+                
+                // Convert to data URL with maximum quality
+                const frameDataURL = finalCanvas.toDataURL('image/png', 1.0);
+                capturedFrames.push(frameDataURL);
             }
             
             // Restore original animation state
-            cardElement.style.animationPlayState = originalAnimationPlayState;
-            cardElement.style.animationDelay = originalAnimationDelay;
+            card.style.animationPlayState = originalAnimationPlayState;
+            card.style.animationDelay = originalAnimationDelay;
             
-            // Restore original image sources
-            aiImages.forEach((img, index) => {
-                if (originalSources[index]) {
-                    img.src = originalSources[index];
-                    console.log('🔄 Restored original S3 image source');
-                }
-            });
+            // Clean up hidden system
+            cleanup();
             
-            console.log('🎬 All fallback frames captured, creating GIF...');
+            console.log(`🎬 All frames captured at ${width}×${height}, creating GIF...`);
             
             // Create GIF from captured frames
-            const gifBlob = await this.createGIFFromFrames(frames, frameDuration);
+            const gifBlob = await this.createGIFFromFrames(capturedFrames, frameDuration);
             
-            console.log('✅ Fallback animated GIF created:', { size: gifBlob.size });
+            console.log('✅ PARALLEL SYSTEM animated GIF created:', { 
+                size: Math.round(gifBlob.size / 1024) + 'KB',
+                dimensions: `${width}×${height}`,
+                frames: totalFrames,
+                quality: 'Maximum (parallel hidden system)',
+                system: 'Flexible & Gallery Compatible'
+            });
+            
             return gifBlob;
             
         } catch (error) {
-            console.error('❌ Fallback HTML2Canvas animated GIF generation failed:', error);
+            console.error('❌ PARALLEL SYSTEM animated GIF generation failed:', error);
             throw error;
         }
     }

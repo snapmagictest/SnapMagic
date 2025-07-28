@@ -33,16 +33,16 @@ class HolographicCanvasRenderer {
     }
 
     /**
-     * Initialize canvas with card dimensions - NORMALIZED FOR 2MB FILE SIZE
+     * Initialize canvas with configurable dimensions - FLEXIBLE PARALLEL SYSTEM
      */
-    initCanvas(width = 366, height = 477) {
+    initCanvas(width = 275, height = 358) {
         this.cardWidth = width;
         this.cardHeight = height;
         
         this.canvas = document.createElement('canvas');
         
-        // CRITICAL: Normalize pixel ratio for consistent 2MB file sizes across all devices
-        const pixelRatio = 1; // Force 1x ratio for all devices to ensure 2MB max
+        // CRITICAL: Normalize pixel ratio for consistent file sizes across all devices
+        const pixelRatio = 1; // Force 1x ratio for all devices to ensure consistent output
         this.canvas.width = width * pixelRatio;
         this.canvas.height = height * pixelRatio;
         this.canvas.style.width = width + 'px';
@@ -68,13 +68,13 @@ class HolographicCanvasRenderer {
         this.ctx.lineJoin = 'round';
         this.ctx.miterLimit = 10;
         
-        console.log('🎨 NORMALIZED canvas initialized for 2MB target:', { 
+        console.log('🎨 FLEXIBLE canvas initialized for parallel system:', { 
             width, 
             height, 
             pixelRatio: 1,
             actualWidth: this.canvas.width,
             actualHeight: this.canvas.height,
-            target: '2MB file size'
+            system: 'Configurable dimensions'
         });
         return this.canvas;
     }
@@ -708,30 +708,32 @@ class HolographicCanvasRenderer {
     }
 
     /**
-     * Generate animated GIF from canvas frames - MAXIMUM QUALITY
+     * Generate animated GIF from canvas frames - FLEXIBLE PARALLEL SYSTEM
      */
     async generateAnimatedGIF(cardData, options = {}) {
         const settings = {
+            width: 275,      // Default optimized width
+            height: 358,     // Default optimized height  
             frames: 30,      // Maximum frames for smoothest animation
             framerate: 15,   // Standard web GIF framerate
             quality: 1,      // Highest quality (1 = best, 10 = worst)
             ...options
         };
         
-        console.log('🎬 Starting MAXIMUM QUALITY animated GIF generation...');
+        console.log('🎬 Starting FLEXIBLE animated GIF generation...');
         console.log('⭐ Settings:', settings);
         
         // Load all required images
         await this.loadImages(cardData);
         
-        // Initialize canvas
-        this.initCanvas();
+        // Initialize canvas with configurable dimensions
+        this.initCanvas(settings.width, settings.height);
         
         // Generate frames with progress tracking
         const frames = [];
         for (let frame = 0; frame < settings.frames; frame++) {
             const progress = Math.round((frame / settings.frames) * 100);
-            console.log(`🎨 Rendering frame ${frame + 1}/${settings.frames} (${progress}%) - MAXIMUM QUALITY`);
+            console.log(`🎨 Rendering frame ${frame + 1}/${settings.frames} (${progress}%) at ${settings.width}×${settings.height}`);
             
             // Render card at this animation frame
             this.renderCard(frame, settings.frames, cardData);
@@ -741,7 +743,7 @@ class HolographicCanvasRenderer {
             frames.push(frameDataURL);
         }
         
-        console.log('🎬 All frames rendered at maximum quality, creating GIF...');
+        console.log(`🎬 All frames rendered at ${settings.width}×${settings.height}, creating GIF...`);
         
         // Create GIF using existing gif.js system
         return await this.createGIFFromFrames(frames, settings);
