@@ -35,10 +35,8 @@ class HolographicCanvasRenderer {
     /**
      * Initialize canvas with configurable dimensions - FLEXIBLE PARALLEL SYSTEM
      */
-    initCanvas(width = 275, height = 358) {
-        this.cardWidth = width;
-        this.cardHeight = height;
-        
+    initCanvas(width, height) {
+        // Don't override cardWidth/cardHeight - they should be set separately
         this.canvas = document.createElement('canvas');
         
         // CRITICAL: Normalize pixel ratio for consistent file sizes across all devices
