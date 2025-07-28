@@ -708,17 +708,17 @@ class HolographicCanvasRenderer {
     }
 
     /**
-     * Generate animated GIF from canvas frames - OPTIMIZED FOR 2MB FILE SIZE
+     * Generate animated GIF from canvas frames - MAXIMUM QUALITY
      */
     async generateAnimatedGIF(cardData, options = {}) {
         const settings = {
-            frames: 25,      // Optimized: 25 frames for 2MB target (vs 30)
+            frames: 30,      // Maximum frames for smoothest animation
             framerate: 15,   // Standard web GIF framerate
-            quality: 3,      // Optimized: quality 3 for 2MB target (vs 1)
+            quality: 1,      // Highest quality (1 = best, 10 = worst)
             ...options
         };
         
-        console.log('🎬 Starting OPTIMIZED animated GIF generation for 2MB target...');
+        console.log('🎬 Starting MAXIMUM QUALITY animated GIF generation...');
         console.log('⭐ Settings:', settings);
         
         // Load all required images
@@ -731,17 +731,17 @@ class HolographicCanvasRenderer {
         const frames = [];
         for (let frame = 0; frame < settings.frames; frame++) {
             const progress = Math.round((frame / settings.frames) * 100);
-            console.log(`🎨 Rendering frame ${frame + 1}/${settings.frames} (${progress}%) - targeting 2MB`);
+            console.log(`🎨 Rendering frame ${frame + 1}/${settings.frames} (${progress}%) - MAXIMUM QUALITY`);
             
             // Render card at this animation frame
             this.renderCard(frame, settings.frames, cardData);
             
-            // Capture frame at optimized quality for 2MB target
-            const frameDataURL = this.canvas.toDataURL('image/png', 0.8); // Slightly compressed
+            // Capture frame at maximum quality (no compression)
+            const frameDataURL = this.canvas.toDataURL('image/png', 1.0); // Maximum quality
             frames.push(frameDataURL);
         }
         
-        console.log('🎬 All frames rendered for 2MB target, creating GIF...');
+        console.log('🎬 All frames rendered at maximum quality, creating GIF...');
         
         // Create GIF using existing gif.js system
         return await this.createGIFFromFrames(frames, settings);
