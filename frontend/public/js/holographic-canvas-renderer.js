@@ -142,6 +142,9 @@ class HolographicCanvasRenderer {
         // Save context for transformations
         ctx.save();
         
+        // ENHANCED: Draw animated glow effects BEFORE card (like CSS box-shadow)
+        this.drawAnimatedGlow(ctx, animationTime);
+        
         // Apply 3D card rotation (autoFloat animation)
         this.apply3DTransform(ctx, animationTime);
         
@@ -154,9 +157,10 @@ class HolographicCanvasRenderer {
         this.drawEventName(ctx);
         this.drawCardFooter(ctx, cardData);
         
-        // Draw holographic overlays (the magic!)
-        this.drawHolographicGradient(ctx, animationTime);
-        this.drawSparkleOverlay(ctx, animationTime);
+        // ENHANCED: Draw dual holographic overlays (::before and ::after effects)
+        this.drawHolographicGradient(ctx, animationTime);      // ::before effect
+        this.drawSparkleOverlay(ctx, animationTime);           // ::after effect
+        this.drawColorDodgeOverlay(ctx, animationTime);        // Additional color-dodge effect
         
         // Restore context
         ctx.restore();
@@ -221,6 +225,101 @@ class HolographicCanvasRenderer {
         
         ctx.transform(scaleX, skewY, skewX, scaleY, 0, 0);
         ctx.translate(-centerX, -centerY);
+    }
+
+    /**
+     * Draw animated glow effects (matching CSS box-shadow animation)
+     */
+    drawAnimatedGlow(ctx, animationTime) {
+        const progress = (animationTime % this.FLOAT_DURATION) / this.FLOAT_DURATION;
+        const cycle = progress * 2 * Math.PI;
+        
+        // Calculate animation keyframes (matching autoFloat CSS)
+        let shadowColor1, shadowColor2, glowIntensity;
+        
+        if (progress < 0.25) {
+            // 0% → 25%: Default to intense glow
+            const t = progress / 0.25;
+            shadowColor1 = this.interpolateColor('#DAA520', '#E67E22', t);
+            shadowColor2 = this.interpolateColor('#4B9CD3', '#FF9900', t);
+            glowIntensity = 0.3 + t * 0.4;
+        } else if (progress < 0.5) {
+            // 25% → 50%: Intense to medium glow
+            const t = (progress - 0.25) / 0.25;
+            shadowColor1 = this.interpolateColor('#E67E22', '#FF7F50', t);
+            shadowColor2 = this.interpolateColor('#FF9900', '#4B9CD3', t);
+            glowIntensity = 0.7 - t * 0.3;
+        } else if (progress < 0.75) {
+            // 50% → 75%: Medium to strong glow
+            const t = (progress - 0.5) / 0.25;
+            shadowColor1 = this.interpolateColor('#FF7F50', '#FF9900', t);
+            shadowColor2 = this.interpolateColor('#4B9CD3', '#4B9CD3', t);
+            glowIntensity = 0.4 + t * 0.2;
+        } else {
+            // 75% → 100%: Strong back to default
+            const t = (progress - 0.75) / 0.25;
+            shadowColor1 = this.interpolateColor('#FF9900', '#DAA520', t);
+            shadowColor2 = this.interpolateColor('#4B9CD3', '#4B9CD3', t);
+            glowIntensity = 0.6 - t * 0.3;
+        }
+        
+        // Draw multiple shadow layers (matching CSS box-shadow)
+        ctx.save();
+        
+        // Shadow layer 1: Directional colored glow
+        ctx.shadowColor = shadowColor1;
+        ctx.shadowBlur = 15 + Math.sin(cycle) * 5;
+        ctx.shadowOffsetX = -10 + Math.sin(cycle) * 5;
+        ctx.shadowOffsetY = -10 + Math.cos(cycle) * 5;
+        ctx.globalAlpha = glowIntensity * 0.6;
+        
+        ctx.fillStyle = 'rgba(0,0,0,0.1)';
+        this.roundRect(ctx, 0, 0, this.cardWidth, this.cardHeight, 15);
+        ctx.fill();
+        
+        // Shadow layer 2: Opposite directional glow
+        ctx.shadowColor = shadowColor2;
+        ctx.shadowBlur = 15 + Math.cos(cycle) * 5;
+        ctx.shadowOffsetX = 10 - Math.sin(cycle) * 5;
+        ctx.shadowOffsetY = 10 - Math.cos(cycle) * 5;
+        ctx.globalAlpha = glowIntensity * 0.6;
+        
+        this.roundRect(ctx, 0, 0, this.cardWidth, this.cardHeight, 15);
+        ctx.fill();
+        
+        // Shadow layer 3: Central glow
+        ctx.shadowColor = `rgba(255, 100, 50, ${glowIntensity * 0.4})`;
+        ctx.shadowBlur = 8 + Math.sin(cycle * 2) * 4;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
+        ctx.globalAlpha = glowIntensity;
+        
+        this.roundRect(ctx, 0, 0, this.cardWidth, this.cardHeight, 15);
+        ctx.fill();
+        
+        ctx.restore();
+    }
+
+    /**
+     * Interpolate between two hex colors
+     */
+    interpolateColor(color1, color2, t) {
+        const hex1 = color1.replace('#', '');
+        const hex2 = color2.replace('#', '');
+        
+        const r1 = parseInt(hex1.substr(0, 2), 16);
+        const g1 = parseInt(hex1.substr(2, 2), 16);
+        const b1 = parseInt(hex1.substr(4, 2), 16);
+        
+        const r2 = parseInt(hex2.substr(0, 2), 16);
+        const g2 = parseInt(hex2.substr(2, 2), 16);
+        const b2 = parseInt(hex2.substr(4, 2), 16);
+        
+        const r = Math.round(r1 + (r2 - r1) * t);
+        const g = Math.round(g1 + (g2 - g1) * t);
+        const b = Math.round(b1 + (b2 - b1) * t);
+        
+        return `rgb(${r}, ${g}, ${b})`;
     }
 
     /**
@@ -684,6 +783,40 @@ class HolographicCanvasRenderer {
         ctx.globalAlpha = 0.3 + Math.cos(progress * 4 * Math.PI) * 0.2; // Animated opacity
         
         ctx.fillStyle = sparkleGradient;
+        this.roundRect(ctx, 0, 0, this.cardWidth, this.cardHeight, 15);
+        ctx.fill();
+        
+        ctx.restore();
+    }
+
+    /**
+     * Draw color-dodge overlay (enhanced ::after effect with mix-blend-mode: color-dodge)
+     */
+    drawColorDodgeOverlay(ctx, animationTime) {
+        const progress = (animationTime % this.SPARKLE_DURATION) / this.SPARKLE_DURATION;
+        
+        // Create multi-color gradient (matching CSS ::after)
+        const gradient = ctx.createLinearGradient(0, 0, this.cardWidth, this.cardHeight);
+        
+        // Animate gradient position (matching autoSparkleMove)
+        const offset = Math.sin(progress * 2 * Math.PI) * 0.3;
+        
+        gradient.addColorStop(Math.max(0, 0.1 + offset), 'rgba(255, 215, 0, 0.125)');
+        gradient.addColorStop(Math.max(0, 0.2 + offset), 'rgba(255, 165, 0, 0.15)');
+        gradient.addColorStop(Math.max(0, 0.3 + offset), 'rgba(255, 140, 0, 0.09)');
+        gradient.addColorStop(Math.max(0, 0.4 + offset), 'rgba(255, 255, 0, 0.15)');
+        gradient.addColorStop(Math.max(0, 0.5 + offset), 'rgba(218, 165, 32, 0.06)');
+        gradient.addColorStop(Math.max(0, 0.6 + offset), 'rgba(0, 255, 138, 0.08)');
+        gradient.addColorStop(Math.max(0, 0.7 + offset), 'rgba(0, 207, 255, 0.18)');
+        gradient.addColorStop(Math.max(0, 0.8 + offset), 'rgba(255, 184, 77, 0.15)');
+        gradient.addColorStop(Math.min(1, 0.9 + offset), 'rgba(204, 76, 250, 0.21)');
+        
+        // Apply color-dodge-like effect (canvas doesn't have color-dodge, so simulate)
+        ctx.save();
+        ctx.globalCompositeOperation = 'screen'; // Closest to color-dodge
+        ctx.globalAlpha = 0.3 + Math.sin(progress * 2 * Math.PI) * 0.1;
+        
+        ctx.fillStyle = gradient;
         this.roundRect(ctx, 0, 0, this.cardWidth, this.cardHeight, 15);
         ctx.fill();
         
