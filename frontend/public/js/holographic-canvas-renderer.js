@@ -725,18 +725,19 @@ class HolographicCanvasRenderer {
         // Create animated gradient (matching autoGradientSweep)
         const gradient = ctx.createLinearGradient(0, 0, this.cardWidth, this.cardHeight);
         
-        // Animate gradient position
-        const offset = Math.sin(progress * 2 * Math.PI) * 0.3;
+        // Animate gradient position - FIXED: Clamp offset and ensure all stops are valid
+        const offset = Math.sin(progress * 2 * Math.PI) * 0.2; // Reduced from 0.3 to 0.2
         
-        gradient.addColorStop(Math.max(0, 0 + offset), 'transparent');
-        gradient.addColorStop(Math.max(0, 0.15 + offset), this.colors.holoColor4);
-        gradient.addColorStop(Math.max(0, 0.25 + offset), this.colors.holoColor1);
-        gradient.addColorStop(Math.max(0, 0.35 + offset), this.colors.holoColor5);
-        gradient.addColorStop(Math.min(1, 0.47 + offset), 'transparent');
-        gradient.addColorStop(Math.min(1, 0.53 + offset), 'transparent');
-        gradient.addColorStop(Math.min(1, 0.65 + offset), this.colors.holoColor2);
-        gradient.addColorStop(Math.min(1, 0.75 + offset), this.colors.holoColor3);
-        gradient.addColorStop(Math.min(1, 0.85 + offset), this.colors.holoColor4);
+        // FIXED: Ensure all color stops stay within 0.0-1.0 range
+        gradient.addColorStop(Math.max(0, Math.min(1, 0 + offset)), 'transparent');
+        gradient.addColorStop(Math.max(0, Math.min(1, 0.15 + offset)), this.colors.holoColor4);
+        gradient.addColorStop(Math.max(0, Math.min(1, 0.25 + offset)), this.colors.holoColor1);
+        gradient.addColorStop(Math.max(0, Math.min(1, 0.35 + offset)), this.colors.holoColor5);
+        gradient.addColorStop(Math.max(0, Math.min(1, 0.47 + offset)), 'transparent');
+        gradient.addColorStop(Math.max(0, Math.min(1, 0.53 + offset)), 'transparent');
+        gradient.addColorStop(Math.max(0, Math.min(1, 0.65 + offset)), this.colors.holoColor2);
+        gradient.addColorStop(Math.max(0, Math.min(1, 0.75 + offset)), this.colors.holoColor3);
+        gradient.addColorStop(Math.max(0, Math.min(1, 0.85 + offset)), this.colors.holoColor4);
         gradient.addColorStop(1, 'transparent');
         
         // Apply overlay blend mode and opacity
@@ -798,18 +799,19 @@ class HolographicCanvasRenderer {
         // Create multi-color gradient (matching CSS ::after)
         const gradient = ctx.createLinearGradient(0, 0, this.cardWidth, this.cardHeight);
         
-        // Animate gradient position (matching autoSparkleMove)
-        const offset = Math.sin(progress * 2 * Math.PI) * 0.3;
+        // Animate gradient position (matching autoSparkleMove) - FIXED: Clamp offset
+        const offset = Math.sin(progress * 2 * Math.PI) * 0.2; // Reduced from 0.3 to 0.2
         
-        gradient.addColorStop(Math.max(0, 0.1 + offset), 'rgba(255, 215, 0, 0.125)');
-        gradient.addColorStop(Math.max(0, 0.2 + offset), 'rgba(255, 165, 0, 0.15)');
-        gradient.addColorStop(Math.max(0, 0.3 + offset), 'rgba(255, 140, 0, 0.09)');
-        gradient.addColorStop(Math.max(0, 0.4 + offset), 'rgba(255, 255, 0, 0.15)');
-        gradient.addColorStop(Math.max(0, 0.5 + offset), 'rgba(218, 165, 32, 0.06)');
-        gradient.addColorStop(Math.max(0, 0.6 + offset), 'rgba(0, 255, 138, 0.08)');
-        gradient.addColorStop(Math.max(0, 0.7 + offset), 'rgba(0, 207, 255, 0.18)');
-        gradient.addColorStop(Math.max(0, 0.8 + offset), 'rgba(255, 184, 77, 0.15)');
-        gradient.addColorStop(Math.min(1, 0.9 + offset), 'rgba(204, 76, 250, 0.21)');
+        // FIXED: Ensure all color stops stay within 0.0-1.0 range
+        gradient.addColorStop(Math.max(0, Math.min(1, 0.1 + offset)), 'rgba(255, 215, 0, 0.125)');
+        gradient.addColorStop(Math.max(0, Math.min(1, 0.2 + offset)), 'rgba(255, 165, 0, 0.15)');
+        gradient.addColorStop(Math.max(0, Math.min(1, 0.3 + offset)), 'rgba(255, 140, 0, 0.09)');
+        gradient.addColorStop(Math.max(0, Math.min(1, 0.4 + offset)), 'rgba(255, 255, 0, 0.15)');
+        gradient.addColorStop(Math.max(0, Math.min(1, 0.5 + offset)), 'rgba(218, 165, 32, 0.06)');
+        gradient.addColorStop(Math.max(0, Math.min(1, 0.6 + offset)), 'rgba(0, 255, 138, 0.08)');
+        gradient.addColorStop(Math.max(0, Math.min(1, 0.7 + offset)), 'rgba(0, 207, 255, 0.18)');
+        gradient.addColorStop(Math.max(0, Math.min(1, 0.8 + offset)), 'rgba(255, 184, 77, 0.15)');
+        gradient.addColorStop(Math.max(0, Math.min(1, 0.9 + offset)), 'rgba(204, 76, 250, 0.21)');
         
         // Apply color-dodge-like effect (canvas doesn't have color-dodge, so simulate)
         ctx.save();
