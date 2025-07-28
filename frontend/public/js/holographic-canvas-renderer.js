@@ -492,64 +492,64 @@ class HolographicCanvasRenderer {
         const footerHeight = 110; // BIGGER: Scaled up for larger card (was 90)
         const footerY = this.cardHeight - footerHeight - margin;
         
-        // Draw 3D etched footer background with enhanced depth
+        // Draw 3D INSET footer background with recessed depth
         const footerGradient = ctx.createLinearGradient(0, footerY, 0, footerY + footerHeight);
-        footerGradient.addColorStop(0, 'rgba(255, 255, 255, 0.08)'); // Slightly brighter top
-        footerGradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.03)'); // Mid tone
-        footerGradient.addColorStop(1, 'rgba(0, 0, 0, 0.02)'); // Darker bottom for depth
+        footerGradient.addColorStop(0, 'rgba(0, 0, 0, 0.05)'); // INVERTED: Darker top (recessed)
+        footerGradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.02)'); // Mid tone
+        footerGradient.addColorStop(1, 'rgba(255, 255, 255, 0.06)'); // INVERTED: Brighter bottom (raised edge)
         
         ctx.fillStyle = footerGradient;
         this.roundRect(ctx, margin, footerY, this.cardWidth - 2 * margin, footerHeight, 8);
         ctx.fill();
         
-        // ENHANCED 3D ETCHED EFFECT - Multiple layers for depth
+        // INVERTED 3D INSET EFFECT - Dark top-left, bright bottom-right
         ctx.save();
         
-        // 1. Outer highlight (top-left light edge)
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+        // 1. INVERTED: Dark shadow (top-left edges - recessed into surface)
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.4)'; // DARK instead of bright
         ctx.lineWidth = 1;
         ctx.setLineDash([]);
         
-        // Draw top edge highlight
+        // Draw top edge shadow (DARK - recessed)
         ctx.beginPath();
         ctx.moveTo(margin + 8, footerY);
         ctx.lineTo(this.cardWidth - margin - 8, footerY);
         ctx.stroke();
         
-        // Draw left edge highlight  
+        // Draw left edge shadow (DARK - recessed)
         ctx.beginPath();
         ctx.moveTo(margin, footerY + 8);
         ctx.lineTo(margin, footerY + footerHeight - 8);
         ctx.stroke();
         
-        // 2. Inner shadow (bottom-right dark edge)
-        ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
+        // 2. INVERTED: Bright highlight (bottom-right edges - raised from recess)
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)'; // BRIGHT instead of dark
         ctx.lineWidth = 1;
         
-        // Draw bottom edge shadow
+        // Draw bottom edge highlight (BRIGHT - raised edge)
         ctx.beginPath();
         ctx.moveTo(margin + 8, footerY + footerHeight);
         ctx.lineTo(this.cardWidth - margin - 8, footerY + footerHeight);
         ctx.stroke();
         
-        // Draw right edge shadow
+        // Draw right edge highlight (BRIGHT - raised edge)
         ctx.beginPath();
         ctx.moveTo(this.cardWidth - margin, footerY + 8);
         ctx.lineTo(this.cardWidth - margin, footerY + footerHeight - 8);
         ctx.stroke();
         
-        // 3. Inner highlight (subtle inner glow)
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+        // 3. Inner dark line (recessed depth)
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.2)'; // DARK inner line
         ctx.lineWidth = 0.5;
         this.roundRect(ctx, margin + 1, footerY + 1, this.cardWidth - 2 * margin - 2, footerHeight - 2, 7);
         ctx.stroke();
         
-        // 4. Outer shadow for depth
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
-        ctx.shadowBlur = 3;
-        ctx.shadowOffsetX = 1;
-        ctx.shadowOffsetY = 1;
-        ctx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
+        // 4. Outer bright edge for contrast
+        ctx.shadowColor = 'rgba(255, 255, 255, 0.1)';
+        ctx.shadowBlur = 2;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
         ctx.lineWidth = 0.5;
         this.roundRect(ctx, margin - 0.5, footerY - 0.5, this.cardWidth - 2 * margin + 1, footerHeight + 1, 8.5);
         ctx.stroke();
