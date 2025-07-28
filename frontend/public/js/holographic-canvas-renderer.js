@@ -8,8 +8,8 @@ class HolographicCanvasRenderer {
     constructor() {
         this.canvas = null;
         this.ctx = null;
-        this.cardWidth = 366;  // Default card width
-        this.cardHeight = 477; // Default card height (5/6.5 aspect ratio)
+        this.cardWidth = 550;  // FORCED: 2x size for crisp quality (was 366)
+        this.cardHeight = 716; // FORCED: 2x size for crisp quality (was 477)
         this.images = {};
         this.fonts = {};
         
@@ -869,7 +869,7 @@ class HolographicCanvasRenderer {
         
         console.log('🚀 Starting OPTIMIZED 1080×1080 animated GIF generation...');
         console.log('⚡ SPEED: 15 frames @ 10fps (target: <30 seconds)');
-        console.log(`🔍 NATURAL: Using original card dimensions ${settings.width}×${settings.height}`);
+        console.log(`🔍 FORCED: Using 550×716 card dimensions ${settings.width}×${settings.height}`);
         console.log('⭐ Settings:', settings);
         
         // Load all required images
@@ -878,15 +878,15 @@ class HolographicCanvasRenderer {
         // Initialize 1080×1080 canvas for background
         this.initCanvas(1080, 1080);
         
-        // Use natural card dimensions (no override)
-        this.cardWidth = settings.width;   // 366px (natural)
-        this.cardHeight = settings.height; // 477px (natural)
+        // Use 550×716 card dimensions (2x crisp quality)
+        this.cardWidth = settings.width;   // 550px (2x quality)
+        this.cardHeight = settings.height; // 716px (2x quality)
         
-        // Calculate centering offsets for natural card in 1080×1080 canvas
-        const offsetX = (1080 - this.cardWidth) / 2;   // (1080 - 366) / 2 = 357px
-        const offsetY = (1080 - this.cardHeight) / 2;  // (1080 - 477) / 2 = 301.5px
+        // Calculate centering offsets for 550×716 card in 1080×1080 canvas
+        const offsetX = (1080 - this.cardWidth) / 2;   // (1080 - 550) / 2 = 265px
+        const offsetY = (1080 - this.cardHeight) / 2;  // (1080 - 716) / 2 = 182px
         
-        console.log(`📐 Natural card: ${this.cardWidth}×${this.cardHeight} centered at (${offsetX}, ${offsetY})`);
+        console.log(`📐 Card: ${this.cardWidth}×${this.cardHeight} (2x quality) centered at (${offsetX}, ${offsetY})`);
         
         // QUALITY: Enhanced rendering settings
         this.ctx.imageSmoothingEnabled = true;
