@@ -1482,6 +1482,9 @@ class SnapMagicApp {
             hiddenCard.style.aspectRatio = 'unset'; // Override responsive aspect ratio
             hiddenCard.style.margin = '0';
             hiddenCard.style.padding = '0';
+            
+            // Add special class for GIF animations
+            hiddenCard.classList.add('gif-card', 'animated');
         }
         
         // Add to DOM for rendering
@@ -1825,7 +1828,233 @@ class SnapMagicApp {
             }
         }
         
-        /* Hover Enhancement */
+        /* ===== ENHANCED GIF CARD ANIMATIONS - CLASSY & PROFESSIONAL ===== */
+        
+        /* Graceful Swivel Animation for GIF Cards Only */
+        @keyframes gifGracefulSwivel {
+            0%, 100% {
+                transform: perspective(1000px) rotateX(0deg) rotateY(0deg) rotateZ(0deg);
+                box-shadow: 
+                    -8px -8px 16px -8px rgba(255, 215, 0, 0.3), 
+                    8px 8px 16px -8px rgba(138, 43, 226, 0.3), 
+                    0 0 20px 4px rgba(255, 255, 255, 0.1),
+                    0 60px 40px -25px rgba(0, 0, 0, 0.4);
+            }
+            12.5% {
+                transform: perspective(1000px) rotateX(1deg) rotateY(-2deg) rotateZ(0.3deg);
+                box-shadow: 
+                    -12px -12px 24px -12px rgba(255, 140, 0, 0.4), 
+                    12px 12px 24px -12px rgba(75, 0, 130, 0.4), 
+                    0 0 25px 6px rgba(255, 215, 0, 0.15),
+                    0 60px 40px -25px rgba(0, 0, 0, 0.4);
+            }
+            25% {
+                transform: perspective(1000px) rotateX(2deg) rotateY(-3deg) rotateZ(0.5deg);
+                box-shadow: 
+                    -16px -16px 32px -16px rgba(255, 69, 0, 0.5), 
+                    16px 16px 32px -16px rgba(148, 0, 211, 0.5), 
+                    0 0 30px 8px rgba(255, 140, 0, 0.2),
+                    0 60px 40px -25px rgba(0, 0, 0, 0.4);
+            }
+            37.5% {
+                transform: perspective(1000px) rotateX(1.5deg) rotateY(-1deg) rotateZ(0.2deg);
+                box-shadow: 
+                    -14px -14px 28px -14px rgba(255, 105, 180, 0.4), 
+                    14px 14px 28px -14px rgba(72, 61, 139, 0.4), 
+                    0 0 28px 7px rgba(255, 20, 147, 0.18),
+                    0 60px 40px -25px rgba(0, 0, 0, 0.4);
+            }
+            50% {
+                transform: perspective(1000px) rotateX(-1deg) rotateY(4deg) rotateZ(-0.4deg);
+                box-shadow: 
+                    -10px -10px 20px -10px rgba(0, 191, 255, 0.5), 
+                    10px 10px 20px -10px rgba(255, 20, 147, 0.5), 
+                    0 0 35px 10px rgba(0, 191, 255, 0.25),
+                    0 60px 40px -25px rgba(0, 0, 0, 0.4);
+            }
+            62.5% {
+                transform: perspective(1000px) rotateX(-0.5deg) rotateY(2deg) rotateZ(-0.1deg);
+                box-shadow: 
+                    -12px -12px 24px -12px rgba(50, 205, 50, 0.4), 
+                    12px 12px 24px -12px rgba(255, 69, 0, 0.4), 
+                    0 0 32px 9px rgba(50, 205, 50, 0.22),
+                    0 60px 40px -25px rgba(0, 0, 0, 0.4);
+            }
+            75% {
+                transform: perspective(1000px) rotateX(3deg) rotateY(2deg) rotateZ(0.6deg);
+                box-shadow: 
+                    -18px -18px 36px -18px rgba(255, 215, 0, 0.5), 
+                    18px 18px 36px -18px rgba(138, 43, 226, 0.5), 
+                    0 0 25px 6px rgba(255, 215, 0, 0.15),
+                    0 60px 40px -25px rgba(0, 0, 0, 0.4);
+            }
+            87.5% {
+                transform: perspective(1000px) rotateX(1deg) rotateY(0.5deg) rotateZ(0.2deg);
+                box-shadow: 
+                    -10px -10px 20px -10px rgba(255, 182, 193, 0.4), 
+                    10px 10px 20px -10px rgba(106, 90, 205, 0.4), 
+                    0 0 22px 5px rgba(255, 182, 193, 0.12),
+                    0 60px 40px -25px rgba(0, 0, 0, 0.4);
+            }
+        }
+
+        /* Elegant Shimmer Animation for GIF Cards */
+        @keyframes gifElegantShimmer {
+            0%, 100% {
+                background-position: -200% 0%;
+                opacity: 0.2;
+                filter: brightness(0.8) contrast(1.1) saturate(1.2);
+            }
+            10% {
+                background-position: -150% 25%;
+                opacity: 0.3;
+                filter: brightness(0.9) contrast(1.2) saturate(1.3);
+            }
+            25% {
+                background-position: -100% 50%;
+                opacity: 0.5;
+                filter: brightness(1.1) contrast(1.4) saturate(1.5);
+            }
+            40% {
+                background-position: -50% 75%;
+                opacity: 0.4;
+                filter: brightness(1.0) contrast(1.3) saturate(1.4);
+            }
+            50% {
+                background-position: 0% 100%;
+                opacity: 0.6;
+                filter: brightness(1.2) contrast(1.5) saturate(1.6);
+            }
+            60% {
+                background-position: 50% 75%;
+                opacity: 0.4;
+                filter: brightness(1.0) contrast(1.3) saturate(1.4);
+            }
+            75% {
+                background-position: 100% 50%;
+                opacity: 0.5;
+                filter: brightness(1.1) contrast(1.4) saturate(1.5);
+            }
+            90% {
+                background-position: 150% 25%;
+                opacity: 0.3;
+                filter: brightness(0.9) contrast(1.2) saturate(1.3);
+            }
+        }
+
+        /* Professional Sparkle Animation for GIF Cards */
+        @keyframes gifProfessionalSparkle {
+            0%, 100% {
+                background-position: 0% 0%;
+                opacity: 0.15;
+                filter: brightness(1.0) contrast(1.0) saturate(1.1);
+            }
+            8% {
+                background-position: 12% 15%;
+                opacity: 0.25;
+                filter: brightness(1.1) contrast(1.1) saturate(1.2);
+            }
+            16% {
+                background-position: 25% 30%;
+                opacity: 0.35;
+                filter: brightness(1.2) contrast(1.2) saturate(1.3);
+            }
+            25% {
+                background-position: 40% 45%;
+                opacity: 0.45;
+                filter: brightness(1.3) contrast(1.3) saturate(1.4);
+            }
+            33% {
+                background-position: 55% 60%;
+                opacity: 0.4;
+                filter: brightness(1.25) contrast(1.25) saturate(1.35);
+            }
+            41% {
+                background-position: 70% 75%;
+                opacity: 0.5;
+                filter: brightness(1.4) contrast(1.4) saturate(1.5);
+            }
+            50% {
+                background-position: 85% 90%;
+                opacity: 0.3;
+                filter: brightness(1.2) contrast(1.2) saturate(1.3);
+            }
+            58% {
+                background-position: 70% 75%;
+                opacity: 0.4;
+                filter: brightness(1.3) contrast(1.3) saturate(1.4);
+            }
+            66% {
+                background-position: 55% 60%;
+                opacity: 0.35;
+                filter: brightness(1.25) contrast(1.25) saturate(1.35);
+            }
+            75% {
+                background-position: 40% 45%;
+                opacity: 0.45;
+                filter: brightness(1.35) contrast(1.35) saturate(1.45);
+            }
+            83% {
+                background-position: 25% 30%;
+                opacity: 0.3;
+                filter: brightness(1.15) contrast(1.15) saturate(1.25);
+            }
+            91% {
+                background-position: 12% 15%;
+                opacity: 0.2;
+                filter: brightness(1.05) contrast(1.05) saturate(1.15);
+            }
+        }
+
+        /* Apply Enhanced Animations to GIF Cards Only */
+        .snapmagic-card.gif-card.animated {
+            animation: gifGracefulSwivel 8s ease-in-out infinite;
+            transform-style: preserve-3d;
+            backface-visibility: hidden;
+        }
+
+        .snapmagic-card.gif-card.animated:before {
+            animation: gifElegantShimmer 6s ease-in-out infinite;
+            background: linear-gradient(
+                135deg,
+                transparent 0%,
+                rgba(255, 215, 0, 0.1) 15%,
+                rgba(255, 140, 0, 0.2) 25%,
+                rgba(255, 69, 0, 0.3) 35%,
+                rgba(255, 20, 147, 0.25) 45%,
+                rgba(138, 43, 226, 0.2) 55%,
+                rgba(75, 0, 130, 0.15) 65%,
+                rgba(0, 191, 255, 0.2) 75%,
+                rgba(50, 205, 50, 0.1) 85%,
+                transparent 100%
+            );
+            background-size: 400% 400%;
+        }
+
+        .snapmagic-card.gif-card.animated:after {
+            animation: gifProfessionalSparkle 10s ease-in-out infinite;
+            background: radial-gradient(
+                circle at 20% 20%, rgba(255, 215, 0, 0.3) 0%, transparent 25%
+            ),
+            radial-gradient(
+                circle at 80% 30%, rgba(255, 140, 0, 0.25) 0%, transparent 20%
+            ),
+            radial-gradient(
+                circle at 40% 70%, rgba(138, 43, 226, 0.2) 0%, transparent 15%
+            ),
+            radial-gradient(
+                circle at 70% 80%, rgba(0, 191, 255, 0.25) 0%, transparent 18%
+            ),
+            radial-gradient(
+                circle at 15% 60%, rgba(255, 20, 147, 0.2) 0%, transparent 22%
+            ),
+            radial-gradient(
+                circle at 90% 15%, rgba(50, 205, 50, 0.15) 0%, transparent 20%
+            );
+            background-size: 300% 300%;
+        }
+
+        /* ===== END GIF CARD ANIMATIONS ===== */
         .bulk-head-header:hover .popping-logo {
             transform: translateZ(15px) scale(1.08);
             filter: 
