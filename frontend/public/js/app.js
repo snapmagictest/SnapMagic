@@ -670,40 +670,40 @@ class SnapMagicApp {
 
         // Real-time character counting for Line 1
         this.elements.nameInputLine1.addEventListener('input', (e) => {
-            // Hard stop at 12 characters
-            if (e.target.value.length > 12) {
-                e.target.value = e.target.value.substring(0, 12);
+            // Hard stop at 11 characters
+            if (e.target.value.length > 11) {
+                e.target.value = e.target.value.substring(0, 11);
             }
             this.updateLine1CharacterCount();
         });
 
         // Real-time character counting for Line 2
         this.elements.nameInputLine2.addEventListener('input', (e) => {
-            // Hard stop at 12 characters
-            if (e.target.value.length > 12) {
-                e.target.value = e.target.value.substring(0, 12);
+            // Hard stop at 11 characters
+            if (e.target.value.length > 11) {
+                e.target.value = e.target.value.substring(0, 11);
             }
             this.updateLine2CharacterCount();
         });
 
-        // Prevent typing beyond 12 characters on keypress for Line 1
+        // Prevent typing beyond 11 characters on keypress for Line 1
         this.elements.nameInputLine1.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 this.handleNameConfirm();
                 return;
             }
-            if (e.target.value.length >= 12 && e.key !== 'Backspace' && e.key !== 'Delete') {
+            if (e.target.value.length >= 11 && e.key !== 'Backspace' && e.key !== 'Delete') {
                 e.preventDefault();
             }
         });
 
-        // Prevent typing beyond 12 characters on keypress for Line 2
+        // Prevent typing beyond 11 characters on keypress for Line 2
         this.elements.nameInputLine2.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 this.handleNameConfirm();
                 return;
             }
-            if (e.target.value.length >= 12 && e.key !== 'Backspace' && e.key !== 'Delete') {
+            if (e.target.value.length >= 11 && e.key !== 'Backspace' && e.key !== 'Delete') {
                 e.preventDefault();
             }
         });
@@ -3810,12 +3810,12 @@ class SnapMagicApp {
         if (!nameInput || !charCount) return;
         
         const currentLength = nameInput.value.length;
-        const maxLength = 12;
+        const maxLength = 11;
         
         charCount.textContent = `${currentLength}/${maxLength}`;
         
         // Add warning class when approaching limit
-        if (currentLength >= 10) {
+        if (currentLength >= 9) {
             charCount.classList.add('warning');
         } else {
             charCount.classList.remove('warning');
@@ -3832,12 +3832,12 @@ class SnapMagicApp {
         if (!nameInput || !charCount) return;
         
         const currentLength = nameInput.value.length;
-        const maxLength = 12;
+        const maxLength = 11;
         
         charCount.textContent = `${currentLength}/${maxLength}`;
         
         // Add warning class when approaching limit
-        if (currentLength >= 10) {
+        if (currentLength >= 9) {
             charCount.classList.add('warning');
         } else {
             charCount.classList.remove('warning');
@@ -3912,7 +3912,7 @@ class SnapMagicApp {
         const nameParts = this.pendingName.split(' ');
         if (nameParts.length >= 2) {
             this.elements.nameInputLine1.value = nameParts[0];
-            this.elements.nameInputLine2.value = nameParts.slice(1).join(' ').substring(0, 12);
+            this.elements.nameInputLine2.value = nameParts.slice(1).join(' ').substring(0, 11);
         } else {
             this.elements.nameInputLine1.value = this.pendingName;
             this.elements.nameInputLine2.value = '';
