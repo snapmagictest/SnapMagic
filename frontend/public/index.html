@@ -1070,6 +1070,37 @@
             color: rgba(245, 245, 220, 0.5);
         }
 
+        /* Dual Input System Styling */
+        .name-input-group {
+            margin-bottom: 1rem;
+            position: relative;
+        }
+
+        .name-label {
+            display: block;
+            color: var(--art-deco-gold);
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .char-count {
+            position: absolute;
+            right: 0.75rem;
+            top: 2.2rem;
+            font-size: 0.8rem;
+            color: rgba(245, 245, 220, 0.6);
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .char-count.warning {
+            color: #ff6b6b;
+            font-weight: bold;
+        }
+
         .char-count {
             font-size: 0.85rem;
             color: rgba(245, 245, 220, 0.7);
@@ -1449,8 +1480,20 @@
     <div id="nameInputModal" class="modal hidden">
         <div class="modal-content">
             <h3>Enter Your Name</h3>
-            <p>Displays your name on the card as the creator. <span id="nameCharCount" class="char-count">25 characters max</span></p>
-            <input type="text" id="nameInput" class="name-input" placeholder="Name (blank = NOVA)" maxlength="25">
+            <p>Displays your name on the card as the creator. Each line has a 10 character limit for optimal display.</p>
+            
+            <div class="name-input-group">
+                <label for="nameInputLine1" class="name-label">LINE 1</label>
+                <input type="text" id="nameInputLine1" class="name-input" placeholder="First name or line 1" maxlength="10">
+                <span id="line1CharCount" class="char-count">0/10</span>
+            </div>
+            
+            <div class="name-input-group">
+                <label for="nameInputLine2" class="name-label">LINE 2 (Optional)</label>
+                <input type="text" id="nameInputLine2" class="name-input" placeholder="Last name or line 2" maxlength="10">
+                <span id="line2CharCount" class="char-count">0/10</span>
+            </div>
+            
             <div class="modal-buttons">
                 <button id="nameConfirmBtn" class="art-deco-btn">Continue</button>
                 <button id="nameCancelBtn" class="art-deco-btn">Cancel</button>

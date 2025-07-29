@@ -447,10 +447,12 @@ class SnapMagicApp {
             // Processing overlay
             processingOverlay: document.getElementById('processingOverlay'),
             
-            // Name input modals
+            // Name input modals - Dual Line System
             nameInputModal: document.getElementById('nameInputModal'),
-            nameInput: document.getElementById('nameInput'),
-            nameCharCount: document.getElementById('nameCharCount'),
+            nameInputLine1: document.getElementById('nameInputLine1'),
+            nameInputLine2: document.getElementById('nameInputLine2'),
+            line1CharCount: document.getElementById('line1CharCount'),
+            line2CharCount: document.getElementById('line2CharCount'),
             nameConfirmBtn: document.getElementById('nameConfirmBtn'),
             nameCancelBtn: document.getElementById('nameCancelBtn'),
             nameConfirmModal: document.getElementById('nameConfirmModal'),
@@ -653,34 +655,58 @@ class SnapMagicApp {
         // Print success modal
         this.elements.printSuccessOkBtn.addEventListener('click', () => this.handlePrintSuccessOk());
         
-        // Enter key support for name input with character limit validation
-        this.elements.nameInput.addEventListener('keypress', (e) => {
+        // Enter key support for dual line inputs
+        this.elements.nameInputLine1.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 this.handleNameConfirm();
             }
         });
 
-        // Real-time character counting and validation with HARD LIMIT
-        this.elements.nameInput.addEventListener('input', (e) => {
-            // CRITICAL: Hard stop at 25 characters - prevent further typing
-            if (e.target.value.length > 25) {
-                e.target.value = e.target.value.substring(0, 25);
+        this.elements.nameInputLine2.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                this.handleNameConfirm();
             }
-            this.updateNameCharacterCount();
         });
 
-        // Prevent typing beyond 25 characters on keypress
-        this.elements.nameInput.addEventListener('keypress', (e) => {
+        // Real-time character counting for Line 1
+        this.elements.nameInputLine1.addEventListener('input', (e) => {
+            // Hard stop at 10 characters
+            if (e.target.value.length > 10) {
+                e.target.value = e.target.value.substring(0, 10);
+            }
+            this.updateLine1CharacterCount();
+        });
+
+        // Real-time character counting for Line 2
+        this.elements.nameInputLine2.addEventListener('input', (e) => {
+            // Hard stop at 10 characters
+            if (e.target.value.length > 10) {
+                e.target.value = e.target.value.substring(0, 10);
+            }
+            this.updateLine2CharacterCount();
+        });
+
+        // Prevent typing beyond 10 characters on keypress for Line 1
+        this.elements.nameInputLine1.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 this.handleNameConfirm();
                 return;
             }
-            
-            // HARD LIMIT: Stop typing at 25 characters
-            if (e.target.value.length >= 25 && e.key !== 'Backspace' && e.key !== 'Delete') {
+            if (e.target.value.length >= 10 && e.key !== 'Backspace' && e.key !== 'Delete') {
                 e.preventDefault();
-                return false;
             }
+        });
+
+        // Prevent typing beyond 10 characters on keypress for Line 2
+        this.elements.nameInputLine2.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                this.handleNameConfirm();
+                return;
+            }
+            if (e.target.value.length >= 10 && e.key !== 'Backspace' && e.key !== 'Delete') {
+                e.preventDefault();
+            }
+        });
         });
 
         // Initialize character counter
@@ -1344,8 +1370,25 @@ class SnapMagicApp {
      */
     createHolographicCard(aiImageSrc, userName, userPrompt) {
         // Parse creator info and FORCE UPPERCASE
-        const creatorName = (userName || 'NOVA').toUpperCase(); // ALWAYS UPPERCASE
+        const fullName = (userName || 'NOVA').toUpperCase(); // ALWAYS UPPERCASE
         const creatorTitle = 'Creator';
+        
+        // Split name intelligently for two-line display
+        const nameParts = fullName.split(' ');
+        let nameHTML;
+        
+        if (nameParts.length >= 2) {
+            // Two lines: First name and rest
+            const firstName = nameParts[0];
+            const lastName = nameParts.slice(1).join(' ');
+            nameHTML = `
+                <div class="creator-name-line">${firstName}</div>
+                <div class="creator-name-line">${lastName}</div>
+            `;
+        } else {
+            // Single line
+            nameHTML = `<div class="creator-name-line">${fullName}</div>`;
+        }
         
         return `
         <div class="snapmagic-card animated" id="holoCard">
@@ -1383,7 +1426,7 @@ class SnapMagicApp {
                             <img src="/logos/2.png" alt="Partner" onerror="this.style.display='none'">
                         </div>
                         <div class="creator-info">
-                            <div class="creator-name">${creatorName}</div>
+                            <div class="creator-name">${nameHTML}</div>
                             <div class="creator-title">${creatorTitle}</div>
                         </div>
                     </div>
@@ -1873,6 +1916,15 @@ class SnapMagicApp {
             margin-bottom: 1px;
             text-transform: uppercase; /* FORCE UPPERCASE */
             letter-spacing: 0.5px; /* Better spacing for uppercase */
+        }
+
+        .creator-name-line {
+            line-height: 1.1;
+            margin-bottom: 1px;
+        }
+
+        .creator-name-line:last-child {
+            margin-bottom: 0;
         }
 
         .creator-title {
@@ -3521,50 +3573,64 @@ class SnapMagicApp {
     }
     
     /**
-     * Update name character count display with validation
+     * Update Line 1 character count display
      */
-    updateNameCharacterCount() {
-        const nameInput = this.elements.nameInput;
-        const charCount = this.elements.nameCharCount;
-        const confirmBtn = this.elements.nameConfirmBtn;
+    updateLine1CharacterCount() {
+        const nameInput = this.elements.nameInputLine1;
+        const charCount = this.elements.line1CharCount;
         
-        if (!nameInput || !charCount || !confirmBtn) return;
+        if (!nameInput || !charCount) return;
         
         const currentLength = nameInput.value.length;
-        const maxLength = 25;
-        const remaining = maxLength - currentLength;
+        const maxLength = 10;
         
-        // Update counter text
-        if (currentLength === 0) {
-            charCount.textContent = '25 characters max';
-            charCount.className = 'char-count';
-        } else if (remaining > 5) {
-            charCount.textContent = `${remaining} characters remaining`;
-            charCount.className = 'char-count';
-        } else if (remaining > 0) {
-            charCount.textContent = `${remaining} characters remaining`;
-            charCount.className = 'char-count warning';
-        } else {
-            charCount.textContent = 'Character limit reached';
-            charCount.className = 'char-count error';
-        }
+        charCount.textContent = `${currentLength}/${maxLength}`;
         
-        // Enable/disable confirm button based on length
-        if (currentLength > maxLength) {
-            confirmBtn.disabled = true;
-            confirmBtn.style.opacity = '0.5';
+        // Add warning class when approaching limit
+        if (currentLength >= 8) {
+            charCount.classList.add('warning');
         } else {
-            confirmBtn.disabled = false;
-            confirmBtn.style.opacity = '1';
+            charCount.classList.remove('warning');
         }
+    }
+
+    /**
+     * Update Line 2 character count display
+     */
+    updateLine2CharacterCount() {
+        const nameInput = this.elements.nameInputLine2;
+        const charCount = this.elements.line2CharCount;
+        
+        if (!nameInput || !charCount) return;
+        
+        const currentLength = nameInput.value.length;
+        const maxLength = 10;
+        
+        charCount.textContent = `${currentLength}/${maxLength}`;
+        
+        // Add warning class when approaching limit
+        if (currentLength >= 8) {
+            charCount.classList.add('warning');
+        } else {
+            charCount.classList.remove('warning');
+        }
+    }
+
+    /**
+     * Update both character counts
+     */
+    updateNameCharacterCount() {
+        this.updateLine1CharacterCount();
+        this.updateLine2CharacterCount();
     }
 
     // Name Input Modal Functions
     showNameInputModal() {
-        this.elements.nameInput.value = '';
+        this.elements.nameInputLine1.value = '';
+        this.elements.nameInputLine2.value = '';
         this.elements.nameInputModal.classList.remove('hidden');
-        this.elements.nameInput.focus();
-        this.updateNameCharacterCount(); // Reset character counter
+        this.elements.nameInputLine1.focus();
+        this.updateNameCharacterCount(); // Reset character counters
     }
     
     hideNameInputModal() {
@@ -3581,12 +3647,18 @@ class SnapMagicApp {
     }
     
     handleNameConfirm() {
-        const enteredName = this.elements.nameInput.value.trim();
+        const line1 = this.elements.nameInputLine1.value.trim();
+        const line2 = this.elements.nameInputLine2.value.trim();
         
-        // CRITICAL: Enforce 25-character limit for generation and download
-        if (enteredName.length > 25) {
-            this.showError('Name must be 25 characters or less for card generation');
-            return;
+        // Combine lines with space if both exist
+        let enteredName = line1;
+        if (line2) {
+            enteredName += ' ' + line2;
+        }
+        
+        // Use NOVA if no name entered
+        if (!enteredName) {
+            enteredName = 'NOVA';
         }
         
         this.pendingName = enteredName;
@@ -3607,9 +3679,20 @@ class SnapMagicApp {
     
     handleNameEdit() {
         this.hideNameConfirmModal();
-        this.elements.nameInput.value = this.pendingName;
+        
+        // Split the pending name back into lines for editing
+        const nameParts = this.pendingName.split(' ');
+        if (nameParts.length >= 2) {
+            this.elements.nameInputLine1.value = nameParts[0];
+            this.elements.nameInputLine2.value = nameParts.slice(1).join(' ').substring(0, 10);
+        } else {
+            this.elements.nameInputLine1.value = this.pendingName;
+            this.elements.nameInputLine2.value = '';
+        }
+        
         this.elements.nameInputModal.classList.remove('hidden');
-        this.elements.nameInput.focus();
+        this.elements.nameInputLine1.focus();
+        this.updateNameCharacterCount();
     }
     
     async generateCardWithName(userPrompt, userName) {
