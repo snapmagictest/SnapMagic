@@ -707,7 +707,6 @@ class SnapMagicApp {
                 e.preventDefault();
             }
         });
-        });
 
         // Initialize character counter
         this.updateNameCharacterCount();
