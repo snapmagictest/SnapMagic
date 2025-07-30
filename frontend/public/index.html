@@ -277,28 +277,14 @@
         .aws-logo {
             height: 32px;
             opacity: 0.9;
-            transition: opacity 0.3s ease;
+            transition: all 0.3s ease;
+            cursor: pointer;
         }
 
         .aws-logo:hover {
             opacity: 1;
-        }
-
-        .staff-override-btn {
-            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
-            color: white;
-            border: none;
-            padding: 0.5rem 1rem;
-            border-radius: 8px;
-            font-size: 0.9rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .staff-override-btn:hover {
-            background: linear-gradient(135deg, #ff5252, #d63031);
-            transform: translateY(-2px);
+            transform: scale(1.05);
+            filter: brightness(1.1);
         }
 
         /* Main Container */
@@ -1258,11 +1244,7 @@
         <header class="art-deco-header">
             <div class="snapmagic-logo">SnapMagic</div>
             <div class="header-right">
-                <!-- Staff Override Button -->
-                <button id="staffOverrideBtn" class="staff-override-btn" style="display: none;">
-                    🔓 Staff Override
-                </button>
-                <img src="https://d0.awsstatic.com/logos/powered-by-aws-white.png" alt="Powered by AWS" class="aws-logo">
+                <img src="https://d0.awsstatic.com/logos/powered-by-aws-white.png" alt="Powered by AWS" class="aws-logo" id="awsLogoOverride">
             </div>
         </header>
 

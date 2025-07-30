@@ -384,8 +384,8 @@ class SnapMagicApp {
             usernameInput: document.getElementById('username'),
             passwordInput: document.getElementById('password'),
             
-            // Staff override
-            staffOverrideBtn: document.getElementById('staffOverrideBtn'),
+            // AWS logo (hidden staff override trigger)
+            awsLogoOverride: document.getElementById('awsLogoOverride'),
             
             // Header (removed user elements for events)
             // usernameDisplay: document.getElementById('usernameDisplay'),
@@ -531,8 +531,8 @@ class SnapMagicApp {
         // Login form
         this.elements.loginForm.addEventListener('submit', (e) => this.handleLogin(e));
         
-        // Staff override button
-        this.elements.staffOverrideBtn.addEventListener('click', () => this.handleStaffOverride());
+        // AWS logo as hidden staff override trigger
+        this.elements.awsLogoOverride.addEventListener('click', () => this.handleStaffOverride());
         
         // Sign out (removed for events)
         // this.elements.signOutBtn.addEventListener('click', () => this.handleSignOut());
@@ -805,8 +805,7 @@ class SnapMagicApp {
                     token: data.token
                 };
                 
-                // Show staff override button for all users
-                this.elements.staffOverrideBtn.style.display = 'block';
+                // AWS logo is always visible - no need to show/hide for staff override
                 
                 // Update usage limits from login response
                 if (data.remaining) {
