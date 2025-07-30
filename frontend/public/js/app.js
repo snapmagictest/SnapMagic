@@ -4889,7 +4889,7 @@ class SnapMagicApp {
      * Open LinkedIn with clean post text (no URL)
      */
     openLinkedInForSharing() {
-        // Get event name and LinkedIn mentions from template configuration
+        // Get event name from template configuration and LinkedIn mentions from app configuration
         let eventName = 'AWS events'; // Default fallback
         let linkedinMentions = {
             eventOrganizer: { enabled: false, name: '', handle: '' },
@@ -4897,6 +4897,7 @@ class SnapMagicApp {
         };
         
         try {
+            // Get event name from template config
             if (window.SNAPMAGIC_CONFIG && window.SNAPMAGIC_CONFIG.TEMPLATE_CONFIG) {
                 let templateConfig;
                 if (typeof window.SNAPMAGIC_CONFIG.TEMPLATE_CONFIG === 'string') {
@@ -4908,13 +4909,23 @@ class SnapMagicApp {
                 if (templateConfig && templateConfig.eventName) {
                     eventName = templateConfig.eventName;
                 }
+            }
+            
+            // Get LinkedIn mentions from app config
+            if (window.SNAPMAGIC_CONFIG && window.SNAPMAGIC_CONFIG.APP_CONFIG) {
+                let appConfig;
+                if (typeof window.SNAPMAGIC_CONFIG.APP_CONFIG === 'string') {
+                    appConfig = JSON.parse(window.SNAPMAGIC_CONFIG.APP_CONFIG);
+                } else {
+                    appConfig = window.SNAPMAGIC_CONFIG.APP_CONFIG;
+                }
                 
-                if (templateConfig && templateConfig.linkedinMentions) {
-                    linkedinMentions = templateConfig.linkedinMentions;
+                if (appConfig && appConfig.linkedinMentions) {
+                    linkedinMentions = appConfig.linkedinMentions;
                 }
             }
         } catch (error) {
-            console.warn('Could not parse template config for event name or LinkedIn mentions:', error);
+            console.warn('Could not parse configuration for event name or LinkedIn mentions:', error);
         }
         
         console.log('🎯 Using event name for LinkedIn:', eventName);
