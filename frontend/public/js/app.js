@@ -4889,8 +4889,12 @@ class SnapMagicApp {
      * Open LinkedIn with clean post text (no URL)
      */
     openLinkedInForSharing() {
-        // Get event name from template configuration
+        // Get event name and LinkedIn mentions from template configuration
         let eventName = 'AWS events'; // Default fallback
+        let linkedinMentions = {
+            eventOrganizer: { enabled: false, name: '', handle: '' },
+            partnerOrCustomer: { enabled: false, name: '', handle: '' }
+        };
         
         try {
             if (window.SNAPMAGIC_CONFIG && window.SNAPMAGIC_CONFIG.TEMPLATE_CONFIG) {
@@ -4904,18 +4908,38 @@ class SnapMagicApp {
                 if (templateConfig && templateConfig.eventName) {
                     eventName = templateConfig.eventName;
                 }
+                
+                if (templateConfig && templateConfig.linkedinMentions) {
+                    linkedinMentions = templateConfig.linkedinMentions;
+                }
             }
         } catch (error) {
-            console.warn('Could not parse template config for event name:', error);
+            console.warn('Could not parse template config for event name or LinkedIn mentions:', error);
         }
         
         console.log('🎯 Using event name for LinkedIn:', eventName);
+        console.log('🎯 Using LinkedIn mentions:', linkedinMentions);
         
-        // Generate clean share text without URL and without prompt
-        // Create hashtag version of event name (remove spaces and special characters)
+        // Generate clean share text with LinkedIn mentions
         const eventHashtag = eventName.replace(/[^a-zA-Z0-9]/g, '');
         
-        const shareText = `🎴✨ Just created my AI-powered trading card with SnapMagic - Powered by AWS! Generated using Amazon Bedrock Nova Canvas at ${eventName}. #SnapMagic #AI #TradingCards #${eventHashtag} #AmazonBedrock #Nova #Innovation`;
+        // Build LinkedIn mentions dynamically
+        let mentionText = '';
+        
+        // Add event organizer mention if enabled
+        if (linkedinMentions.eventOrganizer && linkedinMentions.eventOrganizer.enabled) {
+            mentionText += ` @${linkedinMentions.eventOrganizer.name}`;
+        }
+        
+        // Add partner/customer mention if enabled
+        if (linkedinMentions.partnerOrCustomer && linkedinMentions.partnerOrCustomer.enabled) {
+            mentionText += ` @${linkedinMentions.partnerOrCustomer.name}`;
+        }
+        
+        // Fixed SnapMagic mention (hardcoded handle - will be updated when you provide it)
+        const snapmagicHandle = 'SnapMagic'; // TODO: Replace with actual LinkedIn handle when provided
+        
+        const shareText = `🎴✨ Just created my AI-powered trading card with @${snapmagicHandle} - Powered by AWS! Generated using Amazon Bedrock Nova Canvas at ${eventName}.${mentionText} #SnapMagic #AI #TradingCards #${eventHashtag} #AmazonBedrock #Nova #Innovation`;
         
         // LinkedIn sharing URL with text only (no URL parameter)
         const linkedInUrl = `https://www.linkedin.com/sharing/share-offsite/?text=${encodeURIComponent(shareText)}`;
