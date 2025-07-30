@@ -4856,7 +4856,7 @@ class SnapMagicApp {
                     </div>
 
                     <div class="linkedin-buttons">
-                        <button id="downloadAnimatedGifLinkedIn" class="art-deco-btn">🎬 Download Animated GIF</button>
+                        <button id="downloadAnimatedGifLinkedIn" class="art-deco-btn">🎬 Download Card</button>
                         <button id="shareToLinkedIn" class="art-deco-btn">📱 Share on LinkedIn</button>
                     </div>
                     
