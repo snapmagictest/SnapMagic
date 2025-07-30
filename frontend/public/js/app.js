@@ -4856,6 +4856,7 @@ class SnapMagicApp {
                     </div>
 
                     <div class="linkedin-buttons">
+                        <button id="downloadAnimatedGifLinkedIn" class="art-deco-btn">🎬 Download Animated GIF</button>
                         <button id="shareToLinkedIn" class="art-deco-btn">📱 Share on LinkedIn</button>
                     </div>
                     
@@ -4870,6 +4871,10 @@ class SnapMagicApp {
         document.body.insertAdjacentHTML('beforeend', modalHtml);
         
         // Setup event listeners
+        document.getElementById('downloadAnimatedGifLinkedIn').addEventListener('click', () => {
+            this.handleDownloadAnimatedGIF();
+        });
+        
         document.getElementById('shareToLinkedIn').addEventListener('click', () => {
             this.openLinkedInForSharing();
         });
