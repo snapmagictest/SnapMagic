@@ -1837,11 +1837,11 @@ def lambda_handler(event, context):
             request_headers = event.get('headers', {})
             client_ip = get_client_ip(request_headers)
             
-            # Get current override number
+            # Get current override number - OUTSIDE try block so it's always available
             current_override = get_current_override_number(client_ip)
             session_id_for_files = create_standard_session_id(client_ip, current_override)
             
-            logger.info(f"📚 Loading session cards for: {session_id_for_files}")
+            logger.info(f"📚 Loading ALL cards for device: {client_ip}")
             
             try:
                 # Import boto3 and create S3 client
@@ -1853,9 +1853,9 @@ def lambda_handler(event, context):
                     logger.error("❌ S3_BUCKET_NAME environment variable not set")
                     return create_error_response("S3 bucket not configured", 500)
                 
-                # List all cards for this session: cards/{IP}_override{N}_*
-                cards_prefix = f"cards/{client_ip}_override{current_override}_"
-                logger.info(f"🔍 Searching for cards with prefix: {cards_prefix}")
+                # List ALL cards for this device across ALL overrides
+                cards_prefix = f"cards/{client_ip}_override"
+                logger.info(f"🔍 Searching for ALL cards with prefix: {cards_prefix}")
                 
                 response = s3_client.list_objects_v2(
                     Bucket=bucket_name,
