@@ -1209,7 +1209,7 @@ class SnapMagicApp {
                 promptInput.value = data.prompt;
                 
                 // Show visual feedback instead of popup
-                this.showTextBoxFeedback('userPrompt');
+                this.showTextBoxFeedback('promptInput');
                 
                 // Optional: Show what seed was used (for debugging)
                 if (data.seed_used) {
@@ -1274,7 +1274,7 @@ class SnapMagicApp {
                 promptInput.value = data.prompt;
                 
                 // Show visual feedback instead of popup
-                this.showTextBoxFeedback('userPrompt');
+                this.showTextBoxFeedback('promptInput');
             } else {
                 throw new Error(data.error || 'Failed to optimize prompt');
             }
@@ -4339,6 +4339,12 @@ class SnapMagicApp {
     showTextBoxFeedback(textareaId) {
         const textarea = document.getElementById(textareaId);
         if (textarea) {
+            // Scroll to the textarea first
+            textarea.scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'center' 
+            });
+            
             // Add highlight animation
             textarea.classList.add('textarea-highlight');
             
