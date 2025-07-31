@@ -3730,7 +3730,7 @@ class SnapMagicApp {
         }
 
         try {
-            this.showProcessing('Generating animation prompt...');
+            // No modal processing - smooth UX like download buttons
             
             console.log('🔍 DEBUG: Current card data structure:', {
                 keys: Object.keys(this.generatedCardData),
@@ -3806,9 +3806,8 @@ class SnapMagicApp {
             console.error('❌ Error stack:', error.stack);
             // Show simple error without modal
             this.showError(`Failed to generate video prompt: ${error.message}`);
-        } finally {
-            this.hideProcessing();
         }
+        // No finally block with hideProcessing() - smooth UX
     }
 
     async handleOptimizeVideoPrompt() {
@@ -3833,7 +3832,7 @@ class SnapMagicApp {
         }
 
         try {
-            this.showProcessing('Optimizing animation prompt...');
+            // No modal processing - smooth UX like download buttons
             
             const apiBaseUrl = window.SNAPMAGIC_CONFIG.API_URL;
             const endpoint = `${apiBaseUrl}api/transform-card`;
@@ -3875,9 +3874,8 @@ class SnapMagicApp {
             console.error('❌ Video prompt optimization failed:', error);
             // Show simple error without modal
             this.showError(`Failed to optimize video prompt: ${error.message}`);
-        } finally {
-            this.hideProcessing();
         }
+        // No finally block with hideProcessing() - smooth UX
     }
 
     setupVideoGalleryNavigation() {
