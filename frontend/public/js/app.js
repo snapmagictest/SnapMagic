@@ -3156,16 +3156,8 @@ class SnapMagicApp {
         }
 
         try {
-            this.showProcessing('Creating your animated video... This takes about 2 minutes.');
-            
-            // Disable both video generation buttons
-            if (this.elements.generateVideoBtn) {
-                this.elements.generateVideoBtn.disabled = true;
-            }
-            const generateVideoBtn2 = document.getElementById('generateVideoBtn2');
-            if (generateVideoBtn2) {
-                generateVideoBtn2.disabled = true;
-            }
+            // Smooth button states - no blocking modal
+            this.setVideoButtonState('🔄 Starting video generation...', true);
             
             this.videoGenerationInProgress = true;
             
@@ -3217,10 +3209,10 @@ class SnapMagicApp {
                 
                 const invocationArn = data.metadata.invocation_arn;
                 console.log('🔍 Using full invocation ARN:', invocationArn);
-                this.startVideoPolling(invocationArn, data.metadata);
+                this.startSmoothVideoPolling(invocationArn, data.metadata);
             } else {
                 console.error('❌ Video generation failed:', data.error);
-                this.hideProcessing();
+                this.resetVideoButtonState();
                 
                 // Check for limit reached error
                 if (response.status === 429) {
@@ -3232,18 +3224,9 @@ class SnapMagicApp {
             }
         } catch (error) {
             console.error('❌ Video generation error:', error);
-            this.hideProcessing();
+            this.resetVideoButtonState();
             this.showError('Video generation failed. Please check your connection and try again.');
             this.videoGenerationInProgress = false;
-        } finally {
-            // Re-enable both video generation buttons
-            if (this.elements.generateVideoBtn) {
-                this.elements.generateVideoBtn.disabled = false;
-            }
-            const generateVideoBtn2 = document.getElementById('generateVideoBtn2');
-            if (generateVideoBtn2) {
-                generateVideoBtn2.disabled = false;
-            }
         }
     }
 
@@ -3298,6 +3281,84 @@ class SnapMagicApp {
                 reject(error);
             }
         });
+    }
+
+    /**
+     * Set video button state (like download buttons)
+     */
+    setVideoButtonState(text, disabled = false) {
+        // Update both video generation buttons
+        if (this.elements.generateVideoBtn) {
+            this.elements.generateVideoBtn.innerHTML = text;
+            this.elements.generateVideoBtn.disabled = disabled;
+        }
+        const generateVideoBtn2 = document.getElementById('generateVideoBtn2');
+        if (generateVideoBtn2) {
+            generateVideoBtn2.innerHTML = text;
+            generateVideoBtn2.disabled = disabled;
+        }
+    }
+
+    /**
+     * Reset video button to normal state
+     */
+    resetVideoButtonState() {
+        this.setVideoButtonState('🎬 Generate Video', false);
+        this.videoGenerationInProgress = false;
+    }
+
+    /**
+     * Start smooth video polling (no modal, button states only)
+     */
+    startSmoothVideoPolling(invocationArn, metadata) {
+        console.log('⏰ Starting smooth video polling...');
+        
+        // Initialize progress tracking
+        this.videoProgress = {
+            startTime: Date.now(),
+            invocationArn: invocationArn,
+            metadata: metadata
+        };
+        
+        // Start smooth progress updates
+        this.updateSmoothVideoProgress();
+        
+        // Wait 30 seconds before first check
+        setTimeout(() => {
+            console.log('⏰ 30 seconds elapsed - starting polling every 15 seconds');
+            this.pollVideoStatus(invocationArn, metadata, 0);
+        }, 30 * 1000);
+    }
+
+    /**
+     * Update video button with smooth progress (no modal)
+     */
+    updateSmoothVideoProgress() {
+        if (!this.videoProgress) return;
+        
+        const elapsed = Date.now() - this.videoProgress.startTime;
+        const elapsedSeconds = Math.floor(elapsed / 1000);
+        
+        let message = '';
+        
+        // Status progression based on time (no percentages shown)
+        if (elapsedSeconds <= 30) {
+            message = '🔄 Starting video generation...';
+        } else if (elapsedSeconds <= 90) {
+            message = '🔄 Processing animation...';
+        } else if (elapsedSeconds <= 150) {
+            message = '🔄 Finalizing video...';
+        } else {
+            message = '🔄 Almost ready...';
+        }
+        
+        // Update button text
+        this.setVideoButtonState(message, true);
+        
+        // Continue updating every 5 seconds until completion
+        if (this.videoGenerationInProgress) {
+            setTimeout(() => this.updateSmoothVideoProgress(), 5000);
+        }
     }
 
     /**
@@ -3419,9 +3480,7 @@ class SnapMagicApp {
         // Check if we've exceeded max retries
         if (retryCount >= MAX_RETRIES) {
             console.error(`❌ Max retries (${MAX_RETRIES}) exceeded for video polling`);
-            this.videoGenerationInProgress = false;
-            this.videoProgress = null; // Clean up progress tracking
-            this.hideProcessing();
+            this.resetVideoButtonState();
             this.showError(`Video generation timed out. Please try again.`);
             return;
         }
@@ -3477,8 +3536,8 @@ class SnapMagicApp {
             if (result.success && (result.status === 'SUCCEEDED' || result.status === 'completed') && result.video_url) {
                 console.log('✅ Video generation completed successfully!');
                 
-                // Complete progress bar
-                this.showVideoProgress(100, 'Video ready!');
+                // Reset button state (smooth UX)
+                this.resetVideoButtonState();
                 
                 // Update usage limits after video completion (same as cards)
                 if (result.remaining) {
@@ -3493,7 +3552,6 @@ class SnapMagicApp {
                 // Clean up progress tracking
                 this.videoProgress = null;
                 
-                this.hideProcessing();
                 this.displayGeneratedVideo(result.video_url, result); // Pass complete result data
                 this.videoGenerationInProgress = false;
             } else if (result.success && (result.status === 'IN_PROGRESS' || result.status === 'PROCESSING')) {
@@ -3507,7 +3565,7 @@ class SnapMagicApp {
             } else {
                 // Failed, blocked, or unknown status
                 console.error('❌ Video generation failed or blocked:', result);
-                this.hideProcessing();
+                this.resetVideoButtonState();
                 
                 // Check for content filter message specifically
                 if (result.message && result.message.includes('content filters')) {
@@ -3528,7 +3586,7 @@ class SnapMagicApp {
             
             if (nextRetryCount >= MAX_RETRIES) {
                 console.error(`❌ Max retries (${MAX_RETRIES}) exceeded due to errors`);
-                this.hideProcessing();
+                this.resetVideoButtonState();
                 this.showError(`Video status check failed after ${MAX_RETRIES} attempts. Error: ${error.message}`);
                 this.videoGenerationInProgress = false;
                 return;
@@ -3605,6 +3663,11 @@ class SnapMagicApp {
         this.addVideoToGallery(videoData);
         
         console.log('✅ Video displayed successfully and added to gallery');
+        
+        // Focus on video gallery after completion (smooth UX)
+        setTimeout(() => {
+            this.focusVideoGallery();
+        }, 500); // Small delay to ensure video is rendered
     }
 
     handleDownloadVideo() {
@@ -4363,6 +4426,26 @@ class SnapMagicApp {
             setTimeout(() => {
                 textarea.classList.remove('textarea-highlight');
             }, 1500);
+        }
+    }
+
+    /**
+     * Focus on video gallery after video generation completes
+     */
+    focusVideoGallery() {
+        // Focus on the video result area
+        const videoResult = this.elements.videoResult || document.querySelector('.video-result');
+        if (videoResult) {
+            videoResult.scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'center' 
+            });
+        } else if (this.elements.videoPlayer) {
+            // Fallback to video player
+            this.elements.videoPlayer.scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'center' 
+            });
         }
     }
 
