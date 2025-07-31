@@ -1823,7 +1823,14 @@ def lambda_handler(event, context):
                     # Sort by last modified (newest first)
                     sorted_objects = sorted(response['Contents'], key=lambda x: x['LastModified'], reverse=True)
                     
+                    # LIMIT to 3 cards max to prevent 413 errors while including base64 data
+                    max_cards = 3
+                    processed_cards = 0
+                    
                     for obj in sorted_objects:
+                        if processed_cards >= max_cards:
+                            break
+                            
                         # Generate presigned URL for secure access (1 hour expiration)
                         try:
                             presigned_url = s3_client.generate_presigned_url(
@@ -1835,20 +1842,38 @@ def lambda_handler(event, context):
                             logger.error(f"❌ Failed to generate presigned URL for {obj['Key']}: {str(e)}")
                             continue
                         
+                        # CRITICAL FIX: Download image and include base64 data for instant GIF generation
+                        try:
+                            # Download the image from S3
+                            s3_object = s3_client.get_object(Bucket=bucket_name, Key=obj['Key'])
+                            image_data = s3_object['Body'].read()
+                            
+                            # Convert to base64
+                            import base64
+                            image_base64 = base64.b64encode(image_data).decode('utf-8')
+                            
+                            logger.info(f"✅ Loaded base64 data for {obj['Key']} ({len(image_base64)} chars)")
+                            
+                        except Exception as e:
+                            logger.error(f"❌ Failed to load base64 data for {obj['Key']}: {str(e)}")
+                            # Fallback to presigned URL only
+                            image_base64 = None
+                        
                         # Create card data compatible with frontend gallery
-                        # REMOVED: base64 image data to prevent 413 errors with 3+ cards
-                        # GIF generation will load image data on-demand from S3 URLs
                         card_data = {
                             'finalImageSrc': presigned_url,
                             'imageSrc': presigned_url,
+                            'result': image_base64,  # CRITICAL: Include base64 for instant GIF generation
+                            'novaImageBase64': image_base64,  # Alternative field name
                             's3_key': obj['Key'],
                             'filename': obj['Key'].split('/')[-1],
                             'timestamp': obj['LastModified'].isoformat(),
                             'size': obj['Size']
                         }
                         cards.append(card_data)
+                        processed_cards += 1
                 
-                logger.info(f"✅ Found {len(cards)} cards for session")
+                logger.info(f"✅ Found {len(cards)} cards for session (limited to {max_cards} for instant GIF support)")
                 
                 return create_success_response({
                     'success': True,
