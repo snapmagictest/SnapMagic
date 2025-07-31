@@ -1080,8 +1080,6 @@ def lambda_handler(event, context):
                 action = 'generate_video'
             elif body_action == 'get_video_status':
                 action = 'get_video_status'
-            elif body_action == 'get_video_status':
-                action = 'get_video_status'
             elif body_action == 'apply_override':
                 action = 'apply_override'
             elif body_action == 'enter_competition':
@@ -1991,43 +1989,46 @@ def lambda_handler(event, context):
 # ========================================
 
 def create_success_response(data):
-    """Create standardized success response"""
+    """Create standardized success response with comprehensive CORS headers"""
     return {
         'statusCode': 200,
         'headers': {
             'Content-Type': 'application/json',
             'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Headers': 'Content-Type,Authorization,X-Auth-Token',
-            'Access-Control-Allow-Methods': 'GET,POST,OPTIONS'
+            'Access-Control-Allow-Headers': 'Content-Type,Authorization,X-Auth-Token,X-Device-ID,X-Amz-Date,X-Api-Key,X-Amz-Security-Token',
+            'Access-Control-Allow-Methods': 'GET,POST,OPTIONS,PUT,DELETE',
+            'Access-Control-Max-Age': '86400'
         },
         'body': json.dumps(data)
     }
 
 def create_error_response(message, status_code):
-    """Create standardized error response"""
+    """Create standardized error response with comprehensive CORS headers"""
     return {
         'statusCode': status_code,
         'headers': {
             'Content-Type': 'application/json',
             'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Headers': 'Content-Type,Authorization,X-Auth-Token',
-            'Access-Control-Allow-Methods': 'GET,POST,OPTIONS'
+            'Access-Control-Allow-Headers': 'Content-Type,Authorization,X-Auth-Token,X-Device-ID,X-Amz-Date,X-Api-Key,X-Amz-Security-Token',
+            'Access-Control-Allow-Methods': 'GET,POST,OPTIONS,PUT,DELETE',
+            'Access-Control-Max-Age': '86400'
         },
         'body': json.dumps({
             'success': False,
             'error': message,
-            'timestamp': '2025-07-12T18:30:00Z'
+            'timestamp': datetime.utcnow().isoformat() + 'Z'
         })
     }
 
 def create_cors_response():
-    """Handle CORS preflight requests"""
+    """Handle CORS preflight requests with comprehensive headers"""
     return {
         'statusCode': 200,
         'headers': {
             'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Headers': 'Content-Type,Authorization,X-Auth-Token',
-            'Access-Control-Allow-Methods': 'GET,POST,OPTIONS'
+            'Access-Control-Allow-Headers': 'Content-Type,Authorization,X-Auth-Token,X-Device-ID,X-Amz-Date,X-Api-Key,X-Amz-Security-Token',
+            'Access-Control-Allow-Methods': 'GET,POST,OPTIONS,PUT,DELETE',
+            'Access-Control-Max-Age': '86400'
         },
         'body': json.dumps({'message': 'CORS preflight successful'})
     }

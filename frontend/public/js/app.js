@@ -2897,6 +2897,19 @@ class SnapMagicApp {
             });
 
             console.log('📥 Response status:', response.status, response.statusText);
+            
+            // Handle different response statuses
+            if (!response.ok) {
+                if (response.status === 502) {
+                    console.warn(`⚠️ Backend temporarily unavailable (502), retrying... (attempt ${retryCount + 1}/${MAX_RETRIES})`);
+                    throw new Error(`Backend temporarily unavailable (502 Bad Gateway)`);
+                } else if (response.status >= 500) {
+                    console.warn(`⚠️ Server error (${response.status}), retrying... (attempt ${retryCount + 1}/${MAX_RETRIES})`);
+                    throw new Error(`Server error (${response.status})`);
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+            }
 
             if (!response.ok) {
                 const errorText = await response.text();
