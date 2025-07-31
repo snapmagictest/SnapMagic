@@ -1837,21 +1837,12 @@ def lambda_handler(event, context):
                             logger.error(f"❌ Failed to generate presigned URL for {obj['Key']}: {str(e)}")
                             continue
                         
-                        # Also get the actual image data as base64 for button functionality
-                        try:
-                            response_obj = s3_client.get_object(Bucket=bucket_name, Key=obj['Key'])
-                            image_data = response_obj['Body'].read()
-                            import base64
-                            image_base64 = base64.b64encode(image_data).decode('utf-8')
-                        except Exception as e:
-                            logger.error(f"❌ Failed to get image data for {obj['Key']}: {str(e)}")
-                            image_base64 = None
-                        
                         # Create card data compatible with frontend gallery
+                        # REMOVED: base64 image data to prevent 413 errors with 3+ cards
+                        # GIF generation will load image data on-demand from S3 URLs
                         card_data = {
                             'finalImageSrc': presigned_url,
                             'imageSrc': presigned_url,
-                            'result': image_base64,  # Add base64 data for button functionality
                             's3_key': obj['Key'],
                             'filename': obj['Key'].split('/')[-1],
                             'timestamp': obj['LastModified'].isoformat(),

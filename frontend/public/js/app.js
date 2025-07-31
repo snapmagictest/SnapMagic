@@ -32,6 +32,15 @@ class SnapMagicApp {
             totalVideos: 0 // Total videos in user's session
         };
         
+        // GIF cache for instant downloads
+        this.gifCache = new Map();
+        
+        // Background processing status
+        this.backgroundProcessing = {
+            gifGeneration: new Set(), // Track which cards are being processed
+            completed: new Set()      // Track which cards are ready
+        };
+        
         // Usage tracking
         this.usageLimits = {
             cards: { used: 0, total: 5 },
@@ -2232,6 +2241,142 @@ class SnapMagicApp {
         }
     }
 
+    /**
+     * Start background GIF generation for all gallery cards
+     * Provides instant downloads when user clicks
+     */
+    async startBackgroundGIFGeneration() {
+        console.log(`🎬 Background GIF generation started for ${this.userGallery.totalCards} cards`);
+        
+        // Process cards in parallel (but limit concurrent generations)
+        const maxConcurrent = 2; // Don't overwhelm the browser
+        const chunks = [];
+        
+        for (let i = 0; i < this.userGallery.cards.length; i += maxConcurrent) {
+            chunks.push(this.userGallery.cards.slice(i, i + maxConcurrent));
+        }
+        
+        for (const chunk of chunks) {
+            await Promise.allSettled(
+                chunk.map(card => this.generateGIFInBackground(card))
+            );
+        }
+        
+        console.log('✅ Background GIF generation completed for all cards');
+    }
+    
+    /**
+     * Generate GIF for a single card in background
+     */
+    async generateGIFInBackground(card) {
+        const cardId = card.s3_key || card.filename;
+        
+        try {
+            // Skip if already processing or completed
+            if (this.backgroundProcessing.gifGeneration.has(cardId) || 
+                this.backgroundProcessing.completed.has(cardId)) {
+                return;
+            }
+            
+            console.log(`🎬 Background: Starting GIF for card ${cardId}`);
+            this.backgroundProcessing.gifGeneration.add(cardId);
+            
+            // Update UI to show processing
+            this.updateGIFButtonStatus(cardId, 'generating');
+            
+            // Generate GIF
+            const gifBlob = await this.generateAnimatedCardGIF(card);
+            
+            // Cache the result
+            this.gifCache.set(cardId, gifBlob);
+            this.backgroundProcessing.completed.add(cardId);
+            this.backgroundProcessing.gifGeneration.delete(cardId);
+            
+            // Update UI to show ready
+            this.updateGIFButtonStatus(cardId, 'ready');
+            
+            console.log(`✅ Background: GIF ready for card ${cardId} (${Math.round(gifBlob.size / 1024)}KB)`);
+            
+        } catch (error) {
+            console.error(`❌ Background: GIF failed for card ${cardId}:`, error.message);
+            this.backgroundProcessing.gifGeneration.delete(cardId);
+            this.updateGIFButtonStatus(cardId, 'error');
+        }
+    }
+    
+    /**
+     * Update GIF download button status
+     */
+    updateGIFButtonStatus(cardId, status) {
+        // Find the download button for this card (if visible)
+        const downloadBtn = document.getElementById('downloadAnimatedBtn');
+        if (!downloadBtn) return;
+        
+        // Only update if this is the currently displayed card
+        const currentCard = this.userGallery.cards[this.userGallery.currentIndex];
+        const currentCardId = currentCard?.s3_key || currentCard?.filename;
+        
+        if (currentCardId === cardId) {
+            switch(status) {
+                case 'generating':
+                    downloadBtn.innerHTML = '🎬 Preparing GIF...';
+                    downloadBtn.disabled = false; // Still allow click (will wait)
+                    break;
+                case 'ready':
+                    downloadBtn.innerHTML = '⚡ Download GIF (Ready!)';
+                    downloadBtn.disabled = false;
+                    break;
+                case 'error':
+                    downloadBtn.innerHTML = '🎬 Download Animated GIF';
+                    downloadBtn.disabled = false; // Allow retry
+                    break;
+            }
+        }
+    }
+
+    /**
+     * Load image data on-demand for GIF generation
+     * Converts S3 URL to base64 data needed by canvas renderer
+     */
+    async loadImageDataForGIF(cardData) {
+        try {
+            console.log('🔄 Loading image data on-demand for GIF generation...');
+            
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            
+            return new Promise((resolve, reject) => {
+                img.onload = () => {
+                    try {
+                        // Convert S3 image to base64
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                        ctx.drawImage(img, 0, 0);
+                        
+                        // Extract base64 (remove data:image/png;base64, prefix)
+                        const base64Data = canvas.toDataURL('image/png').split(',')[1];
+                        
+                        console.log('✅ Image data loaded for GIF generation');
+                        resolve({
+                            ...cardData,
+                            result: base64Data  // Add base64 for GIF generation
+                        });
+                    } catch (error) {
+                        reject(new Error(`Canvas conversion failed: ${error.message}`));
+                    }
+                };
+                
+                img.onerror = () => reject(new Error('Failed to load image from S3 URL'));
+                img.src = cardData.imageSrc;  // Load from S3 URL
+            });
+        } catch (error) {
+            console.error('❌ Failed to load image data for GIF:', error);
+            throw error;
+        }
+    }
+
     // ========================================
     // ANIMATED GIF GENERATION SYSTEM
     // ========================================
@@ -2247,29 +2392,29 @@ class SnapMagicApp {
         
         try {
             console.log('🎬 Starting animated GIF download...');
+            
+            // Check if GIF is already cached (instant download)
+            const cardId = this.generatedCardData.s3_key || this.generatedCardData.filename || 'current';
+            const cachedGIF = this.gifCache.get(cardId);
+            
+            if (cachedGIF) {
+                console.log('⚡ Using cached GIF for instant download!');
+                this.downloadGIFBlob(cachedGIF);
+                return;
+            }
+            
+            // Not cached - generate on demand
+            console.log('🔄 GIF not cached - generating on demand...');
             this.showProcessing('Generating animated GIF...');
             
             // Generate animated GIF
             const gifBlob = await this.generateAnimatedCardGIF(this.generatedCardData);
             
-            // SIMPLE WORKING METHOD: Direct blob download (same as working PNG downloads)
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(gifBlob);
+            // Cache for future use
+            this.gifCache.set(cardId, gifBlob);
             
-            // Generate filename
-            const eventName = this.templateSystem?.templateConfig?.eventName || 'Event';
-            const sanitizedEventName = eventName.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
-            const today = new Date().toISOString().slice(0, 10);
-            const time = new Date().toTimeString().slice(0, 5).replace(':', '');
-            link.download = `snapmagic-${sanitizedEventName}-animated-card-${today}-${time}.gif`;
-            
-            // Trigger download (same method that works for PNG)
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            
-            // Clean up blob URL
-            URL.revokeObjectURL(link.href);
+            // Download immediately
+            this.downloadGIFBlob(gifBlob);
             
             this.hideProcessing();
             console.log('✅ Animated GIF download completed');
@@ -2279,6 +2424,29 @@ class SnapMagicApp {
             this.hideProcessing();
             this.showError(`Animated GIF generation failed: ${error.message}`);
         }
+    }
+    
+    /**
+     * Download GIF blob with consistent filename
+     */
+    downloadGIFBlob(gifBlob) {
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(gifBlob);
+        
+        // Generate filename
+        const eventName = this.templateSystem?.templateConfig?.eventName || 'Event';
+        const sanitizedEventName = eventName.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
+        const today = new Date().toISOString().slice(0, 10);
+        const time = new Date().toTimeString().slice(0, 5).replace(':', '');
+        link.download = `snapmagic-${sanitizedEventName}-animated-card-${today}-${time}.gif`;
+        
+        // Trigger download
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        // Clean up object URL
+        setTimeout(() => URL.revokeObjectURL(link.href), 1000);
     }
 
     /**
@@ -3254,22 +3422,33 @@ class SnapMagicApp {
         
         console.log(`🎬 Starting canvas-based animated GIF generation with optimized settings...`);
         console.log(`⚡ OPTIMIZED: ${frames} frames @ ${framerate}fps + quality 1 (target: <3MB)`);
-        console.log('🔍 DEBUG: cardData structure for canvas:', {
-            keys: Object.keys(cardData),
-            userName: cardData.userName,
-            user_name: cardData.user_name,
-            prompt: cardData.prompt,
-            hasResult: !!cardData.result
-        });
         
-        // Use current card data directly - no S3 URL conversion needed for canvas rendering
-        const activeCardData = this.generatedCardData;
+        // NEW: Handle both new cards and gallery cards
+        let activeCardData;
         
-        if (!activeCardData) {
-            throw new Error('No card data available');
+        if (cardData && cardData.result) {
+            // New card with base64 data
+            console.log('🆕 New card detected - using provided data');
+            activeCardData = cardData;
+        } else if (cardData && cardData.imageSrc && !cardData.result) {
+            // Gallery card without base64 - load on-demand
+            console.log('🔄 Gallery card detected - loading image data on-demand...');
+            activeCardData = await this.loadImageDataForGIF(cardData);
+        } else {
+            // Fallback to current card
+            console.log('🔄 Using current card data');
+            activeCardData = this.generatedCardData;
         }
         
-        console.log('✅ Using card data directly for canvas rendering (no S3 fetch needed)');
+        if (!activeCardData || !activeCardData.result) {
+            throw new Error('No image data available for GIF generation');
+        }
+        
+        console.log('🔍 DEBUG: Final cardData for canvas:', {
+            hasResult: !!activeCardData.result,
+            hasImageSrc: !!activeCardData.imageSrc,
+            s3Key: activeCardData.s3_key || 'none'
+        });
         
         // Initialize holographic canvas renderer with configurable dimensions
         const renderer = new HolographicCanvasRenderer();
@@ -3285,6 +3464,13 @@ class SnapMagicApp {
             size: Math.round(gifBlob.size / 1024) + 'KB',
             dimensions: 'Natural card size in 1080×1080 background',
             frames: frames,
+            framerate: framerate,
+            quality: 1,
+            method: 'HolographicCanvasRenderer'
+        });
+        
+        return gifBlob;
+    }
             framerate: framerate,
             method: 'Canvas-based (no fallback)',
             system: 'Direct HolographicCanvasRenderer'
@@ -4417,6 +4603,12 @@ class SnapMagicApp {
                     this.showGalleryNavigation();
                     
                     console.log(`🖼️ Displaying most recent card (${this.userGallery.currentIndex + 1} of ${this.userGallery.totalCards})`);
+                }
+                
+                // 🚀 PHASE 2: Background GIF Pre-Generation for Instant Downloads
+                if (this.userGallery.totalCards > 0) {
+                    console.log('🎬 Starting background GIF pre-generation for instant downloads...');
+                    this.startBackgroundGIFGeneration();
                 }
             } else {
                 console.log('📭 No existing cards found for this session');
