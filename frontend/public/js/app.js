@@ -1336,10 +1336,11 @@ class SnapMagicApp {
             // Create the beautiful holographic card directly
             const cardHTML = this.createHolographicCard(aiImageSrc, userName, userPrompt);
             
-            // Store the card data with proper user name mapping
+            // Store the card data with proper user name mapping AND preserve base64 data
             this.generatedCardData = {
                 ...data,
                 novaImageBase64: novaImageBase64,
+                result: novaImageBase64,     // CRITICAL: Preserve base64 for instant GIF generation
                 finalImageSrc: aiImageSrc,
                 cardHTML: cardHTML,
                 userName: userName,      // Store as userName for consistency
@@ -1374,7 +1375,11 @@ class SnapMagicApp {
                 <img src="${imageSrc}" alt="Generated Trading Card" class="result-image">
             `;
             
-            this.generatedCardData = { ...data, finalImageSrc: imageSrc };
+            this.generatedCardData = { 
+                ...data, 
+                finalImageSrc: imageSrc,
+                result: novaImageBase64  // CRITICAL: Preserve base64 for instant GIF generation
+            };
             this.addCardToGallery(this.generatedCardData);
             await this.storeFinalCardInS3(novaImageBase64, userPrompt, userName);
             
@@ -3671,17 +3676,29 @@ class SnapMagicApp {
         console.log(`🎬 Starting canvas-based animated GIF generation with optimized settings...`);
         console.log(`⚡ OPTIMIZED: ${frames} frames @ ${framerate}fps + quality 1 (target: <3MB)`);
         
-        // NEW: Handle both new cards and gallery cards
+        // NEW: Handle both new cards and gallery cards with better fallback
         let activeCardData;
         
         if (cardData && cardData.result) {
-            // New card with base64 data
-            console.log('🆕 New card detected - using provided data');
+            // New card with base64 data - INSTANT
+            console.log('🆕 New card detected - using provided base64 data');
             activeCardData = cardData;
-        } else if (cardData && cardData.imageSrc && !cardData.result) {
-            // Gallery card without base64 - load on-demand
-            console.log('🔄 Gallery card detected - loading image data on-demand...');
-            activeCardData = await this.loadImageDataForGIF(cardData);
+        } else if (cardData && cardData.novaImageBase64) {
+            // Card has base64 in different field - INSTANT
+            console.log('🆕 Card has base64 in novaImageBase64 field');
+            activeCardData = {
+                ...cardData,
+                result: cardData.novaImageBase64
+            };
+        } else if (cardData && (cardData.imageSrc || cardData.finalImageSrc)) {
+            // Gallery card without base64 - try to load (may fail due to CORS)
+            console.log('🔄 Gallery card detected - attempting to load image data...');
+            try {
+                activeCardData = await this.loadImageDataForGIF(cardData);
+            } catch (error) {
+                console.warn('⚠️ Failed to load image data for GIF generation:', error.message);
+                throw new Error(`Cannot generate GIF: ${error.message}. This card needs to be regenerated to support GIF downloads.`);
+            }
         } else {
             // Fallback to current card
             console.log('🔄 Using current card data');
