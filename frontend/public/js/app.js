@@ -1221,7 +1221,8 @@ class SnapMagicApp {
             
         } catch (error) {
             console.error('❌ Generate prompt error:', error);
-            this.showErrorModal('Prompt Generation Failed', 'Failed to generate prompt. Please try again.');
+            // Show simple error without modal
+            this.showError('Failed to generate prompt. Please try again.');
         } finally {
             // Reset button state
             generateBtn.disabled = false;
