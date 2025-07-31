@@ -2640,7 +2640,7 @@ class SnapMagicApp {
     }
     
     /**
-     * Prepare card for download (loading state)
+     * Prepare card for download (loading state with progress)
      */
     async prepareCardDownload(cardId) {
         console.log(`🔄 Preparing card ${cardId} for download...`);
@@ -2648,6 +2648,16 @@ class SnapMagicApp {
         // Set loading state
         this.cardDownloadStates.set(cardId, 'loading');
         this.updateDownloadButton(cardId);
+        
+        // Start progress animation
+        let progress = 0;
+        const progressInterval = setInterval(() => {
+            if (progress < 90) {
+                progress += Math.random() * 10;
+                progress = Math.min(90, progress);
+                this.updateDownloadButtonProgress(cardId, progress);
+            }
+        }, 300);
         
         try {
             // Get card data
@@ -2667,6 +2677,10 @@ class SnapMagicApp {
             console.log('🎬 Generating animated GIF...');
             const gifBlob = await this.generateAnimatedCardGIF(cardData);
             
+            // Complete progress
+            clearInterval(progressInterval);
+            this.updateDownloadButtonProgress(cardId, 100);
+            
             // Cache the result
             this.cardGIFCache.set(cardId, gifBlob);
             
@@ -2676,8 +2690,17 @@ class SnapMagicApp {
             
             console.log(`✅ Card ${cardId} prepared successfully (${Math.round(gifBlob.size / 1024)}KB)`);
             
+            // AUTO-DOWNLOAD: Download immediately when ready
+            setTimeout(() => {
+                console.log(`⚡ Auto-downloading card ${cardId}...`);
+                this.downloadCachedGIF(cardId);
+            }, 500); // Small delay to show the ready state briefly
+            
         } catch (error) {
             console.error(`❌ Failed to prepare card ${cardId}:`, error);
+            
+            // Clear progress interval
+            clearInterval(progressInterval);
             
             // Reset to prepare state on error
             this.cardDownloadStates.set(cardId, 'prepare');
@@ -2708,6 +2731,43 @@ class SnapMagicApp {
         // Update state to downloaded
         this.cardDownloadStates.set(cardId, 'downloaded');
         this.updateDownloadButton(cardId);
+    }
+    
+    /**
+     * Update download button with progress coloring during preparation
+     */
+    updateDownloadButtonProgress(cardId, progress) {
+        const downloadBtn = document.getElementById('downloadAnimatedBtn');
+        if (!downloadBtn) return;
+        
+        const currentCardId = this.generatedCardData.s3_key || this.generatedCardData.filename || 'current';
+        if (currentCardId !== cardId) return; // Only update if this is the current card
+        
+        const state = this.cardDownloadStates.get(cardId);
+        if (state !== 'loading') return; // Only update during loading
+        
+        console.log(`🎨 Updating progress for card ${cardId}: ${Math.round(progress)}%`);
+        
+        // Update button text with progress
+        downloadBtn.innerHTML = `🔄 Preparing... ${Math.round(progress)}%`;
+        
+        // Progressive gold coloring based on progress
+        const goldIntensity = progress / 100;
+        const greyIntensity = 1 - goldIntensity;
+        
+        // Blend from grey to gold as progress increases
+        downloadBtn.style.background = `linear-gradient(to right, 
+            rgba(255, 215, 0, ${goldIntensity}) ${progress}%, 
+            rgba(102, 102, 102, ${greyIntensity}) ${progress}%)`;
+        
+        // Add subtle glow that increases with progress
+        const glowIntensity = goldIntensity * 0.3;
+        downloadBtn.style.boxShadow = `0 0 ${10 * goldIntensity}px rgba(255, 215, 0, ${glowIntensity})`;
+        
+        // Keep disabled state
+        downloadBtn.disabled = true;
+        downloadBtn.style.cursor = 'not-allowed';
+        downloadBtn.style.opacity = '0.8';
     }
     
     /**
