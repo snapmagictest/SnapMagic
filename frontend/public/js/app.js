@@ -2443,7 +2443,7 @@ class SnapMagicApp {
         
         // Only update if this is the currently displayed card
         const currentCard = this.userGallery.cards[this.userGallery.currentIndex];
-        const currentCardId = currentCard?.s3_key || currentCard?.filename;
+        const currentCardId = currentCard?.s3_key || currentCard?.filename || 'current'; // FIXED: Added 'current' fallback
         
         if (currentCardId === cardId) {
             switch(status) {
@@ -2483,7 +2483,7 @@ class SnapMagicApp {
         
         // Check if current card is ready for instant download
         const currentCard = this.userGallery.cards[this.userGallery.currentIndex];
-        const currentCardId = currentCard?.s3_key || currentCard?.filename;
+        const currentCardId = currentCard?.s3_key || currentCard?.filename || 'current'; // FIXED: Added 'current' fallback
         const currentCardReady = currentCardId && this.gifCache.has(currentCardId);
         
         // Debug logging
@@ -2651,7 +2651,7 @@ class SnapMagicApp {
         
         // CRITICAL FIX: Verify that all cards actually have cached GIFs
         for (const card of this.userGallery.cards) {
-            const cardId = card.s3_key || card.filename;
+            const cardId = card.s3_key || card.filename || 'current'; // FIXED: Added 'current' fallback
             if (!this.gifCache.has(cardId)) {
                 console.warn(`⚠️ Card ${cardId} marked as complete but not in cache`);
                 return false; // Missing from cache
