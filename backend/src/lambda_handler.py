@@ -1928,7 +1928,7 @@ def lambda_handler(event, context):
             current_override = get_current_override_number(client_ip)
             session_id_for_files = create_standard_session_id(client_ip, current_override)
             
-            logger.info(f"🎬 Loading session videos for: {session_id_for_files}")
+            logger.info(f"🎬 Loading ALL videos for device: {client_ip}")
             
             try:
                 # Import boto3 and create S3 client
@@ -1942,9 +1942,9 @@ def lambda_handler(event, context):
                     logger.error("❌ VIDEO_BUCKET_NAME environment variable not set")
                     return create_error_response("Video bucket not configured", 500)
                 
-                # List all videos for this session: videos/{IP}_override{N}_*
-                videos_prefix = f"videos/{client_ip}_override{current_override}_"
-                logger.info(f"🔍 Searching for videos with prefix: {videos_prefix}")
+                # List ALL videos for this device across ALL overrides (like cards)
+                videos_prefix = f"videos/{client_ip}_override"
+                logger.info(f"🔍 Searching for ALL videos with prefix: {videos_prefix}")
                 
                 response = s3_client.list_objects_v2(
                     Bucket=video_bucket_name,
@@ -1985,7 +1985,7 @@ def lambda_handler(event, context):
                         }
                         videos.append(video_data)
                 
-                logger.info(f"✅ Found {len(videos)} videos for session")
+                logger.info(f"✅ Found {len(videos)} videos for device across all sessions")
                 
                 return create_success_response({
                     'success': True,
@@ -1995,8 +1995,8 @@ def lambda_handler(event, context):
                 })
                 
             except Exception as e:
-                logger.error(f"❌ Error loading session videos: {str(e)}")
-                return create_error_response('Failed to load session videos', 500)
+                logger.error(f"❌ Error loading videos for device: {str(e)}")
+                return create_error_response('Failed to load videos', 500)
 
         # ========================================
         # GENERATE PROMPT ENDPOINT

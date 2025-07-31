@@ -5343,7 +5343,7 @@ class SnapMagicApp {
      */
     async loadExistingVideos() {
         try {
-            console.log('📹 Loading existing videos from session...');
+            console.log('📹 Loading existing videos from all sessions...');
             
             const apiBaseUrl = window.SNAPMAGIC_CONFIG.API_URL;
             console.log('🔗 API Base URL:', apiBaseUrl);
@@ -5390,7 +5390,7 @@ class SnapMagicApp {
                 console.log(`🎬 Loaded ${this.videoGallery.totalVideos} videos into gallery`);
                 console.log(`🎬 Displaying most recent video (${this.videoGallery.currentIndex + 1} of ${this.videoGallery.totalVideos})`);
             } else {
-                console.log('📭 No existing videos found for this session');
+                console.log('📭 No existing videos found for this device');
                 console.log('📊 Response details:', data);
             }
         } catch (error) {
