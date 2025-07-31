@@ -1823,12 +1823,13 @@ def lambda_handler(event, context):
                     # Sort by last modified (newest first)
                     sorted_objects = sorted(response['Contents'], key=lambda x: x['LastModified'], reverse=True)
                     
-                    # LIMIT to 3 cards max to prevent 413 errors while including base64 data
-                    max_cards = 3
+                    # HYBRID APPROACH: Base64 for newest 3 cards, URLs for older cards
+                    max_cards_with_base64 = 3
+                    max_total_cards = 10  # Return up to 10 cards total
                     processed_cards = 0
                     
                     for obj in sorted_objects:
-                        if processed_cards >= max_cards:
+                        if processed_cards >= max_total_cards:
                             break
                             
                         # Generate presigned URL for secure access (1 hour expiration)
@@ -1842,38 +1843,40 @@ def lambda_handler(event, context):
                             logger.error(f"❌ Failed to generate presigned URL for {obj['Key']}: {str(e)}")
                             continue
                         
-                        # CRITICAL FIX: Download image and include base64 data for instant GIF generation
-                        try:
-                            # Download the image from S3
-                            s3_object = s3_client.get_object(Bucket=bucket_name, Key=obj['Key'])
-                            image_data = s3_object['Body'].read()
-                            
-                            # Convert to base64
-                            import base64
-                            image_base64 = base64.b64encode(image_data).decode('utf-8')
-                            
-                            logger.info(f"✅ Loaded base64 data for {obj['Key']} ({len(image_base64)} chars)")
-                            
-                        except Exception as e:
-                            logger.error(f"❌ Failed to load base64 data for {obj['Key']}: {str(e)}")
-                            # Fallback to presigned URL only
-                            image_base64 = None
+                        # Include base64 data for newest cards only (instant GIF generation)
+                        image_base64 = None
+                        if processed_cards < max_cards_with_base64:
+                            try:
+                                # Download the image from S3
+                                s3_object = s3_client.get_object(Bucket=bucket_name, Key=obj['Key'])
+                                image_data = s3_object['Body'].read()
+                                
+                                # Convert to base64
+                                import base64
+                                image_base64 = base64.b64encode(image_data).decode('utf-8')
+                                
+                                logger.info(f"✅ Loaded base64 data for {obj['Key']} ({len(image_base64)} chars)")
+                                
+                            except Exception as e:
+                                logger.error(f"❌ Failed to load base64 data for {obj['Key']}: {str(e)}")
+                                # Continue without base64 - will use URL only
                         
-                        # Create card data compatible with frontend gallery
+                        # Create card data
                         card_data = {
                             'finalImageSrc': presigned_url,
                             'imageSrc': presigned_url,
-                            'result': image_base64,  # CRITICAL: Include base64 for instant GIF generation
+                            'result': image_base64,  # Base64 for newest 3, None for older
                             'novaImageBase64': image_base64,  # Alternative field name
                             's3_key': obj['Key'],
                             'filename': obj['Key'].split('/')[-1],
                             'timestamp': obj['LastModified'].isoformat(),
-                            'size': obj['Size']
+                            'size': obj['Size'],
+                            'has_instant_gif': image_base64 is not None  # Flag for frontend
                         }
                         cards.append(card_data)
                         processed_cards += 1
                 
-                logger.info(f"✅ Found {len(cards)} cards for session (limited to {max_cards} for instant GIF support)")
+                logger.info(f"✅ Found {len(cards)} cards for session (newest {max_cards_with_base64} with instant GIF support, up to {max_total_cards} total)")
                 
                 return create_success_response({
                     'success': True,
