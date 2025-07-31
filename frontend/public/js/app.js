@@ -1358,6 +1358,11 @@ class SnapMagicApp {
             
             console.log('✅ Holographic card displayed successfully!');
             
+            // Focus on card gallery after completion (smooth UX)
+            setTimeout(() => {
+                this.focusCardGallery();
+            }, 500); // Small delay to ensure card is rendered
+            
         } catch (error) {
             console.error('❌ Card display failed:', error);
             
@@ -1378,6 +1383,11 @@ class SnapMagicApp {
             // Set initial download button state for new card (fallback case)
             const cardId = this.generatedCardData.s3_key || this.generatedCardData.filename || 'current';
             this.updateDownloadButton(cardId);
+            
+            // Focus on card gallery after completion (fallback case)
+            setTimeout(() => {
+                this.focusCardGallery();
+            }, 500);
         }
         
         this.elements.resultActions.classList.remove('hidden');
@@ -4443,6 +4453,20 @@ class SnapMagicApp {
         } else if (this.elements.videoPlayer) {
             // Fallback to video player
             this.elements.videoPlayer.scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'center' 
+            });
+        }
+    }
+
+    /**
+     * Focus on card gallery after card generation completes
+     */
+    focusCardGallery() {
+        // Focus on the card result area
+        const cardResult = this.elements.resultContainer;
+        if (cardResult) {
+            cardResult.scrollIntoView({ 
                 behavior: 'smooth', 
                 block: 'center' 
             });
