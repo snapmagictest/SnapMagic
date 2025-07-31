@@ -1348,6 +1348,13 @@ class SnapMagicApp {
             // Store in S3
             await this.storeFinalCardInS3(novaImageBase64, userPrompt, userName);
             
+            // 🎬 INSTANT GIF SOLUTION: Start background GIF generation for new card
+            console.log('🎬 Starting background GIF generation for new card...');
+            this.generateGIFInBackground(this.generatedCardData).catch(error => {
+                console.warn('⚠️ Background GIF generation failed for new card:', error);
+                // Don't throw - this shouldn't break the card display
+            });
+            
             // Display the holographic card
             this.elements.resultContainer.innerHTML = cardHTML;
             
@@ -1365,6 +1372,13 @@ class SnapMagicApp {
             this.generatedCardData = { ...data, finalImageSrc: imageSrc };
             this.addCardToGallery(this.generatedCardData);
             await this.storeFinalCardInS3(novaImageBase64, userPrompt, userName);
+            
+            // 🎬 INSTANT GIF SOLUTION: Start background GIF generation for new card (fallback case)
+            console.log('🎬 Starting background GIF generation for new card (fallback)...');
+            this.generateGIFInBackground(this.generatedCardData).catch(error => {
+                console.warn('⚠️ Background GIF generation failed for new card (fallback):', error);
+                // Don't throw - this shouldn't break the card display
+            });
         }
         
         this.elements.resultActions.classList.remove('hidden');
