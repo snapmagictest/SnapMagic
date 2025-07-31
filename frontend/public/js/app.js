@@ -35,11 +35,16 @@ class SnapMagicApp {
         // GIF cache for instant downloads
         this.gifCache = new Map();
         
-        // Background processing status
+        // Background processing status with progress tracking
         this.backgroundProcessing = {
             gifGeneration: new Set(), // Track which cards are being processed
-            completed: new Set()      // Track which cards are ready
+            completed: new Set(),     // Track which cards are ready
+            progress: new Map(),      // Track progress for each card (0-100)
+            waitingQueue: new Map()   // Track users waiting for specific cards
         };
+        
+        // Start progress update timer
+        this.startProgressUpdateTimer();
         
         // Usage tracking
         this.usageLimits = {
@@ -2280,7 +2285,7 @@ class SnapMagicApp {
     }
     
     /**
-     * Generate GIF for a single card in background
+     * Generate GIF for a single card in background with progress tracking
      */
     async generateGIFInBackground(card) {
         const cardId = card.s3_key || card.filename;
@@ -2294,12 +2299,27 @@ class SnapMagicApp {
             
             console.log(`🎬 Background: Starting GIF for card ${cardId}`);
             this.backgroundProcessing.gifGeneration.add(cardId);
+            this.backgroundProcessing.progress.set(cardId, 0);
             
             // Update UI to show processing
             this.updateGIFButtonStatus(cardId, 'generating');
             
+            // Simulate progress updates during generation
+            const progressUpdater = setInterval(() => {
+                const currentProgress = this.backgroundProcessing.progress.get(cardId) || 0;
+                if (currentProgress < 90) {
+                    const newProgress = Math.min(90, currentProgress + Math.random() * 10);
+                    this.backgroundProcessing.progress.set(cardId, newProgress);
+                }
+            }, 300);
+            
             // Generate GIF
             const gifBlob = await this.generateAnimatedCardGIF(card);
+            
+            clearInterval(progressUpdater);
+            
+            // Complete progress
+            this.backgroundProcessing.progress.set(cardId, 100);
             
             // Cache the result
             this.gifCache.set(cardId, gifBlob);
@@ -2309,20 +2329,45 @@ class SnapMagicApp {
             // Update UI to show ready
             this.updateGIFButtonStatus(cardId, 'ready');
             
+            // Notify any waiting users
+            this.notifyWaitingUsers(cardId, gifBlob);
+            
             console.log(`✅ Background: GIF ready for card ${cardId} (${Math.round(gifBlob.size / 1024)}KB)`);
             
         } catch (error) {
             console.log(`⚠️ Background: GIF failed for card ${cardId}: ${error.message}`);
             this.backgroundProcessing.gifGeneration.delete(cardId);
+            this.backgroundProcessing.progress.delete(cardId);
             this.updateGIFButtonStatus(cardId, 'error');
             
+            // Notify waiting users of error
+            this.notifyWaitingUsers(cardId, null, error);
+            
             // Don't throw error - continue with other cards
-            // This is background processing, failures shouldn't break the app
         }
     }
     
     /**
-     * Update GIF download button status
+     * Notify users waiting for a specific GIF
+     */
+    notifyWaitingUsers(cardId, gifBlob, error = null) {
+        const waitingUsers = this.backgroundProcessing.waitingQueue.get(cardId);
+        if (waitingUsers && waitingUsers.length > 0) {
+            waitingUsers.forEach(({ resolve, reject }) => {
+                if (error) {
+                    reject(error);
+                } else {
+                    resolve(gifBlob);
+                }
+            });
+            
+            // Clear the waiting queue
+            this.backgroundProcessing.waitingQueue.delete(cardId);
+        }
+    }
+    
+    /**
+     * Update GIF download button status with progress
      */
     updateGIFButtonStatus(cardId, status) {
         // Find the download button for this card (if visible)
@@ -2336,19 +2381,52 @@ class SnapMagicApp {
         if (currentCardId === cardId) {
             switch(status) {
                 case 'generating':
-                    downloadBtn.innerHTML = '🎬 Preparing GIF...';
-                    downloadBtn.disabled = false; // Still allow click (will wait)
+                    const progress = this.backgroundProcessing.progress.get(cardId) || 0;
+                    downloadBtn.innerHTML = `🎬 Preparing GIF... ${Math.round(progress)}%`;
+                    downloadBtn.disabled = false; // Still allow click (will show progress)
                     break;
                 case 'ready':
                     downloadBtn.innerHTML = '⚡ Download GIF (Ready!)';
                     downloadBtn.disabled = false;
                     break;
                 case 'error':
-                    downloadBtn.innerHTML = '🎬 Download Animated GIF';
+                    downloadBtn.innerHTML = '🎬 Download Animated GIF (Retry)';
                     downloadBtn.disabled = false; // Allow retry
+                    break;
+                default:
+                    downloadBtn.innerHTML = '🎬 Download Animated GIF';
+                    downloadBtn.disabled = false;
                     break;
             }
         }
+        
+        // Also update any gallery buttons if they exist
+        this.updateGalleryGIFButtons(cardId, status);
+    }
+    
+    /**
+     * Start periodic progress updates for UI
+     */
+    startProgressUpdateTimer() {
+        setInterval(() => {
+            // Update button progress for currently displayed card
+            if (this.userGallery.cards.length > 0) {
+                const currentCard = this.userGallery.cards[this.userGallery.currentIndex];
+                const cardId = currentCard?.s3_key || currentCard?.filename;
+                
+                if (cardId && this.backgroundProcessing.gifGeneration.has(cardId)) {
+                    this.updateGIFButtonStatus(cardId, 'generating');
+                }
+            }
+        }, 1000); // Update every second
+    }
+
+    /**
+     * Update gallery GIF buttons with progress
+     */
+    updateGalleryGIFButtons(cardId, status) {
+        // This can be extended later for gallery-specific buttons
+        // For now, we focus on the main download button
     }
 
     /**
@@ -2432,7 +2510,7 @@ class SnapMagicApp {
     // ========================================
     
     /**
-     * Download animated GIF for current card
+     * Download animated GIF for current card with progress tracking
      */
     async handleDownloadAnimatedGIF() {
         if (!this.generatedCardData) {
@@ -2443,36 +2521,143 @@ class SnapMagicApp {
         try {
             console.log('🎬 Starting animated GIF download...');
             
-            // Check if GIF is already cached (instant download)
             const cardId = this.generatedCardData.s3_key || this.generatedCardData.filename || 'current';
-            const cachedGIF = this.gifCache.get(cardId);
             
+            // Check if GIF is already cached (instant download)
+            const cachedGIF = this.gifCache.get(cardId);
             if (cachedGIF) {
                 console.log('⚡ Using cached GIF for instant download!');
                 this.downloadGIFBlob(cachedGIF);
                 return;
             }
             
-            // Not cached - generate on demand
-            console.log('🔄 GIF not cached - generating on demand...');
-            this.showProcessing('Generating animated GIF...');
+            // Check if GIF is currently being generated in background
+            if (this.backgroundProcessing.gifGeneration.has(cardId)) {
+                console.log('🔄 GIF is being generated in background - showing progress...');
+                await this.waitForBackgroundGIF(cardId);
+                return;
+            }
             
-            // Generate animated GIF
-            const gifBlob = await this.generateAnimatedCardGIF(this.generatedCardData);
-            
-            // Cache for future use
-            this.gifCache.set(cardId, gifBlob);
-            
-            // Download immediately
-            this.downloadGIFBlob(gifBlob);
-            
-            this.hideProcessing();
-            console.log('✅ Animated GIF download completed');
+            // Not cached and not in progress - generate on demand with progress
+            console.log('🔄 GIF not cached - generating on demand with progress...');
+            await this.generateGIFWithProgress(cardId);
             
         } catch (error) {
             console.error('❌ Animated GIF download failed:', error);
             this.hideProcessing();
             this.showError(`Animated GIF generation failed: ${error.message}`);
+        }
+    }
+    
+    /**
+     * Wait for background GIF generation with progress updates
+     */
+    async waitForBackgroundGIF(cardId) {
+        return new Promise((resolve, reject) => {
+            // Add to waiting queue
+            if (!this.backgroundProcessing.waitingQueue.has(cardId)) {
+                this.backgroundProcessing.waitingQueue.set(cardId, []);
+            }
+            this.backgroundProcessing.waitingQueue.get(cardId).push({ resolve, reject });
+            
+            // Show initial progress
+            const currentProgress = this.backgroundProcessing.progress.get(cardId) || 0;
+            this.showGIFProgress(currentProgress);
+            
+            // Set up progress monitoring
+            const progressInterval = setInterval(() => {
+                const progress = this.backgroundProcessing.progress.get(cardId) || 0;
+                this.updateGIFProgress(progress);
+                
+                // Check if completed
+                if (this.backgroundProcessing.completed.has(cardId)) {
+                    clearInterval(progressInterval);
+                    this.hideProcessing();
+                    
+                    const cachedGIF = this.gifCache.get(cardId);
+                    if (cachedGIF) {
+                        this.downloadGIFBlob(cachedGIF);
+                        resolve();
+                    } else {
+                        reject(new Error('GIF generation completed but not found in cache'));
+                    }
+                }
+            }, 500); // Update every 500ms
+            
+            // Timeout after 2 minutes
+            setTimeout(() => {
+                clearInterval(progressInterval);
+                this.hideProcessing();
+                reject(new Error('GIF generation timeout'));
+            }, 120000);
+        });
+    }
+    
+    /**
+     * Generate GIF on demand with progress tracking
+     */
+    async generateGIFWithProgress(cardId) {
+        this.backgroundProcessing.gifGeneration.add(cardId);
+        this.backgroundProcessing.progress.set(cardId, 0);
+        
+        this.showGIFProgress(0);
+        
+        try {
+            // Simulate progress updates during generation
+            const progressUpdater = setInterval(() => {
+                const currentProgress = this.backgroundProcessing.progress.get(cardId) || 0;
+                if (currentProgress < 90) {
+                    const newProgress = Math.min(90, currentProgress + Math.random() * 15);
+                    this.backgroundProcessing.progress.set(cardId, newProgress);
+                    this.updateGIFProgress(newProgress);
+                }
+            }, 200);
+            
+            // Generate animated GIF
+            const gifBlob = await this.generateAnimatedCardGIF(this.generatedCardData);
+            
+            clearInterval(progressUpdater);
+            
+            // Complete progress
+            this.backgroundProcessing.progress.set(cardId, 100);
+            this.updateGIFProgress(100);
+            
+            // Cache for future use
+            this.gifCache.set(cardId, gifBlob);
+            this.backgroundProcessing.completed.add(cardId);
+            this.backgroundProcessing.gifGeneration.delete(cardId);
+            
+            // Download immediately
+            setTimeout(() => {
+                this.hideProcessing();
+                this.downloadGIFBlob(gifBlob);
+            }, 500); // Brief pause to show 100%
+            
+            console.log('✅ Animated GIF download completed');
+            
+        } catch (error) {
+            this.backgroundProcessing.gifGeneration.delete(cardId);
+            this.backgroundProcessing.progress.delete(cardId);
+            throw error;
+        }
+    }
+    
+    /**
+     * Show GIF generation progress
+     */
+    showGIFProgress(progress) {
+        this.showProcessing(`Generating animated GIF... ${Math.round(progress)}%`);
+    }
+    
+    /**
+     * Update GIF generation progress
+     */
+    updateGIFProgress(progress) {
+        const processingModal = document.getElementById('processingModal');
+        const processingText = document.getElementById('processingText');
+        
+        if (processingModal && processingText) {
+            processingText.textContent = `Generating animated GIF... ${Math.round(progress)}%`;
         }
     }
     
