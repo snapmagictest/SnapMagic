@@ -3471,13 +3471,6 @@ class SnapMagicApp {
         
         return gifBlob;
     }
-            framerate: framerate,
-            method: 'Canvas-based (no fallback)',
-            system: 'Direct HolographicCanvasRenderer'
-        });
-        
-        return gifBlob;
-    }
 
     /**
      * 🎯 PARALLEL SYSTEM: Generate animated GIF using hidden card approach
