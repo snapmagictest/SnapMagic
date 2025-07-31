@@ -2302,14 +2302,6 @@ class SnapMagicApp {
                 return;
             }
             
-            // Check if this card has base64 data available
-            const hasBase64 = card.result || card.novaImageBase64;
-            if (!hasBase64) {
-                console.log(`⚠️ Background: Skipping legacy card ${cardId} - no base64 data available`);
-                this.updateGIFButtonStatus(cardId, 'legacy');
-                return;
-            }
-            
             console.log(`🎬 Background: Starting GIF for card ${cardId}`);
             this.backgroundProcessing.gifGeneration.add(cardId);
             this.backgroundProcessing.progress.set(cardId, 0);
@@ -2326,7 +2318,7 @@ class SnapMagicApp {
                 }
             }, 300);
             
-            // Generate GIF
+            // Generate GIF (this will handle both new and old cards automatically)
             const gifBlob = await this.generateAnimatedCardGIF(card);
             
             clearInterval(progressUpdater);
@@ -2351,13 +2343,7 @@ class SnapMagicApp {
             console.log(`⚠️ Background: GIF failed for card ${cardId}: ${error.message}`);
             this.backgroundProcessing.gifGeneration.delete(cardId);
             this.backgroundProcessing.progress.delete(cardId);
-            
-            // Check if it's a legacy card issue
-            if (error.message.includes('CORS') || error.message.includes('Tainted canvases')) {
-                this.updateGIFButtonStatus(cardId, 'legacy');
-            } else {
-                this.updateGIFButtonStatus(cardId, 'error');
-            }
+            this.updateGIFButtonStatus(cardId, 'error');
             
             // Notify waiting users of error
             this.notifyWaitingUsers(cardId, null, error);
@@ -2408,10 +2394,6 @@ class SnapMagicApp {
                     downloadBtn.innerHTML = '⚡ Download GIF (Ready!)';
                     downloadBtn.disabled = false;
                     break;
-                case 'legacy':
-                    downloadBtn.innerHTML = '🔄 Legacy Card (Click for Info)';
-                    downloadBtn.disabled = false;
-                    break;
                 case 'error':
                     downloadBtn.innerHTML = '🎬 Download Animated GIF (Retry)';
                     downloadBtn.disabled = false; // Allow retry
@@ -2454,77 +2436,41 @@ class SnapMagicApp {
 
     /**
      * Load image data on-demand for GIF generation
-     * Converts S3 URL to base64 data needed by canvas renderer
+     * Simple approach: Download image and convert to base64
      */
     async loadImageDataForGIF(cardData) {
         try {
-            console.log('🔄 Loading image data on-demand for GIF generation...');
+            console.log('🔄 Loading image data for GIF generation...');
             
-            // First try to load with CORS
-            const img = new Image();
-            img.crossOrigin = 'anonymous';
+            // Use fetch to download the image (bypasses CORS issues)
+            const response = await fetch(cardData.imageSrc || cardData.finalImageSrc);
+            
+            if (!response.ok) {
+                throw new Error(`Failed to fetch image: ${response.status}`);
+            }
+            
+            // Convert to blob then to base64
+            const blob = await response.blob();
             
             return new Promise((resolve, reject) => {
-                img.onload = () => {
-                    try {
-                        // Convert S3 image to base64
-                        const canvas = document.createElement('canvas');
-                        const ctx = canvas.getContext('2d');
-                        canvas.width = img.width;
-                        canvas.height = img.height;
-                        ctx.drawImage(img, 0, 0);
-                        
-                        // Extract base64 (remove data:image/png;base64, prefix)
-                        const base64Data = canvas.toDataURL('image/png').split(',')[1];
-                        
-                        console.log('✅ Image data loaded for GIF generation');
-                        resolve({
-                            ...cardData,
-                            result: base64Data  // Add base64 for GIF generation
-                        });
-                    } catch (error) {
-                        reject(new Error(`Canvas conversion failed: ${error.message}`));
-                    }
+                const reader = new FileReader();
+                reader.onload = () => {
+                    // Extract base64 (remove data:image/png;base64, prefix)
+                    const base64Data = reader.result.split(',')[1];
+                    
+                    console.log('✅ Image data loaded for GIF generation');
+                    resolve({
+                        ...cardData,
+                        result: base64Data  // Add base64 for GIF generation
+                    });
                 };
-                
-                img.onerror = () => {
-                    console.log('⚠️ CORS failed, trying without crossOrigin...');
-                    
-                    // Fallback: Try without CORS (for same-origin or properly configured S3)
-                    const fallbackImg = new Image();
-                    
-                    fallbackImg.onload = () => {
-                        try {
-                            const canvas = document.createElement('canvas');
-                            const ctx = canvas.getContext('2d');
-                            canvas.width = fallbackImg.width;
-                            canvas.height = fallbackImg.height;
-                            ctx.drawImage(fallbackImg, 0, 0);
-                            
-                            const base64Data = canvas.toDataURL('image/png').split(',')[1];
-                            
-                            console.log('✅ Image data loaded (fallback method)');
-                            resolve({
-                                ...cardData,
-                                result: base64Data
-                            });
-                        } catch (error) {
-                            reject(new Error(`Fallback canvas conversion failed: ${error.message}`));
-                        }
-                    };
-                    
-                    fallbackImg.onerror = () => {
-                        reject(new Error('Failed to load image from S3 URL (both CORS and fallback failed)'));
-                    };
-                    
-                    fallbackImg.src = cardData.imageSrc;
-                };
-                
-                img.src = cardData.imageSrc;  // Load from S3 URL
+                reader.onerror = () => reject(new Error('Failed to convert image to base64'));
+                reader.readAsDataURL(blob);
             });
+            
         } catch (error) {
             console.error('❌ Failed to load image data for GIF:', error);
-            throw error;
+            throw new Error(`Failed to load image for GIF generation: ${error.message}`);
         }
     }
 
@@ -2554,15 +2500,6 @@ class SnapMagicApp {
                 return;
             }
             
-            // Check if this card has base64 data available
-            const hasBase64 = this.generatedCardData.result || this.generatedCardData.novaImageBase64;
-            
-            if (!hasBase64) {
-                // Legacy card without base64 - show helpful message
-                this.showError(`🔄 Legacy Card Detected\n\nThis card was created before our instant GIF system was implemented. To enable instant GIF downloads:\n\n1. Note down your prompt: "${this.generatedCardData.prompt || 'Your original prompt'}"\n2. Generate a new card with the same prompt\n3. New cards support instant GIF downloads!\n\nWe're working on a system update to fix legacy cards automatically.`);
-                return;
-            }
-            
             // Check if GIF is currently being generated in background
             if (this.backgroundProcessing.gifGeneration.has(cardId)) {
                 console.log('🔄 GIF is being generated in background - showing progress...');
@@ -2577,13 +2514,7 @@ class SnapMagicApp {
         } catch (error) {
             console.error('❌ Animated GIF download failed:', error);
             this.hideProcessing();
-            
-            // Check if it's a CORS/legacy card issue
-            if (error.message.includes('CORS') || error.message.includes('Tainted canvases')) {
-                this.showError(`🔄 Legacy Card Issue\n\nThis card cannot generate GIFs due to browser security restrictions. To fix this:\n\n1. Generate a new card with the same prompt\n2. New cards support instant GIF downloads!\n\nPrompt to reuse: "${this.generatedCardData.prompt || 'Your original prompt'}"`);
-            } else {
-                this.showError(`Animated GIF generation failed: ${error.message}`);
-            }
+            this.showError(`Animated GIF generation failed: ${error.message}`);
         }
     }
     
