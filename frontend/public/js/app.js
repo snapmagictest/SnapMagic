@@ -3793,6 +3793,10 @@ class SnapMagicApp {
             if (result.success && result.animation_prompt) {
                 this.elements.videoPrompt.value = result.animation_prompt;
                 this.updateVideoCharCount();
+                
+                // Show visual feedback instead of popup
+                this.showTextBoxFeedback('videoPrompt');
+                
                 console.log('✅ Video prompt generated successfully');
             } else {
                 throw new Error(result.error || 'Failed to generate video prompt');
@@ -3800,6 +3804,7 @@ class SnapMagicApp {
         } catch (error) {
             console.error('❌ Video prompt generation failed:', error);
             console.error('❌ Error stack:', error.stack);
+            // Show simple error without modal
             this.showError(`Failed to generate video prompt: ${error.message}`);
         } finally {
             this.hideProcessing();
@@ -3858,12 +3863,17 @@ class SnapMagicApp {
             if (result.success && result.optimized_prompt) {
                 this.elements.videoPrompt.value = result.optimized_prompt;
                 this.updateVideoCharCount();
+                
+                // Show visual feedback instead of popup
+                this.showTextBoxFeedback('videoPrompt');
+                
                 console.log('✅ Video prompt optimized successfully');
             } else {
                 throw new Error(result.error || 'Failed to optimize video prompt');
             }
         } catch (error) {
             console.error('❌ Video prompt optimization failed:', error);
+            // Show simple error without modal
             this.showError(`Failed to optimize video prompt: ${error.message}`);
         } finally {
             this.hideProcessing();
