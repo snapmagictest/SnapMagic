@@ -2737,8 +2737,13 @@ class SnapMagicApp {
      * Update download button with progress coloring during preparation
      */
     updateDownloadButtonProgress(cardId, progress) {
-        const downloadBtn = document.getElementById('downloadAnimatedBtn');
-        if (!downloadBtn) return;
+        // Update both download buttons
+        const downloadBtns = [
+            document.getElementById('downloadAnimatedBtn'),
+            document.getElementById('downloadAnimatedGifLinkedIn')
+        ].filter(btn => btn); // Remove null buttons
+        
+        if (downloadBtns.length === 0) return;
         
         const currentCardId = this.generatedCardData.s3_key || this.generatedCardData.filename || 'current';
         if (currentCardId !== cardId) return; // Only update if this is the current card
@@ -2748,78 +2753,90 @@ class SnapMagicApp {
         
         console.log(`🎨 Updating progress for card ${cardId}: ${Math.round(progress)}%`);
         
-        // Update button text with progress
-        downloadBtn.innerHTML = `🔄 Preparing... ${Math.round(progress)}%`;
-        
-        // Progressive gold coloring based on progress
-        const goldIntensity = progress / 100;
-        const greyIntensity = 1 - goldIntensity;
-        
-        // Blend from grey to gold as progress increases
-        downloadBtn.style.background = `linear-gradient(to right, 
-            rgba(255, 215, 0, ${goldIntensity}) ${progress}%, 
-            rgba(102, 102, 102, ${greyIntensity}) ${progress}%)`;
-        
-        // Add subtle glow that increases with progress
-        const glowIntensity = goldIntensity * 0.3;
-        downloadBtn.style.boxShadow = `0 0 ${10 * goldIntensity}px rgba(255, 215, 0, ${glowIntensity})`;
-        
-        // Keep disabled state
-        downloadBtn.disabled = true;
-        downloadBtn.style.cursor = 'not-allowed';
-        downloadBtn.style.opacity = '0.8';
+        // Update both buttons identically
+        downloadBtns.forEach(downloadBtn => {
+            // Update button text with progress
+            downloadBtn.innerHTML = `🔄 Preparing... ${Math.round(progress)}%`;
+            
+            // Progressive gold coloring based on progress
+            const goldIntensity = progress / 100;
+            const greyIntensity = 1 - goldIntensity;
+            
+            // Blend from grey to gold as progress increases
+            downloadBtn.style.background = `linear-gradient(to right, 
+                rgba(255, 215, 0, ${goldIntensity}) ${progress}%, 
+                rgba(102, 102, 102, ${greyIntensity}) ${progress}%)`;
+            
+            // Add subtle glow that increases with progress
+            const glowIntensity = goldIntensity * 0.3;
+            downloadBtn.style.boxShadow = `0 0 ${10 * goldIntensity}px rgba(255, 215, 0, ${glowIntensity})`;
+            
+            // Keep disabled state
+            downloadBtn.disabled = true;
+            downloadBtn.style.cursor = 'not-allowed';
+            downloadBtn.style.opacity = '0.8';
+        });
     }
     
     /**
      * Update download button appearance based on card state
      */
     updateDownloadButton(cardId) {
-        const downloadBtn = document.getElementById('downloadAnimatedBtn');
-        if (!downloadBtn) return;
+        // Update both download buttons
+        const downloadBtns = [
+            document.getElementById('downloadAnimatedBtn'),
+            document.getElementById('downloadAnimatedGifLinkedIn')
+        ].filter(btn => btn); // Remove null buttons
+        
+        if (downloadBtns.length === 0) return;
         
         const state = this.cardDownloadStates.get(cardId) || 'prepare';
         
-        console.log(`🎨 Updating button for card ${cardId}, state: ${state}`);
+        console.log(`🎨 Updating buttons for card ${cardId}, state: ${state}`);
         
-        // Remove all state classes
-        downloadBtn.classList.remove('prepare-download', 'preparing-download', 'download-ready');
-        
-        switch(state) {
-            case 'prepare':
-                downloadBtn.innerHTML = '🎬 Prepare Download';
-                downloadBtn.disabled = false;
-                downloadBtn.classList.add('prepare-download');
-                downloadBtn.style.background = '';
-                downloadBtn.style.boxShadow = '';
-                downloadBtn.style.border = '';
-                downloadBtn.style.cursor = 'pointer';
-                break;
-                
-            case 'loading':
-                downloadBtn.innerHTML = '🔄 Preparing...';
-                downloadBtn.disabled = true;
-                downloadBtn.classList.add('preparing-download');
-                downloadBtn.style.background = '#666';
-                downloadBtn.style.boxShadow = 'none';
-                downloadBtn.style.border = '1px solid #444';
-                downloadBtn.style.cursor = 'not-allowed';
-                downloadBtn.style.opacity = '0.6';
-                break;
-                
-            case 'ready':
-            case 'downloaded':
-                downloadBtn.innerHTML = '⚡ Download Card';
-                downloadBtn.disabled = false;
-                downloadBtn.classList.add('download-ready');
-                downloadBtn.style.background = 'linear-gradient(135deg, #FFD700, #FFA500)'; // Gold gradient
-                downloadBtn.style.boxShadow = '0 0 15px rgba(255, 215, 0, 0.6), 0 0 30px rgba(255, 215, 0, 0.3)'; // Gold glow
-                downloadBtn.style.border = '2px solid #FFD700';
-                downloadBtn.style.cursor = 'pointer';
-                downloadBtn.style.opacity = '1';
-                downloadBtn.style.color = '#000';
-                downloadBtn.style.fontWeight = 'bold';
-                break;
-        }
+        // Update both buttons identically
+        downloadBtns.forEach(downloadBtn => {
+            // Remove all state classes
+            downloadBtn.classList.remove('prepare-download', 'preparing-download', 'download-ready');
+            
+            switch(state) {
+                case 'prepare':
+                    downloadBtn.innerHTML = '🎬 Prepare Download';
+                    downloadBtn.disabled = false;
+                    downloadBtn.classList.add('prepare-download');
+                    downloadBtn.style.background = '';
+                    downloadBtn.style.boxShadow = '';
+                    downloadBtn.style.border = '';
+                    downloadBtn.style.cursor = 'pointer';
+                    downloadBtn.style.opacity = '1';
+                    break;
+                    
+                case 'loading':
+                    downloadBtn.innerHTML = '🔄 Preparing...';
+                    downloadBtn.disabled = true;
+                    downloadBtn.classList.add('preparing-download');
+                    downloadBtn.style.background = '#666';
+                    downloadBtn.style.boxShadow = 'none';
+                    downloadBtn.style.border = '1px solid #444';
+                    downloadBtn.style.cursor = 'not-allowed';
+                    downloadBtn.style.opacity = '0.6';
+                    break;
+                    
+                case 'ready':
+                case 'downloaded':
+                    downloadBtn.innerHTML = '⚡ Download Card';
+                    downloadBtn.disabled = false;
+                    downloadBtn.classList.add('download-ready');
+                    downloadBtn.style.background = 'linear-gradient(135deg, #FFD700, #FFA500)'; // Gold gradient
+                    downloadBtn.style.boxShadow = '0 0 15px rgba(255, 215, 0, 0.6), 0 0 30px rgba(255, 215, 0, 0.3)'; // Gold glow
+                    downloadBtn.style.border = '2px solid #FFD700';
+                    downloadBtn.style.cursor = 'pointer';
+                    downloadBtn.style.opacity = '1';
+                    downloadBtn.style.color = '#000';
+                    downloadBtn.style.fontWeight = 'bold';
+                    break;
+            }
+        });
     }
     
     /**
