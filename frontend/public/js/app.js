@@ -2302,6 +2302,14 @@ class SnapMagicApp {
                 return;
             }
             
+            // Check if this card has base64 data available
+            const hasBase64 = card.result || card.novaImageBase64;
+            if (!hasBase64) {
+                console.log(`⚠️ Background: Skipping legacy card ${cardId} - no base64 data available`);
+                this.updateGIFButtonStatus(cardId, 'legacy');
+                return;
+            }
+            
             console.log(`🎬 Background: Starting GIF for card ${cardId}`);
             this.backgroundProcessing.gifGeneration.add(cardId);
             this.backgroundProcessing.progress.set(cardId, 0);
@@ -2343,7 +2351,13 @@ class SnapMagicApp {
             console.log(`⚠️ Background: GIF failed for card ${cardId}: ${error.message}`);
             this.backgroundProcessing.gifGeneration.delete(cardId);
             this.backgroundProcessing.progress.delete(cardId);
-            this.updateGIFButtonStatus(cardId, 'error');
+            
+            // Check if it's a legacy card issue
+            if (error.message.includes('CORS') || error.message.includes('Tainted canvases')) {
+                this.updateGIFButtonStatus(cardId, 'legacy');
+            } else {
+                this.updateGIFButtonStatus(cardId, 'error');
+            }
             
             // Notify waiting users of error
             this.notifyWaitingUsers(cardId, null, error);
@@ -2392,6 +2406,10 @@ class SnapMagicApp {
                     break;
                 case 'ready':
                     downloadBtn.innerHTML = '⚡ Download GIF (Ready!)';
+                    downloadBtn.disabled = false;
+                    break;
+                case 'legacy':
+                    downloadBtn.innerHTML = '🔄 Legacy Card (Click for Info)';
                     downloadBtn.disabled = false;
                     break;
                 case 'error':
@@ -2536,6 +2554,15 @@ class SnapMagicApp {
                 return;
             }
             
+            // Check if this card has base64 data available
+            const hasBase64 = this.generatedCardData.result || this.generatedCardData.novaImageBase64;
+            
+            if (!hasBase64) {
+                // Legacy card without base64 - show helpful message
+                this.showError(`🔄 Legacy Card Detected\n\nThis card was created before our instant GIF system was implemented. To enable instant GIF downloads:\n\n1. Note down your prompt: "${this.generatedCardData.prompt || 'Your original prompt'}"\n2. Generate a new card with the same prompt\n3. New cards support instant GIF downloads!\n\nWe're working on a system update to fix legacy cards automatically.`);
+                return;
+            }
+            
             // Check if GIF is currently being generated in background
             if (this.backgroundProcessing.gifGeneration.has(cardId)) {
                 console.log('🔄 GIF is being generated in background - showing progress...');
@@ -2550,7 +2577,13 @@ class SnapMagicApp {
         } catch (error) {
             console.error('❌ Animated GIF download failed:', error);
             this.hideProcessing();
-            this.showError(`Animated GIF generation failed: ${error.message}`);
+            
+            // Check if it's a CORS/legacy card issue
+            if (error.message.includes('CORS') || error.message.includes('Tainted canvases')) {
+                this.showError(`🔄 Legacy Card Issue\n\nThis card cannot generate GIFs due to browser security restrictions. To fix this:\n\n1. Generate a new card with the same prompt\n2. New cards support instant GIF downloads!\n\nPrompt to reuse: "${this.generatedCardData.prompt || 'Your original prompt'}"`);
+            } else {
+                this.showError(`Animated GIF generation failed: ${error.message}`);
+            }
         }
     }
     
