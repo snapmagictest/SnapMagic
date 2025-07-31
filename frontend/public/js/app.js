@@ -2538,15 +2538,11 @@ class SnapMagicApp {
     }
     
     /**
-     * Update progress timer for global button updates
+     * Progress update timer - REMOVED (no longer needed with per-card system)
      */
     startProgressUpdateTimer() {
-        setInterval(() => {
-            // Update global progress and button state
-            if (this.backgroundProcessing.totalCards > 0 && !this.areAllGIFsReady()) {
-                this.updateGlobalGIFButtonStatus();
-            }
-        }, 500); // Update every 500ms during processing
+        // No longer needed - per-card download system doesn't use global progress
+        console.log('📊 Progress timer disabled - using per-card download system');
     }
 
     /**
