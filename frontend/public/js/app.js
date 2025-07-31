@@ -2291,12 +2291,25 @@ class SnapMagicApp {
         // Update button to show initial processing state
         this.updateGlobalGIFButtonStatus();
         
-        // Process cards in parallel (but limit concurrent generations)
-        const maxConcurrent = 2; // Don't overwhelm the browser
+        // PRIORITY PROCESSING: Newest cards first (have base64), older cards second
+        const cardsWithBase64 = this.userGallery.cards.filter(card => card.result || card.novaImageBase64);
+        const cardsWithoutBase64 = this.userGallery.cards.filter(card => !(card.result || card.novaImageBase64));
+        
+        console.log(`📊 Processing priority: ${cardsWithBase64.length} instant cards, ${cardsWithoutBase64.length} slower cards`);
+        
+        // Phase 1: Process cards with base64 first (instant)
+        console.log('🚀 Phase 1: Processing cards with base64 data (instant)...');
+        for (const card of cardsWithBase64) {
+            await this.generateGIFInBackground(card);
+        }
+        
+        // Phase 2: Process cards without base64 (slower, but in background)
+        console.log('🔄 Phase 2: Processing cards without base64 data (slower)...');
+        const maxConcurrent = 2; // Don't overwhelm browser
         const chunks = [];
         
-        for (let i = 0; i < this.userGallery.cards.length; i += maxConcurrent) {
-            chunks.push(this.userGallery.cards.slice(i, i + maxConcurrent));
+        for (let i = 0; i < cardsWithoutBase64.length; i += maxConcurrent) {
+            chunks.push(cardsWithoutBase64.slice(i, i + maxConcurrent));
         }
         
         for (const chunk of chunks) {
@@ -2455,8 +2468,13 @@ class SnapMagicApp {
         const globalProgress = this.calculateGlobalProgress();
         const allReady = this.areAllGIFsReady();
         
+        // Check if current card is ready for instant download
+        const currentCard = this.userGallery.cards[this.userGallery.currentIndex];
+        const currentCardId = currentCard?.s3_key || currentCard?.filename;
+        const currentCardReady = currentCardId && this.gifCache.has(currentCardId);
+        
         // Debug logging
-        console.log(`🔍 Button update: Progress=${globalProgress}%, AllReady=${allReady}, Completed=${this.backgroundProcessing.completed.size}/${this.backgroundProcessing.totalCards}, Cached=${this.gifCache.size}`);
+        console.log(`🔍 Button update: Progress=${globalProgress}%, AllReady=${allReady}, CurrentCardReady=${currentCardReady}, Completed=${this.backgroundProcessing.completed.size}/${this.backgroundProcessing.totalCards}, Cached=${this.gifCache.size}`);
         
         if (allReady) {
             // All GIFs are ready - enable button for instant downloads
@@ -2464,9 +2482,20 @@ class SnapMagicApp {
             downloadBtn.disabled = false;
             downloadBtn.style.background = '#4CAF50'; // Green
             downloadBtn.style.cursor = 'pointer';
+        } else if (currentCardReady) {
+            // Current card is ready even if others aren't
+            downloadBtn.innerHTML = '⚡ Download GIF (This Card Ready!)';
+            downloadBtn.disabled = false;
+            downloadBtn.style.background = '#4CAF50'; // Green
+            downloadBtn.style.cursor = 'pointer';
         } else if (this.backgroundProcessing.totalCards > 0) {
             // Processing in progress - show progress bar
-            downloadBtn.innerHTML = `🎬 Processing GIFs... ${globalProgress}%`;
+            const currentCardProcessing = currentCardId && this.backgroundProcessing.gifGeneration.has(currentCardId);
+            if (currentCardProcessing) {
+                downloadBtn.innerHTML = `🎬 Preparing This Card... ${globalProgress}%`;
+            } else {
+                downloadBtn.innerHTML = `🎬 Processing GIFs... ${globalProgress}%`;
+            }
             downloadBtn.disabled = true;
             downloadBtn.style.background = `linear-gradient(to right, #4CAF50 ${globalProgress}%, #666 ${globalProgress}%)`;
             downloadBtn.style.cursor = 'not-allowed';
@@ -4737,6 +4766,9 @@ class SnapMagicApp {
         
         // Update gallery navigation display
         this.updateGalleryDisplay();
+        
+        // Update GIF button status for the new card
+        this.updateGlobalGIFButtonStatus();
         
         console.log('✅ Gallery card displayed with full template - consistent with new cards');
     }
