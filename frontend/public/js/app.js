@@ -2298,9 +2298,12 @@ class SnapMagicApp {
             console.log(`✅ Background: GIF ready for card ${cardId} (${Math.round(gifBlob.size / 1024)}KB)`);
             
         } catch (error) {
-            console.error(`❌ Background: GIF failed for card ${cardId}:`, error.message);
+            console.log(`⚠️ Background: GIF failed for card ${cardId}: ${error.message}`);
             this.backgroundProcessing.gifGeneration.delete(cardId);
             this.updateGIFButtonStatus(cardId, 'error');
+            
+            // Don't throw error - continue with other cards
+            // This is background processing, failures shouldn't break the app
         }
     }
     
@@ -2342,6 +2345,7 @@ class SnapMagicApp {
         try {
             console.log('🔄 Loading image data on-demand for GIF generation...');
             
+            // First try to load with CORS
             const img = new Image();
             img.crossOrigin = 'anonymous';
             
@@ -2368,7 +2372,39 @@ class SnapMagicApp {
                     }
                 };
                 
-                img.onerror = () => reject(new Error('Failed to load image from S3 URL'));
+                img.onerror = () => {
+                    console.log('⚠️ CORS failed, trying without crossOrigin...');
+                    
+                    // Fallback: Try without CORS (for same-origin or properly configured S3)
+                    const fallbackImg = new Image();
+                    
+                    fallbackImg.onload = () => {
+                        try {
+                            const canvas = document.createElement('canvas');
+                            const ctx = canvas.getContext('2d');
+                            canvas.width = fallbackImg.width;
+                            canvas.height = fallbackImg.height;
+                            ctx.drawImage(fallbackImg, 0, 0);
+                            
+                            const base64Data = canvas.toDataURL('image/png').split(',')[1];
+                            
+                            console.log('✅ Image data loaded (fallback method)');
+                            resolve({
+                                ...cardData,
+                                result: base64Data
+                            });
+                        } catch (error) {
+                            reject(new Error(`Fallback canvas conversion failed: ${error.message}`));
+                        }
+                    };
+                    
+                    fallbackImg.onerror = () => {
+                        reject(new Error('Failed to load image from S3 URL (both CORS and fallback failed)'));
+                    };
+                    
+                    fallbackImg.src = cardData.imageSrc;
+                };
+                
                 img.src = cardData.imageSrc;  // Load from S3 URL
             });
         } catch (error) {
