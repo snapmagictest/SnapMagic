@@ -5666,7 +5666,7 @@ class SnapMagicApp {
                     </div>
 
                     <div class="linkedin-buttons">
-                        <button id="downloadAnimatedGifLinkedIn" class="art-deco-btn">🎬 Download Card</button>
+                        <button id="downloadAnimatedGifLinkedIn" class="art-deco-btn">🎬 Prepare Download</button>
                         <button id="shareToLinkedIn" class="art-deco-btn">📱 Share on LinkedIn</button>
                     </div>
                     
@@ -5692,6 +5692,10 @@ class SnapMagicApp {
         document.getElementById('cancelLinkedInSharing').addEventListener('click', () => {
             this.closeLinkedInSharingPopup();
         });
+        
+        // Update LinkedIn button to match current card state
+        const currentCardId = this.generatedCardData?.s3_key || this.generatedCardData?.filename || 'current';
+        this.updateDownloadButton(currentCardId);
     }
 
 
