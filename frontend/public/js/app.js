@@ -2328,7 +2328,7 @@ class SnapMagicApp {
      * Generate GIF for a single card in background with progress tracking
      */
     async generateGIFInBackground(card) {
-        const cardId = card.s3_key || card.filename;
+        const cardId = card.s3_key || card.filename || 'current'; // FIXED: Added 'current' fallback
         
         try {
             // Skip if already processing or completed
