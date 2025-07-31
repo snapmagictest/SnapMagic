@@ -2278,7 +2278,36 @@ class SnapMagicApp {
     }
 
     /**
-     * Start background GIF generation for all gallery cards
+     * Load GIFs for cards around the current position (lazy loading)
+     */
+    async loadGIFsAroundCurrentCard() {
+        const currentIndex = this.userGallery.currentIndex || 0;
+        const preloadRange = 2;
+        const startIndex = Math.max(0, currentIndex - preloadRange);
+        const endIndex = Math.min(this.userGallery.totalCards - 1, currentIndex + preloadRange);
+        
+        console.log(`🎯 Lazy loading: Checking cards ${startIndex}-${endIndex} around current card ${currentIndex}`);
+        
+        // Only process cards that aren't already cached or processing
+        for (let i = startIndex; i <= endIndex; i++) {
+            const card = this.userGallery.cards[i];
+            const cardId = card.s3_key || card.filename || 'current';
+            
+            if (!this.gifCache.has(cardId) && 
+                !this.backgroundProcessing.gifGeneration.has(cardId) &&
+                !this.backgroundProcessing.completed.has(cardId)) {
+                
+                console.log(`🔄 Lazy loading GIF for card ${cardId}`);
+                // Don't await - let it process in background
+                this.generateGIFInBackground(card).catch(error => {
+                    console.warn(`⚠️ Lazy loading failed for card ${cardId}:`, error);
+                });
+            }
+        }
+    }
+
+    /**
+     * Start background GIF generation for visible cards only (performance optimized)
      * Provides instant downloads when user clicks
      */
     async startBackgroundGIFGeneration() {
@@ -2291,34 +2320,42 @@ class SnapMagicApp {
         // Update button to show initial processing state
         this.updateGlobalGIFButtonStatus();
         
-        // PRIORITY PROCESSING: Newest cards first (have base64), older cards second
-        const cardsWithBase64 = this.userGallery.cards.filter(card => card.result || card.novaImageBase64);
-        const cardsWithoutBase64 = this.userGallery.cards.filter(card => !(card.result || card.novaImageBase64));
+        // PERFORMANCE FIX: Only process current card + 2 ahead/behind (5 total max)
+        const currentIndex = this.userGallery.currentIndex || 0;
+        const preloadRange = 2;
+        const startIndex = Math.max(0, currentIndex - preloadRange);
+        const endIndex = Math.min(this.userGallery.totalCards - 1, currentIndex + preloadRange);
+        
+        console.log(`🎯 Performance optimization: Processing cards ${startIndex}-${endIndex} (${endIndex - startIndex + 1} cards) instead of all ${this.userGallery.totalCards}`);
+        
+        // Process only visible + nearby cards
+        const cardsToProcess = this.userGallery.cards.slice(startIndex, endIndex + 1);
+        
+        // PRIORITY PROCESSING: Cards with base64 first, then others
+        const cardsWithBase64 = cardsToProcess.filter(card => card.result || card.novaImageBase64);
+        const cardsWithoutBase64 = cardsToProcess.filter(card => !(card.result || card.novaImageBase64));
         
         console.log(`📊 Processing priority: ${cardsWithBase64.length} instant cards, ${cardsWithoutBase64.length} slower cards`);
         
         // Phase 1: Process cards with base64 first (instant)
-        console.log('🚀 Phase 1: Processing cards with base64 data (instant)...');
-        for (const card of cardsWithBase64) {
-            await this.generateGIFInBackground(card);
+        if (cardsWithBase64.length > 0) {
+            console.log('🚀 Phase 1: Processing cards with base64 data (instant)...');
+            for (const card of cardsWithBase64) {
+                await this.generateGIFInBackground(card);
+            }
         }
         
-        // Phase 2: Process cards without base64 (slower, but in background)
-        console.log('🔄 Phase 2: Processing cards without base64 data (slower)...');
-        const maxConcurrent = 2; // Don't overwhelm browser
-        const chunks = [];
-        
-        for (let i = 0; i < cardsWithoutBase64.length; i += maxConcurrent) {
-            chunks.push(cardsWithoutBase64.slice(i, i + maxConcurrent));
+        // Phase 2: Process cards without base64 (slower, but limited)
+        if (cardsWithoutBase64.length > 0) {
+            console.log('🔄 Phase 2: Processing cards without base64 data (slower)...');
+            const maxConcurrent = 1; // Reduced from 2 to prevent overload
+            
+            for (const card of cardsWithoutBase64) {
+                await this.generateGIFInBackground(card);
+            }
         }
         
-        for (const chunk of chunks) {
-            await Promise.allSettled(
-                chunk.map(card => this.generateGIFInBackground(card))
-            );
-        }
-        
-        console.log('✅ Background GIF generation completed for all cards');
+        console.log('✅ Background GIF generation completed for visible cards');
         
         // Final update to show ready state
         this.updateGlobalGIFButtonStatus();
@@ -2634,55 +2671,67 @@ class SnapMagicApp {
     }
     
     /**
-     * Check if all GIFs are ready for download
+     * Check if visible GIFs are ready for download (performance optimized)
      */
     areAllGIFsReady() {
-        if (this.backgroundProcessing.totalCards === 0) {
+        // Calculate visible cards around current position
+        const currentIndex = this.userGallery.currentIndex || 0;
+        const preloadRange = 2;
+        const startIndex = Math.max(0, currentIndex - preloadRange);
+        const endIndex = Math.min(this.userGallery.totalCards - 1, currentIndex + preloadRange);
+        
+        if (this.userGallery.totalCards === 0) {
             return false; // No cards to process
         }
         
-        // Check if we have the expected number of completed cards
-        const completedCount = this.backgroundProcessing.completed.size;
-        const expectedCount = this.backgroundProcessing.totalCards;
-        
-        if (completedCount < expectedCount) {
-            return false; // Still processing
-        }
-        
-        // CRITICAL FIX: Verify that all cards actually have cached GIFs
-        for (const card of this.userGallery.cards) {
-            const cardId = card.s3_key || card.filename || 'current'; // FIXED: Added 'current' fallback
+        // Check if visible cards are cached
+        for (let i = startIndex; i <= endIndex; i++) {
+            const card = this.userGallery.cards[i];
+            const cardId = card.s3_key || card.filename || 'current';
+            
             if (!this.gifCache.has(cardId)) {
-                console.warn(`⚠️ Card ${cardId} marked as complete but not in cache`);
+                console.log(`🔄 Visible card ${cardId} not yet cached`);
                 return false; // Missing from cache
             }
         }
         
-        return true; // All cards are truly ready
+        console.log(`✅ All visible cards (${startIndex}-${endIndex}) are cached and ready`);
+        return true; // All visible cards are ready
     }
     
     /**
-     * Calculate global progress percentage
+     * Calculate global progress percentage (based on visible cards only)
      */
     calculateGlobalProgress() {
-        if (this.backgroundProcessing.totalCards === 0) {
+        // Calculate progress based on cards we're actually processing
+        const currentIndex = this.userGallery.currentIndex || 0;
+        const preloadRange = 2;
+        const startIndex = Math.max(0, currentIndex - preloadRange);
+        const endIndex = Math.min(this.userGallery.totalCards - 1, currentIndex + preloadRange);
+        const visibleCardCount = endIndex - startIndex + 1;
+        
+        if (visibleCardCount === 0) {
             return 0;
         }
         
         let totalProgress = 0;
+        let processedCards = 0;
         
-        // Add progress for completed cards (100% each)
-        totalProgress += this.backgroundProcessing.completed.size * 100;
-        
-        // Add progress for cards currently being processed
-        for (const [cardId, progress] of this.backgroundProcessing.progress.entries()) {
-            if (!this.backgroundProcessing.completed.has(cardId)) {
-                totalProgress += progress;
+        // Check progress for visible cards only
+        for (let i = startIndex; i <= endIndex; i++) {
+            const card = this.userGallery.cards[i];
+            const cardId = card.s3_key || card.filename || 'current';
+            
+            if (this.backgroundProcessing.completed.has(cardId)) {
+                totalProgress += 100;
+            } else if (this.backgroundProcessing.progress.has(cardId)) {
+                totalProgress += this.backgroundProcessing.progress.get(cardId);
             }
+            processedCards++;
         }
         
         // Calculate percentage
-        const globalProgress = Math.round(totalProgress / this.backgroundProcessing.totalCards);
+        const globalProgress = Math.round(totalProgress / processedCards);
         this.backgroundProcessing.globalProgress = Math.min(100, globalProgress);
         
         return this.backgroundProcessing.globalProgress;
@@ -4837,6 +4886,9 @@ class SnapMagicApp {
         
         // Update GIF button status for the new card
         this.updateGlobalGIFButtonStatus();
+        
+        // Lazy load GIFs for cards around current position
+        this.loadGIFsAroundCurrentCard();
         
         console.log('✅ Gallery card displayed with full template - consistent with new cards');
     }
