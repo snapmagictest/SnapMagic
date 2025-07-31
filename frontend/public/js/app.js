@@ -903,14 +903,7 @@ class SnapMagicApp {
                 this.overrideNumber = data.override_number;
                 this.clientIP = data.client_ip;
                 
-                // Reset gallery for new session
-                this.userGallery = {
-                    cards: [],
-                    currentIndex: 0,
-                    totalCards: 0
-                };
-                this.hideGalleryNavigation();
-                // this.hideVideoGalleryNavigation(); // Removed - no longer needed
+                // Clear current display (but preserve gallery data)
                 this.generatedCardData = null;
                 
                 // Clear result container
@@ -919,10 +912,14 @@ class SnapMagicApp {
                 `;
                 this.elements.resultActions.classList.add('hidden');
                 
+                // IMPORTANT: Reload all cards from all sessions after override
+                await this.loadExistingCards();
+                await this.loadExistingVideos();
+                
                 this.showSuccessModal('Override Applied!', `Override #${data.override_number} Applied!\n\nYour limits have been reset:\n• Cards: 5\n• Videos: 3\n• Prints: 1\n\nYou can now generate new content.`);
                 console.log(`✅ Override #${data.override_number} applied successfully`);
                 console.log(`📝 Client IP: ${data.client_ip}`);
-                console.log(`🔄 Gallery reset for new session`);
+                console.log(`🔄 Gallery preserved - showing all cards from all sessions`);
             } else {
                 this.showErrorModal('Override Failed', data.error || 'Unknown error occurred during override.');
             }
