@@ -2528,6 +2528,52 @@ class SnapMagicApp {
         // For now, we focus on the main download button
     }
 
+    /**
+     * Load base64 data on-demand for any card
+     */
+    async loadCardBase64OnDemand(cardData) {
+        try {
+            console.log(`🔄 Loading base64 data on-demand for card: ${cardData.s3_key}`);
+            
+            const apiBaseUrl = window.SNAPMAGIC_CONFIG.API_URL;
+            const response = await fetch(`${apiBaseUrl}api/transform-card`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.authToken}`,
+                    'X-Device-ID': this.deviceId
+                },
+                body: JSON.stringify({ 
+                    action: 'load_card_base64',
+                    s3_key: cardData.s3_key
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const result = await response.json();
+            
+            if (result.success && result.base64_data) {
+                console.log(`✅ Loaded base64 data for ${cardData.s3_key} (${result.base64_data.length} chars)`);
+                
+                // Update card data with base64
+                return {
+                    ...cardData,
+                    result: result.base64_data,
+                    novaImageBase64: result.base64_data
+                };
+            } else {
+                throw new Error(result.error || 'Failed to load base64 data');
+            }
+            
+        } catch (error) {
+            console.error(`❌ Failed to load base64 for ${cardData.s3_key}:`, error);
+            throw error;
+        }
+    }
+
     // ========================================
     // ANIMATED GIF GENERATION SYSTEM
     // ========================================
@@ -3751,23 +3797,32 @@ class SnapMagicApp {
         console.log(`🎬 Starting canvas-based animated GIF generation with optimized settings...`);
         console.log(`⚡ OPTIMIZED: ${frames} frames @ ${framerate}fps + quality 1 (target: <3MB)`);
         
-        // Handle both new cards and existing cards with base64 data
+        // Handle all cards uniformly with on-demand base64 loading
         let activeCardData;
         
         if (cardData && (cardData.result || cardData.novaImageBase64)) {
-            // Card has base64 data - INSTANT
+            // Card already has base64 data - INSTANT
             console.log('✅ Card has base64 data - instant GIF generation');
             activeCardData = {
                 ...cardData,
                 result: cardData.result || cardData.novaImageBase64
             };
+        } else if (cardData && cardData.s3_key) {
+            // Card needs base64 loading - LOAD ON-DEMAND
+            console.log('🔄 Card needs base64 loading - loading on-demand...');
+            activeCardData = await this.loadCardBase64OnDemand(cardData);
         } else {
             // Fallback to current card
             console.log('🔄 Using current card data');
             activeCardData = this.generatedCardData;
             
             if (!activeCardData || (!activeCardData.result && !activeCardData.novaImageBase64)) {
-                throw new Error('No base64 image data available for GIF generation. Please regenerate this card.');
+                // If current card also needs loading
+                if (activeCardData && activeCardData.s3_key) {
+                    activeCardData = await this.loadCardBase64OnDemand(activeCardData);
+                } else {
+                    throw new Error('No image data available for GIF generation. Please regenerate this card.');
+                }
             }
             
             // Ensure result field is populated

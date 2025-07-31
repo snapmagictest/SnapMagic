@@ -1086,6 +1086,8 @@ def lambda_handler(event, context):
                 action = 'enter_competition'
             elif body_action == 'load_session_cards':
                 action = 'load_session_cards'
+            elif body_action == 'load_card_base64':
+                action = 'load_card_base64'
             elif body_action == 'load_session_videos':
                 action = 'load_session_videos'
             elif body_action == 'generate_prompt':
@@ -1784,6 +1786,48 @@ def lambda_handler(event, context):
                 logger.error(f"❌ Competition entry failed: {str(e)}")
                 return create_error_response(f"Failed to submit competition entry: {str(e)}", 500)
 
+        # ========================================
+        # LOAD CARD BASE64 DATA ENDPOINT (NEW)
+        # ========================================
+        elif action == 'load_card_base64':
+            username = token_payload.get('username', 'unknown')
+            
+            # Get card S3 key from request
+            card_s3_key = body.get('s3_key')
+            if not card_s3_key:
+                return create_error_response("Missing s3_key parameter", 400)
+            
+            try:
+                # Import boto3 and create S3 client
+                import boto3
+                s3_client = boto3.client('s3')
+                bucket_name = os.environ.get('S3_BUCKET_NAME')
+                
+                if not bucket_name:
+                    logger.error("❌ S3_BUCKET_NAME environment variable not set")
+                    return create_error_response("S3 bucket not configured", 500)
+                
+                # Download the specific image from S3
+                s3_object = s3_client.get_object(Bucket=bucket_name, Key=card_s3_key)
+                image_data = s3_object['Body'].read()
+                
+                # Convert to base64
+                import base64
+                image_base64 = base64.b64encode(image_data).decode('utf-8')
+                
+                logger.info(f"✅ Loaded base64 data for {card_s3_key} ({len(image_base64)} chars)")
+                
+                return create_success_response({
+                    'success': True,
+                    'base64_data': image_base64,
+                    's3_key': card_s3_key
+                })
+                
+            except Exception as e:
+                logger.error(f"❌ Error loading base64 for {card_s3_key}: {str(e)}")
+                return create_error_response(f'Failed to load card base64: {str(e)}', 500)
+
+        # ========================================
         # LOAD SESSION CARDS ENDPOINT
         # ========================================
         elif action == 'load_session_cards':
@@ -1823,9 +1867,8 @@ def lambda_handler(event, context):
                     # Sort by last modified (newest first)
                     sorted_objects = sorted(response['Contents'], key=lambda x: x['LastModified'], reverse=True)
                     
-                    # HYBRID APPROACH: Base64 for newest 3 cards, URLs for older cards
-                    max_cards_with_base64 = 3
-                    max_total_cards = 10  # Return up to 10 cards total
+                    # SIMPLIFIED: Return all cards with URLs only, load base64 on-demand
+                    max_total_cards = 20  # Increased limit since no base64 in response
                     processed_cards = 0
                     
                     for obj in sorted_objects:
@@ -1843,40 +1886,22 @@ def lambda_handler(event, context):
                             logger.error(f"❌ Failed to generate presigned URL for {obj['Key']}: {str(e)}")
                             continue
                         
-                        # Include base64 data for newest cards only (instant GIF generation)
-                        image_base64 = None
-                        if processed_cards < max_cards_with_base64:
-                            try:
-                                # Download the image from S3
-                                s3_object = s3_client.get_object(Bucket=bucket_name, Key=obj['Key'])
-                                image_data = s3_object['Body'].read()
-                                
-                                # Convert to base64
-                                import base64
-                                image_base64 = base64.b64encode(image_data).decode('utf-8')
-                                
-                                logger.info(f"✅ Loaded base64 data for {obj['Key']} ({len(image_base64)} chars)")
-                                
-                            except Exception as e:
-                                logger.error(f"❌ Failed to load base64 data for {obj['Key']}: {str(e)}")
-                                # Continue without base64 - will use URL only
-                        
-                        # Create card data
+                        # Create card data - NO base64 data to keep response small
                         card_data = {
                             'finalImageSrc': presigned_url,
                             'imageSrc': presigned_url,
-                            'result': image_base64,  # Base64 for newest 3, None for older
-                            'novaImageBase64': image_base64,  # Alternative field name
+                            'result': None,  # Will be loaded on-demand
+                            'novaImageBase64': None,  # Will be loaded on-demand
                             's3_key': obj['Key'],
                             'filename': obj['Key'].split('/')[-1],
                             'timestamp': obj['LastModified'].isoformat(),
                             'size': obj['Size'],
-                            'has_instant_gif': image_base64 is not None  # Flag for frontend
+                            'needs_base64_loading': True  # Flag for frontend
                         }
                         cards.append(card_data)
                         processed_cards += 1
                 
-                logger.info(f"✅ Found {len(cards)} cards for session (newest {max_cards_with_base64} with instant GIF support, up to {max_total_cards} total)")
+                logger.info(f"✅ Found {len(cards)} cards for session (base64 loaded on-demand for instant GIFs)")
                 
                 return create_success_response({
                     'success': True,
