@@ -2337,7 +2337,10 @@ class SnapMagicApp {
                 return;
             }
             
-            console.log(`🎬 Background: Starting GIF for card ${cardId}`);
+            // Check if card already has base64 data (new cards)
+            const hasBase64 = card.result || card.novaImageBase64;
+            console.log(`🎬 Background: Starting GIF for card ${cardId} (hasBase64: ${!!hasBase64})`);
+            
             this.backgroundProcessing.gifGeneration.add(cardId);
             this.backgroundProcessing.progress.set(cardId, 0);
             
@@ -2353,8 +2356,18 @@ class SnapMagicApp {
                 }
             }, 300);
             
-            // Generate GIF (this will handle both new and old cards automatically)
-            const gifBlob = await this.generateAnimatedCardGIF(card);
+            // Generate GIF - pass the card data directly to avoid unnecessary loading
+            let gifBlob;
+            if (hasBase64) {
+                // Card already has base64 - use it directly
+                console.log(`✅ Background: Using existing base64 for card ${cardId}`);
+                gifBlob = await this.generateAnimatedCardGIF(card);
+            } else {
+                // Card needs base64 loading
+                console.log(`🔄 Background: Loading base64 for card ${cardId}`);
+                const cardWithBase64 = await this.loadCardBase64OnDemand(card);
+                gifBlob = await this.generateAnimatedCardGIF(cardWithBase64);
+            }
             
             clearInterval(progressUpdater);
             
@@ -3797,7 +3810,7 @@ class SnapMagicApp {
         console.log(`🎬 Starting canvas-based animated GIF generation with optimized settings...`);
         console.log(`⚡ OPTIMIZED: ${frames} frames @ ${framerate}fps + quality 1 (target: <3MB)`);
         
-        // Handle all cards uniformly with on-demand base64 loading
+        // Handle cards with base64 data directly (most common case)
         let activeCardData;
         
         if (cardData && (cardData.result || cardData.novaImageBase64)) {
@@ -3807,18 +3820,18 @@ class SnapMagicApp {
                 ...cardData,
                 result: cardData.result || cardData.novaImageBase64
             };
-        } else if (cardData && cardData.s3_key) {
-            // Card needs base64 loading - LOAD ON-DEMAND
-            console.log('🔄 Card needs base64 loading - loading on-demand...');
-            activeCardData = await this.loadCardBase64OnDemand(cardData);
         } else {
-            // Fallback to current card
-            console.log('🔄 Using current card data');
+            // Fallback to current card or load on-demand
+            console.log('🔄 Using current card data or loading on-demand');
             activeCardData = this.generatedCardData;
             
+            // If current card doesn't have base64, try to load it
             if (!activeCardData || (!activeCardData.result && !activeCardData.novaImageBase64)) {
-                // If current card also needs loading
-                if (activeCardData && activeCardData.s3_key) {
+                if (cardData && cardData.s3_key) {
+                    console.log('🔄 Loading base64 on-demand for provided card...');
+                    activeCardData = await this.loadCardBase64OnDemand(cardData);
+                } else if (activeCardData && activeCardData.s3_key) {
+                    console.log('🔄 Loading base64 on-demand for current card...');
                     activeCardData = await this.loadCardBase64OnDemand(activeCardData);
                 } else {
                     throw new Error('No image data available for GIF generation. Please regenerate this card.');
