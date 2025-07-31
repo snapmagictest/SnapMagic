@@ -5172,15 +5172,6 @@ class SnapMagicApp {
         throw new Error('Cannot access card image. No base64 data available and all loading methods failed.');
     }
 
-        // Priority 2: Fallback to raw result if no styled version available
-        if (this.generatedCardData.result && this.generatedCardData.result.length > 100) {
-            console.log('⚠️ Fallback: Using raw result (no styled version available)');
-            return this.generatedCardData;
-        }
-
-        throw new Error('Card data missing required image information');
-    }
-
     /**
      * Load existing cards from S3 for current session
      */
