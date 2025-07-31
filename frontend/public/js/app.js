@@ -988,7 +988,7 @@ class SnapMagicApp {
         // Update Generate Video button text
         const generateVideoBtn = document.getElementById('generateVideoBtn');
         if (generateVideoBtn) {
-            generateVideoBtn.innerHTML = `🎬 Generate Video (${videoRemaining} of ${this.usageLimits.videos.total} remaining)`;
+            generateVideoBtn.innerHTML = `🎬 Generate Video (2 min wait) (${videoRemaining} of ${this.usageLimits.videos.total} remaining)`;
         }
         
         // Update Print button text (if print is enabled)
@@ -1031,7 +1031,7 @@ class SnapMagicApp {
                 generateVideoBtn.innerHTML = '🚫 Video Limit Reached';
             } else {
                 generateVideoBtn.disabled = false;
-                generateVideoBtn.innerHTML = `🎬 Generate Video (${videoRemaining} of ${this.usageLimits.videos.total} remaining)`;
+                generateVideoBtn.innerHTML = `🎬 Generate Video (2 min wait) (${videoRemaining} of ${this.usageLimits.videos.total} remaining)`;
             }
         }
         
@@ -1041,7 +1041,7 @@ class SnapMagicApp {
                 generateVideoBtn2.innerHTML = '🚫 Video Limit Reached';
             } else {
                 generateVideoBtn2.disabled = false;
-                generateVideoBtn2.innerHTML = `🎬 Generate Video (${videoRemaining} of ${this.usageLimits.videos.total} remaining)`;
+                generateVideoBtn2.innerHTML = `🎬 Generate Video (2 min wait) (${videoRemaining} of ${this.usageLimits.videos.total} remaining)`;
             }
         }
         
@@ -3313,7 +3313,7 @@ class SnapMagicApp {
      * Reset video button to normal state
      */
     resetVideoButtonState() {
-        this.setVideoButtonState('🎬 Generate Video', false);
+        this.setVideoButtonState('🎬 Generate Video (2 min wait)', false);
         this.videoGenerationInProgress = false;
     }
 
