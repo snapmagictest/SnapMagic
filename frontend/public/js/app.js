@@ -5130,33 +5130,47 @@ class SnapMagicApp {
         console.log('🔍 Has finalImageSrc:', !!this.generatedCardData.finalImageSrc);
         console.log('🔍 Has result field:', !!this.generatedCardData.result);
         console.log('🔍 Result field length:', this.generatedCardData.result ? this.generatedCardData.result.length : 'N/A');
+        console.log('🔍 Has needs_base64_loading flag:', !!this.generatedCardData.needs_base64_loading);
 
-        // Priority 1: Use finalImageSrc (styled card) if available - same logic as display functions
+        // Check if we already have base64 data (new cards)
+        if (this.generatedCardData.result || this.generatedCardData.novaImageBase64) {
+            console.log('✅ Using existing base64 data (new card)');
+            return this.generatedCardData;
+        }
+
+        // For old gallery cards, use the load_card_base64 endpoint
+        if (this.generatedCardData.needs_base64_loading || this.generatedCardData.s3_key) {
+            console.log('🔄 Loading base64 data for old gallery card via API...');
+            try {
+                const cardWithBase64 = await this.loadCardBase64OnDemand(this.generatedCardData);
+                console.log('✅ Successfully loaded base64 data via API');
+                return cardWithBase64;
+            } catch (error) {
+                console.error('❌ Failed to load base64 via API:', error);
+                throw new Error(`Cannot access card image. API loading failed: ${error.message}`);
+            }
+        }
+
+        // If we have finalImageSrc but no base64, try URL conversion (last resort)
         if (this.generatedCardData.finalImageSrc || this.generatedCardData.imageSrc) {
-            console.log('✅ Using finalImageSrc (styled card) - same as working gallery method');
-            
+            console.log('🔄 Attempting URL conversion as fallback...');
             try {
                 const imageUrl = this.generatedCardData.finalImageSrc || this.generatedCardData.imageSrc;
                 const base64Data = await this.convertImageUrlToBase64(imageUrl);
-                
-                // Create a complete card data object with base64
+                console.log('✅ URL conversion successful');
                 return {
                     ...this.generatedCardData,
                     result: base64Data,
                     finalImageBase64: base64Data
                 };
-            } catch (conversionError) {
-                console.error('❌ Image URL conversion failed:', conversionError);
-                console.log('🔄 Falling back to raw result data...');
-                
-                // Fallback: try to use raw result if available
-                if (this.generatedCardData.result && this.generatedCardData.result.length > 100) {
-                    return this.generatedCardData;
-                }
-                
-                throw new Error(`Cannot access card image. URL conversion failed: ${conversionError.message}`);
+            } catch (error) {
+                console.error('❌ URL conversion failed:', error);
+                // Don't throw here - continue to final error
             }
         }
+
+        throw new Error('Cannot access card image. No base64 data available and all loading methods failed.');
+    }
 
         // Priority 2: Fallback to raw result if no styled version available
         if (this.generatedCardData.result && this.generatedCardData.result.length > 100) {
