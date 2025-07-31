@@ -2434,46 +2434,6 @@ class SnapMagicApp {
         // For now, we focus on the main download button
     }
 
-    /**
-     * Load image data on-demand for GIF generation
-     * Simple approach: Download image and convert to base64
-     */
-    async loadImageDataForGIF(cardData) {
-        try {
-            console.log('🔄 Loading image data for GIF generation...');
-            
-            // Use fetch to download the image (bypasses CORS issues)
-            const response = await fetch(cardData.imageSrc || cardData.finalImageSrc);
-            
-            if (!response.ok) {
-                throw new Error(`Failed to fetch image: ${response.status}`);
-            }
-            
-            // Convert to blob then to base64
-            const blob = await response.blob();
-            
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = () => {
-                    // Extract base64 (remove data:image/png;base64, prefix)
-                    const base64Data = reader.result.split(',')[1];
-                    
-                    console.log('✅ Image data loaded for GIF generation');
-                    resolve({
-                        ...cardData,
-                        result: base64Data  // Add base64 for GIF generation
-                    });
-                };
-                reader.onerror = () => reject(new Error('Failed to convert image to base64'));
-                reader.readAsDataURL(blob);
-            });
-            
-        } catch (error) {
-            console.error('❌ Failed to load image data for GIF:', error);
-            throw new Error(`Failed to load image for GIF generation: ${error.message}`);
-        }
-    }
-
     // ========================================
     // ANIMATED GIF GENERATION SYSTEM
     // ========================================
@@ -3640,33 +3600,29 @@ class SnapMagicApp {
         console.log(`🎬 Starting canvas-based animated GIF generation with optimized settings...`);
         console.log(`⚡ OPTIMIZED: ${frames} frames @ ${framerate}fps + quality 1 (target: <3MB)`);
         
-        // NEW: Handle both new cards and gallery cards with better fallback
+        // Handle both new cards and existing cards with base64 data
         let activeCardData;
         
-        if (cardData && cardData.result) {
-            // New card with base64 data - INSTANT
-            console.log('🆕 New card detected - using provided base64 data');
-            activeCardData = cardData;
-        } else if (cardData && cardData.novaImageBase64) {
-            // Card has base64 in different field - INSTANT
-            console.log('🆕 Card has base64 in novaImageBase64 field');
+        if (cardData && (cardData.result || cardData.novaImageBase64)) {
+            // Card has base64 data - INSTANT
+            console.log('✅ Card has base64 data - instant GIF generation');
             activeCardData = {
                 ...cardData,
-                result: cardData.novaImageBase64
+                result: cardData.result || cardData.novaImageBase64
             };
-        } else if (cardData && (cardData.imageSrc || cardData.finalImageSrc)) {
-            // Gallery card without base64 - try to load (may fail due to CORS)
-            console.log('🔄 Gallery card detected - attempting to load image data...');
-            try {
-                activeCardData = await this.loadImageDataForGIF(cardData);
-            } catch (error) {
-                console.warn('⚠️ Failed to load image data for GIF generation:', error.message);
-                throw new Error(`Cannot generate GIF: ${error.message}. This card needs to be regenerated to support GIF downloads.`);
-            }
         } else {
             // Fallback to current card
             console.log('🔄 Using current card data');
             activeCardData = this.generatedCardData;
+            
+            if (!activeCardData || (!activeCardData.result && !activeCardData.novaImageBase64)) {
+                throw new Error('No base64 image data available for GIF generation. Please regenerate this card.');
+            }
+            
+            // Ensure result field is populated
+            if (!activeCardData.result && activeCardData.novaImageBase64) {
+                activeCardData.result = activeCardData.novaImageBase64;
+            }
         }
         
         if (!activeCardData || !activeCardData.result) {
