@@ -1,5 +1,6 @@
-[
-  "A majestic dragon perched on a crystal mountain peak, breathing rainbow fire into a starlit sky",
+{
+  "seeds": [
+    "A majestic dragon perched on a crystal mountain peak, breathing rainbow fire into a starlit sky",
   "An astronaut riding a magnificent white horse across the surface of Mars, with Earth visible in the distance",
   "A punk rock frog in a studded leather jacket shouting into a vintage microphone on a concert stage",
   "A tiny dinosaur sitting delicately in an ornate porcelain tea cup with steam rising around it",
@@ -218,5 +219,6 @@
   "A vintage snow globe containing a miniature world where seasons change by shaking",
   "A legendary feather from the wing of time itself, shimmering with temporal energy",
   "A baby unicorn with a horn made of twisted candy cane playing in flower fields",
-  "A river of liquid chocolate flowing through a landscape made entirely of desserts"
-]
+    "A river of liquid chocolate flowing through a landscape made entirely of desserts"
+  ]
+}
