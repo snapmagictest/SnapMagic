@@ -1394,6 +1394,32 @@ class SnapMagicApp {
     }
     
     /**
+     * Get event name from configuration or default
+     */
+    getEventName() {
+        try {
+            // Check if configuration exists
+            if (window.SNAPMAGIC_CONFIG && window.SNAPMAGIC_CONFIG.TEMPLATE_CONFIG) {
+                let templateConfig;
+                if (typeof window.SNAPMAGIC_CONFIG.TEMPLATE_CONFIG === 'string') {
+                    templateConfig = JSON.parse(window.SNAPMAGIC_CONFIG.TEMPLATE_CONFIG);
+                } else {
+                    templateConfig = window.SNAPMAGIC_CONFIG.TEMPLATE_CONFIG;
+                }
+                
+                if (templateConfig && templateConfig.eventName) {
+                    return templateConfig.eventName;
+                }
+            }
+        } catch (error) {
+            console.warn('Could not parse template configuration for event name:', error);
+        }
+        
+        // Default fallback
+        return 'AWS re:Invent 2024';
+    }
+
+    /**
      * Create holographic trading card with Nova image
      */
     createHolographicCard(aiImageSrc, userName, userPrompt) {
@@ -1440,7 +1466,7 @@ class SnapMagicApp {
 
                 <!-- 3. Event Name -->
                 <div class="event-name">
-                    AWS re:Invent 2024
+                    ${this.getEventName()}
                 </div>
 
                 <!-- Bottom section container -->
