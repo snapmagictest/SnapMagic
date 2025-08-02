@@ -446,7 +446,26 @@ class HolographicCanvasRenderer {
      * Draw event name - ENHANCED TEXT CLARITY
      */
     drawEventName(ctx) {
-        const eventName = 'AWS re:Invent 2024';
+        // Get event name from dynamic configuration (same system as app.js)
+        let eventName = 'AWS events'; // Default fallback
+        
+        try {
+            // Check if configuration exists
+            if (window.SNAPMAGIC_CONFIG && window.SNAPMAGIC_CONFIG.TEMPLATE_CONFIG) {
+                let templateConfig;
+                if (typeof window.SNAPMAGIC_CONFIG.TEMPLATE_CONFIG === 'string') {
+                    templateConfig = JSON.parse(window.SNAPMAGIC_CONFIG.TEMPLATE_CONFIG);
+                } else {
+                    templateConfig = window.SNAPMAGIC_CONFIG.TEMPLATE_CONFIG;
+                }
+                
+                if (templateConfig && templateConfig.eventName) {
+                    eventName = templateConfig.eventName;
+                }
+            }
+        } catch (error) {
+            console.warn('HolographicCanvasRenderer: Could not parse template configuration for event name:', error);
+        }
         const fontSize = Math.max(14, this.cardWidth * 0.04);
         
         ctx.save();
