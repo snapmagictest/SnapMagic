@@ -988,7 +988,7 @@ class SnapMagicApp {
         // Update Generate Video button text
         const generateVideoBtn = document.getElementById('generateVideoBtn');
         if (generateVideoBtn) {
-            generateVideoBtn.innerHTML = `🎬 Generate Video (2 min wait) (${videoRemaining} of ${this.usageLimits.videos.total} remaining)`;
+            generateVideoBtn.innerHTML = `🎬 Generate Video (~2 min) (${videoRemaining} of ${this.usageLimits.videos.total} remaining)`;
         }
         
         // Update Print button text (if print is enabled)
@@ -1031,7 +1031,7 @@ class SnapMagicApp {
                 generateVideoBtn.innerHTML = '🚫 Video Limit Reached';
             } else {
                 generateVideoBtn.disabled = false;
-                generateVideoBtn.innerHTML = `🎬 Generate Video (2 min wait) (${videoRemaining} of ${this.usageLimits.videos.total} remaining)`;
+                generateVideoBtn.innerHTML = `🎬 Generate Video (~2 min) (${videoRemaining} of ${this.usageLimits.videos.total} remaining)`;
             }
         }
         
@@ -1041,7 +1041,7 @@ class SnapMagicApp {
                 generateVideoBtn2.innerHTML = '🚫 Video Limit Reached';
             } else {
                 generateVideoBtn2.disabled = false;
-                generateVideoBtn2.innerHTML = `🎬 Generate Video (2 min wait) (${videoRemaining} of ${this.usageLimits.videos.total} remaining)`;
+                generateVideoBtn2.innerHTML = `🎬 Generate Video (~2 min) (${videoRemaining} of ${this.usageLimits.videos.total} remaining)`;
             }
         }
         
@@ -3192,8 +3192,8 @@ class SnapMagicApp {
         }
 
         try {
-            // Smooth button states - no blocking modal
-            this.setVideoButtonState('🔄 Starting video generation...', true);
+            // Clear immediate feedback - starts fast then shows progress
+            this.setVideoButtonState('🚀 Starting Video Generation...', true);
             
             this.videoGenerationInProgress = true;
             
@@ -3339,7 +3339,7 @@ class SnapMagicApp {
      * Reset video button to normal state
      */
     resetVideoButtonState() {
-        this.setVideoButtonState('🎬 Generate Video (2 min wait)', false);
+        this.setVideoButtonState('🎬 Generate Video (~2 min)', false);
         this.videoGenerationInProgress = false;
     }
 
@@ -3376,24 +3376,37 @@ class SnapMagicApp {
         const elapsedSeconds = Math.floor(elapsed / 1000);
         
         let message = '';
+        let icon = '';
         
-        // Status progression based on time (no percentages shown)
-        if (elapsedSeconds <= 30) {
-            message = '🔄 Starting video generation...';
+        // Clear stage progression with appropriate timing and visual feedback
+        if (elapsedSeconds <= 10) {
+            // Fast start - immediate feedback
+            icon = '🚀';
+            message = `${icon} Starting Video Generation...`;
+        } else if (elapsedSeconds <= 45) {
+            // Processing stage - most of the work happens here
+            icon = '⚙️';
+            message = `${icon} Processing Animation (${Math.floor(elapsedSeconds)}s)`;
         } else if (elapsedSeconds <= 90) {
-            message = '🔄 Processing animation...';
-        } else if (elapsedSeconds <= 150) {
-            message = '🔄 Finalizing video...';
+            // In progress - showing it's working
+            icon = '🎬';
+            message = `${icon} Rendering Video (${Math.floor(elapsedSeconds)}s)`;
+        } else if (elapsedSeconds <= 120) {
+            // Almost done - building anticipation
+            icon = '✨';
+            message = `${icon} Almost Done (${Math.floor(elapsedSeconds)}s)`;
         } else {
-            message = '🔄 Almost ready...';
+            // Final stage - should be ready soon
+            icon = '🔄';
+            message = `${icon} Finalizing (${Math.floor(elapsedSeconds)}s)`;
         }
         
-        // Update button text
+        // Update button text with loading animation
         this.setVideoButtonState(message, true);
         
-        // Continue updating every 5 seconds until completion
+        // Continue updating every 3 seconds for more responsive feedback
         if (this.videoGenerationInProgress) {
-            setTimeout(() => this.updateSmoothVideoProgress(), 5000);
+            setTimeout(() => this.updateSmoothVideoProgress(), 3000);
         }
     }
 
