@@ -1645,6 +1645,9 @@ def lambda_handler(event, context):
                     else:
                         logger.warning(f"⚠️ Failed to store video with session filename: {storage_result.get('error')}")
                     
+                    # Get updated remaining usage (same as generate_video endpoint)
+                    remaining = get_remaining_usage_simplified(client_ip)
+                    
                     logger.info(f"✅ Video status check successful: {result.get('status')}")
                     return create_success_response({
                         'success': True,
@@ -1652,6 +1655,7 @@ def lambda_handler(event, context):
                         'video_base64': result.get('video_base64'),
                         'video_url': result.get('video_url'),
                         'message': result.get('message'),
+                        'remaining': remaining,  # Include remaining usage for frontend
                         'invocation_arn': invocation_arn,
                         'client_ip': client_ip,
                         'session_stored': storage_result.get('success', False),
