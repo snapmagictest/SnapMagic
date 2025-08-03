@@ -792,7 +792,7 @@ def handle_generate_animation_prompt(event):
         
         # Create animation prompt generation template
         animation_prompt_template = """
-        Analyze this trading card image and create an animation prompt for a 6-second video that starts immediately from frame 1.
+        Analyze this trading card image and create an animation prompt for a 6-second video with immediate action.
 
         Your task:
         1. Look at the trading card image and describe what you see
@@ -800,9 +800,9 @@ def handle_generate_animation_prompt(event):
         3. Do NOT use any external context - only what is visible in the card
 
         CRITICAL Requirements:
-        - Animation must start IMMEDIATELY from frame 1 - no buildup or delay
+        - Animation must start IMMEDIATELY with no buildup or delay
         - Must be fast-paced to fit all action within 6 seconds
-        - Use phrases like "immediately", "instantly", "from frame 1", "rapidly"
+        - Use phrases like "immediately", "instantly", "rapidly"
         - Describe quick, dynamic movements based on what you see in the card
         - Include fast visual effects that would bring this specific image to life
         - Keep the character/subject/elements consistent with what's shown in the card
@@ -810,9 +810,9 @@ def handle_generate_animation_prompt(event):
         - Focus on rapid motion and immediate transformation of what you observe
 
         Examples of good 6-second animation prompts:
-        - "From frame 1, the character immediately steps forward with eyes instantly glowing, magical energy rapidly swirling around them"
-        - "Instantly, the figure emerges from the card frame in 3D with immediate dramatic lighting effects and fast particle bursts"
-        - "Eyes immediately glow intensely while power aura rapidly expands outward with quick particle effects and fast energy waves"
+        - "character immediately steps forward with eyes instantly glowing, magical energy rapidly swirling around them"
+        - "figure emerges in 3D with immediate dramatic lighting effects and fast particle bursts"
+        - "eyes immediately glow intensely while power aura rapidly expands outward with quick particle effects and fast energy waves"
 
         Response Format:
         [Just the fast-paced animation prompt text based purely on what you see in the image, starting with immediate action, nothing else]
@@ -889,7 +889,7 @@ def handle_generate_animation_prompt(event):
                 return create_error_response("Nova Lite model access not available. Please ensure Amazon Nova Lite model access is granted in AWS Bedrock console.", 400)
             
             # Fallback to simple prompt if Bedrock fails
-            animation_prompt = "From frame 1, the character immediately steps forward with eyes instantly glowing, magical energy rapidly swirling around them"
+            animation_prompt = "character immediately steps forward with eyes instantly glowing, magical energy rapidly swirling around them"
             logger.info("🔄 Using fallback animation prompt due to Bedrock error")
         
         return create_success_response({
@@ -933,7 +933,7 @@ def handle_optimize_animation_prompt(event):
                 raise ValueError("Invalid base64 image data")
             
             optimization_prompt = f"""
-            Analyze this trading card image and optimize the user's animation idea for a 6-second video that starts immediately from frame 1.
+            Analyze this trading card image and optimize the user's animation idea for a 6-second video with immediate action.
 
             User's animation idea: "{user_prompt}"
 
@@ -943,9 +943,9 @@ def handle_optimize_animation_prompt(event):
             3. Do NOT use any external context - only combine the user's idea with what you observe in the image
 
             CRITICAL Requirements:
-            - Animation must start IMMEDIATELY from frame 1 - no buildup or delay
+            - Animation must start IMMEDIATELY with no buildup or delay
             - Must be fast-paced to fit all action within 6 seconds
-            - Use phrases like "immediately", "instantly", "from frame 1", "rapidly"
+            - Use phrases like "immediately", "instantly", "rapidly"
             - Combines the user's animation idea with what you see in the card
             - Keeps the character/subject consistent with what's shown in the card image
             - Enhances the user's concept with specific visual details from what you observe
@@ -984,12 +984,12 @@ def handle_optimize_animation_prompt(event):
         else:
             # Text-only optimization when no image is provided
             optimization_prompt = f"""
-            Take this animation prompt and enhance it for a 6-second video that starts immediately from frame 1: "{user_prompt}"
+            Take this animation prompt and enhance it for a 6-second video with immediate action: "{user_prompt}"
 
             CRITICAL Requirements:
-            - Animation must start IMMEDIATELY from frame 1 - no buildup or delay
+            - Animation must start IMMEDIATELY with no buildup or delay
             - Must be fast-paced to fit all action within 6 seconds
-            - Use phrases like "immediately", "instantly", "from frame 1", "rapidly"
+            - Use phrases like "immediately", "instantly", "rapidly"
             - Keep the core animation concept intact
             - Add fast visual effects, lighting, and movement details
             - Make it more cinematic and engaging for 6-second video
