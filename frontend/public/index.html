@@ -564,6 +564,55 @@
             transform: scale(0.95);
         }
 
+        /* Video Prompt Container with Timing Prefix */
+        .video-prompt-container {
+            position: relative;
+            display: flex;
+            align-items: flex-start;
+            background: var(--glass-black);
+            border: 2px solid var(--glass-border);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: border-color 0.3s ease;
+        }
+
+        .video-prompt-container:focus-within {
+            border-color: var(--art-deco-gold);
+            box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.2);
+        }
+
+        .prompt-prefix {
+            background: rgba(212, 175, 55, 0.1);
+            border-right: 1px solid rgba(212, 175, 55, 0.3);
+            color: var(--text-gold);
+            font-family: var(--font-body);
+            font-size: 1rem;
+            font-weight: 600;
+            padding: 1.5rem 1rem;
+            white-space: nowrap;
+            user-select: none;
+            pointer-events: none;
+            display: flex;
+            align-items: flex-start;
+            min-height: 120px;
+            box-sizing: border-box;
+        }
+
+        .video-prompt-with-prefix {
+            border: none !important;
+            border-radius: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+            flex: 1;
+            margin: 0;
+        }
+
+        .video-prompt-with-prefix:focus {
+            border: none !important;
+            box-shadow: none !important;
+            outline: none !important;
+        }
+
         /* Usage Limits Display */
         .usage-limits {
             background: var(--glass-black);
@@ -1360,15 +1409,18 @@
                 <!-- Video Prompt Input -->
                 <div id="videoPromptInput" class="prompt-input-section hidden">
                     <div class="textarea-container">
-                        <textarea id="videoPrompt" class="art-deco-textarea" placeholder="Describe your animation..." maxlength="512"></textarea>
+                        <div class="video-prompt-container">
+                            <div class="prompt-prefix">From frame 1, within 6 seconds: </div>
+                            <textarea id="videoPrompt" class="art-deco-textarea video-prompt-with-prefix" placeholder="character steps forward with glowing eyes and magical energy swirling around them" maxlength="450"></textarea>
+                        </div>
                         <div class="textarea-controls">
-                            <div id="videoCharCount" class="textarea-limit-indicator">0/512</div>
+                            <div id="videoCharCount" class="textarea-limit-indicator">0/450</div>
                             <button class="textarea-clear-btn" id="videoClearBtn">CLEAR</button>
                         </div>
                     </div>
                     
                     <div style="text-align: center; margin-top: 1rem;">
-                        <button id="generateVideoBtn" class="art-deco-btn">🎬 Generate Video (2 min wait)</button>
+                        <button id="generateVideoBtn" class="art-deco-btn">🎬 Generate Video (~2 min)</button>
                     </div>
                 </div>
                 
