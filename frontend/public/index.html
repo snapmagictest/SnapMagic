@@ -586,16 +586,19 @@
             border-right: 1px solid rgba(212, 175, 55, 0.3);
             color: var(--text-gold);
             font-family: var(--font-body);
-            font-size: 1rem;
+            font-size: 0.9rem;
             font-weight: 600;
-            padding: 1.5rem 1rem;
-            white-space: nowrap;
+            padding: 1rem 0.8rem;
             user-select: none;
             pointer-events: none;
             display: flex;
             align-items: flex-start;
             min-height: 120px;
             box-sizing: border-box;
+            line-height: 1.3;
+            text-align: center;
+            width: 120px;
+            flex-shrink: 0;
         }
 
         .video-prompt-with-prefix {
@@ -1410,7 +1413,7 @@
                 <div id="videoPromptInput" class="prompt-input-section hidden">
                     <div class="textarea-container">
                         <div class="video-prompt-container">
-                            <div class="prompt-prefix">From frame 1, within 6 seconds, execute every detail: </div>
+                            <div class="prompt-prefix">From frame 1,<br>within 6 seconds,<br>execute every detail: </div>
                             <textarea id="videoPrompt" class="art-deco-textarea video-prompt-with-prefix" placeholder="character steps forward with glowing eyes and magical energy swirling around them" maxlength="450"></textarea>
                         </div>
                         <div class="textarea-controls">
