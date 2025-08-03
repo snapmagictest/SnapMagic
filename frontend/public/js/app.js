@@ -3192,8 +3192,8 @@ class SnapMagicApp {
         }
 
         try {
-            // Clear immediate feedback - starts fast then shows progress
-            this.setVideoButtonState('🚀 Starting Video Generation...', true);
+            // Start with preparing state (like download button)
+            this.setVideoButtonState('🔄 Preparing...', true);
             
             this.videoGenerationInProgress = true;
             
@@ -3339,15 +3339,25 @@ class SnapMagicApp {
      * Reset video button to normal state
      */
     resetVideoButtonState() {
+        // Clear progress interval if running
+        if (this.videoProgressInterval) {
+            clearInterval(this.videoProgressInterval);
+            this.videoProgressInterval = null;
+        }
+        
+        // Reset button styling
+        this.resetVideoButtonStyling();
+        
+        // Reset button text and state
         this.setVideoButtonState('🎬 Generate Video (~2 min)', false);
         this.videoGenerationInProgress = false;
     }
 
     /**
-     * Start smooth video polling (no modal, button states only)
+     * Start smooth video polling with progress bar (like download button)
      */
     startSmoothVideoPolling(invocationArn, metadata) {
-        console.log('⏰ Starting smooth video polling...');
+        console.log('⏰ Starting video generation with progress bar...');
         
         // Initialize progress tracking
         this.videoProgress = {
@@ -3356,8 +3366,19 @@ class SnapMagicApp {
             metadata: metadata
         };
         
-        // Start smooth progress updates
-        this.updateSmoothVideoProgress();
+        // Start progress animation (like download button)
+        let progress = 0;
+        const progressInterval = setInterval(() => {
+            if (progress < 90 && this.videoGenerationInProgress) {
+                // Slower progress for video (2 min vs 30s for download)
+                progress += Math.random() * 3; // Slower increment
+                progress = Math.min(90, progress);
+                this.updateVideoButtonProgress(progress);
+            }
+        }, 1000); // Update every second
+        
+        // Store interval for cleanup
+        this.videoProgressInterval = progressInterval;
         
         // Wait 30 seconds before first check
         setTimeout(() => {
@@ -3367,47 +3388,60 @@ class SnapMagicApp {
     }
 
     /**
-     * Update video button with smooth progress (no modal)
+     * Update video button with progress coloring during generation (like download button)
      */
-    updateSmoothVideoProgress() {
-        if (!this.videoProgress) return;
+    updateVideoButtonProgress(progress) {
+        // Update both video generation buttons
+        const videoBtns = [
+            this.elements.generateVideoBtn,
+            document.getElementById('generateVideoBtn2')
+        ].filter(btn => btn); // Remove null buttons
         
-        const elapsed = Date.now() - this.videoProgress.startTime;
-        const elapsedSeconds = Math.floor(elapsed / 1000);
+        if (videoBtns.length === 0) return;
         
-        let message = '';
-        let icon = '';
+        console.log(`🎬 Updating video progress: ${Math.round(progress)}%`);
         
-        // Clear stage progression with appropriate timing and visual feedback
-        if (elapsedSeconds <= 10) {
-            // Fast start - immediate feedback
-            icon = '🚀';
-            message = `${icon} Starting Video Generation...`;
-        } else if (elapsedSeconds <= 45) {
-            // Processing stage - most of the work happens here
-            icon = '⚙️';
-            message = `${icon} Processing Animation (${Math.floor(elapsedSeconds)}s)`;
-        } else if (elapsedSeconds <= 90) {
-            // In progress - showing it's working
-            icon = '🎬';
-            message = `${icon} Rendering Video (${Math.floor(elapsedSeconds)}s)`;
-        } else if (elapsedSeconds <= 120) {
-            // Almost done - building anticipation
-            icon = '✨';
-            message = `${icon} Almost Done (${Math.floor(elapsedSeconds)}s)`;
-        } else {
-            // Final stage - should be ready soon
-            icon = '🔄';
-            message = `${icon} Finalizing (${Math.floor(elapsedSeconds)}s)`;
-        }
+        // Update both buttons identically (like download button)
+        videoBtns.forEach(videoBtn => {
+            // Update button text with progress
+            videoBtn.innerHTML = `🔄 Preparing... ${Math.round(progress)}%`;
+            
+            // Progressive gold coloring based on progress (same as download button)
+            const goldIntensity = progress / 100;
+            const greyIntensity = 1 - goldIntensity;
+            
+            // Blend from grey to gold as progress increases
+            videoBtn.style.background = `linear-gradient(to right, 
+                rgba(255, 215, 0, ${goldIntensity}) ${progress}%, 
+                rgba(102, 102, 102, ${greyIntensity}) ${progress}%)`;
+            
+            // Add subtle glow that increases with progress
+            const glowIntensity = goldIntensity * 0.3;
+            videoBtn.style.boxShadow = `0 0 ${10 * goldIntensity}px rgba(255, 215, 0, ${glowIntensity})`;
+            
+            // Keep disabled state
+            videoBtn.disabled = true;
+            videoBtn.style.cursor = 'not-allowed';
+            videoBtn.style.opacity = '0.8';
+        });
+    }
+
+    /**
+     * Reset video button styling to normal state
+     */
+    resetVideoButtonStyling() {
+        const videoBtns = [
+            this.elements.generateVideoBtn,
+            document.getElementById('generateVideoBtn2')
+        ].filter(btn => btn);
         
-        // Update button text with loading animation
-        this.setVideoButtonState(message, true);
-        
-        // Continue updating every 3 seconds for more responsive feedback
-        if (this.videoGenerationInProgress) {
-            setTimeout(() => this.updateSmoothVideoProgress(), 3000);
-        }
+        videoBtns.forEach(videoBtn => {
+            // Reset all custom styling
+            videoBtn.style.background = '';
+            videoBtn.style.boxShadow = '';
+            videoBtn.style.cursor = '';
+            videoBtn.style.opacity = '';
+        });
     }
 
     /**
@@ -3585,24 +3619,34 @@ class SnapMagicApp {
             if (result.success && (result.status === 'SUCCEEDED' || result.status === 'completed') && result.video_url) {
                 console.log('✅ Video generation completed successfully!');
                 
-                // Reset button state (smooth UX)
-                this.resetVideoButtonState();
-                
-                // Update usage limits after video completion (same as cards)
-                if (result.remaining) {
-                    console.log('📊 Updating usage limits after video completion:', result.remaining);
-                    this.updateUsageLimits(result.remaining);
-                } else {
-                    // Fallback: refresh usage limits if not provided in response
-                    console.log('🔄 Refreshing usage limits after video completion...');
-                    await this.refreshUsageLimits();
+                // Complete progress to 100% (like download button)
+                if (this.videoProgressInterval) {
+                    clearInterval(this.videoProgressInterval);
+                    this.videoProgressInterval = null;
                 }
+                this.updateVideoButtonProgress(100);
                 
-                // Clean up progress tracking
-                this.videoProgress = null;
-                
-                this.displayGeneratedVideo(result.video_url, result); // Pass complete result data
-                this.videoGenerationInProgress = false;
+                // Brief delay to show 100% completion
+                setTimeout(() => {
+                    // Reset button state (smooth UX)
+                    this.resetVideoButtonState();
+                    
+                    // Update usage limits after video completion (same as cards)
+                    if (result.remaining) {
+                        console.log('📊 Updating usage limits after video completion:', result.remaining);
+                        this.updateUsageLimits(result.remaining);
+                    } else {
+                        // Fallback: refresh usage limits if not provided in response
+                        console.log('🔄 Refreshing usage limits after video completion...');
+                        this.refreshUsageLimits();
+                    }
+                    
+                    // Clean up progress tracking
+                    this.videoProgress = null;
+                    
+                    this.displayGeneratedVideo(result.video_url, result); // Pass complete result data
+                    this.videoGenerationInProgress = false;
+                }, 500); // Brief delay to show completion
             } else if (result.success && (result.status === 'IN_PROGRESS' || result.status === 'PROCESSING')) {
                 console.log(`⏳ Video still processing, will check again in 10 seconds (attempt ${retryCount + 1}/${MAX_RETRIES})`);
                 this.updateVideoProcessingStatus(`Video processing... Attempt ${retryCount + 1}/${MAX_RETRIES}. ${result.message || 'Checking again in 10 seconds'}`);
