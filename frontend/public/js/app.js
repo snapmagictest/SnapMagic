@@ -3182,11 +3182,10 @@ class SnapMagicApp {
             return;
         }
 
-        // Automatically prepend the enhanced timing prefix for better 6-second impact
+        // Simple timing prefix for 6-second impact
         const timingPrefix = "From frame 1, within 6 seconds, complete the action: ";
-        const timingConstraint = " Ensure all movement and effects finish by frame 180 (6 seconds at 30fps).";
-        const animationPrompt = `${timingPrefix}${userPrompt}.${timingConstraint}`;
-        console.log('🎬 Video prompt with enhanced timing:', animationPrompt);
+        const animationPrompt = `${timingPrefix}${userPrompt}`;
+        console.log('🎬 Video prompt with timing prefix:', animationPrompt);
 
         if (!this.generatedCardData) {
             this.showError('Please generate a trading card first');
@@ -3852,7 +3851,7 @@ class SnapMagicApp {
         if (videoPrompt && videoCharCount) {
             const currentLength = videoPrompt.value.length;
             const maxLength = videoPrompt.getAttribute('maxlength') || 450;
-            const reservedChars = 62; // "From frame 1, within 6 seconds, complete the action: " + timing constraint
+            const reservedChars = 47; // "From frame 1, within 6 seconds, complete the action: "
             
             // Show user characters + reserved characters info
             videoCharCount.textContent = `${currentLength}/${maxLength} (+${reservedChars} timing)`;
