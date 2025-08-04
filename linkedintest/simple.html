@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple LinkedIn Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 50px;
+        }
+        .button {
+            background: #0066cc;
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 18px;
+        }
+        .message {
+            background: #f0f0f0;
+            padding: 20px;
+            margin: 20px;
+            border-radius: 5px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <h1>LinkedIn Test - Simplified</h1>
+    
+    <div class="message" id="message">Loading...</div>
+    
+    <button class="button" onclick="shareLinkedIn()">📱 Share on LinkedIn</button>
+
+    <script>
+        // Simplified config - only event name needed
+        const config = {
+            "cardTemplate": {
+                "eventName": "AWS re:Invent 2025"
+            }
+        };
+
+        let message = '';
+
+        function generateMessage() {
+            const eventName = config.cardTemplate.eventName;
+            
+            // Simple clean message - no mentions, no complex logic
+            message = `🎴✨ Just created my AI-powered trading card with SnapMagic - Powered by AWS! Generated using Amazon Bedrock Nova Canvas at ${eventName}. #AWS #Amazon #Bedrock #Nova`;
+            
+            document.getElementById('message').textContent = message;
+        }
+
+        function shareLinkedIn() {
+            const url = `https://www.linkedin.com/sharing/share-offsite/?text=${encodeURIComponent(message)}`;
+            window.open(url, '_blank');
+        }
+
+        // Generate message on page load
+        generateMessage();
+    </script>
+</body>
+</html>
