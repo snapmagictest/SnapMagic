@@ -5880,11 +5880,11 @@ class SnapMagicApp {
                         </div>
                         <div class="step-item">
                             <span class="step-number">2</span>
-                            <span class="step-text">The post text will be pre-filled for you</span>
+                            <span class="step-text">Add your card image manually using LinkedIn's "Add media" option</span>
                         </div>
                         <div class="step-item">
                             <span class="step-number">3</span>
-                            <span class="step-text">Add your card image manually using LinkedIn's "Add media" option</span>
+                            <span class="step-text">Mention "@snapmagic cards" after pre-filled text to win a prize</span>
                         </div>
                     </div>
 

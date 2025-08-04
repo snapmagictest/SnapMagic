@@ -30,14 +30,14 @@
     </style>
 </head>
 <body>
-    <h1>LinkedIn Test - Simplified</h1>
+    <h1>LinkedIn Test - Matches Main App</h1>
     
     <div class="message" id="message">Loading...</div>
     
     <button class="button" onclick="shareLinkedIn()">📱 Share on LinkedIn</button>
 
     <script>
-        // Simplified config - only event name needed
+        // Config matching your actual secrets.json (simplified)
         const config = {
             "cardTemplate": {
                 "eventName": "AWS re:Invent 2025"
@@ -49,15 +49,16 @@
         function generateMessage() {
             const eventName = config.cardTemplate.eventName;
             
-            // Simple clean message - no mentions, no complex logic
+            // Exact same message as main app - simple and clean
             message = `🎴✨ Just created my AI-powered trading card with SnapMagic - Powered by AWS! Generated using Amazon Bedrock Nova Canvas at ${eventName}. #AWS #Amazon #Bedrock #Nova`;
             
             document.getElementById('message').textContent = message;
         }
 
         function shareLinkedIn() {
+            // Exact same LinkedIn sharing as main app
             const url = `https://www.linkedin.com/sharing/share-offsite/?text=${encodeURIComponent(message)}`;
-            window.open(url, '_blank');
+            window.open(url, '_blank', 'width=600,height=600,scrollbars=yes,resizable=yes');
         }
 
         // Generate message on page load
