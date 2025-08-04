@@ -792,28 +792,31 @@ def handle_generate_animation_prompt(event):
         
         # Create animation prompt generation template
         animation_prompt_template = """
-        Analyze this trading card image and create an animation prompt for a 6-second video.
+        Analyze this trading card image and create a HIGH-ENERGY animation prompt for a 6-second video with FAST, DYNAMIC ACTION.
 
         Your task:
         1. Look at the trading card image and describe what you see
-        2. Based ONLY on what you visually observe in the image, create an animation prompt
+        2. Based ONLY on what you visually observe in the image, create a FAST-PACED animation prompt
         3. Do NOT use any external context - only what is visible in the card
 
-        CRITICAL Requirements:
-        - Describe dynamic movements based on what you see in the card
-        - Include visual effects that would bring this specific image to life
-        - Keep the character/subject/elements consistent with what's shown in the card
-        - Keep under 400 characters for video generation
-        - Focus on motion and transformation of what you observe
-        - Generate pure action descriptions without timing words
+        CRITICAL Requirements for FAST ACTION:
+        - Use SPEED words: rapidly, quickly, explosively, bursts, flashes, surges, erupts
+        - Pack MULTIPLE rapid actions into 6 seconds
+        - Create OVERLAPPING effects happening simultaneously
+        - Focus on EXPLOSIVE energy and SWIFT movements
+        - Generate INTENSE, ENERGETIC motion descriptions
+        - Keep under 400 characters but maximize action density
 
-        Examples of good animation prompts:
-        - "character steps forward with eyes glowing, magical energy swirling around them"
-        - "figure emerges in 3D with dramatic lighting effects and particle bursts"
-        - "eyes glow intensely while power aura expands outward with particle effects and energy waves"
+        FAST ACTION Examples:
+        - "character rapidly emerges forward as eyes flash bright, explosive magical energy bursts outward in rapid pulses while particles swirl intensely"
+        - "figure quickly materializes in 3D with lightning-fast particle explosions, energy waves rapidly pulsing outward as dramatic lighting flashes"
+        - "eyes instantly ignite with intense glow while power aura explosively expands, rapid energy bursts and particle storms surge across scene"
+        - "character swiftly steps forward as magical forces rapidly spiral around them, explosive light bursts and energy waves pulse quickly"
+
+        SPEED FOCUS: Make everything happen FAST, INTENSE, and ENERGETIC for maximum 6-second impact!
 
         Response Format:
-        [Just the action description based purely on what you see in the image, nothing else]
+        [High-energy action description with rapid movements and explosive effects based purely on what you see in the image]
         """
         
         try:
