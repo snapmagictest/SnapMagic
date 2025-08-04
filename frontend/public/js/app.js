@@ -5876,7 +5876,7 @@ class SnapMagicApp {
                     <div class="linkedin-steps">
                         <div class="step-item">
                             <span class="step-number">1</span>
-                            <span class="step-text">Click "Share on LinkedIn" to open LinkedIn</span>
+                            <span class="step-text">Download Card and choose "Share on LinkedIn" to open LinkedIn</span>
                         </div>
                         <div class="step-item">
                             <span class="step-number">2</span>
