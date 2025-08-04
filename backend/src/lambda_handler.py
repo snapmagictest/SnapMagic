@@ -1484,19 +1484,19 @@ def lambda_handler(event, context):
             request_headers = event.get('headers', {})
             client_ip = get_client_ip(request_headers)
             
+            # Extract override code from request body if provided
+            override_code = body.get('override_code')
+            
             # Get current override number (includes pending override check)
             current_override = get_current_override_number(client_ip)
             session_id_for_files = create_standard_session_id(client_ip, current_override)
             
             logger.info(f"🎬 Video generation request - using override session: {session_id_for_files}")
             
-            # Check usage limits for current override session
-            limits = load_limits()
-            current_usage = get_usage_for_override_session(client_ip, current_override)
-            current_count = current_usage.get('videos', 0)
-            limit = limits.get('videos', 3)
+            # Check usage limits for current override session (SAME AS CARDS)
+            allowed, _ = check_usage_limit_simplified(client_ip, 'videos', override_code)
             
-            if current_count >= limit:
+            if not allowed:
                 return create_error_response(
                     f"Video limit reached. Please visit the event staff at SnapMagic to assist.", 
                     429
