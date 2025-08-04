@@ -1494,7 +1494,7 @@ def lambda_handler(event, context):
             logger.info(f"🎬 Video generation request - using override session: {session_id_for_files}")
             
             # Check usage limits for current override session (SAME AS CARDS)
-            allowed, _ = check_usage_limit_simplified(client_ip, 'videos', override_code)
+            allowed, session_id_for_files = check_usage_limit_simplified(client_ip, 'videos', override_code)
             
             if not allowed:
                 return create_error_response(
