@@ -1532,10 +1532,13 @@ def lambda_handler(event, context):
                             override_number = int(parts[1])
                             video_number = get_next_video_number_for_session(client_ip, override_number)
                             
-                            # Create video filename: IP_override1_card_1_video_2_TIMESTAMP.mp4
+                            # Get the current card number to match video to the correct card
+                            current_card_number = get_current_card_number_for_session(client_ip, override_number)
+                            
+                            # Create video filename: IP_override1_card_2_video_1_TIMESTAMP.mp4 (using correct card number)
                             from datetime import datetime
                             timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-                            video_filename = f"{session_id_for_files}_card_1_video_{video_number}_{timestamp}.mp4"
+                            video_filename = f"{session_id_for_files}_card_{current_card_number}_video_{video_number}_{timestamp}.mp4"
                             s3_key = f"videos/{video_filename}"
                             
                             # Store video file directly in S3
