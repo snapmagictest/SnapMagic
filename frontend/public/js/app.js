@@ -3578,7 +3578,8 @@ class SnapMagicApp {
             const requestBody = {
                 action: 'get_video_status',
                 invocation_arn: invocationArn,  // This is actually the full ARN, not just ID
-                animation_prompt: metadata.animation_prompt || ''  // Include prompt for session storage
+                animation_prompt: metadata.animation_prompt || '',  // Include prompt for session storage
+                session_id_for_storage: metadata.session_id_for_storage  // Pass stored session_id from video generation
             };
 
             console.log('📤 Sending video status request:', requestBody);

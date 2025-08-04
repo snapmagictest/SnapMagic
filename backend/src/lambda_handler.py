@@ -1587,7 +1587,8 @@ def lambda_handler(event, context):
                             'animation_prompt': prompt,
                             'status': result.get('status'),
                             'estimated_time': result.get('estimated_time'),
-                            'timestamp': result.get('timestamp')
+                            'timestamp': result.get('timestamp'),
+                            'session_id_for_storage': session_id_for_files  # Store correct session_id for later use
                         }
                     })
                 else:
@@ -1621,9 +1622,25 @@ def lambda_handler(event, context):
                     # Video is completed - store it with session-based filename
                     logger.info("✅ Video completed - storing with session-based filename...")
                     
-                    # Get current override session for storage
-                    current_override = get_current_override_number(client_ip)
-                    session_id_for_files = create_standard_session_id(client_ip, current_override)
+                    # Try to get session_id from request metadata first (from original video generation)
+                    stored_session_id = body.get('session_id_for_storage')
+                    
+                    if stored_session_id:
+                        # Use the session_id from when the video was originally generated
+                        session_id_for_files = stored_session_id
+                        logger.info(f"📝 Using stored session_id from video generation: {session_id_for_files}")
+                        
+                        # Extract override number from stored session_id for card number calculation
+                        if '_override' in session_id_for_files:
+                            parts = session_id_for_files.split('_override')
+                            current_override = int(parts[1])
+                        else:
+                            current_override = 1
+                    else:
+                        # Fallback to recalculating (old behavior)
+                        logger.warning("⚠️ No stored session_id found, recalculating (may be incorrect after override)")
+                        current_override = get_current_override_number(client_ip)
+                        session_id_for_files = create_standard_session_id(client_ip, current_override)
                     
                     # Get the current card number to match video to card
                     current_card_number = get_current_card_number_for_session(client_ip, current_override)
