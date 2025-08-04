@@ -805,18 +805,19 @@ def handle_generate_animation_prompt(event):
         - Create OVERLAPPING effects happening simultaneously
         - Focus on EXPLOSIVE energy and SWIFT movements
         - Generate INTENSE, ENERGETIC motion descriptions
-        - Keep under 400 characters but maximize action density
+        - MUST be under 300 characters for video generation (STRICT LIMIT)
+        - Be concise but action-packed
 
-        FAST ACTION Examples:
-        - "character rapidly emerges forward as eyes flash bright, explosive magical energy bursts outward in rapid pulses while particles swirl intensely"
-        - "figure quickly materializes in 3D with lightning-fast particle explosions, energy waves rapidly pulsing outward as dramatic lighting flashes"
-        - "eyes instantly ignite with intense glow while power aura explosively expands, rapid energy bursts and particle storms surge across scene"
-        - "character swiftly steps forward as magical forces rapidly spiral around them, explosive light bursts and energy waves pulse quickly"
+        FAST ACTION Examples (SHORT):
+        - "character rapidly emerges as eyes flash, explosive energy bursts outward with swirling particles"
+        - "figure quickly materializes with lightning particle explosions, energy waves pulsing rapidly"
+        - "eyes instantly ignite while power aura explosively expands, rapid energy bursts surge"
+        - "character swiftly steps forward as magical forces spiral, explosive light bursts pulse"
 
-        SPEED FOCUS: Make everything happen FAST, INTENSE, and ENERGETIC for maximum 6-second impact!
+        KEEP IT SHORT BUT FAST: Maximum action in minimum words!
 
         Response Format:
-        [High-energy action description with rapid movements and explosive effects based purely on what you see in the image]
+        [Concise high-energy action description under 300 characters based on what you see in the image]
         """
         
         try:
