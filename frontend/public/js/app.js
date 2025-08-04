@@ -3168,56 +3168,17 @@ class SnapMagicApp {
     }
 
     enhance6SecondActionPrompt(userPrompt) {
-        // Transform any prompt to ensure actions complete within 6 seconds
-        // Focus on completion timing rather than verbose descriptions
+        // Universal enhancement that works for ALL prompts
+        // Don't parse or restructure - just enforce completion
         
-        // Step 1: Extract and clean actions
-        const actions = this.extractActions(userPrompt);
+        // Remove conflicting timing words
+        const cleanPrompt = userPrompt.replace(/\b(quickly|slowly|gradually|eventually|finally|rapidly)\b/gi, '').trim();
         
-        // Step 2: Create concise time-sequenced actions
-        let enhancedPrompt = '';
-        if (actions.length === 1) {
-            // Single action - ensure it completes fully
-            enhancedPrompt = `${actions[0]}, completing fully within 6 seconds`;
-        } else {
-            // Multiple actions - sequence them with completion timing
-            const actionSequence = actions.map((action, index) => {
-                const timing = index === actions.length - 1 ? 'by 6 seconds' : `by second ${Math.ceil((index + 1) * 6 / actions.length)}`;
-                return `${action} (${timing})`;
-            }).join(', ');
-            enhancedPrompt = actionSequence;
-        }
+        // Add universal completion enforcement
+        const completionEnforcement = "All described actions and effects complete fully within 6 seconds, no partial movements or unfinished states";
         
-        // Step 3: Add strict completion enforcement (concise)
-        const enforcement = "All motion finishes completely, no partial states";
-        
-        return `${enhancedPrompt}. ${enforcement}.`;
+        return `${cleanPrompt}. ${completionEnforcement}.`;
     }
-    
-    extractActions(prompt) {
-        // Extract individual actions from the prompt
-        let actions = [];
-        
-        // Split on semicolons, commas, and "and"
-        let parts = prompt.split(/[;,]|(?:\s+and\s+)/i);
-        
-        // Clean and filter actions
-        actions = parts
-            .map(part => part.trim())
-            .filter(part => part.length > 0)
-            .map(part => {
-                // Remove existing timing words that might conflict
-                return part.replace(/\b(quickly|slowly|gradually|eventually|finally|rapidly)\b/gi, '').trim();
-            });
-        
-        // If no clear separators, treat as single action
-        if (actions.length <= 1) {
-            actions = [prompt.trim()];
-        }
-        
-        return actions;
-    }
-
     // Video Generation
     async handleGenerateVideo() {
         // Use videoPrompt if available (new system), otherwise use animationPrompt (legacy)
