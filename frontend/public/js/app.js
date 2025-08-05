@@ -50,6 +50,11 @@ class SnapMagicApp {
             prints: { used: 0, total: 1 }
         };
         
+        // Concurrency control for card generation (prevent HTTP 500 errors)
+        this.activeCardRequests = 0;
+        this.maxConcurrentCards = 2; // Conservative safe limit based on load testing
+        this.cardRequestQueue = [];
+        
         // Initialize app
         this.init();
     }
@@ -4911,6 +4916,41 @@ class SnapMagicApp {
     }
     
     async generateCardWithName(userPrompt, userName) {
+        // NEW: Check if we're at the concurrent limit
+        if (this.activeCardRequests >= this.maxConcurrentCards) {
+            // Queue the request instead of processing immediately
+            return this.queueCardRequest(userPrompt, userName);
+        }
+        
+        // Process the request immediately
+        return this.processCardRequest(userPrompt, userName);
+    }
+    
+    // NEW METHOD: Queue card requests when at capacity
+    async queueCardRequest(userPrompt, userName) {
+        console.log(`🚦 Card request queued (${this.activeCardRequests}/${this.maxConcurrentCards} slots busy)`);
+        
+        // Show user they're in queue
+        const queuePosition = this.cardRequestQueue.length + 1;
+        this.showProcessing(`Your card is being prepared... You're #${queuePosition} in line`);
+        this.elements.generateBtn.disabled = true;
+        
+        // Add to queue
+        return new Promise((resolve, reject) => {
+            this.cardRequestQueue.push({
+                userPrompt,
+                userName,
+                resolve,
+                reject
+            });
+        });
+    }
+    
+    // NEW METHOD: Process card requests with concurrency tracking
+    async processCardRequest(userPrompt, userName) {
+        this.activeCardRequests++; // Track this request
+        console.log(`🎯 Processing card request (${this.activeCardRequests}/${this.maxConcurrentCards} slots busy)`);
+        
         try {
             this.showProcessing('Creating your magical trading card...');
             this.elements.generateBtn.disabled = true;
@@ -4948,6 +4988,7 @@ class SnapMagicApp {
                 
                 this.displayGeneratedCard(data, userName);
                 this.hideProcessing();
+                return data;
             } else {
                 console.error('❌ Card generation failed:', data.error);
                 this.hideProcessing();
@@ -4960,13 +5001,32 @@ class SnapMagicApp {
                 } else {
                     this.showError(data.error || 'Card generation failed. Please try again.');
                 }
+                throw new Error(data.error || 'Card generation failed');
             }
         } catch (error) {
             console.error('❌ Card generation error:', error);
             this.hideProcessing();
             this.showError('Card generation failed. Please check your connection and try again.');
+            throw error;
         } finally {
+            this.activeCardRequests--; // Stop tracking this request
             this.elements.generateBtn.disabled = false;
+            
+            // Process next request in queue
+            this.processNextCardInQueue();
+        }
+    }
+    
+    // NEW METHOD: Process next queued card request
+    processNextCardInQueue() {
+        if (this.cardRequestQueue.length > 0 && this.activeCardRequests < this.maxConcurrentCards) {
+            const nextRequest = this.cardRequestQueue.shift();
+            console.log(`🚀 Processing next queued card request (${this.cardRequestQueue.length} remaining in queue)`);
+            
+            // Process the queued request
+            this.processCardRequest(nextRequest.userPrompt, nextRequest.userName)
+                .then(nextRequest.resolve)
+                .catch(nextRequest.reject);
         }
     }
     
