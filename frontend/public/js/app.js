@@ -5888,6 +5888,10 @@ class SnapMagicApp {
                         </div>
                     </div>
 
+                    <div style="text-align: center; margin: 20px 0;">
+                        <img src="/linkedin/post.png" alt="LinkedIn sharing example" style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
+                    </div>
+
                     <div class="linkedin-buttons">
                         <button id="downloadAnimatedGifLinkedIn" class="art-deco-btn">🎬 Prepare Download</button>
                         <button id="shareToLinkedIn" class="art-deco-btn">📱 Share on LinkedIn</button>
