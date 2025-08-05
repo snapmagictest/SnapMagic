@@ -1396,6 +1396,9 @@ class SnapMagicApp {
         }
         
         this.elements.resultActions.classList.remove('hidden');
+        
+        // Hide loading box only after card is fully displayed and ready
+        this.hideProcessing();
     }
     
     /**
@@ -4987,7 +4990,7 @@ class SnapMagicApp {
                 // The actual usage count changes when the card is stored in S3
                 
                 this.displayGeneratedCard(data, userName);
-                this.hideProcessing();
+                // hideProcessing() moved to displayGeneratedCard - after card is fully ready
                 return data;
             } else {
                 console.error('❌ Card generation failed:', data.error);
