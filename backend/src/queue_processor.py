@@ -27,8 +27,12 @@ JOB_TRACKING_TABLE = os.environ.get('JOB_TRACKING_TABLE')
 TEMPLATE_EVENT_NAME = os.environ.get('TEMPLATE_EVENT_NAME', 'AWS Event')
 TEMPLATE_LOGOS_JSON = os.environ.get('TEMPLATE_LOGOS_JSON', '[]')
 
-# DynamoDB table
-job_table = dynamodb.Table(JOB_TRACKING_TABLE)
+# DynamoDB table (conditional initialization for testing)
+job_table = None
+if JOB_TRACKING_TABLE:
+    job_table = dynamodb.Table(JOB_TRACKING_TABLE)
+else:
+    logger.warning("⚠️ JOB_TRACKING_TABLE not set - DynamoDB operations will be disabled")
 
 def lambda_handler(event, context):
     """

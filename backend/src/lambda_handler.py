@@ -584,6 +584,22 @@ def get_client_ip(request_headers: Dict[str, str]) -> str:
     fallback_id = f"fallback_{int(time.time())}_{secrets.token_hex(6)}"
     return fallback_id
 
+def get_device_id(request_headers: Dict[str, str]) -> str:
+    """Extract device ID from request headers for user correlation"""
+    # Extract device ID from X-Device-ID header
+    device_id = request_headers.get('X-Device-ID', request_headers.get('x-device-id', ''))
+    
+    if device_id:
+        logger.info(f"📱 Device ID extracted: {device_id}")
+        return device_id
+    
+    # If no device ID provided, generate a fallback
+    logger.warning(f"⚠️ No device ID in headers, generating fallback")
+    import secrets
+    import time
+    fallback_id = f"fallback_{int(time.time())}_{secrets.token_hex(6)}"
+    return fallback_id
+
 def load_event_credentials() -> Dict[str, str]:
     """Load event credentials from environment variables (set by CDK from secrets.json)"""
     try:
