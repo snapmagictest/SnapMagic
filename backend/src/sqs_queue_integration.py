@@ -112,7 +112,7 @@ def create_job_record(job_id, job_data):
             
         item = {
             'jobId': job_id,  # Fixed: use correct key name to match table schema
-            'job_status': 'queued',  # Fixed: use consistent status field name
+            'status': 'queued',  # Fixed: use consistent status field name (same as queue processor)
             'created_at': job_data.get('created_at', datetime.now().isoformat()),
             'prompt': job_data.get('prompt', ''),
             'user_name': job_data.get('user_name', ''),

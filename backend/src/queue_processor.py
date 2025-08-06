@@ -76,24 +76,34 @@ def lambda_handler(event, context):
     Each message contains job details for Nova Canvas generation
     """
     try:
+        print(f"🚀 QUEUE PROCESSOR STARTED - Request ID: {context.aws_request_id}")
         logger.info(f"🚀 Queue Processor Lambda started - Request ID: {context.aws_request_id}")
+        
+        print(f"📥 RAW EVENT: {json.dumps(event, default=str)}")
         logger.info(f"📥 Received event: {json.dumps(event, default=str)}")
         
         # Check if we have SQS records
         if 'Records' not in event:
+            print("❌ NO RECORDS FOUND IN EVENT")
             logger.error("❌ No 'Records' found in event - this should be an SQS event")
             return {'statusCode': 400, 'body': 'Invalid event structure'}
         
         records = event['Records']
+        print(f"🎯 PROCESSING {len(records)} MESSAGES")
         logger.info(f"🎯 Queue Processor: Processing {len(records)} messages")
         
         for i, record in enumerate(records):
             try:
+                print(f"📝 PROCESSING RECORD {i+1}/{len(records)}")
                 logger.info(f"📝 Processing record {i+1}/{len(records)}")
+                
+                print(f"📝 RECORD: {json.dumps(record, default=str)}")
                 logger.info(f"📝 Record structure: {json.dumps(record, default=str)}")
                 
                 # Parse SQS message with enhanced user correlation data
+                print(f"📝 PARSING MESSAGE BODY...")
                 message_body = json.loads(record['body'])
+                print(f"📝 MESSAGE BODY: {json.dumps(message_body, default=str)}")
                 logger.info(f"📝 Message body: {json.dumps(message_body, default=str)}")
                 
                 job_id = message_body['job_id']
@@ -105,9 +115,11 @@ def lambda_handler(event, context):
                 device_id = message_body.get('device_id', 'unknown')
                 session_id = message_body.get('session_id', f'{device_id}_user_{user_number:03d}_override1')
                 
+                print(f"🎴 PROCESSING JOB {job_id} for {display_name}: {prompt[:50]}...")
                 logger.info(f"🎴 Processing job {job_id} for {display_name}: {prompt[:50]}...")
                 
                 # Update job status to processing with enhanced metadata
+                print(f"📊 UPDATING JOB STATUS TO PROCESSING...")
                 update_job_status(job_id, 'processing', {
                     'user_number': user_number,
                     'display_name': display_name,
@@ -115,11 +127,15 @@ def lambda_handler(event, context):
                     'session_id': session_id,
                     'started_at': datetime.now().isoformat()
                 })
+                print(f"✅ JOB STATUS UPDATED TO PROCESSING")
                 
                 # Generate card with Nova Canvas
+                print(f"🎨 STARTING BEDROCK GENERATION...")
                 result = generate_card_with_bedrock(prompt, job_id, session_id, user_number, display_name, device_id)
+                print(f"🎨 BEDROCK GENERATION RESULT: {result}")
                 
                 if result['success']:
+                    print(f"✅ JOB {job_id} COMPLETED SUCCESSFULLY")
                     logger.info(f"✅ Job {job_id} completed successfully for {display_name}")
                     # Update job status to completed with enhanced metadata
                     update_job_status(job_id, 'completed', {
@@ -132,6 +148,7 @@ def lambda_handler(event, context):
                         'completed_at': datetime.now().isoformat()
                     })
                 else:
+                    print(f"❌ JOB {job_id} FAILED: {result['error']}")
                     logger.error(f"❌ Job {job_id} failed for {display_name}: {result['error']}")
                     # Update job status to failed with enhanced metadata
                     update_job_status(job_id, 'failed', {
@@ -144,6 +161,7 @@ def lambda_handler(event, context):
                     })
                     
             except Exception as e:
+                print(f"❌ ERROR PROCESSING RECORD {i+1}: {str(e)}")
                 logger.error(f"❌ Error processing record {i+1}: {str(e)}")
                 logger.error(f"❌ Record content: {json.dumps(record, default=str)}")
                 # Try to update job status if we can extract job_id
@@ -151,18 +169,22 @@ def lambda_handler(event, context):
                     message_body = json.loads(record['body'])
                     job_id = message_body.get('job_id')
                     if job_id:
+                        print(f"📊 UPDATING FAILED JOB {job_id}")
                         update_job_status(job_id, 'failed', {
                             'error': f'Processing error: {str(e)}',
                             'failed_at': datetime.now().isoformat()
                         })
-                except:
-                    logger.error(f"❌ Could not update job status for failed record")
+                except Exception as inner_e:
+                    print(f"❌ COULD NOT UPDATE JOB STATUS: {str(inner_e)}")
+                    logger.error(f"❌ Could not update job status for failed record: {str(inner_e)}")
                 continue
         
+        print(f"✅ QUEUE PROCESSOR COMPLETED - PROCESSED {len(records)} MESSAGES")
         logger.info(f"✅ Queue Processor completed processing {len(records)} messages")
         return {'statusCode': 200, 'body': f'Processed {len(records)} messages'}
         
     except Exception as e:
+        print(f"❌ FATAL ERROR IN QUEUE PROCESSOR: {str(e)}")
         logger.error(f"❌ Fatal error in queue processor: {str(e)}")
         logger.error(f"❌ Event: {json.dumps(event, default=str)}")
         return {'statusCode': 500, 'body': f'Fatal error: {str(e)}'}
@@ -172,6 +194,7 @@ def generate_card_with_bedrock(prompt, job_id, session_id, user_number, display_
     Generate trading card using Bedrock Nova Canvas with enhanced user correlation
     """
     try:
+        print(f"🎨 STARTING NOVA CANVAS GENERATION FOR JOB {job_id} - {display_name}")
         logger.info(f"🎨 Starting Nova Canvas generation for job {job_id} - {display_name}")
         
         # Prepare the request payload for Nova Canvas
@@ -190,6 +213,9 @@ def generate_card_with_bedrock(prompt, job_id, session_id, user_number, display_
             }
         }
         
+        print(f"🎨 CALLING BEDROCK NOVA CANVAS FOR JOB {job_id}")
+        print(f"🎨 MODEL: {NOVA_CANVAS_MODEL}")
+        print(f"🎨 PAYLOAD: {json.dumps(request_payload)}")
         logger.info(f"🎨 Calling Bedrock Nova Canvas for job {job_id}")
         
         # Call Bedrock Nova Canvas
@@ -199,11 +225,15 @@ def generate_card_with_bedrock(prompt, job_id, session_id, user_number, display_
             contentType='application/json'
         )
         
+        print(f"✅ BEDROCK RESPONSE RECEIVED FOR JOB {job_id}")
+        
         # Parse response
         response_body = json.loads(response['body'].read())
+        print(f"✅ RESPONSE PARSED FOR JOB {job_id}")
         logger.info(f"✅ Nova Canvas response received for job {job_id}")
         
         if 'images' in response_body and len(response_body['images']) > 0:
+            print(f"✅ IMAGE DATA FOUND FOR JOB {job_id}")
             # Get the base64 image data
             image_data = base64.b64decode(response_body['images'][0])
             
@@ -211,6 +241,7 @@ def generate_card_with_bedrock(prompt, job_id, session_id, user_number, display_
             timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
             s3_key = f"cards/{session_id}_card_1_{timestamp}.png"
             
+            print(f"💾 UPLOADING TO S3: {s3_key}")
             logger.info(f"💾 Uploading to S3: {s3_key}")
             
             # Upload to S3
@@ -232,6 +263,8 @@ def generate_card_with_bedrock(prompt, job_id, session_id, user_number, display_
             # Generate S3 URL
             s3_url = f"https://{S3_BUCKET_NAME}.s3.us-east-1.amazonaws.com/{s3_key}"
             
+            print(f"✅ CARD GENERATED SUCCESSFULLY FOR JOB {job_id} - {display_name}")
+            print(f"📍 S3 URL: {s3_url}")
             logger.info(f"✅ Card generated successfully for job {job_id} - {display_name}")
             logger.info(f"📍 S3 URL: {s3_url}")
             
@@ -247,11 +280,13 @@ def generate_card_with_bedrock(prompt, job_id, session_id, user_number, display_
             }
         else:
             error_msg = "No images returned from Nova Canvas"
+            print(f"❌ {error_msg} FOR JOB {job_id}")
             logger.error(f"❌ {error_msg} for job {job_id}")
             return {'success': False, 'error': error_msg}
             
     except Exception as e:
         error_msg = f"Bedrock generation failed: {str(e)}"
+        print(f"❌ {error_msg} FOR JOB {job_id}")
         logger.error(f"❌ {error_msg} for job {job_id}")
         return {'success': False, 'error': error_msg}
 
@@ -260,16 +295,21 @@ def update_job_status(job_id, status, metadata=None):
     Update job status in DynamoDB with enhanced user correlation metadata
     """
     if not job_table:
+        print(f"⚠️ CANNOT UPDATE JOB {job_id} - DYNAMODB TABLE NOT AVAILABLE")
         logger.warning(f"⚠️ Cannot update job {job_id} - DynamoDB table not available")
         return
     
     try:
+        print(f"📊 UPDATING JOB {job_id} STATUS TO: {status}")
+        
         # Get existing job record to preserve created_at timestamp
         response = job_table.get_item(Key={'jobId': job_id})
         if 'Item' in response:
             created_at = response['Item'].get('created_at')
+            print(f"📊 FOUND EXISTING JOB {job_id}, CREATED_AT: {created_at}")
         else:
             created_at = datetime.now().isoformat()
+            print(f"📊 NEW JOB {job_id}, SETTING CREATED_AT: {created_at}")
         
         # Prepare update data with enhanced metadata
         update_data = {
@@ -282,6 +322,7 @@ def update_job_status(job_id, status, metadata=None):
         # Add metadata if provided
         if metadata:
             update_data.update(metadata)
+            print(f"📊 ADDED METADATA: {json.dumps(metadata, default=str)}")
         
         # Handle reserved keywords for DynamoDB
         reserved_keywords = {
@@ -314,6 +355,9 @@ def update_job_status(job_id, status, metadata=None):
         
         update_expression = update_expression.rstrip(', ')
         
+        print(f"📊 UPDATE EXPRESSION: {update_expression}")
+        print(f"📊 ATTRIBUTE VALUES: {json.dumps(expression_attribute_values, default=str)}")
+        
         # Only include ExpressionAttributeNames if we have reserved keywords
         update_params = {
             'Key': {'jobId': job_id},
@@ -323,10 +367,13 @@ def update_job_status(job_id, status, metadata=None):
         
         if expression_attribute_names:
             update_params['ExpressionAttributeNames'] = expression_attribute_names
+            print(f"📊 ATTRIBUTE NAMES: {json.dumps(expression_attribute_names)}")
         
         job_table.update_item(**update_params)
         
+        print(f"✅ JOB {job_id} STATUS UPDATED TO: {status}")
         logger.info(f"📊 Job {job_id} status updated to: {status}")
         
     except Exception as e:
+        print(f"❌ FAILED TO UPDATE JOB {job_id} STATUS: {str(e)}")
         logger.error(f"❌ Failed to update job {job_id} status: {str(e)}")

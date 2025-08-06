@@ -1302,7 +1302,7 @@ def lambda_handler(event, context):
                     return create_error_response("Job not found", 404)
                 
                 job_item = response['Item']
-                job_status = job_item.get('job_status', 'unknown')
+                job_status = job_item.get('status', 'unknown')  # Fixed: use 'status' field consistently
                 
                 logger.info(f"📊 Job {job_id} status: {job_status}")
                 
