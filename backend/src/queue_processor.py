@@ -39,86 +39,105 @@ def lambda_handler(event, context):
     Process SQS messages for card generation with enhanced user correlation
     Each message contains job details for Nova Canvas generation
     """
-    logger.info(f"🎯 Queue Processor: Processing {len(event['Records'])} messages")
-    
-    for record in event['Records']:
-        try:
-            # Parse SQS message with enhanced user correlation data
-            message_body = json.loads(record['body'])
-            job_id = message_body['job_id']
-            prompt = message_body['prompt']
-            
-            # Enhanced user correlation fields
-            user_number = message_body.get('user_number', 1)
-            display_name = message_body.get('display_name', f'Test User #{user_number}')
-            device_id = message_body.get('device_id', 'unknown')
-            session_id = message_body.get('session_id', f'{device_id}_user_{user_number:03d}_override1')
-            
-            logger.info(f"🎴 Processing job {job_id} for {display_name}: {prompt[:50]}...")
-            
-            # Update job status to processing with enhanced metadata
-            update_job_status(job_id, 'processing', {
-                'started_at': datetime.now().isoformat(),
-                'processor': context.aws_request_id,
-                'user_number': user_number,
-                'display_name': display_name,
-                'device_id': device_id,
-                'session_id': session_id
-            })
-            
-            # Generate card with Bedrock Nova Canvas
-            card_result = generate_card_with_bedrock(prompt, display_name)
-            
-            # Create enhanced S3 key with user correlation
-            # Format: device_8qgfnm1jxk3_user_001_override1_card_1_20250806_084208.png
-            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-            s3_key = f"cards/{session_id}_card_1_{timestamp}.png"
-            s3_url = store_card_in_s3(card_result, s3_key)
-            
-            # Update job status to completed with full correlation data
-            update_job_status(job_id, 'completed', {
-                's3_url': s3_url,
-                's3_key': s3_key,
-                'completed_at': datetime.now().isoformat(),
-                'processing_time': get_processing_time(job_id),
-                'user_number': user_number,
-                'display_name': display_name,
-                'device_id': device_id,
-                'session_id': session_id,
-                'card_metadata': {
-                    'event_name': TEMPLATE_EVENT_NAME,
-                    'user_display_name': display_name,
-                    'generation_timestamp': timestamp
-                }
-                # Note: Not storing 'result' (base64 data) in DynamoDB due to size limits
-                # The actual card data is stored in S3 and can be retrieved via s3_url
-            })
-            
-            logger.info(f"✅ Job {job_id} completed successfully for {display_name}")
-            
-        except Exception as e:
-            logger.error(f"❌ Job {job_id} failed: {str(e)}")
-            
-            # Update job status to failed with user correlation data
-            update_job_status(job_id, 'failed', {
-                'error': str(e),
-                'failed_at': datetime.now().isoformat(),
-                'processing_time': get_processing_time(job_id),
-                'user_number': message_body.get('user_number', 1),
-                'display_name': message_body.get('display_name', 'Unknown User'),
-                'device_id': message_body.get('device_id', 'unknown')
-            })
-            
-            # Don't raise exception - let SQS handle retries via DLQ
-    
-    return {'statusCode': 200, 'body': 'Messages processed'}
+    try:
+        logger.info(f"🚀 Queue Processor Lambda started - Request ID: {context.aws_request_id}")
+        logger.info(f"📥 Received event: {json.dumps(event, default=str)}")
+        
+        # Check if we have SQS records
+        if 'Records' not in event:
+            logger.error("❌ No 'Records' found in event - this should be an SQS event")
+            return {'statusCode': 400, 'body': 'Invalid event structure'}
+        
+        records = event['Records']
+        logger.info(f"🎯 Queue Processor: Processing {len(records)} messages")
+        
+        for i, record in enumerate(records):
+            try:
+                logger.info(f"📝 Processing record {i+1}/{len(records)}")
+                logger.info(f"📝 Record structure: {json.dumps(record, default=str)}")
+                
+                # Parse SQS message with enhanced user correlation data
+                message_body = json.loads(record['body'])
+                logger.info(f"📝 Message body: {json.dumps(message_body, default=str)}")
+                
+                job_id = message_body['job_id']
+                prompt = message_body['prompt']
+                
+                # Enhanced user correlation fields
+                user_number = message_body.get('user_number', 1)
+                display_name = message_body.get('display_name', f'Test User #{user_number}')
+                device_id = message_body.get('device_id', 'unknown')
+                session_id = message_body.get('session_id', f'{device_id}_user_{user_number:03d}_override1')
+                
+                logger.info(f"🎴 Processing job {job_id} for {display_name}: {prompt[:50]}...")
+                
+                # Update job status to processing with enhanced metadata
+                update_job_status(job_id, 'processing', {
+                    'user_number': user_number,
+                    'display_name': display_name,
+                    'device_id': device_id,
+                    'session_id': session_id,
+                    'started_at': datetime.now().isoformat()
+                })
+                
+                # Generate card with Nova Canvas
+                result = generate_card_with_bedrock(prompt, job_id, session_id, user_number, display_name, device_id)
+                
+                if result['success']:
+                    logger.info(f"✅ Job {job_id} completed successfully for {display_name}")
+                    # Update job status to completed with enhanced metadata
+                    update_job_status(job_id, 'completed', {
+                        'user_number': user_number,
+                        'display_name': display_name,
+                        'device_id': device_id,
+                        'session_id': session_id,
+                        's3_url': result['s3_url'],
+                        's3_key': result['s3_key'],
+                        'completed_at': datetime.now().isoformat()
+                    })
+                else:
+                    logger.error(f"❌ Job {job_id} failed for {display_name}: {result['error']}")
+                    # Update job status to failed with enhanced metadata
+                    update_job_status(job_id, 'failed', {
+                        'user_number': user_number,
+                        'display_name': display_name,
+                        'device_id': device_id,
+                        'session_id': session_id,
+                        'error': result['error'],
+                        'failed_at': datetime.now().isoformat()
+                    })
+                    
+            except Exception as e:
+                logger.error(f"❌ Error processing record {i+1}: {str(e)}")
+                logger.error(f"❌ Record content: {json.dumps(record, default=str)}")
+                # Try to update job status if we can extract job_id
+                try:
+                    message_body = json.loads(record['body'])
+                    job_id = message_body.get('job_id')
+                    if job_id:
+                        update_job_status(job_id, 'failed', {
+                            'error': f'Processing error: {str(e)}',
+                            'failed_at': datetime.now().isoformat()
+                        })
+                except:
+                    logger.error(f"❌ Could not update job status for failed record")
+                continue
+        
+        logger.info(f"✅ Queue Processor completed processing {len(records)} messages")
+        return {'statusCode': 200, 'body': f'Processed {len(records)} messages'}
+        
+    except Exception as e:
+        logger.error(f"❌ Fatal error in queue processor: {str(e)}")
+        logger.error(f"❌ Event: {json.dumps(event, default=str)}")
+        return {'statusCode': 500, 'body': f'Fatal error: {str(e)}'}
 
-def generate_card_with_bedrock(prompt, user_name=''):
+def generate_card_with_bedrock(prompt, job_id, session_id, user_number, display_name, device_id):
     """
-    Generate trading card using Bedrock Nova Canvas
-    Same logic as main Lambda but isolated for queue processing
+    Generate trading card using Bedrock Nova Canvas with enhanced user correlation
     """
     try:
+        logger.info(f"🎨 Starting Nova Canvas generation for job {job_id} - {display_name}")
+        
         # Prepare the request payload for Nova Canvas
         request_payload = {
             "taskType": "TEXT_IMAGE",
@@ -135,7 +154,7 @@ def generate_card_with_bedrock(prompt, user_name=''):
             }
         }
         
-        logger.info(f"🎨 Calling Bedrock Nova Canvas for card generation")
+        logger.info(f"🎨 Calling Bedrock Nova Canvas for job {job_id}")
         
         # Call Bedrock Nova Canvas
         response = bedrock_client.invoke_model(
@@ -146,77 +165,103 @@ def generate_card_with_bedrock(prompt, user_name=''):
         
         # Parse response
         response_body = json.loads(response['body'].read())
+        logger.info(f"✅ Nova Canvas response received for job {job_id}")
         
         if 'images' in response_body and len(response_body['images']) > 0:
-            base64_image = response_body['images'][0]
-            logger.info(f"✅ Nova Canvas generated card successfully")
-            return base64_image
+            # Get the base64 image data
+            image_data = base64.b64decode(response_body['images'][0])
+            
+            # Generate enhanced S3 key with user correlation
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            s3_key = f"cards/{session_id}_card_1_{timestamp}.png"
+            
+            logger.info(f"💾 Uploading to S3: {s3_key}")
+            
+            # Upload to S3
+            s3_client.put_object(
+                Bucket=S3_BUCKET_NAME,
+                Key=s3_key,
+                Body=image_data,
+                ContentType='image/png',
+                Metadata={
+                    'job_id': job_id,
+                    'user_number': str(user_number),
+                    'display_name': display_name,
+                    'device_id': device_id,
+                    'session_id': session_id,
+                    'generated_at': timestamp
+                }
+            )
+            
+            # Generate S3 URL
+            s3_url = f"https://{S3_BUCKET_NAME}.s3.us-east-1.amazonaws.com/{s3_key}"
+            
+            logger.info(f"✅ Card generated successfully for job {job_id} - {display_name}")
+            logger.info(f"📍 S3 URL: {s3_url}")
+            
+            return {
+                'success': True,
+                's3_url': s3_url,
+                's3_key': s3_key,
+                'job_id': job_id,
+                'user_number': user_number,
+                'display_name': display_name,
+                'device_id': device_id,
+                'session_id': session_id
+            }
         else:
-            raise Exception("No images returned from Nova Canvas")
+            error_msg = "No images returned from Nova Canvas"
+            logger.error(f"❌ {error_msg} for job {job_id}")
+            return {'success': False, 'error': error_msg}
             
     except Exception as e:
-        logger.error(f"❌ Bedrock Nova Canvas error: {str(e)}")
-        raise
+        error_msg = f"Bedrock generation failed: {str(e)}"
+        logger.error(f"❌ {error_msg} for job {job_id}")
+        return {'success': False, 'error': error_msg}
 
-def store_card_in_s3(base64_image, s3_key):
+def update_job_status(job_id, status, metadata=None):
     """
-    Store generated card in S3 bucket
+    Update job status in DynamoDB with enhanced user correlation metadata
     """
+    if not job_table:
+        logger.warning(f"⚠️ Cannot update job {job_id} - DynamoDB table not available")
+        return
+    
     try:
-        # Decode base64 image
-        image_data = base64.b64decode(base64_image)
+        # Get existing job record to preserve created_at timestamp
+        response = job_table.get_item(Key={'jobId': job_id})
+        if 'Item' in response:
+            created_at = response['Item'].get('created_at')
+        else:
+            created_at = datetime.now().isoformat()
         
-        # Upload to S3
-        s3_client.put_object(
-            Bucket=S3_BUCKET_NAME,
-            Key=s3_key,
-            Body=image_data,
-            ContentType='image/png',
-            Metadata={
-                'generated-by': 'snapmagic-queue-processor',
-                'model': NOVA_CANVAS_MODEL,
-                'timestamp': datetime.now().isoformat()
-            }
-        )
-        
-        # Generate S3 URL
-        s3_url = f"https://{S3_BUCKET_NAME}.s3.us-east-1.amazonaws.com/{s3_key}"
-        logger.info(f"📁 Card stored in S3: {s3_key}")
-        
-        return s3_url
-        
-    except Exception as e:
-        logger.error(f"❌ S3 storage error: {str(e)}")
-        raise
-
-def update_job_status(job_id, status, additional_data=None):
-    """
-    Update job status in DynamoDB
-    """
-    try:
+        # Prepare update data with enhanced metadata
         update_data = {
-            'job_status': status,  # Changed from 'status' to avoid reserved keyword
-            'last_updated': datetime.now().isoformat()
+            'jobId': job_id,
+            'status': status,
+            'updated_at': datetime.now().isoformat(),
+            'created_at': created_at
         }
         
-        if additional_data:
-            update_data.update(additional_data)
+        # Add metadata if provided
+        if metadata:
+            update_data.update(metadata)
         
-        # Reserved keywords that need attribute name mapping
+        # Handle reserved keywords for DynamoDB
         reserved_keywords = {
-            'status': '#job_status',
-            'result': '#job_result',
-            'error': '#job_error'
+            'status': '#job_status'
         }
         
-        # Build update expression with attribute names to handle reserved keywords
+        # Build update expression
         update_expression = "SET "
         expression_attribute_names = {}
         expression_attribute_values = {}
         
         for key, value in update_data.items():
-            if key == 'job_status':
-                # Handle reserved keyword 'status'
+            if key == 'jobId':  # Skip the key
+                continue
+            elif key == 'status':
+                # Handle reserved keyword
                 update_expression += "#job_status = :job_status, "
                 expression_attribute_names["#job_status"] = "status"
                 expression_attribute_values[":job_status"] = value
@@ -248,21 +293,4 @@ def update_job_status(job_id, status, additional_data=None):
         logger.info(f"📊 Job {job_id} status updated to: {status}")
         
     except Exception as e:
-        logger.error(f"❌ DynamoDB update error for job {job_id}: {str(e)}")
-        # Don't raise - job processing should continue even if status update fails
-
-def get_processing_time(job_id):
-    """
-    Calculate processing time for a job
-    """
-    try:
-        response = job_table.get_item(Key={'jobId': job_id})
-        if 'Item' in response:
-            created_at = response['Item'].get('created_at')
-            if created_at:
-                created_time = datetime.fromisoformat(created_at.replace('Z', '+00:00'))
-                processing_time = (datetime.now() - created_time).total_seconds()
-                return f"{processing_time:.2f}s"
-    except:
-        pass
-    return "unknown"
+        logger.error(f"❌ Failed to update job {job_id} status: {str(e)}")
