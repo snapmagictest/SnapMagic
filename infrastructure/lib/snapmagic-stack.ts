@@ -218,7 +218,7 @@ frontend:
       role: lambdaExecutionRole,
       timeout: Duration.minutes(10),  // Extended timeout for video generation
       memorySize: 2048,  // Increased memory for AI processing
-      reservedConcurrentExecutions: 750,  // Reserved capacity for event usage (reduced from 800 to leave 50 for queue processor)
+      reservedConcurrentExecutions: 700,  // 🎯 OPTIMIZED: Handle high API traffic for 10,000 users
       environment: {
         PYTHONPATH: '/var/task:/var/task/src',
         LOG_LEVEL: 'INFO',
@@ -262,9 +262,9 @@ frontend:
       }
     });
 
-    // DynamoDB table for job tracking
+    // DynamoDB table for job tracking - recreated on each deploy to clear data
     const jobTrackingTable = new dynamodb.Table(this, 'JobTrackingTable', {
-      tableName: `snapmagic-jobs-${props.environment}`,
+      tableName: `snapmagic-jobs-${props.environment}-${Date.now()}`, // 🗑️ FORCE RECREATION: Unique name each deploy
       partitionKey: { name: 'jobId', type: dynamodb.AttributeType.STRING },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
       removalPolicy: RemovalPolicy.DESTROY, // For dev environment
@@ -281,7 +281,7 @@ frontend:
       role: lambdaExecutionRole, // Same role as main Lambda
       timeout: Duration.seconds(90), // Timeout for card generation
       memorySize: 1024, // Less memory needed than main Lambda
-      reservedConcurrentExecutions: 2, // CRITICAL: Respect Bedrock's 2 concurrent limit
+      reservedConcurrentExecutions: 200, // 🎯 OPTIMIZED: Handle Bedrock processing efficiently
       environment: {
         PYTHONPATH: '/var/task:/var/task/src',
         LOG_LEVEL: 'INFO',
