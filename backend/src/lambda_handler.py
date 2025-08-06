@@ -8,6 +8,7 @@ import logging
 import os
 from datetime import datetime
 from typing import Dict, Any
+from decimal import Decimal
 from auth_simple import SnapMagicAuthSimple
 from card_generator import CardGenerator
 from video_generator import VideoGenerator
@@ -15,6 +16,12 @@ from video_generator import VideoGenerator
 # Configure logging
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
+
+def decimal_default(obj):
+    """JSON serializer for DynamoDB Decimal objects"""
+    if isinstance(obj, Decimal):
+        return int(obj) if obj % 1 == 0 else float(obj)
+    raise TypeError(f"Object of type {type(obj)} is not JSON serializable")
 
 def load_limits() -> Dict[str, int]:
     """Load usage limits from environment variables (set by CDK from secrets.json)"""
@@ -2282,7 +2289,7 @@ def create_success_response(data):
             'Access-Control-Allow-Methods': 'GET,POST,OPTIONS,PUT,DELETE',
             'Access-Control-Max-Age': '86400'
         },
-        'body': json.dumps(data)
+        'body': json.dumps(data, default=decimal_default)
     }
 
 def create_error_response(message, status_code):
@@ -2300,7 +2307,7 @@ def create_error_response(message, status_code):
             'success': False,
             'error': message,
             'timestamp': datetime.utcnow().isoformat() + 'Z'
-        })
+        }, default=decimal_default)
     }
 
 def create_cors_response():
