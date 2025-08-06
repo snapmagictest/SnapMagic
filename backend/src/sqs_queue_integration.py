@@ -111,7 +111,7 @@ def create_job_record(job_id, job_data):
             return
             
         item = {
-            'job_id': job_id,  # Fixed: use consistent key name
+            'jobId': job_id,  # Fixed: use correct key name to match table schema
             'job_status': 'queued',  # Fixed: use consistent status field name
             'created_at': job_data.get('created_at', datetime.now().isoformat()),
             'prompt': job_data.get('prompt', ''),
@@ -139,7 +139,7 @@ def get_job_status(job_id):
         if not job_table:
             return None
             
-        response = job_table.get_item(Key={'job_id': job_id})
+        response = job_table.get_item(Key={'jobId': job_id})
         
         if 'Item' in response:
             return response['Item']

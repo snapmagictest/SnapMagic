@@ -3805,7 +3805,7 @@ class SnapMagicApp {
             console.log(`🔍 Polling card status for job: ${jobId} (attempt ${retryCount + 1}/${MAX_RETRIES})`);
             
             const apiBaseUrl = window.SNAPMAGIC_CONFIG.API_URL;
-            const endpoint = `${apiBaseUrl}api/check-job-status`;
+            const endpoint = `${apiBaseUrl}api/transform-card`;
             
             const response = await fetch(endpoint, {
                 method: 'POST',

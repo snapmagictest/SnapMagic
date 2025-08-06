@@ -1289,7 +1289,7 @@ def lambda_handler(event, context):
                 table = dynamodb.Table(job_tracking_table)
                 
                 # Get job status from DynamoDB
-                response = table.get_item(Key={'job_id': job_id})
+                response = table.get_item(Key={'jobId': job_id})
                 
                 if 'Item' not in response:
                     return create_error_response("Job not found", 404)
