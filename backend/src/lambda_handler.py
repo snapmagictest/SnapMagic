@@ -1211,8 +1211,22 @@ def lambda_handler(event, context):
                 return create_error_response(error_msg, 400)
             
             try:
-                # Generate trading card (raw Nova Canvas image)
-                result = card_generator.generate_trading_card(prompt)
+                # Import SQS queue integration
+                from sqs_queue_integration import generate_card_via_queue, is_queue_system_available
+                
+                # Use SQS queue system if available, otherwise fallback to direct generation
+                if is_queue_system_available():
+                    logger.info(f"🚀 Using SQS queue system for card generation")
+                    result = generate_card_via_queue(
+                        prompt=prompt,
+                        user_name=username,
+                        user_id=client_ip,  # Use client IP as user ID
+                        client_ip=client_ip
+                    )
+                else:
+                    logger.info(f"⚠️ SQS queue not available, using direct generation")
+                    # Fallback to direct generation (existing code)
+                    result = card_generator.generate_trading_card(prompt)
                 
                 if result['success']:
                     # Get current remaining usage
