@@ -13,6 +13,11 @@ class SnapMagicApp {
         // Device identification for session isolation
         this.deviceId = this.getDeviceId();
         
+        // User correlation system (NEW)
+        this.currentUserNumber = this.getCurrentUserNumber();
+        this.pollingInterval = null;
+        this.pollingActive = false;
+        
         // UI state
         this.currentTab = 'instructions';
         this.generatedCardData = null;
@@ -215,6 +220,50 @@ class SnapMagicApp {
         });
         
         return deviceId;
+    }
+
+    /**
+     * Get current user number for correlation system
+     * @returns {number} Current user number (starts at 1, increments with each card)
+     */
+    getCurrentUserNumber() {
+        try {
+            const userNumber = localStorage.getItem('snapmagic_user_number');
+            return userNumber ? parseInt(userNumber, 10) : 1;
+        } catch (error) {
+            console.warn('⚠️ Could not get user number from localStorage:', error);
+            return 1;
+        }
+    }
+
+    /**
+     * Increment user number for next card generation
+     * @returns {number} New user number
+     */
+    incrementUserNumber() {
+        try {
+            const currentNumber = this.getCurrentUserNumber();
+            const newNumber = currentNumber + 1;
+            localStorage.setItem('snapmagic_user_number', newNumber.toString());
+            this.currentUserNumber = newNumber;
+            console.log(`👤 User number incremented: ${currentNumber} → ${newNumber}`);
+            return newNumber;
+        } catch (error) {
+            console.warn('⚠️ Could not increment user number:', error);
+            // Fallback to incrementing in memory only
+            this.currentUserNumber = (this.currentUserNumber || 1) + 1;
+            return this.currentUserNumber;
+        }
+    }
+
+    /**
+     * Get display name for current user
+     * @param {number} userNumber - User number (optional, uses current if not provided)
+     * @returns {string} Display name like "Test User #1"
+     */
+    getUserDisplayName(userNumber = null) {
+        const number = userNumber || this.currentUserNumber;
+        return `Test User #${number}`;
     }
 
     /**
@@ -3716,6 +3765,147 @@ class SnapMagicApp {
     }
 
     /**
+     * Start polling for async card completion (SQS queue system)
+     * @param {string} jobId - Job ID from SQS response
+     * @param {object} initialData - Initial response data
+     * @param {string} userPrompt - Original user prompt
+     * @param {string} userName - User name
+     */
+    startCardPolling(jobId, initialData, userPrompt, userName) {
+        console.log('⏰ Starting card polling for job:', jobId);
+        
+        // Update processing message with user correlation info
+        const displayName = initialData.display_name || `Test User #${initialData.user_number || 1}`;
+        this.showProcessing(`Creating card for ${displayName}... Please wait while our AI works its magic.`);
+        
+        // Start polling immediately (no initial delay for cards)
+        this.pollCardStatus(jobId, initialData, userPrompt, userName, 0);
+    }
+
+    /**
+     * Poll card status every 5 seconds until ready (max 24 retries = 2 minutes)
+     * @param {string} jobId - Job ID to poll
+     * @param {object} metadata - Initial response metadata
+     * @param {string} userPrompt - Original user prompt
+     * @param {string} userName - User name
+     * @param {number} retryCount - Current retry count
+     */
+    async pollCardStatus(jobId, metadata, userPrompt, userName, retryCount = 0) {
+        const MAX_RETRIES = 24; // 24 * 5 seconds = 2 minutes max
+        
+        // Check if we've exceeded max retries
+        if (retryCount >= MAX_RETRIES) {
+            console.error(`❌ Max retries (${MAX_RETRIES}) exceeded for card polling`);
+            this.hideProcessing();
+            this.showError(`Card generation timed out. This may be due to high demand. Please try again.`);
+            return;
+        }
+        
+        try {
+            console.log(`🔍 Polling card status for job: ${jobId} (attempt ${retryCount + 1}/${MAX_RETRIES})`);
+            
+            const apiBaseUrl = window.SNAPMAGIC_CONFIG.API_URL;
+            const endpoint = `${apiBaseUrl}api/check-job-status`;
+            
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.currentUser.token}`,
+                    'X-Device-ID': this.deviceId
+                },
+                body: JSON.stringify({
+                    action: 'check_job_status',
+                    job_id: jobId
+                })
+            });
+
+            const result = await response.json();
+            
+            if (result.success && result.status === 'completed') {
+                console.log('✅ Card generation completed!');
+                
+                // Create card data structure compatible with existing display logic
+                const cardData = {
+                    success: true,
+                    result: result.card_base64 || '', // Base64 image data
+                    imageSrc: result.card_base64 ? `data:image/png;base64,${result.card_base64}` : result.s3_url,
+                    finalImageSrc: result.s3_url,
+                    prompt: userPrompt,
+                    user_name: userName,
+                    user_number: metadata.user_number,
+                    display_name: metadata.display_name,
+                    device_id: metadata.device_id,
+                    session_id: metadata.session_id,
+                    s3_key: result.s3_key,
+                    metadata: {
+                        ...metadata,
+                        job_id: jobId,
+                        generated_via: 'sqs_queue_async',
+                        processing_time: result.processing_time
+                    }
+                };
+                
+                this.generatedCardData = cardData;
+                this.displayGeneratedCard(cardData, userName);
+                
+                // Increment user number for next card
+                this.incrementUserNumber();
+                
+            } else if (result.success && result.status === 'processing') {
+                console.log(`🔄 Card still processing... (${result.message || 'Working on it'})`);
+                
+                // Update processing message with progress
+                const displayName = metadata.display_name || `Test User #${metadata.user_number || 1}`;
+                const progressMsg = `Creating card for ${displayName}... ${result.message || 'AI is working on your card'} (${retryCount + 1}/${MAX_RETRIES})`;
+                this.showProcessing(progressMsg);
+                
+                // Poll again in 5 seconds
+                setTimeout(() => {
+                    this.pollCardStatus(jobId, metadata, userPrompt, userName, retryCount + 1);
+                }, 5 * 1000); // 5 seconds
+                
+            } else if (result.success && result.status === 'failed') {
+                console.error('❌ Card generation failed:', result.error);
+                this.hideProcessing();
+                
+                if (result.error && result.error.includes('content filters')) {
+                    this.showError(`🚫 Content Blocked by AI Safety Filters\n\n${result.error}\n\nPlease try a different prompt that doesn't include potentially sensitive content.`);
+                } else {
+                    this.showError(result.error || 'Card generation failed. Please try again.');
+                }
+                
+            } else {
+                console.log(`⏳ Card status: ${result.status || 'unknown'}, continuing to poll...`);
+                
+                // Poll again in 5 seconds for unknown status
+                setTimeout(() => {
+                    this.pollCardStatus(jobId, metadata, userPrompt, userName, retryCount + 1);
+                }, 5 * 1000);
+            }
+            
+        } catch (error) {
+            console.error('❌ Error polling card status:', error);
+            
+            // Don't fail immediately on network errors - retry
+            const nextRetryCount = retryCount + 1;
+            
+            if (nextRetryCount >= MAX_RETRIES) {
+                this.hideProcessing();
+                this.showError('Card generation timed out due to network issues. Please try again.');
+                return;
+            }
+            
+            // Continue polling on error (might be temporary)
+            console.log(`⚠️ Polling error, retrying in 5 seconds... (attempt ${nextRetryCount}/${MAX_RETRIES})`);
+            
+            setTimeout(() => {
+                this.pollCardStatus(jobId, metadata, userPrompt, userName, nextRetryCount);
+            }, 5 * 1000); // 5 seconds
+        }
+    }
+
+    /**
      * Update video processing status message
      */
     updateVideoProcessingStatus(message) {
@@ -4964,10 +5154,15 @@ class SnapMagicApp {
             console.log('🎯 API call to:', endpoint);
             console.log('👤 User name:', userName || 'No name (AWS logo)');
             
+            // Enhanced request body with user correlation
             const requestBody = {
                 action: 'transform_card',
                 prompt: userPrompt,
-                user_name: userName || '' // Send empty string if no name
+                user_name: userName || '', // Send empty string if no name
+                // Enhanced user correlation fields
+                user_number: this.currentUserNumber,
+                device_id: this.deviceId,
+                display_name: this.getUserDisplayName()
             };
             
             const response = await fetch(endpoint, {
@@ -4984,14 +5179,18 @@ class SnapMagicApp {
             
             if (data.success) {
                 console.log('✅ Card generation successful');
-                this.generatedCardData = data;
                 
-                // Don't update usage limits here - wait until after S3 storage
-                // The actual usage count changes when the card is stored in S3
-                
-                this.displayGeneratedCard(data, userName);
-                // hideProcessing() moved to displayGeneratedCard - after card is fully ready
-                return data;
+                // Check if this is an async response (SQS queue system)
+                if (data.async && data.job_id) {
+                    console.log('🔄 Async card generation started, polling for completion...');
+                    this.startCardPolling(data.job_id, data, userPrompt, userName);
+                    return data;
+                } else {
+                    // Synchronous response (legacy system)
+                    this.generatedCardData = data;
+                    this.displayGeneratedCard(data, userName);
+                    return data;
+                }
             } else {
                 console.error('❌ Card generation failed:', data.error);
                 this.hideProcessing();

@@ -1098,6 +1098,8 @@ def lambda_handler(event, context):
                 action = 'generate_animation_prompt'
             elif body_action == 'optimize_animation_prompt':
                 action = 'optimize_animation_prompt'
+            elif body_action == 'check_job_status':
+                action = 'check_job_status'
             else:
                 action = 'transform_card'  # Default to card generation
         elif '/api/store-card' in request_path:
@@ -1171,28 +1173,26 @@ def lambda_handler(event, context):
         logger.info(f"✅ Authenticated user: {token_payload.get('username')}")
         
         # ========================================
-        # TRADING CARD GENERATION WITH AUTOMATIC OVERRIDE DETECTION
+        # ASYNC TRADING CARD GENERATION WITH USER CORRELATION
         # ========================================
         if action == 'transform_card':
             username = token_payload.get('username', 'unknown')
             
-            # Get client IP
+            # Get client IP and device ID
             request_headers = event.get('headers', {})
             client_ip = get_client_ip(request_headers)
+            device_id = get_device_id(request_headers)
             
-            logger.info(f"🎴 Card generation request - IP: {client_ip}")
+            # Get enhanced user correlation fields from request
+            user_number = body.get('user_number', 1)
+            display_name = body.get('display_name', f'Test User #{user_number}')
+            
+            logger.info(f"🎴 Async card generation request - Device: {device_id}, User: #{user_number} ({display_name})")
             
             # Extract override code from request body if provided
             override_code = body.get('override_code')
             
-            # ALWAYS use the current highest override number for this IP
-            # This ensures after staff override, cards automatically use new override session
-            current_override = get_current_override_number(client_ip)
-            session_id_for_files = create_standard_session_id(client_ip, current_override)
-            
-            logger.info(f"🎯 Using current override session: {session_id_for_files}")
-            
-            # Check usage limits for the current override session
+            # Check usage limits (simplified for async flow)
             allowed, _ = check_usage_limit_simplified(client_ip, 'cards', override_code)
             
             if not allowed:
@@ -1214,41 +1214,217 @@ def lambda_handler(event, context):
                 # Import SQS queue integration
                 from sqs_queue_integration import generate_card_via_queue, is_queue_system_available
                 
-                # Use SQS queue system if available, otherwise fallback to direct generation
+                # Use SQS queue system (required for async flow)
                 if is_queue_system_available():
-                    logger.info(f"🚀 Using SQS queue system for card generation")
+                    logger.info(f"🚀 Using async SQS queue system for card generation")
                     result = generate_card_via_queue(
                         prompt=prompt,
                         user_name=username,
-                        user_id=client_ip,  # Use client IP as user ID
-                        client_ip=client_ip
+                        user_id=client_ip,
+                        client_ip=client_ip,
+                        user_number=user_number,
+                        device_id=device_id,
+                        display_name=display_name
                     )
-                else:
-                    logger.info(f"⚠️ SQS queue not available, using direct generation")
-                    # Fallback to direct generation (existing code)
-                    result = card_generator.generate_trading_card(prompt)
-                
-                if result['success']:
-                    # Get current remaining usage
-                    remaining = get_remaining_usage_simplified(client_ip)
                     
-                    # Return in format frontend expects
-                    return create_success_response({
-                        'success': True,
-                        'message': 'Trading card generated successfully',
-                        'result': result['result'],  # Base64 image data
-                        'imageSrc': result.get('imageSrc'),  # Data URL for frontend
-                        'metadata': result.get('metadata', {}),
-                        'remaining': remaining,  # Current remaining counts
-                        'session_id': session_id_for_files,  # Current override session
-                        'client_ip': client_ip  # For debugging
-                    })
+                    if result['success']:
+                        # Return immediately with job info (async response)
+                        return create_success_response({
+                            'success': True,
+                            'async': True,  # Indicates this is async response
+                            'job_id': result['job_id'],
+                            'status': 'queued',
+                            'user_number': result['user_number'],
+                            'display_name': result['display_name'],
+                            'device_id': result['device_id'],
+                            'session_id': result['session_id'],
+                            'message': f"Card generation started for {result['display_name']}. Please wait...",
+                            'metadata': result.get('metadata', {}),
+                            'client_ip': client_ip  # For debugging
+                        })
+                    else:
+                        return create_error_response(f"Queue submission failed: {result.get('error', 'Unknown error')}", 500)
                 else:
-                    return create_error_response(f"Generation failed: {result.get('error', 'Unknown error')}", 500)
+                    return create_error_response("Async queue system not available", 503)
                     
             except Exception as e:
-                logger.error(f"Card generation error: {str(e)}")
+                logger.error(f"Async card generation error: {str(e)}")
                 return create_error_response(f"Card generation failed: {str(e)}", 500)
+        
+        # ========================================
+        # CHECK JOB STATUS (ASYNC CARD POLLING)
+        # ========================================
+        elif action == 'check_job_status':
+            try:
+                job_id = body.get('job_id', '')
+                if not job_id:
+                    return create_error_response("Missing job_id parameter", 400)
+                
+                logger.info(f"🔍 Checking job status for: {job_id}")
+                
+                # Import DynamoDB integration
+                import boto3
+                dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
+                job_tracking_table = os.environ.get('JOB_TRACKING_TABLE')
+                
+                if not job_tracking_table:
+                    return create_error_response("Job tracking system not available", 503)
+                
+                table = dynamodb.Table(job_tracking_table)
+                
+                # Get job status from DynamoDB
+                response = table.get_item(Key={'job_id': job_id})
+                
+                if 'Item' not in response:
+                    return create_error_response("Job not found", 404)
+                
+                job_item = response['Item']
+                job_status = job_item.get('job_status', 'unknown')
+                
+                logger.info(f"📊 Job {job_id} status: {job_status}")
+                
+                if job_status == 'completed':
+                    # Job completed successfully
+                    s3_url = job_item.get('s3_url', '')
+                    s3_key = job_item.get('s3_key', '')
+                    processing_time = job_item.get('processing_time', 'unknown')
+                    
+                    # Try to get base64 data from S3 if available
+                    card_base64 = None
+                    if s3_key:
+                        try:
+                            import boto3
+                            import base64
+                            s3_client = boto3.client('s3')
+                            bucket_name = os.environ.get('S3_BUCKET_NAME')
+                            
+                            if bucket_name:
+                                s3_response = s3_client.get_object(Bucket=bucket_name, Key=s3_key)
+                                image_data = s3_response['Body'].read()
+                                card_base64 = base64.b64encode(image_data).decode('utf-8')
+                        except Exception as e:
+                            logger.warning(f"Could not retrieve base64 data from S3: {str(e)}")
+                    
+                    return create_success_response({
+                        'success': True,
+                        'status': 'completed',
+                        'job_id': job_id,
+                        's3_url': s3_url,
+                        's3_key': s3_key,
+                        'card_base64': card_base64,
+                        'processing_time': processing_time,
+                        'user_number': job_item.get('user_number', 1),
+                        'display_name': job_item.get('display_name', 'Unknown User'),
+                        'device_id': job_item.get('device_id', 'unknown'),
+                        'session_id': job_item.get('session_id', 'unknown'),
+                        'completed_at': job_item.get('completed_at', 'unknown')
+                    })
+                    
+                elif job_status == 'processing':
+                    # Job still processing
+                    started_at = job_item.get('started_at', 'unknown')
+                    processor = job_item.get('processor', 'unknown')
+                    
+                    return create_success_response({
+                        'success': True,
+                        'status': 'processing',
+                        'job_id': job_id,
+                        'message': 'Your card is being generated by our AI...',
+                        'started_at': started_at,
+                        'processor': processor,
+                        'user_number': job_item.get('user_number', 1),
+                        'display_name': job_item.get('display_name', 'Unknown User'),
+                        'device_id': job_item.get('device_id', 'unknown')
+                    })
+                    
+                elif job_status == 'failed':
+                    # Job failed
+                    error_message = job_item.get('error', 'Unknown error occurred')
+                    failed_at = job_item.get('failed_at', 'unknown')
+                    
+                    return create_success_response({
+                        'success': True,
+                        'status': 'failed',
+                        'job_id': job_id,
+                        'error': error_message,
+                        'failed_at': failed_at,
+                        'user_number': job_item.get('user_number', 1),
+                        'display_name': job_item.get('display_name', 'Unknown User'),
+                        'device_id': job_item.get('device_id', 'unknown')
+                    })
+                    
+                else:
+                    # Job in queue or unknown status
+                    return create_success_response({
+                        'success': True,
+                        'status': job_status,
+                        'job_id': job_id,
+                        'message': 'Your card is in the queue...',
+                        'created_at': job_item.get('created_at', 'unknown'),
+                        'user_number': job_item.get('user_number', 1),
+                        'display_name': job_item.get('display_name', 'Unknown User'),
+                        'device_id': job_item.get('device_id', 'unknown')
+                    })
+                    
+            except Exception as e:
+                logger.error(f"❌ Error checking job status: {str(e)}")
+                return create_error_response(f"Failed to check job status: {str(e)}", 500)
+        
+        # ========================================
+        # NEW: GET CARDS FOR USER (Frontend Polling Endpoint)
+        # ========================================
+        elif action == 'get_user_cards':
+            try:
+                # Get client IP and device ID
+                request_headers = event.get('headers', {})
+                client_ip = get_client_ip(request_headers)
+                device_id = get_device_id(request_headers)
+                
+                # Get user number from request (optional filter)
+                user_number = body.get('user_number')
+                
+                logger.info(f"📊 Getting cards for device: {device_id}, user: #{user_number}")
+                
+                # Import SQS queue integration for card retrieval
+                from sqs_queue_integration import get_cards_for_user
+                
+                # Get cards for this user/device
+                cards = get_cards_for_user(
+                    user_number=user_number,
+                    device_id=device_id,
+                    limit=50
+                )
+                
+                # Format cards for frontend
+                formatted_cards = []
+                for card in cards:
+                    formatted_cards.append({
+                        'job_id': card.get('jobId'),
+                        'status': card.get('status'),
+                        'user_number': card.get('user_number', 1),
+                        'display_name': card.get('display_name', f"Test User #{card.get('user_number', 1)}"),
+                        'device_id': card.get('device_id', 'unknown'),
+                        'session_id': card.get('session_id', 'unknown'),
+                        's3_url': card.get('s3_url'),
+                        's3_key': card.get('s3_key'),
+                        'prompt': card.get('prompt', ''),
+                        'created_at': card.get('created_at'),
+                        'completed_at': card.get('completed_at'),
+                        'processing_time': card.get('processing_time'),
+                        'card_metadata': card.get('card_metadata', {})
+                    })
+                
+                return create_success_response({
+                    'success': True,
+                    'cards': formatted_cards,
+                    'total_count': len(formatted_cards),
+                    'device_id': device_id,
+                    'user_number': user_number
+                })
+                
+            except Exception as e:
+                logger.error(f"Error getting user cards: {str(e)}")
+                return create_error_response(f"Failed to get cards: {str(e)}", 500)
         
         # ========================================
         # STORE FINAL CARD - USE CURRENT OVERRIDE AND CLEAR PENDING

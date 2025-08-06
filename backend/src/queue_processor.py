@@ -32,55 +32,77 @@ job_table = dynamodb.Table(JOB_TRACKING_TABLE)
 
 def lambda_handler(event, context):
     """
-    Process SQS messages for card generation
+    Process SQS messages for card generation with enhanced user correlation
     Each message contains job details for Nova Canvas generation
     """
     logger.info(f"🎯 Queue Processor: Processing {len(event['Records'])} messages")
     
     for record in event['Records']:
         try:
-            # Parse SQS message
+            # Parse SQS message with enhanced user correlation data
             message_body = json.loads(record['body'])
             job_id = message_body['job_id']
             prompt = message_body['prompt']
-            user_name = message_body.get('user_name', '')
-            user_id = message_body.get('user_id', 'anonymous')
             
-            logger.info(f"🎴 Processing job {job_id}: {prompt[:50]}...")
+            # Enhanced user correlation fields
+            user_number = message_body.get('user_number', 1)
+            display_name = message_body.get('display_name', f'Test User #{user_number}')
+            device_id = message_body.get('device_id', 'unknown')
+            session_id = message_body.get('session_id', f'{device_id}_user_{user_number:03d}_override1')
             
-            # Update job status to processing
+            logger.info(f"🎴 Processing job {job_id} for {display_name}: {prompt[:50]}...")
+            
+            # Update job status to processing with enhanced metadata
             update_job_status(job_id, 'processing', {
                 'started_at': datetime.now().isoformat(),
-                'processor': context.aws_request_id
+                'processor': context.aws_request_id,
+                'user_number': user_number,
+                'display_name': display_name,
+                'device_id': device_id,
+                'session_id': session_id
             })
             
             # Generate card with Bedrock Nova Canvas
-            card_result = generate_card_with_bedrock(prompt, user_name)
+            card_result = generate_card_with_bedrock(prompt, display_name)
             
-            # Store card in S3
-            s3_key = f"cards/{job_id}.png"
+            # Create enhanced S3 key with user correlation
+            # Format: device_8qgfnm1jxk3_user_001_override1_card_1_20250806_084208.png
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            s3_key = f"cards/{session_id}_card_1_{timestamp}.png"
             s3_url = store_card_in_s3(card_result, s3_key)
             
-            # Update job status to completed
+            # Update job status to completed with full correlation data
             update_job_status(job_id, 'completed', {
                 's3_url': s3_url,
                 's3_key': s3_key,
                 'completed_at': datetime.now().isoformat(),
-                'processing_time': get_processing_time(job_id)
+                'processing_time': get_processing_time(job_id),
+                'user_number': user_number,
+                'display_name': display_name,
+                'device_id': device_id,
+                'session_id': session_id,
+                'card_metadata': {
+                    'event_name': TEMPLATE_EVENT_NAME,
+                    'user_display_name': display_name,
+                    'generation_timestamp': timestamp
+                }
                 # Note: Not storing 'result' (base64 data) in DynamoDB due to size limits
                 # The actual card data is stored in S3 and can be retrieved via s3_url
             })
             
-            logger.info(f"✅ Job {job_id} completed successfully")
+            logger.info(f"✅ Job {job_id} completed successfully for {display_name}")
             
         except Exception as e:
             logger.error(f"❌ Job {job_id} failed: {str(e)}")
             
-            # Update job status to failed
+            # Update job status to failed with user correlation data
             update_job_status(job_id, 'failed', {
                 'error': str(e),
                 'failed_at': datetime.now().isoformat(),
-                'processing_time': get_processing_time(job_id)
+                'processing_time': get_processing_time(job_id),
+                'user_number': message_body.get('user_number', 1),
+                'display_name': message_body.get('display_name', 'Unknown User'),
+                'device_id': message_body.get('device_id', 'unknown')
             })
             
             # Don't raise exception - let SQS handle retries via DLQ
