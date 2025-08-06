@@ -13,7 +13,7 @@
  */
 
 import { Stack, StackProps, CfnOutput, Tags, Duration, CfnResource, CustomResource, RemovalPolicy, custom_resources as cr } from 'aws-cdk-lib';
-import { aws_amplify as amplify, aws_lambda as lambda, aws_apigateway as apigateway, aws_iam as iam, aws_s3 as s3, aws_events as events, aws_events_targets as targets, aws_sqs as sqs, aws_dynamodb as dynamodb, aws_lambda_event_sources as lambdaEventSources } from 'aws-cdk-lib';
+import { aws_amplify as amplify, aws_lambda as lambda, aws_apigateway as apigateway, aws_iam as iam, aws_s3 as s3, aws_events as events, aws_events_targets as targets } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { DeploymentInputs } from './deployment-inputs';
 import * as path from 'path';
@@ -218,7 +218,7 @@ frontend:
       role: lambdaExecutionRole,
       timeout: Duration.minutes(10),  // Extended timeout for video generation
       memorySize: 2048,  // Increased memory for AI processing
-      reservedConcurrentExecutions: 750,  // Reserved capacity for event usage (reduced from 800 to leave 50 for queue processor)
+      reservedConcurrentExecutions: 800,  // Reserve capacity for event usage
       environment: {
         PYTHONPATH: '/var/task:/var/task/src',
         LOG_LEVEL: 'INFO',
@@ -240,76 +240,6 @@ frontend:
       },
       description: 'SnapMagic AI backend - Trading Cards & Video Generation'
     });
-
-    // ========================================
-    // SQS QUEUE SYSTEM FOR CARD GENERATION
-    // ========================================
-    
-    // Dead Letter Queue for failed card generation requests
-    const cardGenerationDLQ = new sqs.Queue(this, 'CardGenerationDLQ', {
-      queueName: `snapmagic-card-generation-dlq-${props.environment}`,
-      retentionPeriod: Duration.days(14), // Keep failed messages for 14 days
-    });
-
-    // Main card generation queue
-    const cardGenerationQueue = new sqs.Queue(this, 'CardGenerationQueue', {
-      queueName: `snapmagic-card-generation-${props.environment}`,
-      visibilityTimeout: Duration.seconds(90), // Time for Lambda to process message
-      receiveMessageWaitTime: Duration.seconds(20), // Long polling for instant pickup
-      deadLetterQueue: {
-        queue: cardGenerationDLQ,
-        maxReceiveCount: 3 // Retry failed messages 3 times
-      }
-    });
-
-    // DynamoDB table for job tracking
-    const jobTrackingTable = new dynamodb.Table(this, 'JobTrackingTable', {
-      tableName: `snapmagic-jobs-${props.environment}`,
-      partitionKey: { name: 'jobId', type: dynamodb.AttributeType.STRING },
-      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
-      removalPolicy: RemovalPolicy.DESTROY, // For dev environment
-      pointInTimeRecovery: false, // Disable for cost savings in dev
-    });
-
-    // Queue Processor Lambda - handles card generation with 2 concurrent limit
-    const queueProcessorLambda = new lambda.Function(this, 'QueueProcessorFunction', {
-      runtime: lambda.Runtime.PYTHON_3_11,
-      handler: 'src/queue_processor.lambda_handler',
-      code: lambda.Code.fromAsset(path.join(__dirname, '../../backend'), {
-        exclude: ['*.md', '__pycache__', '*.pyc', 'test_*', 'run_local.py', 'README.md']
-      }),
-      role: lambdaExecutionRole, // Same role as main Lambda
-      timeout: Duration.seconds(90), // Timeout for card generation
-      memorySize: 1024, // Less memory needed than main Lambda
-      reservedConcurrentExecutions: 2, // CRITICAL: Respect Bedrock's 2 concurrent limit
-      environment: {
-        PYTHONPATH: '/var/task:/var/task/src',
-        LOG_LEVEL: 'INFO',
-        S3_BUCKET_NAME: videoStorageBucket.bucketName,
-        NOVA_CANVAS_MODEL: inputs.novaCanvasModel,
-        JOB_TRACKING_TABLE: jobTrackingTable.tableName,
-        // Template configuration
-        TEMPLATE_EVENT_NAME: inputs.cardTemplate?.eventName || 'AWS Event',
-        TEMPLATE_LOGOS_JSON: JSON.stringify(inputs.cardTemplate?.logos || []),
-      },
-      description: 'SnapMagic Queue Processor - Handles card generation with Bedrock concurrency control'
-    });
-
-    // SQS Event Source for Queue Processor
-    queueProcessorLambda.addEventSource(new lambdaEventSources.SqsEventSource(cardGenerationQueue, {
-      batchSize: 1, // Process one message at a time
-      maxConcurrency: 2, // Maximum 2 concurrent Lambda executions
-    }));
-
-    // Grant permissions
-    cardGenerationQueue.grantSendMessages(snapMagicBackendLambda); // Main Lambda can send to queue
-    cardGenerationQueue.grantConsumeMessages(queueProcessorLambda); // Queue processor can read from queue
-    jobTrackingTable.grantReadWriteData(snapMagicBackendLambda); // Main Lambda can read/write job status
-    jobTrackingTable.grantReadWriteData(queueProcessorLambda); // Queue processor can update job status
-
-    // Add SQS and DynamoDB environment variables to main Lambda
-    snapMagicBackendLambda.addEnvironment('CARD_GENERATION_QUEUE_URL', cardGenerationQueue.queueUrl);
-    snapMagicBackendLambda.addEnvironment('JOB_TRACKING_TABLE', jobTrackingTable.tableName);
 
     // ========================================
     // API GATEWAY - REST API
