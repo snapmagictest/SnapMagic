@@ -3,22 +3,48 @@ SnapMagic Queue Processor Lambda
 Processes SQS messages for card generation with 2 concurrent limit
 """
 
+print("🔧 Queue Processor: Starting imports...")
+
 import json
+print("✅ json imported")
+
 import boto3
+print("✅ boto3 imported")
+
 import os
+print("✅ os imported")
+
 import uuid
+print("✅ uuid imported")
+
 import base64
+print("✅ base64 imported")
+
 from datetime import datetime
+print("✅ datetime imported")
+
 import logging
+print("✅ logging imported")
+
+print("🔧 Queue Processor: All imports successful, configuring logging...")
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+print("🔧 Queue Processor: Logging configured, initializing AWS clients...")
+
 # AWS clients
 bedrock_client = boto3.client('bedrock-runtime', region_name='us-east-1')
+print("✅ bedrock_client initialized")
+
 s3_client = boto3.client('s3')
+print("✅ s3_client initialized")
+
 dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
+print("✅ dynamodb resource initialized")
+
+print("🔧 Queue Processor: Loading environment variables...")
 
 # Environment variables
 S3_BUCKET_NAME = os.environ.get('S3_BUCKET_NAME')
@@ -27,12 +53,22 @@ JOB_TRACKING_TABLE = os.environ.get('JOB_TRACKING_TABLE')
 TEMPLATE_EVENT_NAME = os.environ.get('TEMPLATE_EVENT_NAME', 'AWS Event')
 TEMPLATE_LOGOS_JSON = os.environ.get('TEMPLATE_LOGOS_JSON', '[]')
 
+print(f"✅ Environment variables loaded:")
+print(f"   S3_BUCKET_NAME: {S3_BUCKET_NAME}")
+print(f"   NOVA_CANVAS_MODEL: {NOVA_CANVAS_MODEL}")
+print(f"   JOB_TRACKING_TABLE: {JOB_TRACKING_TABLE}")
+
+print("🔧 Queue Processor: Initializing DynamoDB table...")
+
 # DynamoDB table (conditional initialization for testing)
 job_table = None
 if JOB_TRACKING_TABLE:
     job_table = dynamodb.Table(JOB_TRACKING_TABLE)
+    print(f"✅ DynamoDB table initialized: {JOB_TRACKING_TABLE}")
 else:
-    logger.warning("⚠️ JOB_TRACKING_TABLE not set - DynamoDB operations will be disabled")
+    print("⚠️ JOB_TRACKING_TABLE not set - DynamoDB operations will be disabled")
+
+print("🎉 Queue Processor: Initialization complete!")
 
 def lambda_handler(event, context):
     """
