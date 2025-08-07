@@ -2110,11 +2110,11 @@ def lambda_handler(event, context):
                             url_without_protocol = s3_url.split('//')[1]  # Remove https://
                             bucket_name = url_without_protocol.split('.s3.')[0]  # Get bucket name
                             
-                            # Generate presigned URL with extracted bucket (2-day expiration)
+                            # Generate presigned URL with extracted bucket (7-day maximum expiration)
                             presigned_url = s3_client.generate_presigned_url(
                                 'get_object',
                                 Params={'Bucket': bucket_name, 'Key': s3_key},
-                                ExpiresIn=172800  # 2 days = 48 hours for user access
+                                ExpiresIn=604800  # 7 days = maximum AWS S3 allows
                             )
                             
                             logger.info(f"✅ Generated presigned URL for {bucket_name}/{s3_key}")
@@ -2200,7 +2200,7 @@ def lambda_handler(event, context):
                             presigned_url = s3_client.generate_presigned_url(
                                 'get_object',
                                 Params={'Bucket': video_bucket_name, 'Key': obj['Key']},
-                                ExpiresIn=172800  # 2 days = 48 hours for user access
+                                ExpiresIn=604800  # 7 days = maximum AWS S3 allows
                             )
                         except Exception as e:
                             logger.error(f"❌ Failed to generate presigned URL for {obj['Key']}: {str(e)}")
