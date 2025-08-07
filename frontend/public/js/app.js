@@ -943,15 +943,19 @@ class SnapMagicApp {
             const data = await response.json();
             
             if (data.success) {
-                // Reset usage limits structure for display
-                this.usageLimits = {
-                    cards: { total: 5, used: 0 },
-                    videos: { total: 3, used: 0 },
-                    prints: { total: 1, used: 0 }
-                };
-                
-                // Update display immediately
-                this.displayUsageLimits();
+                // Use server-provided remaining counts instead of hardcoding
+                if (data.remaining) {
+                    console.log('📊 Updating usage limits after override:', data.remaining);
+                    this.updateUsageLimits(data.remaining);
+                } else {
+                    // Fallback to hardcoded values if server doesn't provide remaining
+                    this.usageLimits = {
+                        cards: { total: 5, used: 0 },
+                        videos: { total: 3, used: 0 },
+                        prints: { total: 1, used: 0 }
+                    };
+                    this.displayUsageLimits();
+                }
                 
                 // Store override info (simplified)
                 this.overrideNumber = data.override_number;
