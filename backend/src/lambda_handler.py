@@ -477,6 +477,7 @@ def get_remaining_usage_simplified(client_ip: str) -> Dict[str, int]:
 def store_file_with_standard_pattern(session_id: str, username: str, prompt: str, file_data: bytes, file_type: str, extension: str, content_type: str) -> Dict[str, Any]:
     """
     Universal file storage method using standard override pattern for ALL files
+    Also creates DynamoDB record for GSI queries (usage counting, override detection)
     
     Args:
         session_id: IP_override1, IP_override2, etc.
@@ -493,6 +494,7 @@ def store_file_with_standard_pattern(session_id: str, username: str, prompt: str
     try:
         import boto3
         from datetime import datetime
+        import uuid
         
         s3_client = boto3.client('s3')
         bucket_name = os.environ.get('S3_BUCKET_NAME')
@@ -519,6 +521,54 @@ def store_file_with_standard_pattern(session_id: str, username: str, prompt: str
         )
         
         logger.info(f"📁 {file_type.title()} stored with standard pattern: {s3_key}")
+        
+        # Create DynamoDB record for GSI queries (usage counting, override detection)
+        try:
+            job_tracking_table = os.environ.get('JOB_TRACKING_TABLE')
+            if job_tracking_table:
+                dynamodb = boto3.resource('dynamodb')
+                table = dynamodb.Table(job_tracking_table)
+                
+                # Generate unique job ID for this file
+                file_job_id = str(uuid.uuid4())
+                
+                # Extract device_id and override_number from session_id for GSI
+                device_id = session_id  # Default fallback
+                override_number = 1     # Default fallback
+                
+                if '_override' in session_id:
+                    try:
+                        parts = session_id.split('_override')
+                        device_id = parts[0]
+                        override_number = int(parts[1])
+                    except (IndexError, ValueError):
+                        pass  # Use defaults
+                
+                # Create DynamoDB record with GSI fields
+                file_record = {
+                    'jobId': file_job_id,
+                    'device_id': device_id,
+                    'override_number': override_number,
+                    'file_type': file_type,  # For usage counting
+                    'status': 'completed',
+                    'session_id': session_id,
+                    'user_name': username,
+                    'prompt': prompt,
+                    's3_url': f"https://{bucket_name}.s3.us-east-1.amazonaws.com/{s3_key}",
+                    's3_key': s3_key,
+                    'created_at': datetime.now().isoformat(),
+                    'completed_at': datetime.now().isoformat()
+                }
+                
+                table.put_item(Item=file_record)
+                logger.info(f"✅ {file_type.title()} DynamoDB record created: {file_job_id}")
+            else:
+                logger.warning("⚠️ JOB_TRACKING_TABLE not configured, skipping DynamoDB record")
+                
+        except Exception as e:
+            logger.error(f"❌ Failed to create DynamoDB record for {file_type}: {str(e)}")
+            # Don't fail the whole operation if DynamoDB fails
+        
         return {'success': True, 's3_key': s3_key, 'filename': filename}
         
     except Exception as e:
@@ -2004,64 +2054,51 @@ def lambda_handler(event, context):
             logger.info(f"📚 Loading ALL cards for device: {client_ip}")
             
             try:
-                # Import boto3 and create S3 client
                 import boto3
-                s3_client = boto3.client('s3')
-                bucket_name = os.environ.get('S3_BUCKET_NAME')
+                from boto3.dynamodb.conditions import Key, Attr
                 
-                if not bucket_name:
-                    logger.error("❌ S3_BUCKET_NAME environment variable not set")
-                    return create_error_response("S3 bucket not configured", 500)
+                # Get DynamoDB table
+                table_name = os.environ.get('JOB_TRACKING_TABLE')
+                if not table_name:
+                    return create_error_response("DynamoDB table not configured", 500)
                 
-                # List ALL cards for this device across ALL overrides
-                cards_prefix = f"cards/{client_ip}_override"
-                logger.info(f"🔍 Searching for ALL cards with prefix: {cards_prefix}")
+                dynamodb = boto3.resource('dynamodb')
+                table = dynamodb.Table(table_name)
                 
-                response = s3_client.list_objects_v2(
-                    Bucket=bucket_name,
-                    Prefix=cards_prefix
+                # Query GSI for ALL cards for this device across ALL override sessions
+                logger.info(f"🔍 Querying DynamoDB for ALL cards for device: {client_ip}")
+                
+                response = table.query(
+                    IndexName='device-override-index',
+                    KeyConditionExpression=Key('device_id').eq(client_ip),
+                    FilterExpression=Attr('file_type').eq('card') & Attr('status').eq('completed'),
+                    ScanIndexForward=False  # Newest first
                 )
                 
                 cards = []
-                if 'Contents' in response:
-                    # Sort by last modified (newest first)
-                    sorted_objects = sorted(response['Contents'], key=lambda x: x['LastModified'], reverse=True)
+                for item in response['Items']:
+                    # Extract info from DynamoDB record
+                    s3_url = item.get('s3_url', '')
+                    s3_key = item.get('s3_key', '')
+                    filename = s3_key.split('/')[-1] if s3_key else 'unknown'
                     
-                    # SIMPLIFIED: Return all cards with URLs only, load base64 on-demand
-                    max_total_cards = 20  # Increased limit since no base64 in response
-                    processed_cards = 0
-                    
-                    for obj in sorted_objects:
-                        if processed_cards >= max_total_cards:
-                            break
-                            
-                        # Generate presigned URL for secure access (1 hour expiration)
-                        try:
-                            presigned_url = s3_client.generate_presigned_url(
-                                'get_object',
-                                Params={'Bucket': bucket_name, 'Key': obj['Key']},
-                                ExpiresIn=3600  # 1 hour
-                            )
-                        except Exception as e:
-                            logger.error(f"❌ Failed to generate presigned URL for {obj['Key']}: {str(e)}")
-                            continue
-                        
-                        # Create card data - NO base64 data to keep response small
-                        card_data = {
-                            'finalImageSrc': presigned_url,
-                            'imageSrc': presigned_url,
-                            'result': None,  # Will be loaded on-demand
-                            'novaImageBase64': None,  # Will be loaded on-demand
-                            's3_key': obj['Key'],
-                            'filename': obj['Key'].split('/')[-1],
-                            'timestamp': obj['LastModified'].isoformat(),
-                            'size': obj['Size'],
-                            'needs_base64_loading': True  # Flag for frontend
-                        }
-                        cards.append(card_data)
-                        processed_cards += 1
+                    card_data = {
+                        'finalImageSrc': s3_url,
+                        'imageSrc': s3_url,
+                        'result': None,  # Will be loaded on-demand
+                        'novaImageBase64': None,  # Will be loaded on-demand
+                        's3_key': s3_key,
+                        'filename': filename,
+                        'job_id': item.get('jobId'),
+                        'override_number': item.get('override_number', 1),
+                        'user_number': item.get('user_number', 1),
+                        'prompt': item.get('prompt', ''),
+                        'timestamp': item.get('created_at', ''),
+                        'needs_base64_loading': True  # Flag for frontend
+                    }
+                    cards.append(card_data)
                 
-                logger.info(f"✅ Found {len(cards)} cards for session (base64 loaded on-demand for instant GIFs)")
+                logger.info(f"✅ Found {len(cards)} cards for device {client_ip} using DynamoDB")
                 
                 return create_success_response({
                     'success': True,

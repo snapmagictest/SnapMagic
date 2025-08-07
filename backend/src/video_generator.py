@@ -155,6 +155,7 @@ class TradingCardVideoGenerator:
     def store_video_with_session_filename(self, invocation_arn: str, session_id: str, prompt: str, username: str, card_number: int = 1) -> Dict[str, Any]:
         """
         Store completed video with session-based filename for usage tracking
+        Also creates DynamoDB record for GSI queries (usage counting, override detection)
         
         Args:
             invocation_arn: The invocation ARN from Bedrock
@@ -168,6 +169,8 @@ class TradingCardVideoGenerator:
         """
         try:
             from datetime import datetime
+            import uuid
+            import os
             
             # Extract invocation ID from ARN for original S3 path
             invocation_id = invocation_arn.split('/')[-1]
@@ -236,6 +239,50 @@ class TradingCardVideoGenerator:
             )
             
             logger.info(f"✅ Video stored with session filename: {session_s3_key} (Video #{video_count} for session {session_id})")
+            
+            # Create DynamoDB record for GSI queries (usage counting, override detection)
+            try:
+                import boto3
+                
+                # Get DynamoDB table name from environment
+                job_tracking_table = os.environ.get('JOB_TRACKING_TABLE')
+                if job_tracking_table:
+                    dynamodb = boto3.resource('dynamodb')
+                    table = dynamodb.Table(job_tracking_table)
+                    
+                    # Generate unique job ID for this video
+                    video_job_id = str(uuid.uuid4())
+                    
+                    # Extract device_id from session_id for GSI
+                    device_id = client_ip  # Already extracted above
+                    
+                    # Create DynamoDB record with GSI fields
+                    video_record = {
+                        'jobId': video_job_id,
+                        'device_id': device_id,
+                        'override_number': override_number,
+                        'file_type': 'video',  # For usage counting
+                        'status': 'completed',
+                        'session_id': session_id,
+                        'user_name': username,
+                        'prompt': prompt,
+                        's3_url': f"https://{self.video_storage_bucket}.s3.us-east-1.amazonaws.com/{session_s3_key}",
+                        's3_key': session_s3_key,
+                        'video_number': video_count,
+                        'card_number': card_number,
+                        'invocation_arn': invocation_arn,
+                        'created_at': datetime.now().isoformat(),
+                        'completed_at': datetime.now().isoformat()
+                    }
+                    
+                    table.put_item(Item=video_record)
+                    logger.info(f"✅ Video DynamoDB record created: {video_job_id}")
+                else:
+                    logger.warning("⚠️ JOB_TRACKING_TABLE not configured, skipping DynamoDB record")
+                    
+            except Exception as e:
+                logger.error(f"❌ Failed to create DynamoDB record for video: {str(e)}")
+                # Don't fail the whole operation if DynamoDB fails
             
             return {
                 'success': True,
