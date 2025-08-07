@@ -2100,63 +2100,28 @@ def lambda_handler(event, context):
                     s3_key = item.get('s3_key', '')
                     filename = s3_key.split('/')[-1] if s3_key else 'unknown'
                     
-                    # Generate presigned URL using environment variable bucket name
-                    presigned_url = s3_url  # Fallback to direct URL
-                    if s3_key:
+                    # Generate presigned URL - extract bucket from actual s3_url
+                    presigned_url = s3_url  # Fallback
+                    if s3_key and s3_url and 'amazonaws.com' in s3_url:
                         try:
-                            # Try multiple methods to get bucket name
-                            bucket_name = None
+                            # Extract bucket name directly from s3_url
+                            # Format: https://bucket-name.s3.us-east-1.amazonaws.com/key
+                            # or: https://bucket-name.s3.amazonaws.com/key
+                            url_without_protocol = s3_url.split('//')[1]  # Remove https://
+                            bucket_name = url_without_protocol.split('.s3.')[0]  # Get bucket name
                             
-                            # Method 1: Environment variable
-                            bucket_name = os.environ.get('S3_BUCKET_NAME')
-                            logger.info(f"🔍 Environment S3_BUCKET_NAME: {bucket_name}")
+                            # Generate presigned URL with extracted bucket
+                            presigned_url = s3_client.generate_presigned_url(
+                                'get_object',
+                                Params={'Bucket': bucket_name, 'Key': s3_key},
+                                ExpiresIn=3600
+                            )
                             
-                            # Method 2: Extract from s3_url (more reliable for current deployment)
-                            if 'amazonaws.com' in s3_url:
-                                url_parts = s3_url.split('//')
-                                if len(url_parts) > 1:
-                                    domain_part = url_parts[1].split('/')[0]
-                                    if '.s3.' in domain_part:
-                                        extracted_bucket = domain_part.split('.s3.')[0]
-                                        logger.info(f"🔍 Extracted bucket from URL: {extracted_bucket}")
-                                        # Use extracted bucket if env var is missing or different
-                                        if not bucket_name or bucket_name != extracted_bucket:
-                                            bucket_name = extracted_bucket
-                                            logger.info(f"🔄 Using extracted bucket name: {bucket_name}")
+                            logger.info(f"✅ Generated presigned URL for {bucket_name}/{s3_key}")
                             
-                            if bucket_name:
-                                logger.info(f"🔍 Attempting presigned URL generation:")
-                                logger.info(f"   Bucket: {bucket_name}")
-                                logger.info(f"   Key: {s3_key}")
-                                
-                                # Generate presigned URL
-                                presigned_url = s3_client.generate_presigned_url(
-                                    'get_object',
-                                    Params={'Bucket': bucket_name, 'Key': s3_key},
-                                    ExpiresIn=3600  # 1 hour
-                                )
-                                
-                                # Verify it's actually presigned
-                                if 'X-Amz-Algorithm' in presigned_url:
-                                    logger.info(f"✅ SUCCESS: Generated valid presigned URL")
-                                    logger.info(f"   URL: {presigned_url[:100]}...")
-                                else:
-                                    logger.error(f"❌ FAILED: Generated URL is not presigned")
-                                    logger.error(f"   URL: {presigned_url}")
-                                    presigned_url = s3_url  # Use original URL
-                            else:
-                                logger.error(f"❌ FAILED: Could not determine bucket name")
-                                logger.error(f"   Env var: {os.environ.get('S3_BUCKET_NAME')}")
-                                logger.error(f"   S3 URL: {s3_url}")
-                                
                         except Exception as e:
-                            logger.error(f"❌ EXCEPTION in presigned URL generation: {str(e)}")
-                            logger.error(f"   Exception type: {type(e).__name__}")
-                            logger.error(f"   Bucket: {bucket_name if 'bucket_name' in locals() else 'unknown'}")
-                            logger.error(f"   Key: {s3_key}")
-                            import traceback
-                            logger.error(f"   Traceback: {traceback.format_exc()}")
-                            # Keep the direct URL as fallback
+                            logger.error(f"❌ Presigned URL failed: {str(e)}")
+                            # Use original URL as fallback
                     
                     card_data = {
                         'finalImageSrc': presigned_url,

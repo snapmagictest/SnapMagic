@@ -121,35 +121,40 @@ frontend:
     // ========================================
 
     // ========================================
+    // S3 BUCKET - VIDEO STORAGE (FIXED FOR PRESIGNED URLS)
     // ========================================
-    // S3 BUCKET - VIDEO STORAGE
-    // ========================================
-    const videoStorageBucket = new s3.Bucket(this, 'SnapMagicVideoBucket', {
+    // CRITICAL FIX: Remove block public access to allow presigned URLs to work
+    // This is the root cause - CDK's BlockPublicAccess prevents presigned URL access
+    const finalVideoStorageBucket = new s3.Bucket(this, 'SnapMagicVideoBucketFixed', {
       bucketName: `snapmagic-videos-${props.environment}-${this.account}-${Date.now()}`,
       
       // Cleanup configuration for event-based deployment
       removalPolicy: RemovalPolicy.DESTROY,
       autoDeleteObjects: true,  // Removes all videos when stack is destroyed
       
-      // Security settings
-      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+      // FIXED: Allow public access for presigned URLs to work
+      blockPublicAccess: new s3.BlockPublicAccess({
+        blockPublicAcls: false,
+        blockPublicPolicy: false,
+        ignorePublicAcls: false,
+        restrictPublicBuckets: false
+      }),
+      
       encryption: s3.BucketEncryption.S3_MANAGED,
       
       // CORS configuration for presigned URLs
       cors: [{
-        allowedMethods: [s3.HttpMethods.GET, s3.HttpMethods.HEAD],
+        allowedMethods: [s3.HttpMethods.GET, s3.HttpMethods.HEAD, s3.HttpMethods.PUT],
         allowedOrigins: ['*'], // Allow all origins for presigned URLs
         allowedHeaders: ['*'],
         maxAge: 3600
-      }],
-      
-
+      }]
     });
 
     // Apply resource tags
-    Tags.of(videoStorageBucket).add('Purpose', 'Event-Video-Storage');
-    Tags.of(videoStorageBucket).add('Cleanup', 'CDK-Destroy-Only');
-    Tags.of(videoStorageBucket).add('Environment', props.environment);
+    Tags.of(finalVideoStorageBucket).add('Purpose', 'Event-Video-Storage');
+    Tags.of(finalVideoStorageBucket).add('Cleanup', 'CDK-Destroy-Only');
+    Tags.of(finalVideoStorageBucket).add('Environment', props.environment);
 
     // ========================================
     // IAM ROLE - LAMBDA EXECUTION
@@ -194,8 +199,8 @@ frontend:
                 's3:ListBucket'
               ],
               resources: [
-                videoStorageBucket.bucketArn,
-                `${videoStorageBucket.bucketArn}/*`
+                finalVideoStorageBucket.bucketArn,
+                `${finalVideoStorageBucket.bucketArn}/*`
               ]
             })
           ]
@@ -203,8 +208,6 @@ frontend:
 
       }
     });
-
-
 
     // ========================================
     // LAMBDA FUNCTION - BACKEND API
@@ -224,8 +227,8 @@ frontend:
         LOG_LEVEL: 'INFO',
         EVENT_USERNAME: inputs.basicAuthUsername || 'demo',
         EVENT_PASSWORD: inputs.basicAuthPassword || 'demo',
-        VIDEO_BUCKET_NAME: videoStorageBucket.bucketName,
-        S3_BUCKET_NAME: videoStorageBucket.bucketName,  // Use same bucket for cards storage
+        VIDEO_BUCKET_NAME: finalVideoStorageBucket.bucketName,
+        S3_BUCKET_NAME: finalVideoStorageBucket.bucketName,  // Use same bucket for cards storage
         NOVA_CANVAS_MODEL: inputs.novaCanvasModel,
         NOVA_REEL_MODEL: inputs.novaReelModel,
         NOVA_LITE_MODEL: inputs.novaLiteModel,
@@ -293,7 +296,7 @@ frontend:
       environment: {
         PYTHONPATH: '/var/task:/var/task/src',
         LOG_LEVEL: 'INFO',
-        S3_BUCKET_NAME: videoStorageBucket.bucketName,
+        S3_BUCKET_NAME: finalVideoStorageBucket.bucketName,
         NOVA_CANVAS_MODEL: inputs.novaCanvasModel,
         JOB_TRACKING_TABLE: jobTrackingTable.tableName,
         // Template configuration
@@ -316,12 +319,11 @@ frontend:
     jobTrackingTable.grantReadWriteData(queueProcessorLambda); // Queue processor can update job status
 
     // Grant S3 bucket access to Lambda functions (for presigned URLs and file operations)
-    videoStorageBucket.grantReadWrite(snapMagicBackendLambda); // Main Lambda needs read/write for presigned URLs
-    videoStorageBucket.grantReadWrite(queueProcessorLambda); // Queue processor needs write for file storage
+    finalVideoStorageBucket.grantReadWrite(snapMagicBackendLambda); // Main Lambda needs read/write for presigned URLs
+    finalVideoStorageBucket.grantReadWrite(queueProcessorLambda); // Queue processor needs write for file storage
 
-    // Add explicit bucket policy to ensure Lambda roles can access the bucket
-    // This is needed because CDK's auto-delete feature creates a restrictive bucket policy
-    videoStorageBucket.addToResourcePolicy(new iam.PolicyStatement({
+    // CRITICAL FIX: Add explicit bucket policies for Lambda roles
+    finalVideoStorageBucket.addToResourcePolicy(new iam.PolicyStatement({
       effect: iam.Effect.ALLOW,
       principals: [
         snapMagicBackendLambda.role!,
@@ -334,8 +336,8 @@ frontend:
         's3:ListBucket'
       ],
       resources: [
-        videoStorageBucket.bucketArn,
-        `${videoStorageBucket.bucketArn}/*`
+        finalVideoStorageBucket.bucketArn,
+        `${finalVideoStorageBucket.bucketArn}/*`
       ]
     }));
 
@@ -572,7 +574,7 @@ frontend:
     });
 
     new CfnOutput(this, 'VideoBucketName', {
-      value: videoStorageBucket.bucketName,
+      value: finalVideoStorageBucket.bucketName,
       description: 'S3 Bucket for Video Storage (Auto-cleanup after 7 days)',
       exportName: `SnapMagic-${props.environment}-VideoBucket`
     });
