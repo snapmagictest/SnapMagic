@@ -315,6 +315,30 @@ frontend:
     jobTrackingTable.grantReadWriteData(snapMagicBackendLambda); // Main Lambda can read/write job status
     jobTrackingTable.grantReadWriteData(queueProcessorLambda); // Queue processor can update job status
 
+    // Grant S3 bucket access to Lambda functions (for presigned URLs and file operations)
+    videoStorageBucket.grantReadWrite(snapMagicBackendLambda); // Main Lambda needs read/write for presigned URLs
+    videoStorageBucket.grantReadWrite(queueProcessorLambda); // Queue processor needs write for file storage
+
+    // Add explicit bucket policy to ensure Lambda roles can access the bucket
+    // This is needed because CDK's auto-delete feature creates a restrictive bucket policy
+    videoStorageBucket.addToResourcePolicy(new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      principals: [
+        snapMagicBackendLambda.role!,
+        queueProcessorLambda.role!
+      ],
+      actions: [
+        's3:GetObject',
+        's3:PutObject',
+        's3:DeleteObject',
+        's3:ListBucket'
+      ],
+      resources: [
+        videoStorageBucket.bucketArn,
+        `${videoStorageBucket.bucketArn}/*`
+      ]
+    }));
+
     // Add SQS and DynamoDB environment variables to main Lambda
     snapMagicBackendLambda.addEnvironment('CARD_GENERATION_QUEUE_URL', cardGenerationQueue.queueUrl);
     snapMagicBackendLambda.addEnvironment('JOB_TRACKING_TABLE', jobTrackingTable.tableName);
