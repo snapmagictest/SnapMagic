@@ -347,72 +347,39 @@ class SnapMagicApp {
     }
 
     init() {
-        console.log('🚨 EMERGENCY MINIMAL INIT - BYPASSING COMPLEX INITIALIZATION');
+        console.log('🚀 Initializing SnapMagic application...');
         
-        // EMERGENCY: Show login immediately without any complex setup
+        // Show login screen and initialize proper login system
         setTimeout(() => {
-            console.log('🚨 Emergency login display');
+            console.log('📱 Displaying login screen');
             
-            // Force hide loading screen
+            // Hide loading screen
             const loadingScreen = document.getElementById('loadingScreen');
             if (loadingScreen) {
                 loadingScreen.classList.add('hidden');
                 console.log('✅ Loading screen hidden');
             }
             
-            // Force show login screen
+            // Show login screen
             const loginScreen = document.getElementById('loginScreen');
             if (loginScreen) {
                 loginScreen.classList.remove('hidden');
                 console.log('✅ Login screen shown');
             } else {
                 console.error('❌ Login screen element not found');
+                return;
             }
             
-            // Basic login functionality
-            const loginBtn = document.getElementById('loginBtn');
-            const usernameInput = document.getElementById('username');
-            const passwordInput = document.getElementById('password');
-            
-            if (loginBtn && usernameInput && passwordInput) {
-                loginBtn.addEventListener('click', () => {
-                    const username = usernameInput.value;
-                    const password = passwordInput.value;
-                    
-                    if (username === 'demo' && password === 'demo') {
-                        console.log('✅ Emergency login successful');
-                        
-                        // Note: User number will be assigned by proper login API call
-                        // Emergency login is just for UI bypass, real login handles user numbering
-                        
-                        loginScreen.classList.add('hidden');
-                        
-                        // Show main app
-                        const mainApp = document.getElementById('mainApp');
-                        if (mainApp) {
-                            mainApp.classList.remove('hidden');
-                            console.log('✅ Main app shown');
-                        }
-                    } else {
-                        alert('Invalid credentials. Use demo/demo');
-                    }
-                });
-                console.log('✅ Emergency login handler attached');
-            } else {
-                console.error('❌ Login elements not found');
-            }
-            
-        }, 500); // Much shorter delay
-        
-        // Try to run normal initialization in background (non-blocking)
-        setTimeout(() => {
+            // Initialize proper login system only - no emergency fallback
             try {
-                console.log('🔄 Attempting normal initialization in background...');
                 this.normalInit();
+                console.log('✅ Application initialization completed');
             } catch (error) {
-                console.error('❌ Normal init failed, but emergency login should work:', error);
+                console.error('❌ Application initialization failed:', error);
+                this.showError('Application failed to initialize. Please refresh the page.');
             }
-        }, 1000);
+            
+        }, 500);
     }
     
     normalInit() {
