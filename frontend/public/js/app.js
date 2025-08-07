@@ -3855,8 +3855,15 @@ class SnapMagicApp {
                 this.generatedCardData = cardData;
                 this.displayGeneratedCard(cardData, userName);
                 
-                // Increment user number for next card
-                this.incrementUserNumber();
+                // Update usage limits after card completion (same as video generation)
+                if (result.remaining) {
+                    console.log('📊 Updating usage limits after card completion:', result.remaining);
+                    this.updateUsageLimits(result.remaining);
+                } else {
+                    // Fallback: refresh usage limits if not provided in response
+                    console.log('🔄 Refreshing usage limits after card completion...');
+                    this.refreshUsageLimits();
+                }
                 
             } else if (result.success && result.status === 'processing') {
                 console.log(`🔄 Card still processing... (${result.message || 'Working on it'})`);

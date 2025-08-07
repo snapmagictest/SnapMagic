@@ -1359,7 +1359,15 @@ def lambda_handler(event, context):
                         except Exception as e:
                             logger.warning(f"Could not retrieve base64 data from S3: {str(e)}")
                     
-                    return create_success_response({
+                    # Calculate remaining counts for this device
+                    device_id = job_item.get('device_id', 'unknown')
+                    try:
+                        remaining_counts = get_remaining_counts(device_id)
+                    except Exception as e:
+                        logger.warning(f"Could not calculate remaining counts: {str(e)}")
+                        remaining_counts = None
+                    
+                    response_data = {
                         'success': True,
                         'status': 'completed',
                         'job_id': job_id,
@@ -1369,10 +1377,16 @@ def lambda_handler(event, context):
                         'processing_time': processing_time,
                         'user_number': job_item.get('user_number', 1),
                         'display_name': job_item.get('display_name', 'Unknown User'),
-                        'device_id': job_item.get('device_id', 'unknown'),
+                        'device_id': device_id,
                         'session_id': job_item.get('session_id', 'unknown'),
                         'completed_at': job_item.get('completed_at', 'unknown')
-                    })
+                    }
+                    
+                    # Add remaining counts if available
+                    if remaining_counts:
+                        response_data['remaining'] = remaining_counts
+                    
+                    return create_success_response(response_data)
                     
                 elif job_status == 'processing':
                     # Job still processing
