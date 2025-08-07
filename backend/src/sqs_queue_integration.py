@@ -41,7 +41,8 @@ def generate_card_via_queue(prompt, user_name='', user_id='anonymous', client_ip
         
         # Create session ID with enhanced naming pattern
         # Format: device_8qgfnm1jxk3_user_001_override1
-        session_id = f"device_{device_id}_user_{user_number:03d}_override1"
+        # Note: device_id already contains "device_" prefix, so don't add it again
+        session_id = f"{device_id}_user_{user_number:03d}_override1"
         
         logger.info(f"🎯 Starting async card generation - Job ID: {job_id} for {display_name}")
         

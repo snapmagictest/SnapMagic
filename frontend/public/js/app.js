@@ -1400,8 +1400,8 @@ class SnapMagicApp {
             // Add to user's gallery
             this.addCardToGallery(this.generatedCardData);
             
-            // Store in S3
-            await this.storeFinalCardInS3(novaImageBase64, userPrompt, userName);
+            // Note: Card is automatically stored by Queue Processor
+            // Frontend uses s3_url from DynamoDB polling (single source of truth)
             
             // Display the holographic card
             this.elements.resultContainer.innerHTML = cardHTML;
@@ -1432,7 +1432,9 @@ class SnapMagicApp {
                 result: novaImageBase64  // CRITICAL: Preserve base64 for instant GIF generation
             };
             this.addCardToGallery(this.generatedCardData);
-            await this.storeFinalCardInS3(novaImageBase64, userPrompt, userName);
+            
+            // Note: Card is automatically stored by Queue Processor
+            // Frontend uses s3_url from DynamoDB polling (single source of truth)
             
             // Set initial download button state for new card (fallback case)
             const cardId = this.generatedCardData.s3_key || this.generatedCardData.filename || 'current';
@@ -5233,49 +5235,11 @@ class SnapMagicApp {
     }
     
     /**
-     * Store the final composited card in S3 cards/ folder
+     * REMOVED: storeFinalCardInS3 function
+     * Cards are now stored automatically by Queue Processor after AI generation
+     * Frontend uses s3_url from DynamoDB polling (single source of truth)
+     * This eliminates duplicate file storage and naming inconsistencies
      */
-    async storeFinalCardInS3(finalCardBase64, userPrompt, userName) {
-        try {
-            console.log('💾 Storing final card in S3 cards/ folder...');
-            
-            const apiBaseUrl = window.SNAPMAGIC_CONFIG.API_URL;
-            const endpoint = `${apiBaseUrl}api/store-card`;
-            
-            const requestBody = {
-                action: 'store_final_card',
-                final_card_base64: finalCardBase64,
-                prompt: userPrompt,
-                user_name: userName || ''
-            };
-            
-            const response = await fetch(endpoint, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${this.currentUser.token}`,
-                    'X-Device-ID': this.deviceId
-                },
-                body: JSON.stringify(requestBody)
-            });
-
-            const result = await response.json();
-            
-            if (result.success) {
-                console.log('✅ Final card stored in S3:', result.s3_key);
-                
-                // Now update usage limits after successful storage
-                // This is when the actual usage count changes
-                await this.refreshUsageLimits();
-                
-            } else {
-                console.warn('⚠️ Failed to store card in S3:', result.error);
-            }
-        } catch (error) {
-            console.warn('⚠️ Error storing card in S3:', error);
-            // Don't throw - this is not critical for user experience
-        }
-    }
     
     /**
      * Refresh usage limits by making a new login call to get updated counts

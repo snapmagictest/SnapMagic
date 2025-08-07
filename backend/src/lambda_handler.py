@@ -1125,8 +1125,7 @@ def lambda_handler(event, context):
                 action = 'check_job_status'
             else:
                 action = 'transform_card'  # Default to card generation
-        elif '/api/store-card' in request_path:
-            action = 'store_final_card'
+        # Removed: store_final_card endpoint - using Queue Processor storage only
         elif '/api/print-card' in request_path:
             action = 'print_card'
         elif '/health' in request_path:
@@ -1450,61 +1449,10 @@ def lambda_handler(event, context):
                 return create_error_response(f"Failed to get cards: {str(e)}", 500)
         
         # ========================================
-        # STORE FINAL CARD - USE CURRENT OVERRIDE AND CLEAR PENDING
+        # REMOVED: STORE FINAL CARD - Using Queue Processor storage only
+        # Cards are stored automatically by Queue Processor after AI generation
+        # Frontend uses s3_url from DynamoDB polling (single source of truth)
         # ========================================
-        elif action == 'store_final_card':
-            username = token_payload.get('username', 'unknown')
-            
-            final_card_base64 = body.get('final_card_base64', '')
-            prompt = body.get('prompt', '')
-            user_name = body.get('user_name', '')
-            
-            if not final_card_base64:
-                return create_error_response("Missing final_card_base64 parameter", 400)
-            
-            try:
-                # Get client IP
-                request_headers = event.get('headers', {})
-                client_ip = get_client_ip(request_headers)
-                
-                # Get current override number (includes pending override check)
-                current_override = get_current_override_number(client_ip)
-                session_id_for_files = create_standard_session_id(client_ip, current_override)
-                
-                logger.info(f"📁 Storing card in override session: {session_id_for_files}")
-                
-                # Clear pending override marker since we're now using it
-                clear_pending_override(client_ip)
-                
-                # Decode and store using current override session
-                import base64
-                image_data = base64.b64decode(final_card_base64)
-                
-                result = store_file_with_standard_pattern(
-                    session_id=session_id_for_files,
-                    username=username,
-                    prompt=prompt,
-                    file_data=image_data,
-                    file_type='card',
-                    extension='png',
-                    content_type='image/png'
-                )
-                
-                if result['success']:
-                    logger.info(f"✅ Final card stored in S3: {result['s3_key']}")
-                    return create_success_response({
-                        'success': True,
-                        'message': 'Final card stored successfully',
-                        's3_key': result['s3_key'],
-                        'filename': result['filename']
-                    })
-                else:
-                    logger.error(f"❌ Failed to store final card: {result.get('error')}")
-                    return create_error_response(f"Failed to store card: {result.get('error')}", 500)
-                    
-            except Exception as e:
-                logger.error(f"❌ Store final card exception: {str(e)}")
-                return create_error_response(f"Failed to store card: {str(e)}", 500)
         
         # ========================================
         # PRINT CARD WITH AUTOMATIC OVERRIDE DETECTION
