@@ -5498,6 +5498,9 @@ class SnapMagicApp {
         const userName = this.generatedCardData.userName || this.generatedCardData.user_name || 'NOVA';
         const userPrompt = this.generatedCardData.prompt || this.generatedCardData.userPrompt || 'AI Generated Card';
         
+        // 🆕 NEW FEATURE: Update prompt input field with current card's original prompt
+        this.updatePromptInputWithCardPrompt(userPrompt);
+        
         // CRITICAL FIX: Use the same template system as new cards
         const cardHTML = this.createHolographicCard(aiImageSrc, userName, userPrompt);
         
@@ -5515,6 +5518,32 @@ class SnapMagicApp {
         this.updateDownloadButton(cardId);
         
         console.log('✅ Gallery card displayed with full template - consistent with new cards');
+        console.log(`📝 Prompt input updated with: "${userPrompt}"`);
+    }
+
+    /**
+     * 🆕 NEW FEATURE: Update prompt input field with current gallery card's original prompt
+     */
+    updatePromptInputWithCardPrompt(prompt) {
+        const promptInput = document.getElementById('promptInput');
+        const promptInputArea = document.getElementById('promptInputArea');
+        
+        if (promptInput && prompt && prompt !== 'AI Generated Card') {
+            // Update the textarea with the card's original prompt
+            promptInput.value = prompt;
+            
+            // Show the prompt input area if it's hidden
+            if (promptInputArea && promptInputArea.classList.contains('hidden')) {
+                promptInputArea.classList.remove('hidden');
+            }
+            
+            // Update character count if the function exists
+            if (window.updateTextareaCharCount) {
+                window.updateTextareaCharCount('promptInput');
+            }
+            
+            console.log(`📝 Prompt input field updated with gallery card prompt: "${prompt.substring(0, 50)}..."`);
+        }
     }
 
     /**
@@ -5670,6 +5699,9 @@ class SnapMagicApp {
                     const userName = this.generatedCardData.userName || this.generatedCardData.user_name || 'NOVA';
                     const userPrompt = this.generatedCardData.prompt || this.generatedCardData.userPrompt || 'AI Generated Card';
                     
+                    // 🆕 NEW FEATURE: Update prompt input field with current card's original prompt
+                    this.updatePromptInputWithCardPrompt(userPrompt);
+                    
                     // CRITICAL FIX: Use the same template system as new cards
                     const cardHTML = this.createHolographicCard(aiImageSrc, userName, userPrompt);
                     
@@ -5684,6 +5716,7 @@ class SnapMagicApp {
                     this.showGalleryNavigation();
                     
                     console.log(`🖼️ Displaying most recent card (${this.userGallery.currentIndex + 1} of ${this.userGallery.totalCards})`);
+                    console.log(`📝 Prompt input updated with most recent card prompt: "${userPrompt}"`);
                 }
                 
                 // 🚀 PHASE 2: Background GIF Pre-Generation for Instant Downloads
