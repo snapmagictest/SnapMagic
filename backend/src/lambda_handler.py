@@ -2089,15 +2089,41 @@ def lambda_handler(event, context):
                 )
                 
                 cards = []
+                
+                # Create S3 client for presigned URLs
+                import boto3
+                s3_client = boto3.client('s3')
+                
                 for item in response['Items']:
                     # Extract info from DynamoDB record
                     s3_url = item.get('s3_url', '')
                     s3_key = item.get('s3_key', '')
                     filename = s3_key.split('/')[-1] if s3_key else 'unknown'
                     
+                    # Generate presigned URL for secure access (1 hour expiration)
+                    presigned_url = s3_url  # Fallback to direct URL
+                    if s3_key and s3_url:
+                        try:
+                            # Extract bucket name from the s3_url
+                            # Format: https://bucket-name.s3.us-east-1.amazonaws.com/key
+                            if 's3.us-east-1.amazonaws.com' in s3_url:
+                                bucket_name = s3_url.split('//')[1].split('.s3.us-east-1.amazonaws.com')[0]
+                                
+                                presigned_url = s3_client.generate_presigned_url(
+                                    'get_object',
+                                    Params={'Bucket': bucket_name, 'Key': s3_key},
+                                    ExpiresIn=3600  # 1 hour
+                                )
+                                logger.info(f"✅ Generated presigned URL for {s3_key} in bucket {bucket_name}")
+                            else:
+                                logger.warning(f"⚠️ Unexpected S3 URL format: {s3_url}")
+                        except Exception as e:
+                            logger.error(f"❌ Failed to generate presigned URL for {s3_key}: {str(e)}")
+                            # Keep the direct URL as fallback
+                    
                     card_data = {
-                        'finalImageSrc': s3_url,
-                        'imageSrc': s3_url,
+                        'finalImageSrc': presigned_url,
+                        'imageSrc': presigned_url,
                         'result': None,  # Will be loaded on-demand
                         'novaImageBase64': None,  # Will be loaded on-demand
                         's3_key': s3_key,
