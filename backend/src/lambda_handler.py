@@ -124,32 +124,34 @@ def get_next_print_queue_number() -> int:
 
 def get_pending_override_number(client_ip: str) -> int:
     """
-    Check if there's a pending override increment for this IP
+    Check if there's a pending override increment for this IP using DynamoDB
     This handles the gap between staff clicking override and first card being generated
     """
     try:
         import boto3
-        s3_client = boto3.client('s3')
-        bucket_name = os.environ.get('S3_BUCKET_NAME')
         
-        if not bucket_name:
+        # Get DynamoDB table
+        table_name = os.environ.get('JOB_TRACKING_TABLE')
+        if not table_name:
             return 0
         
-        # Check for pending override marker
+        dynamodb = boto3.resource('dynamodb')
+        table = dynamodb.Table(table_name)
+        
+        # Check for pending override record
         try:
-            response = s3_client.get_object(
-                Bucket=bucket_name,
-                Key=f'pending-overrides/{client_ip}_pending.txt'
+            response = table.get_item(
+                Key={'jobId': f'pending_override_{client_ip}'}
             )
             
-            content = response['Body'].read().decode('utf-8')
-            pending_override = int(content.strip())
-            logger.info(f"🔍 Found pending override for IP {client_ip}: override{pending_override}")
-            return pending_override
-            
-        except s3_client.exceptions.NoSuchKey:
-            # No pending override
-            return 0
+            if 'Item' in response:
+                pending_override = response['Item'].get('override_number', 0)
+                logger.info(f"🔍 Found pending override for IP {client_ip}: override{pending_override}")
+                return pending_override
+            else:
+                # No pending override
+                return 0
+                
         except Exception as e:
             logger.warning(f"⚠️ Error checking pending override: {str(e)}")
             return 0
@@ -159,18 +161,23 @@ def get_pending_override_number(client_ip: str) -> int:
         return 0
 
 def clear_pending_override(client_ip: str):
-    """Clear pending override marker after first card is generated"""
+    """Clear pending override marker after first card is generated using DynamoDB"""
     try:
         import boto3
-        s3_client = boto3.client('s3')
-        bucket_name = os.environ.get('S3_BUCKET_NAME')
         
-        if bucket_name:
-            s3_client.delete_object(
-                Bucket=bucket_name,
-                Key=f'pending-overrides/{client_ip}_pending.txt'
-            )
-            logger.info(f"🗑️ Cleared pending override for IP {client_ip}")
+        # Get DynamoDB table
+        table_name = os.environ.get('JOB_TRACKING_TABLE')
+        if not table_name:
+            return
+        
+        dynamodb = boto3.resource('dynamodb')
+        table = dynamodb.Table(table_name)
+        
+        # Delete pending override record
+        table.delete_item(
+            Key={'jobId': f'pending_override_{client_ip}'}
+        )
+        logger.info(f"🗑️ Cleared pending override for IP {client_ip}")
             
     except Exception as e:
         logger.warning(f"⚠️ Failed to clear pending override: {str(e)}")
@@ -1628,24 +1635,30 @@ def lambda_handler(event, context):
             # Create pending override marker so next card uses new override number
             try:
                 import boto3
-                s3_client = boto3.client('s3')
-                bucket_name = os.environ.get('S3_BUCKET_NAME')
+                from datetime import datetime
                 
-                if bucket_name:
-                    # Create pending override marker
-                    s3_client.put_object(
-                        Bucket=bucket_name,
-                        Key=f'pending-overrides/{client_ip}_pending.txt',
-                        Body=str(new_override_number).encode('utf-8'),
-                        ContentType='text/plain',
-                        Metadata={
-                            'client_ip': client_ip,
-                            'override_number': str(new_override_number),
-                            'created_by': 'staff_override'
+                # Get DynamoDB table
+                table_name = os.environ.get('JOB_TRACKING_TABLE')
+                if table_name:
+                    dynamodb = boto3.resource('dynamodb')
+                    table = dynamodb.Table(table_name)
+                    
+                    # Create pending override record in DynamoDB
+                    table.put_item(
+                        Item={
+                            'jobId': f'pending_override_{client_ip}',
+                            'override_number': new_override_number,
+                            'device_id': client_ip,
+                            'status': 'pending_override',
+                            'created_by': 'staff_override',
+                            'created_at': datetime.now().isoformat(),
+                            'username': username
                         }
                     )
                     
-                    logger.info(f"📝 Created pending override marker: override{new_override_number}")
+                    logger.info(f"📝 Created pending override marker in DynamoDB: override{new_override_number}")
+                else:
+                    logger.warning("⚠️ JOB_TRACKING_TABLE not configured, cannot create pending override")
                 
             except Exception as e:
                 logger.warning(f"⚠️ Failed to create pending override marker: {str(e)}")

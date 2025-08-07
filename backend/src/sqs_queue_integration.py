@@ -39,12 +39,68 @@ def generate_card_via_queue(prompt, user_name='', user_id='anonymous', client_ip
         # Create display name for user correlation (use provided or create fallback)
         display_name = display_name or f"Test User #{user_number}"
         
-        # Create session ID with enhanced naming pattern
-        # Format: device_8qgfnm1jxk3_user_001_override1
-        # Note: device_id already contains "device_" prefix, so don't add it again
-        session_id = f"{device_id}_user_{user_number:03d}_override1"
+        # Check for pending override before creating session_id
+        override_number = 1  # Default
+        try:
+            # Import the override checking function from main lambda
+            import sys
+            import os
+            sys.path.append(os.path.dirname(__file__))
+            
+            # Check for pending override first
+            import boto3
+            table_name = os.environ.get('JOB_TRACKING_TABLE')
+            if table_name:
+                dynamodb = boto3.resource('dynamodb')
+                table = dynamodb.Table(table_name)
+                
+                # Check for pending override record
+                try:
+                    response = table.get_item(
+                        Key={'jobId': f'pending_override_{client_ip}'}
+                    )
+                    
+                    if 'Item' in response:
+                        override_number = response['Item'].get('override_number', 1)
+                        logger.info(f"🔍 Found pending override for {client_ip}: override{override_number}")
+                        
+                        # Clear the pending override since we're using it
+                        table.delete_item(
+                            Key={'jobId': f'pending_override_{client_ip}'}
+                        )
+                        logger.info(f"🗑️ Cleared pending override for {client_ip}")
+                    else:
+                        # No pending override, check existing records for highest override
+                        from boto3.dynamodb.conditions import Key
+                        response = table.query(
+                            IndexName='device-override-index',
+                            KeyConditionExpression=Key('device_id').eq(client_ip),
+                            ScanIndexForward=False,  # Descending order (highest first)
+                            Limit=1  # Only need the highest
+                        )
+                        
+                        if response['Items']:
+                            override_number = response['Items'][0].get('override_number', 1)
+                            logger.info(f"📊 Found highest override for {client_ip}: override{override_number}")
+                        else:
+                            logger.info(f"📊 No existing overrides for {client_ip}, using override1")
+                            
+                except Exception as e:
+                    logger.warning(f"⚠️ Error checking override: {str(e)}")
+                    override_number = 1
+            else:
+                logger.warning("⚠️ JOB_TRACKING_TABLE not configured")
+                override_number = 1
+                
+        except Exception as e:
+            logger.error(f"❌ Failed to check override: {str(e)}")
+            override_number = 1
         
-        logger.info(f"🎯 Starting async card generation - Job ID: {job_id} for {display_name}")
+        # Create session ID with correct override number
+        # Format: device_8qgfnm1jxk3_user_001_override2 (if override was applied)
+        session_id = f"{device_id}_user_{user_number:03d}_override{override_number}"
+        
+        logger.info(f"🎯 Starting async card generation - Job ID: {job_id} for {display_name} with {session_id}")
         
         # Create job record in DynamoDB with enhanced user correlation
         create_job_record(job_id, {
@@ -56,6 +112,7 @@ def generate_card_via_queue(prompt, user_name='', user_id='anonymous', client_ip
             'display_name': display_name,
             'device_id': device_id,
             'session_id': session_id,
+            'override_number': override_number,  # Store the override number used
             'created_at': datetime.now().isoformat()
         })
         
