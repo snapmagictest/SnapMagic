@@ -382,15 +382,8 @@ class SnapMagicApp {
                     if (username === 'demo' && password === 'demo') {
                         console.log('✅ Emergency login successful');
                         
-                        // Reset user number to 1 for each login (fresh event experience)
-                        try {
-                            localStorage.setItem('snapmagic_user_number', '1');
-                            this.currentUserNumber = 1;
-                            console.log('🔄 User number reset to 1 for emergency login');
-                        } catch (error) {
-                            console.warn('⚠️ Could not reset user number:', error);
-                            this.currentUserNumber = 1; // Fallback to memory
-                        }
+                        // Note: User number will be assigned by proper login API call
+                        // Emergency login is just for UI bypass, real login handles user numbering
                         
                         loginScreen.classList.add('hidden');
                         
@@ -881,14 +874,21 @@ class SnapMagicApp {
                     token: data.token
                 };
                 
-                // Reset user number to 1 for each login (fresh event experience)
-                try {
-                    localStorage.setItem('snapmagic_user_number', '1');
-                    this.currentUserNumber = 1;
-                    console.log('🔄 User number reset to 1 for new login session');
-                } catch (error) {
-                    console.warn('⚠️ Could not reset user number:', error);
-                    this.currentUserNumber = 1; // Fallback to memory
+                // Use global user number from backend (not localStorage)
+                if (data.user_number) {
+                    this.currentUserNumber = data.user_number;
+                    console.log(`🌍 Assigned global user number: ${data.user_number} (${data.display_name})`);
+                    
+                    // Store in localStorage for consistency during session, but don't reset to 1
+                    try {
+                        localStorage.setItem('snapmagic_user_number', data.user_number.toString());
+                    } catch (error) {
+                        console.warn('⚠️ Could not store user number:', error);
+                    }
+                } else {
+                    // Fallback to localStorage if backend doesn't provide user number
+                    this.currentUserNumber = this.getCurrentUserNumber();
+                    console.log(`🔄 Using fallback user number: ${this.currentUserNumber}`);
                 }
                 
                 // AWS logo is always visible - no need to show/hide for staff override

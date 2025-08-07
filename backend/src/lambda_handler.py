@@ -451,6 +451,114 @@ def get_usage_for_override_session(client_ip: str, override_number: int) -> Dict
         logger.error(f"❌ Failed to get usage for IP {client_ip} override{override_number}: {str(e)}")
         return {'cards': 0, 'videos': 0, 'prints': 0}
 
+def get_next_global_user_number():
+    """
+    Get the next global user number for event attendees.
+    Uses DynamoDB to track global counter across all devices.
+    Returns: int - Next user number (1, 2, 3, etc.)
+    """
+    try:
+        import boto3
+        from botocore.exceptions import ClientError
+        
+        # Use the job tracking table for global counter
+        table_name = os.environ.get('JOB_TRACKING_TABLE')
+        if not table_name:
+            logger.warning("⚠️ JOB_TRACKING_TABLE not configured, using fallback user number")
+            return 1
+        
+        dynamodb = boto3.resource('dynamodb')
+        table = dynamodb.Table(table_name)
+        
+        # Use atomic counter with conditional update
+        counter_key = 'global_user_counter'
+        
+        try:
+            # Try to increment existing counter
+            response = table.update_item(
+                Key={'jobId': counter_key},
+                UpdateExpression='ADD user_count :inc',
+                ExpressionAttributeValues={':inc': 1},
+                ReturnValues='UPDATED_NEW'
+            )
+            user_number = int(response['Attributes']['user_count'])
+            logger.info(f"🔢 Global user counter incremented to: {user_number}")
+            return user_number
+            
+        except ClientError as e:
+            if e.response['Error']['Code'] == 'ValidationException':
+                # Counter doesn't exist, create it starting at 1
+                try:
+                    table.put_item(
+                        Item={
+                            'jobId': counter_key,
+                            'user_count': 1,
+                            'created_at': datetime.now().isoformat(),
+                            'description': 'Global user counter for event attendees'
+                        },
+                        ConditionExpression='attribute_not_exists(jobId)'
+                    )
+                    logger.info("🆕 Created global user counter starting at 1")
+                    return 1
+                except ClientError as create_error:
+                    if create_error.response['Error']['Code'] == 'ConditionalCheckFailedException':
+                        # Counter was created by another request, try increment again
+                        response = table.update_item(
+                            Key={'jobId': counter_key},
+                            UpdateExpression='ADD user_count :inc',
+                            ExpressionAttributeValues={':inc': 1},
+                            ReturnValues='UPDATED_NEW'
+                        )
+                        user_number = int(response['Attributes']['user_count'])
+                        logger.info(f"🔢 Global user counter incremented to: {user_number} (retry)")
+                        return user_number
+                    else:
+                        raise create_error
+            else:
+                raise e
+                
+    except Exception as e:
+        logger.error(f"❌ Error getting global user number: {str(e)}")
+        # Fallback to timestamp-based number to ensure uniqueness
+        import time
+        fallback_number = int(time.time()) % 10000  # Last 4 digits of timestamp
+        logger.warning(f"⚠️ Using fallback user number: {fallback_number}")
+        return fallback_number
+
+
+def assign_user_number_to_device(device_id, user_number):
+    """
+    Assign a global user number to a specific device for the session.
+    Stores the mapping in DynamoDB for consistency.
+    """
+    try:
+        import boto3
+        
+        table_name = os.environ.get('JOB_TRACKING_TABLE')
+        if not table_name:
+            logger.warning("⚠️ JOB_TRACKING_TABLE not configured, cannot store device mapping")
+            return
+        
+        dynamodb = boto3.resource('dynamodb')
+        table = dynamodb.Table(table_name)
+        
+        # Store device → user number mapping
+        mapping_key = f'device_user_mapping_{device_id}'
+        table.put_item(
+            Item={
+                'jobId': mapping_key,
+                'device_id': device_id,
+                'user_number': user_number,
+                'assigned_at': datetime.now().isoformat(),
+                'session_type': 'login_session'
+            }
+        )
+        
+        logger.info(f"📱 Assigned User #{user_number} to device {device_id}")
+        
+    except Exception as e:
+        logger.error(f"❌ Error storing device user mapping: {str(e)}")
+
 def get_remaining_usage_simplified(client_ip: str) -> Dict[str, int]:
     """Get remaining usage for current base override session"""
     limits = load_limits()
@@ -1186,12 +1294,18 @@ def lambda_handler(event, context):
                     auth_handler = SnapMagicAuthSimple()
                     token = auth_handler.generate_token(username)
                     
-                    # Get client IP for simplified tracking
+                    # Get client IP and device ID for tracking
                     request_headers = event.get('headers', {})
                     client_ip = get_client_ip(request_headers)
+                    device_id = request_headers.get('x-device-id', 'unknown')
+                    
+                    # Assign global user number for this login session
+                    global_user_number = get_next_global_user_number()
+                    assign_user_number_to_device(device_id, global_user_number)
+                    
                     remaining_usage = get_remaining_usage_simplified(client_ip)
                     
-                    logger.info(f"Login successful for IP: {client_ip}, remaining usage: {remaining_usage}")
+                    logger.info(f"Login successful - IP: {client_ip}, Device: {device_id}, User #{global_user_number}")
                     
                     return create_success_response({
                         'success': True,  # Frontend expects this field
@@ -1200,7 +1314,10 @@ def lambda_handler(event, context):
                         'expires_in': 86400,  # 24 hours
                         'user': {'username': username},
                         'remaining': remaining_usage,  # Include usage info at login
-                        'client_ip': client_ip  # For debugging - IP only, no session ID
+                        'client_ip': client_ip,  # For debugging - IP only, no session ID
+                        'user_number': global_user_number,  # Global user number for this session
+                        'device_id': device_id,  # Device identifier
+                        'display_name': f'Test User #{global_user_number}'  # Ready-to-use display name
                     })
                 else:
                     logger.warning(f"Invalid login attempt: {username}")
