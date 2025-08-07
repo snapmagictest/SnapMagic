@@ -13,30 +13,49 @@ SnapMagic creates **AI-generated trading cards and videos** for AWS events using
 
 **Perfect for**: AWS re:Invent, customer summits, partner events, conferences
 
-## 🏗️ Architecture & Data Flow
+## 🏗️ Complete Architecture & Data Flow
 
 ```
-User Request → API Gateway → Lambda → Nova Canvas (AI) → S3 Storage
-                                ↓
-                           DynamoDB (Metadata) → Presigned URLs → Gallery Display
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   AWS AMPLIFY   │    │  API GATEWAY    │    │  MAIN LAMBDA    │    │      SQS        │
+│                 │    │                 │    │                 │    │                 │
+│ • Frontend Host │───▶│ • REST API      │───▶│ • Authentication│───▶│ • Card Queue    │
+│ • GitHub Deploy│    │ • CORS Config   │    │ • Job Creation  │    │ • Concurrency   │
+│ • Auto Build    │    │ • JWT Validation│    │ • Gallery Load  │    │ • Dead Letter Q │
+└─────────────────┘    └─────────────────┘    └─────────────────┘    └─────────────────┘
+                                                        │                        │
+                                                        ▼                        ▼
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│    DYNAMODB     │    │       S3        │    │ QUEUE PROCESSOR │    │  AMAZON BEDROCK │
+│                 │◀───│                 │◀───│     LAMBDA      │───▶│                 │
+│ • Job Tracking  │    │ • File Storage  │    │ • AI Generation │    │ • Nova Canvas   │
+│ • Metadata      │    │ • Presigned URLs│    │ • File Upload   │    │ • Nova Reel     │
+│ • GSI Queries   │    │ • 7-day Access  │    │ • Status Update │    │ • Text-to-Image │
+└─────────────────┘    └─────────────────┘    └─────────────────┘    └─────────────────┘
 ```
 
-### **How It Works**:
-1. **User Input**: Text prompt submitted via web interface
-2. **Job Queue**: SQS queues card generation (handles Bedrock concurrency limits)
-3. **AI Generation**: Nova Canvas creates 1280×720 trading card image
-4. **Storage**: Image saved to S3, metadata stored in DynamoDB
-5. **Gallery**: DynamoDB tracks all cards, Lambda generates 7-day presigned URLs
-6. **Display**: Frontend shows cards with CSS holographic template styling
+### **Complete Data Flow**:
+1. **Frontend (Amplify)**: User enters prompt via web interface
+2. **API Gateway**: Routes request to Main Lambda with CORS/JWT validation
+3. **Main Lambda**: Creates job in DynamoDB, sends message to SQS queue
+4. **SQS Queue**: Manages Bedrock concurrency (max 2 concurrent generations)
+5. **Queue Processor Lambda**: Picks up job, calls Nova Canvas for AI generation
+6. **Bedrock Nova Canvas**: Generates 1280×720 trading card image from text
+7. **S3 Storage**: Queue Processor saves image, updates DynamoDB with S3 key
+8. **Gallery Loading**: Main Lambda queries DynamoDB, generates 7-day presigned URLs
+9. **Frontend Display**: Shows cards with CSS holographic template styling
 
-### **Core AWS Services**:
-- **Amazon Bedrock**: Nova Canvas (images) + Nova Reel (videos)
-- **AWS Lambda**: API processing + queue-based AI generation
-- **DynamoDB**: Job tracking, card metadata, gallery queries
-- **Amazon S3**: File storage with presigned URL security
-- **SQS**: Queue system for Bedrock concurrency management
-- **API Gateway**: REST API with CORS
-- **AWS Amplify**: Frontend hosting with GitHub integration
+### **Complete AWS Services Stack**:
+- **AWS Amplify**: Frontend hosting, GitHub integration, auto-build, environment variables
+- **API Gateway**: REST API endpoints, CORS configuration, request routing
+- **AWS Lambda (2 functions)**:
+  - **Main Lambda**: API processing, authentication, job management, gallery loading
+  - **Queue Processor Lambda**: AI generation, file storage, status updates
+- **Amazon SQS**: Card generation queue + Dead Letter Queue for failed jobs
+- **Amazon DynamoDB**: Job tracking table with GSI for device-based queries
+- **Amazon S3**: File storage with presigned URL security and CORS configuration
+- **Amazon Bedrock**: Nova Canvas (images) + Nova Reel (videos) AI models
+- **CloudWatch**: Logging and monitoring for all components
 
 ## 🚀 Quick Deploy
 
@@ -109,25 +128,53 @@ cdk deploy SnapMagic-dev --region us-east-1
 - Nova Reel animates your trading card
 - Download MP4 for social media
 
-## 🔧 Technical Details
+## 🔧 Technical Architecture Details
 
-### **Data Architecture**:
-- **DynamoDB**: Stores job status, metadata, user sessions
-- **S3**: Stores actual PNG/MP4 files
-- **Presigned URLs**: 7-day secure access to files
-- **No hardcoded values**: Deploy to any AWS account
+### **Two-Lambda Design**:
+- **Main Lambda** (`SnapMagicAIFunction`):
+  - Handles all API requests (login, job creation, gallery loading)
+  - JWT authentication and validation
+  - DynamoDB job creation and queries
+  - Presigned URL generation for gallery
+  - SQS message sending for card generation
+  - 700 concurrent executions for high API traffic
 
-### **Security**:
-- JWT authentication
-- Presigned URLs (direct S3 URLs blocked)
-- IAM roles with least privilege
-- CORS configured for web access
+- **Queue Processor Lambda** (`QueueProcessorFunction`):
+  - Dedicated to AI generation only
+  - Triggered by SQS messages
+  - Calls Amazon Bedrock Nova Canvas
+  - Uploads generated images to S3
+  - Updates DynamoDB job status
+  - 200 concurrent executions (respects Bedrock limits)
 
-### **Scalability**:
-- SQS queues handle Bedrock rate limits
-- DynamoDB GSI for fast gallery queries
-- Lambda concurrency controls
-- S3 for unlimited file storage
+### **SQS Queue System**:
+- **Main Queue**: `snapmagic-card-generation-dev`
+  - 90-second visibility timeout (AI generation time)
+  - 20-second long polling for instant pickup
+  - Handles Bedrock concurrency limits (max 2 simultaneous)
+- **Dead Letter Queue**: `snapmagic-card-generation-dlq-dev`
+  - 3 retry attempts before moving to DLQ
+  - 14-day retention for failed jobs
+
+### **DynamoDB Design**:
+- **Table**: `snapmagic-jobs-dev-{timestamp}`
+  - Primary Key: `jobId` (UUID)
+  - **GSI**: `device-override-index` for fast gallery queries
+  - Tracks: job status, prompts, S3 keys, timestamps, user metadata
+  - Pay-per-request billing for cost efficiency
+
+### **S3 Configuration**:
+- **Bucket**: `snapmagic-videos-dev-{account}-{timestamp}`
+  - **Security**: Direct URLs blocked, presigned URLs allowed
+  - **CORS**: Configured for GET, HEAD, PUT methods
+  - **Presigned URLs**: 7-day expiration (maximum AWS allows)
+  - **Auto-cleanup**: Files deleted when CDK stack destroyed
+
+### **Amplify Integration**:
+- **GitHub Connection**: Auto-deploys on code changes
+- **Environment Variables**: API Gateway URL injected automatically
+- **Build Process**: Replaces placeholders with actual API endpoints
+- **Custom Domain**: Optional custom domain support
 
 ## 💰 Cost Estimate
 
