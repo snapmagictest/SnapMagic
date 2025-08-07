@@ -381,6 +381,17 @@ class SnapMagicApp {
                     
                     if (username === 'demo' && password === 'demo') {
                         console.log('✅ Emergency login successful');
+                        
+                        // Reset user number to 1 for each login (fresh event experience)
+                        try {
+                            localStorage.setItem('snapmagic_user_number', '1');
+                            this.currentUserNumber = 1;
+                            console.log('🔄 User number reset to 1 for emergency login');
+                        } catch (error) {
+                            console.warn('⚠️ Could not reset user number:', error);
+                            this.currentUserNumber = 1; // Fallback to memory
+                        }
+                        
                         loginScreen.classList.add('hidden');
                         
                         // Show main app
@@ -869,6 +880,16 @@ class SnapMagicApp {
                     username, 
                     token: data.token
                 };
+                
+                // Reset user number to 1 for each login (fresh event experience)
+                try {
+                    localStorage.setItem('snapmagic_user_number', '1');
+                    this.currentUserNumber = 1;
+                    console.log('🔄 User number reset to 1 for new login session');
+                } catch (error) {
+                    console.warn('⚠️ Could not reset user number:', error);
+                    this.currentUserNumber = 1; // Fallback to memory
+                }
                 
                 // AWS logo is always visible - no need to show/hide for staff override
                 
