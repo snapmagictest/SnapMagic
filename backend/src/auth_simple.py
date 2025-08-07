@@ -33,9 +33,12 @@ class SnapMagicAuthenticationHandler:
         
         Credentials are loaded from environment variables set by CDK deployment
         """
-        # Load event credentials from environment variables
-        self.event_username = os.environ.get('SNAPMAGIC_USERNAME', 'demo')
-        self.event_password = os.environ.get('SNAPMAGIC_PASSWORD', 'demo')
+        # Load event credentials from environment variables (no fallbacks)
+        self.event_username = os.environ.get('SNAPMAGIC_USERNAME')
+        self.event_password = os.environ.get('SNAPMAGIC_PASSWORD')
+        
+        if not self.event_username or not self.event_password:
+            raise ValueError("SNAPMAGIC_USERNAME and SNAPMAGIC_PASSWORD environment variables must be set")
         
         # Store valid credentials for validation
         self.valid_event_credentials = {

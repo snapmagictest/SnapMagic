@@ -838,6 +838,7 @@ class SnapMagicApp {
                 this.authToken = data.token;
                 this.currentUser = { 
                     username, 
+                    password, // Store password for refresh calls
                     token: data.token
                 };
                 
@@ -904,8 +905,15 @@ class SnapMagicApp {
         const password = prompt('🔓 Override Password:');
         if (!password) return;
         
-        // Check password (using the override code as password)
-        if (password !== 'snap') {
+        // Get override code from config (no hardcoding)
+        const configuredOverrideCode = window.SNAPMAGIC_CONFIG?.OVERRIDE_CODE;
+        if (!configuredOverrideCode) {
+            this.showErrorModal('Configuration Error', 'Override code not configured. Please contact support.');
+            return;
+        }
+        
+        // Check password against configured override code
+        if (password !== configuredOverrideCode) {
             this.showErrorModal('Incorrect Password', 'The password you entered is incorrect. Please try again.');
             return;
         }
@@ -924,7 +932,7 @@ class SnapMagicApp {
                 body: JSON.stringify({
                     action: 'apply_override',
                     prompt: 'Override system reset',
-                    override_code: 'snap'
+                    override_code: configuredOverrideCode
                 })
             });
             
@@ -5247,6 +5255,12 @@ class SnapMagicApp {
         try {
             console.log('🔄 Refreshing usage limits after card storage...');
             
+            // Get current user credentials (no hardcoding)
+            if (!this.currentUser || !this.currentUser.username) {
+                console.warn('⚠️ No current user available for refresh');
+                return;
+            }
+            
             const apiBaseUrl = window.SNAPMAGIC_CONFIG.API_URL;
             const endpoint = `${apiBaseUrl}api/login`;
             
@@ -5258,8 +5272,8 @@ class SnapMagicApp {
                     'X-Device-ID': this.deviceId
                 },
                 body: JSON.stringify({
-                    username: 'demo', // Use the current credentials
-                    password: 'demo'
+                    username: this.currentUser.username,
+                    password: this.currentUser.password || window.SNAPMAGIC_CONFIG?.DEFAULT_PASSWORD
                 })
             });
 

@@ -748,11 +748,14 @@ def get_device_id(request_headers: Dict[str, str]) -> str:
     return fallback_id
 
 def load_event_credentials() -> Dict[str, str]:
-    """Load event credentials from environment variables (set by CDK from secrets.json)"""
+    """Load event credentials from environment variables (set by CDK from secrets.json) - NO FALLBACKS"""
     try:
-        # CDK should set these environment variables from secrets.json
-        username = os.environ.get('EVENT_USERNAME', 'demo')  # fallback for local testing
-        password = os.environ.get('EVENT_PASSWORD', 'demo')  # fallback for local testing
+        # CDK must set these environment variables from secrets.json
+        username = os.environ.get('EVENT_USERNAME')
+        password = os.environ.get('EVENT_PASSWORD')
+        
+        if not username or not password:
+            raise ValueError("EVENT_USERNAME and EVENT_PASSWORD environment variables must be set")
         
         logger.info(f"Event credentials loaded - Username: {username}")
         return {
@@ -760,12 +763,8 @@ def load_event_credentials() -> Dict[str, str]:
             'password': password
         }
     except Exception as e:
-        logger.error(f"Failed to load event credentials: {str(e)}")
-        # Fallback to demo credentials for safety
-        return {
-            'username': 'demo',
-            'password': 'demo'
-        }
+        logger.error(f"❌ Failed to load event credentials: {str(e)}")
+        raise ValueError(f"Event credentials not properly configured: {str(e)}")
 
 # Global instances
 card_generator = CardGenerator()
@@ -1751,7 +1750,12 @@ def lambda_handler(event, context):
             # Extract override code from request body
             override_code = body.get('override_code')
             
-            if not override_code or override_code != 'snap':
+            # Get configured override code from environment
+            valid_override_code = os.environ.get('OVERRIDE_CODE')
+            if not valid_override_code:
+                return create_error_response("Override system not configured", 500)
+            
+            if not override_code or override_code != valid_override_code:
                 return create_error_response("Invalid override code", 400)
             
             logger.info(f"🔓 Staff override request from IP {client_ip}")

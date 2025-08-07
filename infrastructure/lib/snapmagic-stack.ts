@@ -30,6 +30,19 @@ export class SnapMagicTradingCardStack extends Stack {
     const { inputs } = props;
 
     // ========================================
+    // VALIDATE REQUIRED CONFIGURATION - NO HARDCODED FALLBACKS
+    // ========================================
+    if (!inputs.basicAuthUsername) {
+      throw new Error('basicAuthUsername is required in secrets.json - no hardcoded fallbacks allowed');
+    }
+    if (!inputs.basicAuthPassword) {
+      throw new Error('basicAuthPassword is required in secrets.json - no hardcoded fallbacks allowed');
+    }
+    if (!inputs.overrideCode) {
+      throw new Error('overrideCode is required in secrets.json - no hardcoded fallbacks allowed');
+    }
+
+    // ========================================
     // AWS AMPLIFY - FRONTEND HOSTING
     // ========================================
     const snapMagicAmplifyApp = new amplify.CfnApp(this, 'SnapMagicApp', {
@@ -75,6 +88,15 @@ frontend:
         - echo "Verifying print feature replacement worked:"
         - if grep -q "PLACEHOLDER_PRINT_ENABLED" public/index.html; then echo "ERROR: Print placeholder still exists!"; exit 1; fi
         - echo "✅ Print feature replacement successful"
+        - echo "Configuring Override Code..."
+        - echo "SNAPMAGIC_OVERRIDE_CODE is set to: $SNAPMAGIC_OVERRIDE_CODE"
+        - echo "Before override code replacement:"
+        - grep -n "PLACEHOLDER_OVERRIDE_CODE" public/index.html || echo "Could not find override placeholder"
+        - sed -i "s|'PLACEHOLDER_OVERRIDE_CODE'|'$SNAPMAGIC_OVERRIDE_CODE'|g" public/index.html
+        - echo "After override code replacement:"
+        - echo "Verifying override code replacement worked:"
+        - if grep -q "PLACEHOLDER_OVERRIDE_CODE" public/index.html; then echo "ERROR: Override placeholder still exists!"; exit 1; fi
+        - echo "✅ Override code replacement successful"
     build:
       commands:
         - echo "Frontend is already built - copying static files"
@@ -225,14 +247,14 @@ frontend:
       environment: {
         PYTHONPATH: '/var/task:/var/task/src',
         LOG_LEVEL: 'INFO',
-        EVENT_USERNAME: inputs.basicAuthUsername || 'demo',
-        EVENT_PASSWORD: inputs.basicAuthPassword || 'demo',
+        EVENT_USERNAME: inputs.basicAuthUsername,
+        EVENT_PASSWORD: inputs.basicAuthPassword,
         VIDEO_BUCKET_NAME: finalVideoStorageBucket.bucketName,
         S3_BUCKET_NAME: finalVideoStorageBucket.bucketName,  // Use same bucket for cards storage
         NOVA_CANVAS_MODEL: inputs.novaCanvasModel,
         NOVA_REEL_MODEL: inputs.novaReelModel,
         NOVA_LITE_MODEL: inputs.novaLiteModel,
-        OVERRIDE_CODE: inputs.overrideCode || 'snap',
+        OVERRIDE_CODE: inputs.overrideCode,
         // Template configuration from secrets.json
         TEMPLATE_EVENT_NAME: inputs.cardTemplate?.eventName || 'AWS Event',
         TEMPLATE_LOGOS_JSON: JSON.stringify(inputs.cardTemplate?.logos || []),
@@ -461,6 +483,10 @@ frontend:
         {
           name: 'SNAPMAGIC_PRINT_ENABLED',
           value: String(inputs.app?.features?.print || false)
+        },
+        {
+          name: 'SNAPMAGIC_OVERRIDE_CODE',
+          value: inputs.overrideCode
         },
         {
           name: 'SNAPMAGIC_TEMPLATE_CONFIG',
