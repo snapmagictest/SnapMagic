@@ -1092,35 +1092,8 @@ def handle_generate_animation_prompt(event):
             logger.info(f"🚀 Ultimate prompt: {ultimate_animation_prompt}")
             
         except Exception as bedrock_error:
-                        "role": "user",
-                        "content": [
-                            {
-                                "text": animation_prompt_template
-                            },
-                            {
-                                "image": {
-                                    "format": image_format,
-                                    "source": {
-                                        "bytes": image_bytes
-                                    }
-                                }
-                            }
-                        ]
-                    }
-                ],
-                inferenceConfig={
-                    "maxTokens": 500,
-                    "temperature": 0.7
-                }
-            )
-            
-            # Extract the animation prompt from response
-            animation_prompt = response['output']['message']['content'][0]['text'].strip()
-            logger.info(f"✅ Generated animation prompt: {animation_prompt[:100]}...")
-            
-        except Exception as bedrock_error:
-            logger.error(f"❌ Bedrock error details: {str(bedrock_error)}")
-            logger.error(f"❌ Error type: {type(bedrock_error).__name__}")
+            logger.error(f"❌ Bedrock error during ultimate fusion: {str(bedrock_error)}")
+            logger.error(f"❌ Full error details: {repr(bedrock_error)}")
             
             # Check if it's a model access issue
             if "AccessDeniedException" in str(bedrock_error) or "ValidationException" in str(bedrock_error):
