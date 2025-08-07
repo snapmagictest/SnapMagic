@@ -177,8 +177,8 @@ def clear_pending_override(client_ip: str):
 
 def get_current_override_number(client_ip: str) -> int:
     """
-    Get current override number for IP
-    First checks for pending override, then existing files
+    Get current override number for IP using DynamoDB GSI (replaces S3 scanning)
+    First checks for pending override, then queries DynamoDB for highest override
     """
     # Check if there's a pending override first
     pending = get_pending_override_number(client_ip)
@@ -186,49 +186,41 @@ def get_current_override_number(client_ip: str) -> int:
         logger.info(f"🎯 Using pending override for IP {client_ip}: override{pending}")
         return pending
     
-    # Otherwise check existing files
+    # Query DynamoDB using GSI for highest override number
     try:
         import boto3
-        s3_client = boto3.client('s3')
-        bucket_name = os.environ.get('S3_BUCKET_NAME')
+        from boto3.dynamodb.conditions import Key
         
-        if not bucket_name:
+        dynamodb = boto3.resource('dynamodb')
+        table_name = os.environ.get('JOB_TRACKING_TABLE')
+        
+        if not table_name:
+            logger.warning("⚠️ JOB_TRACKING_TABLE not configured, defaulting to override1")
             return 1
         
-        # Check all folders for this IP to find HIGHEST override number
-        max_override = 0
+        table = dynamodb.Table(table_name)
         
-        logger.info(f"🔍 Establishing base override for IP {client_ip}")
+        logger.info(f"🔍 Querying DynamoDB for highest override for IP {client_ip}")
         
-        # Check actual files in cards, videos, print-queue folders
-        for prefix in ['cards', 'videos', 'print-queue']:
-            response = s3_client.list_objects_v2(
-                Bucket=bucket_name,
-                Prefix=f'{prefix}/{client_ip}_override'
-            )
+        # Query GSI for this device_id, sorted by override_number descending
+        response = table.query(
+            IndexName='device-override-index',
+            KeyConditionExpression=Key('device_id').eq(client_ip),
+            ScanIndexForward=False,  # Descending order (highest first)
+            Limit=1  # Only need the highest
+        )
+        
+        if response['Items']:
+            max_override = response['Items'][0].get('override_number', 1)
+            logger.info(f"📊 Found highest override for IP {client_ip}: override{max_override}")
+            return max_override
+        else:
+            logger.info(f"📊 No existing overrides found for IP {client_ip}, starting with override1")
+            return 1
             
-            for obj in response.get('Contents', []):
-                filename = obj['Key']
-                logger.info(f"📁 Found file: {filename}")
-                
-                if '_override' in filename:
-                    try:
-                        parts = filename.split('_override')[1]
-                        override_num = int(parts.split('_')[0])
-                        max_override = max(max_override, override_num)
-                        logger.info(f"📊 Extracted override number: {override_num}, current max: {max_override}")
-                    except (ValueError, IndexError) as e:
-                        logger.warning(f"⚠️ Could not parse override number from {filename}: {e}")
-                        continue
-        
-        # The current base is the highest override found, or 1 if none exist
-        current_base = max(1, max_override)
-        logger.info(f"✅ Established base override for IP {client_ip}: override{current_base}")
-        
-        return current_base
-        
     except Exception as e:
-        logger.error(f"❌ Failed to establish base override for IP {client_ip}: {str(e)}")
+        logger.error(f"❌ Error querying DynamoDB for override number: {str(e)}")
+        logger.info("🔄 Falling back to override1")
         return 1
 
 
@@ -413,56 +405,39 @@ def check_usage_limit_simplified(client_ip: str, generation_type: str, override_
     return current_count < limit, session_id
 
 def get_usage_for_override_session(client_ip: str, override_number: int) -> Dict[str, int]:
-    """Count files ONLY for specific override session - NOT all files for IP"""
+    """Count completed jobs ONLY for specific override session using DynamoDB GSI (replaces S3 scanning)"""
     try:
         import boto3
-        s3_client = boto3.client('s3')
-        bucket_name = os.environ.get('S3_BUCKET_NAME')
+        from boto3.dynamodb.conditions import Key, Attr
         
-        if not bucket_name:
+        dynamodb = boto3.resource('dynamodb')
+        table_name = os.environ.get('JOB_TRACKING_TABLE')
+        
+        if not table_name:
+            logger.warning("⚠️ JOB_TRACKING_TABLE not configured, returning zero usage")
             return {'cards': 0, 'videos': 0, 'prints': 0}
         
-        # CRITICAL: Only count files for THIS specific override session
-        session_prefix = f"{client_ip}_override{override_number}_"
+        table = dynamodb.Table(table_name)
         usage = {'cards': 0, 'videos': 0, 'prints': 0}
         
-        logger.info(f"🔍 Counting usage ONLY for session: {session_prefix}")
+        logger.info(f"🔍 Counting usage for IP {client_ip} override{override_number} using DynamoDB")
         
-        # Count cards ONLY for this override session
-        cards_response = s3_client.list_objects_v2(
-            Bucket=bucket_name,
-            Prefix=f'cards/{session_prefix}'
-        )
-        cards_count = len(cards_response.get('Contents', []))
-        usage['cards'] = cards_count
+        # Query GSI for this device_id and override_number, filter by file_type and completed status
+        for file_type in ['card', 'video', 'print']:
+            response = table.query(
+                IndexName='device-override-index',
+                KeyConditionExpression=Key('device_id').eq(client_ip) & Key('override_number').eq(override_number),
+                FilterExpression=Attr('file_type').eq(file_type) & Attr('status').eq('completed')
+            )
+            
+            count = response['Count']
+            # Map file_type to usage key (card -> cards, video -> videos, print -> prints)
+            usage_key = file_type + 's' if file_type != 'print' else 'prints'
+            usage[usage_key] = count
+            
+            logger.info(f"📊 Found {count} completed {file_type}s for override{override_number}")
         
-        # Count videos ONLY for this override session
-        videos_response = s3_client.list_objects_v2(
-            Bucket=bucket_name,
-            Prefix=f'videos/{session_prefix}'
-        )
-        videos_count = len(videos_response.get('Contents', []))
-        usage['videos'] = videos_count
-        
-        # Count prints ONLY for this override session
-        prints_response = s3_client.list_objects_v2(
-            Bucket=bucket_name,
-            Prefix=f'print-queue/{session_prefix}'
-        )
-        prints_count = len(prints_response.get('Contents', []))
-        usage['prints'] = prints_count
-        
-        logger.info(f"📊 IP {client_ip} override{override_number} ISOLATED usage: {usage}")
-        logger.info(f"🔍 Searched for prefix: {session_prefix}")
-        
-        # Log actual files found for debugging
-        if cards_response.get('Contents'):
-            logger.info(f"📁 Found cards: {[obj['Key'] for obj in cards_response['Contents']]}")
-        if videos_response.get('Contents'):
-            logger.info(f"📁 Found videos: {[obj['Key'] for obj in videos_response['Contents']]}")
-        if prints_response.get('Contents'):
-            logger.info(f"📁 Found prints: {[obj['Key'] for obj in prints_response['Contents']]}")
-        
+        logger.info(f"📊 IP {client_ip} override{override_number} usage: {usage}")
         return usage
         
     except Exception as e:

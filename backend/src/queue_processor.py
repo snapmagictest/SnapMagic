@@ -137,12 +137,24 @@ def lambda_handler(event, context):
                 if result['success']:
                     print(f"✅ JOB {job_id} COMPLETED SUCCESSFULLY")
                     logger.info(f"✅ Job {job_id} completed successfully for {display_name}")
+                    
+                    # Extract override_number from session_id for GSI
+                    override_number = 1  # Default
+                    if 'override' in session_id:
+                        try:
+                            override_part = session_id.split('_override')[1]
+                            override_number = int(override_part.split('_')[0])
+                        except (IndexError, ValueError):
+                            override_number = 1
+                    
                     # Update job status to completed with enhanced metadata
                     update_job_status(job_id, 'completed', {
                         'user_number': user_number,
                         'display_name': display_name,
                         'device_id': device_id,
                         'session_id': session_id,
+                        'override_number': override_number,  # For GSI queries
+                        'file_type': 'card',  # For usage counting
                         's3_url': result['s3_url'],
                         's3_key': result['s3_key'],
                         'completed_at': datetime.now().isoformat()
@@ -150,12 +162,24 @@ def lambda_handler(event, context):
                 else:
                     print(f"❌ JOB {job_id} FAILED: {result['error']}")
                     logger.error(f"❌ Job {job_id} failed for {display_name}: {result['error']}")
+                    
+                    # Extract override_number from session_id for GSI
+                    override_number = 1  # Default
+                    if 'override' in session_id:
+                        try:
+                            override_part = session_id.split('_override')[1]
+                            override_number = int(override_part.split('_')[0])
+                        except (IndexError, ValueError):
+                            override_number = 1
+                    
                     # Update job status to failed with enhanced metadata
                     update_job_status(job_id, 'failed', {
                         'user_number': user_number,
                         'display_name': display_name,
                         'device_id': device_id,
                         'session_id': session_id,
+                        'override_number': override_number,  # For GSI queries
+                        'file_type': 'card',  # For usage counting
                         'error': result['error'],
                         'failed_at': datetime.now().isoformat()
                     })

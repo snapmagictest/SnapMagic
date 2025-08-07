@@ -271,6 +271,14 @@ frontend:
       pointInTimeRecovery: false, // Disable for cost savings in dev
     });
 
+    // Add GSI for fast device/override queries (replaces S3 scanning)
+    jobTrackingTable.addGlobalSecondaryIndex({
+      indexName: 'device-override-index',
+      partitionKey: { name: 'device_id', type: dynamodb.AttributeType.STRING },
+      sortKey: { name: 'override_number', type: dynamodb.AttributeType.NUMBER },
+      projectionType: dynamodb.ProjectionType.ALL // Include all attributes for complete queries
+    });
+
     // Queue Processor Lambda - handles card generation with 2 concurrent limit
     const queueProcessorLambda = new lambda.Function(this, 'QueueProcessorFunction', {
       runtime: lambda.Runtime.PYTHON_3_11,
