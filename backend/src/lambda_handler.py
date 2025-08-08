@@ -1209,12 +1209,13 @@ def handle_optimize_animation_prompt(event):
             - Enhances the user's concept with specific visual details from what you observe
             - Adds dynamic visual effects, lighting, and movement details based on the card
             - Makes it more cinematic and engaging for 6-second video generation
-            - Keeps under 350 characters for video generation
+            - MUST BE UNDER 350 CHARACTERS TOTAL - THIS IS MANDATORY
             - Focuses on motion and transformation
             - Generate pure action descriptions without timing words
+            - Be concise and direct - every word must count
 
             Response Format:
-            [Just the enhanced action description based on the user's idea and what you see in the image, nothing else]
+            [Just the enhanced action description under 350 characters, nothing else]
             """
             
             # Use Converse API with image
@@ -1251,12 +1252,13 @@ def handle_optimize_animation_prompt(event):
             - Add visual effects, lighting, and movement details
             - Make it more cinematic and engaging for 6-second video
             - Focus on dynamic actions that work well in short video
-            - Keep under 350 characters for video generation
+            - MUST BE UNDER 350 CHARACTERS TOTAL - THIS IS MANDATORY
             - Ensure it describes motion and transformation
             - Generate pure action descriptions without timing words
+            - Be concise and direct - every word must count
 
             Response Format:
-            [Just the enhanced action description, nothing else]
+            [Just the enhanced action description under 350 characters, nothing else]
             """
             
             # Use Converse API without image
@@ -1278,7 +1280,12 @@ def handle_optimize_animation_prompt(event):
         # Extract optimized animation prompt
         optimized_prompt = response['output']['message']['content'][0]['text'].strip()
         
-        logger.info(f"✅ Optimized animation prompt: {optimized_prompt[:100]}...")
+        # Enforce 350 character limit
+        if len(optimized_prompt) > 350:
+            optimized_prompt = optimized_prompt[:347] + "..."
+            logger.warning(f"⚠️ Truncated prompt to 350 characters")
+        
+        logger.info(f"✅ Optimized animation prompt ({len(optimized_prompt)} chars): {optimized_prompt[:100]}...")
         
         return create_success_response({
             'success': True,
