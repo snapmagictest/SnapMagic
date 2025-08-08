@@ -1085,11 +1085,37 @@ def handle_generate_animation_prompt(event):
             )
             
             # Extract the ultimate animation prompt
-            ultimate_animation_prompt = fusion_response['output']['message']['content'][0]['text'].strip()
+            raw_prompt = fusion_response['output']['message']['content'][0]['text'].strip()
+            
+            # Remove all decorative prefixes and formatting
+            ultimate_animation_prompt = raw_prompt
+            
+            # Remove common prefixes
+            prefixes_to_remove = [
+                "**Animation Fusion:**",
+                "**Ultimate Animation Fusion:**", 
+                "**Ultimate Contextual Fusion:**",
+                "Animation Fusion:",
+                "Ultimate Animation Fusion:",
+                "Ultimate Contextual Fusion:",
+                "🎬 Animation Fusion:",
+                "🎬 Ultimate Animation Fusion:",
+                "**",
+                "*"
+            ]
+            
+            for prefix in prefixes_to_remove:
+                if ultimate_animation_prompt.startswith(prefix):
+                    ultimate_animation_prompt = ultimate_animation_prompt[len(prefix):].strip()
+            
+            # Remove any remaining markdown formatting
+            ultimate_animation_prompt = ultimate_animation_prompt.replace("**", "").replace("*", "").strip()
+            
             logger.info(f"🎬 ULTIMATE FUSION COMPLETE!")
             logger.info(f"📝 Original intent: {original_prompt}")
             logger.info(f"👁️ Visual analysis: {visual_analysis[:100]}...")
-            logger.info(f"🚀 Ultimate prompt: {ultimate_animation_prompt}")
+            logger.info(f"🚀 Raw prompt: {raw_prompt}")
+            logger.info(f"✨ Clean prompt: {ultimate_animation_prompt}")
             
         except Exception as bedrock_error:
             logger.error(f"❌ Bedrock error during ultimate fusion: {str(bedrock_error)}")
