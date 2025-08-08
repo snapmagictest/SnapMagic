@@ -1209,7 +1209,7 @@ def handle_optimize_animation_prompt(event):
             - Enhances the user's concept with specific visual details from what you observe
             - Adds dynamic visual effects, lighting, and movement details based on the card
             - Makes it more cinematic and engaging for 6-second video generation
-            - Keeps under 400 characters for video generation
+            - Keeps under 350 characters for video generation
             - Focuses on motion and transformation
             - Generate pure action descriptions without timing words
 
@@ -1251,7 +1251,7 @@ def handle_optimize_animation_prompt(event):
             - Add visual effects, lighting, and movement details
             - Make it more cinematic and engaging for 6-second video
             - Focus on dynamic actions that work well in short video
-            - Keep under 400 characters for video generation
+            - Keep under 350 characters for video generation
             - Ensure it describes motion and transformation
             - Generate pure action descriptions without timing words
 
