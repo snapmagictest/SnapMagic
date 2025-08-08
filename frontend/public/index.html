@@ -1326,10 +1326,10 @@
                     </div>
                 </div>
 
-                <!-- Prompt Input Area (hidden initially) -->
-                <div id="promptInputArea" class="hidden">
+                <!-- Prompt Input Area -->
+                <div id="promptInputArea">
                     <div class="textarea-container">
-                        <textarea id="promptInput" class="art-deco-textarea" placeholder="Enter your prompt here..." maxlength="1024"></textarea>
+                        <textarea id="promptInput" class="art-deco-textarea" placeholder="1. Select Generate AI Prompt to give a prompt of your current displayed card in the gallery. 2. Enter your own prompt. 3. AI optimize the prompt." maxlength="1024"></textarea>
                         <div class="textarea-controls">
                             <div id="promptCharCount" class="textarea-limit-indicator">0/1024</div>
                             <button class="textarea-clear-btn" id="promptClearBtn">CLEAR</button>
@@ -1410,11 +1410,10 @@
                 </div>
                 
                 <!-- Video Prompt Input -->
-                <div id="videoPromptInput" class="prompt-input-section hidden">
+                <div id="videoPromptInput" class="prompt-input-section">
                     <div class="textarea-container">
                         <div class="video-prompt-container">
-                            <div class="prompt-prefix">From frame 1,<br>within 6 seconds,<br>execute every detail: </div>
-                            <textarea id="videoPrompt" class="art-deco-textarea video-prompt-with-prefix" placeholder="character steps forward with glowing eyes and magical energy swirling around them" maxlength="350"></textarea>
+                            <textarea id="videoPrompt" class="art-deco-textarea" placeholder="1. Select Generate AI Prompt to give a prompt of your current displayed card in the gallery. 2. Enter your own prompt. 3. AI optimize the prompt." maxlength="350"></textarea>
                         </div>
                         <div class="textarea-controls">
                             <div id="videoCharCount" class="textarea-limit-indicator">0/350</div>
