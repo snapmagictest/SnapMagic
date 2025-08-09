@@ -3368,9 +3368,8 @@ class SnapMagicApp {
             return;
         }
 
-        // Enhanced 6-second action completion system
-        const enhanced6SecondPrompt = this.enhance6SecondActionPrompt(userPrompt);
-        console.log('🎬 Enhanced 6-second prompt:', enhanced6SecondPrompt);
+        // Send user prompt directly to backend (no enhancement)
+        console.log('🎬 Sending prompt directly:', userPrompt);
 
         if (!this.generatedCardData) {
             this.showError('Please generate a trading card first');
@@ -3408,7 +3407,7 @@ class SnapMagicApp {
             const requestBody = {
                 action: 'generate_video',
                 card_image: jpegImage, // Send JPEG format as required by Nova Reel
-                animation_prompt: enhanced6SecondPrompt
+                animation_prompt: userPrompt
             };
             
             const response = await fetch(endpoint, {
@@ -4186,11 +4185,10 @@ class SnapMagicApp {
         
         if (videoPrompt && videoCharCount) {
             const currentLength = videoPrompt.value.length;
-            const maxLength = 350; // Fixed to 350, no fallback
-            const reservedChars = 134; // Ultimate prefix: "From frame 1, within 6 seconds, complete the action and ensure all movement and effects finish by frame 180 (6 seconds at 30fps). Execute every detail described: "
+            const maxLength = 512; // Full Nova Reel capacity
             
-            // Show user characters + reserved characters info
-            videoCharCount.textContent = `${currentLength}/${maxLength} (+${reservedChars} timing)`;
+            // Show character count
+            videoCharCount.textContent = `${currentLength}/${maxLength}`;
             
             // Color coding for character limit
             if (currentLength > maxLength * 0.9) {
@@ -4287,11 +4285,11 @@ class SnapMagicApp {
             console.log('🔍 DEBUG: Response result:', result);
             
             if (result.success && result.animation_prompt) {
-                // Enforce 350 character limit (truncate if needed)
+                // Enforce 512 character limit (truncate if needed)
                 let prompt = result.animation_prompt;
-                if (prompt.length > 350) {
-                    prompt = prompt.substring(0, 347) + '...';
-                    console.log(`⚠️ AI prompt truncated from ${result.animation_prompt.length} to 350 chars`);
+                if (prompt.length > 512) {
+                    prompt = prompt.substring(0, 509) + '...';
+                    console.log(`⚠️ AI prompt truncated from ${result.animation_prompt.length} to 512 chars`);
                 }
                 
                 this.elements.videoPrompt.value = prompt;
@@ -4363,11 +4361,11 @@ class SnapMagicApp {
             const result = await response.json();
             
             if (result.success && result.optimized_prompt) {
-                // Enforce 350 character limit (truncate if needed)
+                // Enforce 512 character limit (truncate if needed)
                 let prompt = result.optimized_prompt;
-                if (prompt.length > 350) {
-                    prompt = prompt.substring(0, 347) + '...';
-                    console.log(`⚠️ Optimized prompt truncated from ${result.optimized_prompt.length} to 350 chars`);
+                if (prompt.length > 512) {
+                    prompt = prompt.substring(0, 509) + '...';
+                    console.log(`⚠️ Optimized prompt truncated from ${result.optimized_prompt.length} to 512 chars`);
                 }
                 
                 this.elements.videoPrompt.value = prompt;

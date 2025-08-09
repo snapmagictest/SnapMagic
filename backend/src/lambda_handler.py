@@ -941,14 +941,14 @@ def handle_optimize_prompt(event):
 
 
 def handle_generate_animation_prompt(event):
-    """🎬 ULTIMATE ANIMATION FUSION: Combine original user intent with visual analysis"""
+    """🎬 Generate animation prompt from image analysis"""
     try:
         import boto3
         import json
         import base64
         import os
         
-        logger.info("🎬 Starting ULTIMATE animation prompt fusion system")
+        logger.info("🎬 Starting animation prompt generation")
         
         # Get request body
         body = json.loads(event.get('body', '{}'))
@@ -961,20 +961,15 @@ def handle_generate_animation_prompt(event):
             body.get('result', '')
         ).strip()
         
-        original_prompt = body.get('original_prompt', '').strip()
-        
         logger.info(f"🔍 Request body keys: {list(body.keys())}")
         logger.info(f"🖼️ Card image length: {len(card_image_base64)} characters")
-        logger.info(f"📝 Original user intent: {original_prompt[:100]}...")
         
         if not card_image_base64:
             logger.error(f"❌ No card image found in request body. Available keys: {list(body.keys())}")
             return create_error_response("Please provide a card image. Make sure you have generated a card first.", 400)
         
-        # STAGE 1: Get Nova Lite's visual analysis of the card
-        logger.info("🔍 STAGE 1: Getting Nova Lite visual analysis...")
-        
-        visual_analysis_template = "Analyze image and describe EXACTLY what you see in detail"
+        # Generate animation prompt from image
+        logger.info("🔍 Generating animation prompt from image...")
         
         try:
             # Decode base64 image data for Nova Lite
@@ -999,21 +994,21 @@ def handle_generate_animation_prompt(event):
             return create_error_response("Invalid image data. Please ensure the card image is properly encoded.", 400)
         
         try:
-            # Use Converse API for visual analysis
+            # Use Converse API for animation prompt generation
             bedrock_client = boto3.client('bedrock-runtime', region_name='us-east-1')
             nova_lite_model = os.environ.get('NOVA_LITE_MODEL', 'amazon.nova-lite-v1:0')
             
-            logger.info(f"🤖 STAGE 1: Calling Nova Lite for visual analysis: {nova_lite_model}")
+            logger.info(f"🤖 Calling Nova Lite for animation prompt: {nova_lite_model}")
             
-            # Get visual analysis first
-            visual_response = bedrock_client.converse(
+            # Get animation prompt
+            response = bedrock_client.converse(
                 modelId=nova_lite_model,
                 messages=[
                     {
                         "role": "user",
                         "content": [
                             {
-                                "text": visual_analysis_template
+                                "text": animation_prompt_template
                             },
                             {
                                 "image": {
@@ -1028,100 +1023,9 @@ def handle_generate_animation_prompt(event):
                 ]
             )
             
-            # Extract visual analysis
-            visual_analysis = visual_response['output']['message']['content'][0]['text'].strip()
-            logger.info(f"✅ STAGE 1 Complete - Visual analysis: {visual_analysis[:150]}...")
-            
-            # STAGE 2: Create ultimate fusion prompt
-            logger.info("🔥 STAGE 2: Creating ultimate fusion prompt...")
-            
-            fusion_template = f"""
-            🎬 ULTIMATE ANIMATION FUSION SYSTEM 🎬
-            
-            Create the perfect 6-second animation by combining user intent with visual reality:
-            
-            ORIGINAL USER INTENT: "{original_prompt}"
-            VISUAL ANALYSIS: "{visual_analysis}"
-            
-            Your mission:
-            1. The character should actively PERFORM the action from the ORIGINAL USER INTENT
-            2. Use the VISUAL ANALYSIS to understand what's actually in the card (appearance, setting, objects)
-            3. Make the character DO what the user originally described, using visual elements from the card
-            4. Create dynamic action where the character demonstrates their expertise/role
-            5. Include relevant tools, environments, or effects that match both the intent and visuals
-            
-            FUSION EXAMPLES:
-            - If user said "AWS Solutions Architect" and visual shows "professional with cloud diagrams" → "AWS Solutions Architect draws glowing cloud architecture diagrams in the air, AWS service icons materialize and connect"
-            - If user said "DevOps Engineer" and visual shows "technical person with code" → "DevOps Engineer orchestrates automated pipelines, hands gesture as code flows through glowing CI/CD stages"
-            - If user said "Data Scientist" and visual shows "analyst with charts" → "Data Scientist manipulates floating ML models, algorithms visualize as flowing data streams"
-            
-            CRITICAL REQUIREMENTS:
-            - Character actively performs their role from ORIGINAL USER INTENT
-            - Use visual elements from VISUAL ANALYSIS to make it realistic
-            - Dynamic, energetic movement with professional context
-            - Under 300 characters but maximum contextual relevance
-            - Focus on the character DOING their job, not just generic energy effects
-            
-            Create the ultimate contextual animation that brings the user's original vision to life!
-            """
-            
-            # Get ultimate fusion prompt
-            logger.info("🤖 STAGE 2: Calling Nova Lite for ultimate fusion...")
-            
-            fusion_response = bedrock_client.converse(
-                modelId=nova_lite_model,
-                messages=[
-                    {
-                        "role": "user", 
-                        "content": [
-                            {
-                                "text": fusion_template
-                            },
-                            {
-                                "image": {
-                                    "format": image_format,
-                                    "source": {
-                                        "bytes": image_bytes
-                                    }
-                                }
-                            }
-                        ]
-                    }
-                ]
-            )
-            
-            # Extract the ultimate animation prompt
-            raw_prompt = fusion_response['output']['message']['content'][0]['text'].strip()
-            
-            # Remove all decorative prefixes and formatting
-            ultimate_animation_prompt = raw_prompt
-            
-            # Remove common prefixes
-            prefixes_to_remove = [
-                "**Animation Fusion:**",
-                "**Ultimate Animation Fusion:**", 
-                "**Ultimate Contextual Fusion:**",
-                "Animation Fusion:",
-                "Ultimate Animation Fusion:",
-                "Ultimate Contextual Fusion:",
-                "🎬 Animation Fusion:",
-                "🎬 Ultimate Animation Fusion:",
-                "**",
-                "*"
-            ]
-            
-            for prefix in prefixes_to_remove:
-                if ultimate_animation_prompt.startswith(prefix):
-                    ultimate_animation_prompt = ultimate_animation_prompt[len(prefix):].strip()
-            
-            # Remove any remaining markdown formatting
-            ultimate_animation_prompt = ultimate_animation_prompt.replace("**", "").replace("*", "").strip()
-            
-            logger.info(f"🎬 ULTIMATE FUSION COMPLETE!")
-            logger.info(f"📝 Original intent: {original_prompt}")
-            logger.info(f"👁️ Visual analysis: {visual_analysis[:100]}...")
-            logger.info(f"🚀 Raw prompt: {raw_prompt}")
-            logger.info(f"✨ Clean prompt: {ultimate_animation_prompt}")
+            # Extract animation prompt
+            animation_prompt = response['output']['message']['content'][0]['text'].strip()
+            logger.info(f"✅ Animation prompt generated: {animation_prompt}")
             
         except Exception as bedrock_error:
             logger.error(f"❌ Bedrock error during ultimate fusion: {str(bedrock_error)}")
@@ -1132,36 +1036,13 @@ def handle_generate_animation_prompt(event):
                 logger.error("🚫 Nova Lite model access denied - check Bedrock model permissions")
                 return create_error_response("Nova Lite model access not available. Please ensure Amazon Nova Lite model access is granted in AWS Bedrock console.", 400)
             
-            # Enhanced fallback based on original prompt if available
-            if original_prompt:
-                # Create contextual fallback based on user intent
-                if "architect" in original_prompt.lower():
-                    ultimate_animation_prompt = "Solutions architect draws glowing cloud diagrams in the air, AWS service icons materialize and connect with flowing data streams"
-                elif "developer" in original_prompt.lower() or "engineer" in original_prompt.lower():
-                    ultimate_animation_prompt = "Developer types code that materializes as glowing text, applications build themselves with dynamic interfaces coming alive"
-                elif "data" in original_prompt.lower() and "scientist" in original_prompt.lower():
-                    ultimate_animation_prompt = "Data scientist manipulates floating data visualizations, charts and graphs animate with ML models processing information"
-                elif "devops" in original_prompt.lower():
-                    ultimate_animation_prompt = "DevOps engineer orchestrates automated pipelines, hands gesture as deployment stages activate with cascading effects"
-                elif "security" in original_prompt.lower():
-                    ultimate_animation_prompt = "Security expert analyzes threats as protective shields materialize, security protocols activate with glowing barriers"
-                else:
-                    # Generic professional fallback
-                    ultimate_animation_prompt = f"Professional demonstrates expertise in {original_prompt.lower()}, tools and interfaces materialize with dynamic energy effects"
-                
-                logger.info(f"🔄 Using contextual fallback based on original prompt: {original_prompt}")
-            else:
-                # Basic fallback if no original prompt
-                ultimate_animation_prompt = "character steps forward with eyes glowing, professional energy and expertise radiating outward with dynamic effects"
-                logger.info("🔄 Using basic fallback animation prompt due to Bedrock error")
+            # Enhanced fallback based on image content
+            animation_prompt = "Professional character performs rapid multiple actions with tools and effects appearing instantly, dynamic camera movement, high-energy 6-second sequence"
+            logger.info("🔄 Using basic fallback animation prompt due to Bedrock error")
         
         return create_success_response({
             'success': True,
-            'animation_prompt': ultimate_animation_prompt,
-            'original_prompt': original_prompt,
-            'fusion_method': 'ultimate_contextual_fusion',
-            'visual_analysis_used': 'visual_analysis' in locals(),
-            'message': '🎬 Ultimate animation fusion complete! Your video will show the character actively performing their role.'
+            'animation_prompt': animation_prompt
         })
         
     except Exception as error:
