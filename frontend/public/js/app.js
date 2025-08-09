@@ -278,6 +278,106 @@ class SnapMagicApp {
     }
 
     /**
+     * Set card button state (like video button)
+     */
+    setCardButtonState(text, disabled = false) {
+        if (this.elements.generateBtn) {
+            this.elements.generateBtn.innerHTML = text;
+            this.elements.generateBtn.disabled = disabled;
+        }
+    }
+
+    /**
+     * Update card button with progress coloring (like video button)
+     */
+    updateCardButtonProgress(progress) {
+        if (!this.elements.generateBtn) return;
+        
+        console.log(`🎴 Updating card progress: ${Math.round(progress)}%`);
+        
+        // Update button text with progress
+        this.elements.generateBtn.innerHTML = `🔄 Preparing... ${Math.round(progress)}%`;
+        
+        // Progressive gold coloring based on progress (same as video button)
+        const goldIntensity = progress / 100;
+        const greyIntensity = 1 - goldIntensity;
+        
+        // Blend from grey to gold as progress increases
+        this.elements.generateBtn.style.background = `linear-gradient(to right, 
+            rgba(255, 215, 0, ${goldIntensity}) ${progress}%, 
+            rgba(102, 102, 102, ${greyIntensity}) ${progress}%)`;
+        
+        // Add subtle glow that increases with progress
+        const glowIntensity = goldIntensity * 0.3;
+        this.elements.generateBtn.style.boxShadow = `0 0 ${10 * goldIntensity}px rgba(255, 215, 0, ${glowIntensity})`;
+        
+        // Keep disabled state
+        this.elements.generateBtn.disabled = true;
+        this.elements.generateBtn.style.cursor = 'not-allowed';
+        this.elements.generateBtn.style.opacity = '0.8';
+    }
+
+    /**
+     * Reset card button styling to normal state
+     */
+    resetCardButtonStyling() {
+        if (this.elements.generateBtn) {
+            this.elements.generateBtn.style.background = '';
+            this.elements.generateBtn.style.boxShadow = '';
+            this.elements.generateBtn.style.cursor = '';
+            this.elements.generateBtn.style.opacity = '';
+        }
+    }
+
+    /**
+     * Reset card button to normal state
+     */
+    resetCardButtonState() {
+        // Clear progress interval if running
+        if (this.cardProgressInterval) {
+            clearInterval(this.cardProgressInterval);
+            this.cardProgressInterval = null;
+        }
+        
+        // Reset button styling
+        this.resetCardButtonStyling();
+        
+        // Reset button text and state
+        this.setCardButtonState('🎨 Generate Trading Card', false);
+    }
+
+    /**
+     * Start smooth card polling with progress bar (like video button)
+     */
+    startSmoothCardPolling(jobId, metadata, userPrompt, userName) {
+        console.log('⏰ Starting card generation with progress bar...');
+        
+        // Initialize progress tracking
+        this.cardProgress = {
+            startTime: Date.now(),
+            jobId: jobId,
+            metadata: metadata
+        };
+        
+        // Start progress animation (faster than video - cards are quicker)
+        let progress = 0;
+        const progressInterval = setInterval(() => {
+            if (progress < 90 && this.elements.generateBtn.disabled) {
+                // Faster progress for cards (30s vs 2min for video)
+                progress += Math.random() * 8; // Faster increment
+                progress = Math.min(90, progress);
+                this.updateCardButtonProgress(progress);
+            }
+        }, 1000); // Update every second
+        
+        // Store interval for cleanup
+        this.cardProgressInterval = progressInterval;
+        
+        // Start polling immediately (cards are faster than videos)
+        this.pollCardStatus(jobId, metadata, userPrompt, userName, 0);
+    }
+
+    /**
      * Monitor localStorage persistence over time
      */
     startLocalStorageMonitoring() {
@@ -1384,7 +1484,8 @@ class SnapMagicApp {
             return;
         }
 
-        // Store the prompt and show name input modal
+        // Show button loading state
+        this.setCardButtonState('🔄 Preparing...', true);
         this.pendingPrompt = userPrompt;
         this.showNameInputModal();
     }
@@ -3791,12 +3892,8 @@ class SnapMagicApp {
     startCardPolling(jobId, initialData, userPrompt, userName) {
         console.log('⏰ Starting card polling for job:', jobId);
         
-        // Update processing message with user correlation info
-        const displayName = initialData.display_name || `Test User #${initialData.user_number || 1}`;
-        this.showProcessing(`Creating card for ${displayName}... Please wait while our AI works its magic.`);
-        
-        // Start polling immediately (no initial delay for cards)
-        this.pollCardStatus(jobId, initialData, userPrompt, userName, 0);
+        // Use smooth polling system like video
+        this.startSmoothCardPolling(jobId, initialData, userPrompt, userName);
     }
 
     /**
@@ -3813,7 +3910,7 @@ class SnapMagicApp {
         // Check if we've exceeded max retries
         if (retryCount >= MAX_RETRIES) {
             console.error(`❌ Max retries (${MAX_RETRIES}) exceeded for card polling`);
-            this.hideProcessing();
+            this.resetCardButtonState();
             this.showError(`Card generation timed out. This may be due to high demand. Please try again.`);
             return;
         }
@@ -3838,9 +3935,31 @@ class SnapMagicApp {
             });
 
             const result = await response.json();
-            
             if (result.success && result.status === 'completed') {
                 console.log('✅ Card generation completed!');
+                
+                // Complete progress to 100% (like video button)
+                if (this.cardProgressInterval) {
+                    clearInterval(this.cardProgressInterval);
+                    this.cardProgressInterval = null;
+                }
+                this.updateCardButtonProgress(100);
+                
+                // Brief delay to show 100% completion
+                setTimeout(() => {
+                    // Reset button state (smooth UX)
+                    this.resetCardButtonState();
+                    
+                    // Update usage limits after card completion
+                    if (result.remaining) {
+                        console.log('📊 Updating usage limits after card completion:', result.remaining);
+                        this.updateUsageLimits(result.remaining);
+                    } else {
+                        // Fallback: refresh usage limits if not provided in response
+                        console.log('🔄 Refreshing usage limits after card completion...');
+                        this.refreshUsageLimits();
+                    }
+                }, 500);
                 
                 // Create card data structure compatible with existing display logic
                 const cardData = {
@@ -3866,38 +3985,22 @@ class SnapMagicApp {
                 this.generatedCardData = cardData;
                 this.displayGeneratedCard(cardData, userName);
                 
-                // Update usage limits after card completion (same as video generation)
-                if (result.remaining) {
-                    console.log('📊 Updating usage limits after card completion:', result.remaining);
-                    this.updateUsageLimits(result.remaining);
-                } else {
-                    // Fallback: refresh usage limits if not provided in response
-                    console.log('🔄 Refreshing usage limits after card completion...');
-                    this.refreshUsageLimits();
-                }
-                
-            } else if (result.success && result.status === 'processing') {
-                console.log(`🔄 Card still processing... (${result.message || 'Working on it'})`);
-                
-                // Update processing message with progress
-                const displayName = metadata.display_name || `Test User #${metadata.user_number || 1}`;
-                const progressMsg = `Creating card for ${displayName}... ${result.message || 'AI is working on your card'} (${retryCount + 1}/${MAX_RETRIES})`;
-                this.showProcessing(progressMsg);
-                
-                // Poll again in 5 seconds
-                setTimeout(() => {
-                    this.pollCardStatus(jobId, metadata, userPrompt, userName, retryCount + 1);
-                }, 5 * 1000); // 5 seconds
-                
             } else if (result.success && result.status === 'failed') {
                 console.error('❌ Card generation failed:', result.error);
-                this.hideProcessing();
+                this.resetCardButtonState();
                 
                 if (result.error && result.error.includes('content filters')) {
                     this.showError(`🚫 Content Blocked by AI Safety Filters\n\n${result.error}\n\nPlease try a different prompt that doesn't include potentially sensitive content.`);
                 } else {
                     this.showError(result.error || 'Card generation failed. Please try again.');
                 }
+            } else if (result.success && result.status === 'processing') {
+                console.log(`🔄 Card still processing... (${result.message || 'Working on it'})`);
+                
+                // Poll again in 5 seconds
+                setTimeout(() => {
+                    this.pollCardStatus(jobId, metadata, userPrompt, userName, retryCount + 1);
+                }, 5 * 1000); // 5 seconds
                 
             } else {
                 console.log(`⏳ Card status: ${result.status || 'unknown'}, continuing to poll...`);
@@ -3915,7 +4018,7 @@ class SnapMagicApp {
             const nextRetryCount = retryCount + 1;
             
             if (nextRetryCount >= MAX_RETRIES) {
-                this.hideProcessing();
+                this.resetCardButtonState();
                 this.showError('Card generation timed out due to network issues. Please try again.');
                 return;
             }
@@ -5072,6 +5175,10 @@ class SnapMagicApp {
     
     hideNameInputModal() {
         this.elements.nameInputModal.classList.add('hidden');
+        // Reset button if modal is cancelled
+        if (this.elements.generateBtn.disabled) {
+            this.resetCardButtonState();
+        }
     }
     
     showNameConfirmModal(name) {
@@ -5231,12 +5338,14 @@ class SnapMagicApp {
             }
         } catch (error) {
             console.error('❌ Card generation error:', error);
-            this.hideProcessing();
+            this.resetCardButtonState();
             this.showError('Card generation failed. Please check your connection and try again.');
             throw error;
         } finally {
             this.activeCardRequests--; // Stop tracking this request
-            this.elements.generateBtn.disabled = false;
+            
+            // Reset button state on any completion/error
+            this.resetCardButtonState();
             
             // Process next request in queue
             this.processNextCardInQueue();
