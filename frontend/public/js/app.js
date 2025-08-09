@@ -4186,7 +4186,7 @@ class SnapMagicApp {
         
         if (videoPrompt && videoCharCount) {
             const currentLength = videoPrompt.value.length;
-            const maxLength = videoPrompt.getAttribute('maxlength') || 450;
+            const maxLength = 350; // Fixed to 350, no fallback
             const reservedChars = 134; // Ultimate prefix: "From frame 1, within 6 seconds, complete the action and ensure all movement and effects finish by frame 180 (6 seconds at 30fps). Execute every detail described: "
             
             // Show user characters + reserved characters info
@@ -4287,7 +4287,14 @@ class SnapMagicApp {
             console.log('🔍 DEBUG: Response result:', result);
             
             if (result.success && result.animation_prompt) {
-                this.elements.videoPrompt.value = result.animation_prompt;
+                // Enforce 350 character limit (truncate if needed)
+                let prompt = result.animation_prompt;
+                if (prompt.length > 350) {
+                    prompt = prompt.substring(0, 347) + '...';
+                    console.log(`⚠️ AI prompt truncated from ${result.animation_prompt.length} to 350 chars`);
+                }
+                
+                this.elements.videoPrompt.value = prompt;
                 this.updateVideoCharCount();
                 
                 // Show visual feedback instead of popup
@@ -4356,7 +4363,14 @@ class SnapMagicApp {
             const result = await response.json();
             
             if (result.success && result.optimized_prompt) {
-                this.elements.videoPrompt.value = result.optimized_prompt;
+                // Enforce 350 character limit (truncate if needed)
+                let prompt = result.optimized_prompt;
+                if (prompt.length > 350) {
+                    prompt = prompt.substring(0, 347) + '...';
+                    console.log(`⚠️ Optimized prompt truncated from ${result.optimized_prompt.length} to 350 chars`);
+                }
+                
+                this.elements.videoPrompt.value = prompt;
                 this.updateVideoCharCount();
                 
                 // Show visual feedback instead of popup
