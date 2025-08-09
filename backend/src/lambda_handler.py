@@ -1109,13 +1109,13 @@ def handle_optimize_animation_prompt(event):
             - Enhances the user's concept with specific visual details from what you observe
             - Adds dynamic visual effects, lighting, and movement details based on the card
             - Makes it more cinematic and engaging for 6-second video generation
-            - MUST BE UNDER 350 CHARACTERS TOTAL - THIS IS MANDATORY
+            - MUST BE UNDER 438 CHARACTERS TOTAL - THIS IS MANDATORY
             - Focuses on motion and transformation
             - Generate pure action descriptions without timing words
             - Be concise and direct - every word must count
 
             Response Format:
-            [Just the enhanced action description under 350 characters, nothing else]
+            [Just the enhanced action description under 438 characters, nothing else]
             """
             
             # Use Converse API with image
@@ -1152,13 +1152,13 @@ def handle_optimize_animation_prompt(event):
             - Add visual effects, lighting, and movement details
             - Make it more cinematic and engaging for 6-second video
             - Focus on dynamic actions that work well in short video
-            - MUST BE UNDER 350 CHARACTERS TOTAL - THIS IS MANDATORY
+            - MUST BE UNDER 438 CHARACTERS TOTAL - THIS IS MANDATORY
             - Ensure it describes motion and transformation
             - Generate pure action descriptions without timing words
             - Be concise and direct - every word must count
 
             Response Format:
-            [Just the enhanced action description under 350 characters, nothing else]
+            [Just the enhanced action description under 438 characters, nothing else]
             """
             
             # Use Converse API without image
