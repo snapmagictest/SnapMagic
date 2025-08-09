@@ -1484,8 +1484,7 @@ class SnapMagicApp {
             return;
         }
 
-        // Show button loading state
-        this.setCardButtonState('🔄 Preparing...', true);
+        // Store the prompt and show name input modal
         this.pendingPrompt = userPrompt;
         this.showNameInputModal();
     }
@@ -5175,10 +5174,6 @@ class SnapMagicApp {
     
     hideNameInputModal() {
         this.elements.nameInputModal.classList.add('hidden');
-        // Reset button if modal is cancelled
-        if (this.elements.generateBtn.disabled) {
-            this.resetCardButtonState();
-        }
     }
     
     showNameConfirmModal(name) {
@@ -5276,7 +5271,8 @@ class SnapMagicApp {
         console.log(`🎯 Processing card request (${this.activeCardRequests}/${this.maxConcurrentCards} slots busy)`);
         
         try {
-            this.setCardButtonState('🎨 Creating Card...', true);
+            // Start with preparing state (like video button)
+            this.setCardButtonState('🔄 Preparing...', true);
             
             const apiBaseUrl = window.SNAPMAGIC_CONFIG.API_URL;
             const endpoint = `${apiBaseUrl}api/transform-card`;
@@ -5342,9 +5338,6 @@ class SnapMagicApp {
             throw error;
         } finally {
             this.activeCardRequests--; // Stop tracking this request
-            
-            // Reset button state on any completion/error
-            this.resetCardButtonState();
             
             // Process next request in queue
             this.processNextCardInQueue();
