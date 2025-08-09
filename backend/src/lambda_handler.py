@@ -974,22 +974,7 @@ def handle_generate_animation_prompt(event):
         # STAGE 1: Get Nova Lite's visual analysis of the card
         logger.info("🔍 STAGE 1: Getting Nova Lite visual analysis...")
         
-        visual_analysis_template = """
-        Analyze this trading card image and describe EXACTLY what you see in detail.
-        
-        Focus on:
-        1. The main character/person and their appearance
-        2. Their pose, expression, and body language  
-        3. Any objects, tools, or symbols visible
-        4. The background environment and setting
-        5. Any text, logos, or branding elements
-        6. Colors, lighting, and visual style
-        
-        Be specific and detailed about what is actually visible in the image.
-        This analysis will be used to create contextual animations.
-        
-        Format: Detailed visual description of what you observe in the card.
-        """
+        visual_analysis_template = "Analyze image and describe EXACTLY what you see in detail"
         
         try:
             # Decode base64 image data for Nova Lite
