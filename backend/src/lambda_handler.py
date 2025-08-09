@@ -999,7 +999,7 @@ def handle_generate_animation_prompt(event):
             nova_lite_model = os.environ.get('NOVA_LITE_MODEL', 'amazon.nova-lite-v1:0')
             
             # Define the animation prompt template
-            animation_prompt_template = "best prompt under 512 characters to animate this image in 6 seconds that will be multiple actions fast paced"
+            animation_prompt_template = "best prompt under 438 characters to animate this image in 6 seconds that will be multiple actions fast paced"
             
             logger.info(f"🤖 Calling Nova Lite for animation prompt: {nova_lite_model}")
             

@@ -3368,13 +3368,8 @@ class SnapMagicApp {
             return;
         }
 
-        // Add animation suffix for user prompts (not AI-generated ones)
-        let finalPrompt = userPrompt;
-        const isAIGenerated = userPrompt.length > 438; // AI prompts are longer
-        
-        if (!isAIGenerated) {
-            finalPrompt = userPrompt + " animate this image in 6 seconds that will be multiple actions fast paced";
-        }
+        // Add animation suffix for ALL prompts (both AI-generated and user-created)
+        const finalPrompt = userPrompt + " animate this image in 6 seconds that will be multiple actions fast paced";
         
         console.log('🎬 Final prompt to Nova Reel:', finalPrompt);
 
@@ -4292,11 +4287,11 @@ class SnapMagicApp {
             console.log('🔍 DEBUG: Response result:', result);
             
             if (result.success && result.animation_prompt) {
-                // Enforce 512 character limit (truncate if needed)
+                // Enforce 438 character limit (truncate if needed)
                 let prompt = result.animation_prompt;
-                if (prompt.length > 512) {
-                    prompt = prompt.substring(0, 509) + '...';
-                    console.log(`⚠️ AI prompt truncated from ${result.animation_prompt.length} to 512 chars`);
+                if (prompt.length > 438) {
+                    prompt = prompt.substring(0, 435) + '...';
+                    console.log(`⚠️ AI prompt truncated from ${result.animation_prompt.length} to 438 chars`);
                 }
                 
                 this.elements.videoPrompt.value = prompt;
@@ -4368,11 +4363,11 @@ class SnapMagicApp {
             const result = await response.json();
             
             if (result.success && result.optimized_prompt) {
-                // Enforce 512 character limit (truncate if needed)
+                // Enforce 438 character limit (truncate if needed)
                 let prompt = result.optimized_prompt;
-                if (prompt.length > 512) {
-                    prompt = prompt.substring(0, 509) + '...';
-                    console.log(`⚠️ Optimized prompt truncated from ${result.optimized_prompt.length} to 512 chars`);
+                if (prompt.length > 438) {
+                    prompt = prompt.substring(0, 435) + '...';
+                    console.log(`⚠️ Optimized prompt truncated from ${result.optimized_prompt.length} to 438 chars`);
                 }
                 
                 this.elements.videoPrompt.value = prompt;
