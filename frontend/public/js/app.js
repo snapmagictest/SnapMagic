@@ -5276,8 +5276,7 @@ class SnapMagicApp {
         console.log(`🎯 Processing card request (${this.activeCardRequests}/${this.maxConcurrentCards} slots busy)`);
         
         try {
-            this.showProcessing('Creating your magical trading card...');
-            this.elements.generateBtn.disabled = true;
+            this.setCardButtonState('🎨 Creating Card...', true);
             
             const apiBaseUrl = window.SNAPMAGIC_CONFIG.API_URL;
             const endpoint = `${apiBaseUrl}api/transform-card`;
