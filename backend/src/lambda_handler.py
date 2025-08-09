@@ -1026,8 +1026,17 @@ def handle_generate_animation_prompt(event):
                 ]
             )
             
-            # Extract animation prompt
+            # Extract animation prompt and clean markdown formatting
             animation_prompt = response['output']['message']['content'][0]['text'].strip()
+            
+            # Remove markdown code blocks and formatting
+            import re
+            # Remove ```language and ``` blocks
+            animation_prompt = re.sub(r'```\w*\n?', '', animation_prompt)
+            animation_prompt = re.sub(r'```', '', animation_prompt)
+            # Remove any remaining markdown formatting
+            animation_prompt = animation_prompt.replace('**', '').replace('*', '').strip()
+            
             logger.info(f"✅ Animation prompt generated: {animation_prompt}")
             
         except Exception as bedrock_error:
