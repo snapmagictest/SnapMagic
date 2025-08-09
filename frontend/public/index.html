@@ -335,6 +335,40 @@
             text-align: center;
         }
 
+        /* User Number Display */
+        .user-number-display {
+            display: flex;
+            justify-content: center;
+            margin: 2rem 0;
+        }
+
+        .user-number-card {
+            background: var(--glass-black);
+            border: 2px solid var(--art-deco-gold);
+            border-radius: 12px;
+            padding: 1.5rem 2rem;
+            text-align: center;
+            box-shadow: var(--shadow-gold);
+            backdrop-filter: blur(10px);
+        }
+
+        .user-number-title {
+            font-family: var(--font-heading);
+            font-size: 0.9rem;
+            color: var(--text-gold);
+            letter-spacing: 0.2em;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .user-number-value {
+            font-family: var(--font-display);
+            font-size: 2.5rem;
+            color: var(--text-gold);
+            font-weight: 900;
+            text-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+        }
+
         /* Art Deco Buttons */
         .art-deco-btn {
             background: var(--gold-gradient);
@@ -1493,6 +1527,14 @@
                     <p style="font-size: 1.2rem; opacity: 0.7;">Videos will appear here</p>
                 </div>
             </section>
+            
+            <!-- User Number Display -->
+            <div id="userNumberDisplay" class="user-number-display">
+                <div class="user-number-card">
+                    <div class="user-number-title">USER NUMBER</div>
+                    <div id="userNumberValue" class="user-number-value">#--</div>
+                </div>
+            </div>
         </div>
     </div>
 

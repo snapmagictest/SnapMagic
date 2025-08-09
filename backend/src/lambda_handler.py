@@ -526,6 +526,27 @@ def get_next_global_user_number():
         return fallback_number
 
 
+def get_user_number_for_device(device_id):
+    """Check if device already has a user number assigned"""
+    try:
+        import boto3
+        dynamodb = boto3.resource('dynamodb')
+        table_name = os.environ.get('JOB_TRACKING_TABLE')
+        if not table_name:
+            return None
+        
+        table = dynamodb.Table(table_name)
+        mapping_key = f'device_user_mapping_{device_id}'
+        
+        response = table.get_item(Key={'jobId': mapping_key})
+        if 'Item' in response:
+            return response['Item']['user_number']
+        return None
+    except Exception as e:
+        logger.error(f"❌ Error getting device user mapping: {str(e)}")
+        return None
+
+
 def assign_user_number_to_device(device_id, user_number):
     """
     Assign a global user number to a specific device for the session.
@@ -1401,9 +1422,15 @@ def lambda_handler(event, context):
                     client_ip = get_client_ip(request_headers)
                     device_id = request_headers.get('x-device-id', 'unknown')
                     
-                    # Assign global user number for this login session
-                    global_user_number = get_next_global_user_number()
-                    assign_user_number_to_device(device_id, global_user_number)
+                    # Check if device already has a user number, otherwise assign new one
+                    existing_user_number = get_user_number_for_device(device_id)
+                    if existing_user_number:
+                        global_user_number = existing_user_number
+                        logger.info(f"Using existing user number {global_user_number} for device {device_id}")
+                    else:
+                        global_user_number = get_next_global_user_number()
+                        assign_user_number_to_device(device_id, global_user_number)
+                        logger.info(f"Assigned new user number {global_user_number} to device {device_id}")
                     
                     remaining_usage = get_remaining_usage_simplified(client_ip)
                     

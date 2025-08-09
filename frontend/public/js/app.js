@@ -267,6 +267,17 @@ class SnapMagicApp {
     }
 
     /**
+     * Update the user number display on the page
+     */
+    updateUserNumberDisplay(userNumber) {
+        const displayElement = document.getElementById('userNumberValue');
+        if (displayElement) {
+            displayElement.textContent = `#${userNumber}`;
+            console.log(`📊 Updated user number display: #${userNumber}`);
+        }
+    }
+
+    /**
      * Monitor localStorage persistence over time
      */
     startLocalStorageMonitoring() {
@@ -847,6 +858,9 @@ class SnapMagicApp {
                     this.currentUserNumber = data.user_number;
                     console.log(`🌍 Assigned global user number: ${data.user_number} (${data.display_name})`);
                     
+                    // Update user number display
+                    this.updateUserNumberDisplay(data.user_number);
+                    
                     // Store in localStorage for consistency during session, but don't reset to 1
                     try {
                         localStorage.setItem('snapmagic_user_number', data.user_number.toString());
@@ -857,6 +871,7 @@ class SnapMagicApp {
                     // Fallback to localStorage if backend doesn't provide user number
                     this.currentUserNumber = this.getCurrentUserNumber();
                     console.log(`🔄 Using fallback user number: ${this.currentUserNumber}`);
+                    this.updateUserNumberDisplay(this.currentUserNumber);
                 }
                 
                 // AWS logo is always visible - no need to show/hide for staff override
