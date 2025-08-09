@@ -1031,14 +1031,15 @@ def handle_generate_animation_prompt(event):
             logger.error(f"❌ Bedrock error during ultimate fusion: {str(bedrock_error)}")
             logger.error(f"❌ Full error details: {repr(bedrock_error)}")
             
+            # Return proper error instead of fallback
+            logger.error(f"❌ Bedrock error during animation prompt generation: {str(bedrock_error)}")
+            
             # Check if it's a model access issue
             if "AccessDeniedException" in str(bedrock_error) or "ValidationException" in str(bedrock_error):
                 logger.error("🚫 Nova Lite model access denied - check Bedrock model permissions")
                 return create_error_response("Nova Lite model access not available. Please ensure Amazon Nova Lite model access is granted in AWS Bedrock console.", 400)
             
-            # Enhanced fallback based on image content
-            animation_prompt = "Professional character performs rapid multiple actions with tools and effects appearing instantly, dynamic camera movement, high-energy 6-second sequence"
-            logger.info("🔄 Using basic fallback animation prompt due to Bedrock error")
+            return create_error_response(f"Failed to generate animation prompt: {str(bedrock_error)}", 500)
         
         return create_success_response({
             'success': True,
