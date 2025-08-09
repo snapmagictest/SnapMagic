@@ -3368,8 +3368,15 @@ class SnapMagicApp {
             return;
         }
 
-        // Send user prompt directly to backend (no enhancement)
-        console.log('🎬 Sending prompt directly:', userPrompt);
+        // Add animation suffix for user prompts (not AI-generated ones)
+        let finalPrompt = userPrompt;
+        const isAIGenerated = userPrompt.length > 438; // AI prompts are longer
+        
+        if (!isAIGenerated) {
+            finalPrompt = userPrompt + " animate this image in 6 seconds that will be multiple actions fast paced";
+        }
+        
+        console.log('🎬 Final prompt to Nova Reel:', finalPrompt);
 
         if (!this.generatedCardData) {
             this.showError('Please generate a trading card first');
@@ -3407,7 +3414,7 @@ class SnapMagicApp {
             const requestBody = {
                 action: 'generate_video',
                 card_image: jpegImage, // Send JPEG format as required by Nova Reel
-                animation_prompt: userPrompt
+                animation_prompt: finalPrompt
             };
             
             const response = await fetch(endpoint, {
@@ -4185,7 +4192,7 @@ class SnapMagicApp {
         
         if (videoPrompt && videoCharCount) {
             const currentLength = videoPrompt.value.length;
-            const maxLength = 512; // Full Nova Reel capacity
+            const maxLength = parseInt(videoPrompt.getAttribute('maxlength')) || 438;
             
             // Show character count
             videoCharCount.textContent = `${currentLength}/${maxLength}`;

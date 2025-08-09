@@ -1447,7 +1447,7 @@
                 <div id="videoPromptInput" class="prompt-input-section">
                     <div class="textarea-container">
                         <div class="video-prompt-container">
-                            <textarea id="videoPrompt" class="art-deco-textarea" placeholder="1. Select Generate AI Prompt to give a prompt of your current displayed card in the gallery. 2. Enter your own prompt. 3. AI optimize the prompt." maxlength="512"></textarea>
+                            <textarea id="videoPrompt" class="art-deco-textarea" placeholder="1. Select Generate AI Prompt to give a prompt of your current displayed card in the gallery. 2. Enter your own prompt. 3. AI optimize the prompt." maxlength="438"></textarea>
                         </div>
                         <div class="textarea-controls">
                             <div id="videoCharCount" class="textarea-limit-indicator">0/350</div>
@@ -1757,6 +1757,7 @@
                     if (textarea) {
                         textarea.placeholder = 'AI will generate an animation prompt based on your selected card...';
                         textarea.value = '';
+                        textarea.setAttribute('maxlength', '512');
                     }
                     
                     // Show progress on the card
@@ -1786,7 +1787,8 @@
                     break;
                 case 'create':
                     if (textarea) {
-                        textarea.placeholder = 'Describe how you want your card to be animated...';
+                        textarea.placeholder = 'Describe how you want your card to be animated (438 chars max)...';
+                        textarea.setAttribute('maxlength', '438');
                         
                         // Add smooth feedback like other buttons
                         if (window.snapMagicApp && window.snapMagicApp.showTextBoxFeedback) {
