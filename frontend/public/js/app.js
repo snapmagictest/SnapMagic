@@ -296,7 +296,7 @@ class SnapMagicApp {
         console.log(`🎴 Updating card progress: ${Math.round(progress)}%`);
         
         // Update button text with progress
-        this.elements.generateBtn.innerHTML = `🔄 Preparing... ${Math.round(progress)}%`;
+        this.elements.generateBtn.innerHTML = `<span class="spinning-bedrock"></span> Preparing... ${Math.round(progress)}%`;
         
         // Progressive gold coloring based on progress (same as video button)
         const goldIntensity = progress / 100;
@@ -2964,7 +2964,7 @@ class SnapMagicApp {
         // Update both buttons identically
         downloadBtns.forEach(downloadBtn => {
             // Update button text with progress
-            downloadBtn.innerHTML = `🔄 Preparing... ${Math.round(progress)}%`;
+            downloadBtn.innerHTML = `<span class="spinning-bedrock"></span> Preparing... ${Math.round(progress)}%`;
             
             // Progressive gold coloring based on progress
             const goldIntensity = progress / 100;
@@ -3020,7 +3020,7 @@ class SnapMagicApp {
                     break;
                     
                 case 'loading':
-                    downloadBtn.innerHTML = '🔄 Preparing...';
+                    downloadBtn.innerHTML = '<span class="spinning-bedrock"></span> Preparing...';
                     downloadBtn.disabled = true;
                     downloadBtn.classList.add('preparing-download');
                     downloadBtn.style.background = '#666';
@@ -3380,7 +3380,7 @@ class SnapMagicApp {
 
         try {
             // Start with preparing state (like download button)
-            this.setVideoButtonState('🔄 Preparing...', true);
+            this.setVideoButtonState('<span class="spinning-bedrock"></span> Preparing...', true);
             
             this.videoGenerationInProgress = true;
             
@@ -3591,7 +3591,7 @@ class SnapMagicApp {
         // Update both buttons identically (like download button)
         videoBtns.forEach(videoBtn => {
             // Update button text with progress
-            videoBtn.innerHTML = `🔄 Preparing... ${Math.round(progress)}%`;
+            videoBtn.innerHTML = `<span class="spinning-bedrock"></span> Preparing... ${Math.round(progress)}%`;
             
             // Progressive gold coloring based on progress (same as download button)
             const goldIntensity = progress / 100;
@@ -5286,7 +5286,7 @@ class SnapMagicApp {
         
         try {
             // Start with preparing state (like video button)
-            this.setCardButtonState('🔄 Preparing...', true);
+            this.setCardButtonState('<span class="spinning-bedrock"></span> Preparing...', true);
             
             const apiBaseUrl = window.SNAPMAGIC_CONFIG.API_URL;
             const endpoint = `${apiBaseUrl}api/transform-card`;

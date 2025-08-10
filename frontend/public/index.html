@@ -1064,6 +1064,18 @@
             100% { transform: rotate(360deg); }
         }
 
+        .spinning-bedrock {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            background-image: url('bedrock.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            animation: spin 1s linear infinite;
+            margin-right: 0.5rem;
+        }
+
         .processing-text {
             color: var(--text-gold);
             font-size: 1.3rem;
@@ -1408,7 +1420,7 @@
                         <button id="downloadAnimatedBtn" class="art-deco-btn">🎬 Prepare Download</button>
                         <button id="printBtn" class="art-deco-btn">🖨️ Save for Print</button>
                         <button id="shareLinkedInBtn" class="art-deco-btn" style="text-align: center;">📱 Share on LinkedIn<br>🏆 COMPETITION</button>
-                        <button id="createAnotherBtn" class="art-deco-btn">🔄 Create Another Card</button>
+                        <button id="createAnotherBtn" class="art-deco-btn"><span class="spinning-bedrock"></span> Create Another Card</button>
                     </div>
                 </div>
                 
@@ -1518,7 +1530,7 @@
                     <!-- Video Action Buttons -->
                     <div id="videoResultActions" class="result-actions hidden">
                         <button id="downloadVideoBtn" class="art-deco-btn">💾 Download Video</button>
-                        <button id="createAnotherVideoBtn" class="art-deco-btn">🔄 Create Another Video</button>
+                        <button id="createAnotherVideoBtn" class="art-deco-btn"><span class="spinning-bedrock"></span> Create Another Video</button>
                     </div>
                 </div>
                 
