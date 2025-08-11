@@ -6383,7 +6383,7 @@ class SnapMagicApp {
             <div id="linkedinConfirmation" class="modal">
                 <div class="modal-content">
                     <h3>📱 LinkedIn Sharing Confirmation</h3>
-                    <p>Did you successfully share your trading card on LinkedIn?</p>
+                    <p>You must have shared on LinkedIn and choose YES here to enter. Did you successfully share your trading card on LinkedIn?</p>
                     
                     <div class="modal-buttons">
                         <button id="linkedinYes" class="art-deco-btn" style="background: #38a169;">✅ Yes, I shared it!</button>
