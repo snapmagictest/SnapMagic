@@ -1249,6 +1249,8 @@ def lambda_handler(event, context):
                 action = 'apply_override'
             elif body_action == 'enter_competition':
                 action = 'enter_competition'
+            elif body_action == 'store_competition':
+                action = 'store_competition'
             elif body_action == 'load_session_cards':
                 action = 'load_session_cards'
             elif body_action == 'load_card_base64':
@@ -2031,6 +2033,72 @@ def lambda_handler(event, context):
                 logger.error(f"❌ Video status check exception: {str(e)}")
                 return create_error_response(f"Video status check failed: {str(e)}", 500)
         
+        # ========================================
+        # STORE COMPETITION ENDPOINT (LinkedIn Competition)
+        # ========================================
+        elif action == 'store_competition':
+            username = token_payload.get('username', 'unknown')
+            
+            # Extract data from request
+            filename = body.get('filename', '').strip()
+            imageData = body.get('imageData', '').strip()
+            userNumber = body.get('userNumber')
+            
+            # Validation
+            if not filename:
+                return create_error_response("Filename is required", 400)
+            
+            if not imageData:
+                return create_error_response("Image data is required", 400)
+            
+            if not userNumber:
+                return create_error_response("User number is required", 400)
+            
+            try:
+                logger.info(f"🏆 Storing LinkedIn competition entry: {filename} for user #{userNumber}")
+                
+                # Import boto3 and create S3 client
+                import boto3
+                import base64
+                s3_client = boto3.client('s3')
+                bucket_name = os.environ.get('S3_BUCKET_NAME')
+                
+                if not bucket_name:
+                    logger.error("❌ S3_BUCKET_NAME environment variable not set")
+                    return create_error_response("S3 bucket not configured", 500)
+                
+                # Create S3 key for competition folder
+                s3_key = f"competition/{filename}.png"
+                
+                # Convert base64 to bytes
+                try:
+                    image_bytes = base64.b64decode(imageData)
+                except Exception as e:
+                    logger.error(f"❌ Invalid base64 image data: {str(e)}")
+                    return create_error_response("Invalid image data format", 400)
+                
+                # Store image in S3 competition folder
+                s3_client.put_object(
+                    Bucket=bucket_name,
+                    Key=s3_key,
+                    Body=image_bytes,
+                    ContentType='image/png'
+                )
+                
+                logger.info(f"✅ Competition entry stored successfully: {s3_key}")
+                
+                return create_success_response({
+                    'success': True,
+                    'message': 'Competition entry recorded successfully!',
+                    'filename': filename,
+                    'userNumber': userNumber,
+                    's3_key': s3_key
+                })
+                
+            except Exception as e:
+                logger.error(f"❌ Failed to store competition entry: {str(e)}")
+                return create_error_response(f"Failed to store competition entry: {str(e)}", 500)
+
         # ENTER COMPETITION ENDPOINT
         # ========================================
         elif action == 'enter_competition':

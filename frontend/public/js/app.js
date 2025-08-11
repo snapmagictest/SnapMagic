@@ -6437,13 +6437,14 @@ class SnapMagicApp {
             
             // Call backend to store in competition folder
             const apiBaseUrl = window.SNAPMAGIC_CONFIG.API_URL;
-            const response = await fetch(`${apiBaseUrl}/store-competition`, {
+            const response = await fetch(`${apiBaseUrl}/api/transform-card`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${this.authToken}`
                 },
                 body: JSON.stringify({
+                    action: 'store_competition',
                     filename: filename,
                     imageData: imageData,
                     userNumber: this.currentUserNumber
