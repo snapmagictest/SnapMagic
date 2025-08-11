@@ -6292,6 +6292,10 @@ class SnapMagicApp {
                             <span class="step-number">4</span>
                             <span class="step-text">⚠️ Don't modify the hashtag #SnapMagicUser{num} - it's your competition ID!</span>
                         </div>
+                        <div class="step-item">
+                            <span class="step-number">5</span>
+                            <span class="step-text">Choose yes once completed to confirm entry</span>
+                        </div>
                     </div>
 
                     <div class="linkedin-buttons">
