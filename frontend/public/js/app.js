@@ -6422,47 +6422,20 @@ class SnapMagicApp {
             const filename = `SnapMagicUser${this.currentUserNumber}`;
             console.log(`🏆 Storing competition image as: competition/${filename}.png`);
             
-            // Get current card image URL from the displayed card
-            let imageUrl = null;
-            if (this.generatedCardData?.finalImageSrc) {
-                imageUrl = this.generatedCardData.finalImageSrc;
-            } else if (this.generatedCardData?.imageSrc) {
-                imageUrl = this.generatedCardData.imageSrc;
-            } else if (this.generatedCardData?.result) {
-                imageUrl = `data:image/png;base64,${this.generatedCardData.result}`;
+            // Get current card S3 key from the displayed card
+            let s3Key = null;
+            if (this.generatedCardData?.s3_key) {
+                s3Key = this.generatedCardData.s3_key;
+            } else if (this.generatedCardData?.filename) {
+                s3Key = this.generatedCardData.filename;
             }
             
-            if (!imageUrl) {
-                console.error('❌ No image URL available for competition storage');
+            if (!s3Key) {
+                console.error('❌ No S3 key available for competition storage');
                 return;
             }
             
-            // Convert image URL to base64 data
-            let imageData = null;
-            if (imageUrl.startsWith('data:image/')) {
-                // Already base64 data URL
-                imageData = imageUrl.split(',')[1];
-            } else {
-                // Fetch image from URL and convert to base64
-                try {
-                    const response = await fetch(imageUrl);
-                    const blob = await response.blob();
-                    const base64 = await new Promise((resolve) => {
-                        const reader = new FileReader();
-                        reader.onloadend = () => resolve(reader.result.split(',')[1]);
-                        reader.readAsDataURL(blob);
-                    });
-                    imageData = base64;
-                } catch (fetchError) {
-                    console.error('❌ Failed to fetch image for competition storage:', fetchError);
-                    return;
-                }
-            }
-            
-            if (!imageData) {
-                console.error('❌ No image data available for competition storage');
-                return;
-            }
+            console.log(`🔑 Using S3 key: ${s3Key}`);
             
             // Call backend to store in competition folder
             const apiBaseUrl = window.SNAPMAGIC_CONFIG.API_URL;
@@ -6475,7 +6448,7 @@ class SnapMagicApp {
                 body: JSON.stringify({
                     action: 'store_competition',
                     filename: filename,
-                    imageData: imageData,
+                    s3Key: s3Key,
                     userNumber: this.currentUserNumber
                 })
             });

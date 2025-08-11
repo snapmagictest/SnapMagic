@@ -2041,15 +2041,15 @@ def lambda_handler(event, context):
             
             # Extract data from request
             filename = body.get('filename', '').strip()
-            imageData = body.get('imageData', '').strip()
+            s3Key = body.get('s3Key', '').strip()
             userNumber = body.get('userNumber')
             
             # Validation
             if not filename:
                 return create_error_response("Filename is required", 400)
             
-            if not imageData:
-                return create_error_response("Image data is required", 400)
+            if not s3Key:
+                return create_error_response("S3 key is required", 400)
             
             if not userNumber:
                 return create_error_response("User number is required", 400)
@@ -2059,7 +2059,6 @@ def lambda_handler(event, context):
                 
                 # Import boto3 and create S3 client
                 import boto3
-                import base64
                 s3_client = boto3.client('s3')
                 bucket_name = os.environ.get('S3_BUCKET_NAME')
                 
@@ -2068,31 +2067,25 @@ def lambda_handler(event, context):
                     return create_error_response("S3 bucket not configured", 500)
                 
                 # Create S3 key for competition folder
-                s3_key = f"competition/{filename}.png"
+                competition_s3_key = f"competition/{filename}.png"
                 
-                # Convert base64 to bytes
-                try:
-                    image_bytes = base64.b64decode(imageData)
-                except Exception as e:
-                    logger.error(f"❌ Invalid base64 image data: {str(e)}")
-                    return create_error_response("Invalid image data format", 400)
-                
-                # Store image in S3 competition folder
-                s3_client.put_object(
+                # Copy existing image from cards/ to competition/ folder
+                copy_source = {'Bucket': bucket_name, 'Key': s3Key}
+                s3_client.copy_object(
+                    CopySource=copy_source,
                     Bucket=bucket_name,
-                    Key=s3_key,
-                    Body=image_bytes,
+                    Key=competition_s3_key,
                     ContentType='image/png'
                 )
                 
-                logger.info(f"✅ Competition entry stored successfully: {s3_key}")
+                logger.info(f"✅ Competition entry stored successfully: {competition_s3_key}")
                 
                 return create_success_response({
                     'success': True,
                     'message': 'Competition entry recorded successfully!',
                     'filename': filename,
                     'userNumber': userNumber,
-                    's3_key': s3_key
+                    's3_key': competition_s3_key
                 })
                 
             except Exception as e:
