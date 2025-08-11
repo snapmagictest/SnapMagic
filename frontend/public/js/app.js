@@ -6286,12 +6286,8 @@ class SnapMagicApp {
                         </div>
                         <div class="step-item">
                             <span class="step-number">3</span>
-                            <span class="step-text">Mention "@snapmagic cards" after pre-filled text to win a prize</span>
+                            <span class="step-text">⚠️ Don't modify the hashtag #SnapMagicUser{num} - it's your competition ID!</span>
                         </div>
-                    </div>
-
-                    <div style="text-align: center; margin: 20px 0;">
-                        <img src="/linkedin/post.PNG" alt="LinkedIn sharing example" style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
                     </div>
 
                     <div class="linkedin-buttons">
@@ -6356,7 +6352,7 @@ class SnapMagicApp {
         console.log('🎯 Using event name for LinkedIn:', eventName);
         
         // Simple clean LinkedIn message
-        const shareText = `🎴✨ Just created my AI-powered trading card with SnapMagic - Powered by AWS! Generated using Amazon Bedrock Nova Canvas at ${eventName}. #AWS #Amazon #Bedrock #Nova`;
+        const shareText = `🎴✨ Just created my AI-powered trading card with SnapMagic - Powered by AWS! Generated using Amazon Bedrock Nova Canvas at ${eventName}. #AmazonBedrockNova #SnapMagicUser${this.currentUserNumber}`;
         
         // LinkedIn sharing URL with text only
         const linkedInUrl = `https://www.linkedin.com/sharing/share-offsite/?text=${encodeURIComponent(shareText)}`;
@@ -6365,8 +6361,115 @@ class SnapMagicApp {
         console.log('📝 Share text:', shareText);
         window.open(linkedInUrl, '_blank', 'width=600,height=600,scrollbars=yes,resizable=yes');
         
-        // Close the popup
+        // Show confirmation dialog after opening LinkedIn
+        setTimeout(() => {
+            this.showLinkedInConfirmation();
+        }, 2000); // Give user time to see LinkedIn opened
+    }
+
+    /**
+     * Show LinkedIn confirmation dialog
+     */
+    showLinkedInConfirmation() {
+        const confirmationHtml = `
+            <div id="linkedinConfirmation" class="modal">
+                <div class="modal-content">
+                    <h3>📱 LinkedIn Sharing Confirmation</h3>
+                    <p>Did you successfully share your trading card on LinkedIn?</p>
+                    
+                    <div class="modal-buttons">
+                        <button id="linkedinYes" class="art-deco-btn" style="background: #38a169;">✅ Yes, I shared it!</button>
+                        <button id="linkedinNo" class="art-deco-btn" style="background: #e53e3e;">❌ No, I didn't share</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Add confirmation modal to page
+        document.body.insertAdjacentHTML('beforeend', confirmationHtml);
+        
+        // Setup event listeners
+        document.getElementById('linkedinYes').addEventListener('click', () => {
+            this.handleLinkedInConfirmation(true);
+        });
+        
+        document.getElementById('linkedinNo').addEventListener('click', () => {
+            this.handleLinkedInConfirmation(false);
+        });
+    }
+
+    /**
+     * Handle LinkedIn confirmation response
+     */
+    async handleLinkedInConfirmation(shared) {
+        if (shared) {
+            console.log('🏆 User confirmed LinkedIn sharing - storing in competition folder');
+            await this.storeCompetitionImage();
+        } else {
+            console.log('❌ User did not share on LinkedIn');
+        }
+        
+        // Close both popups
+        this.closeLinkedInConfirmation();
         this.closeLinkedInSharingPopup();
+    }
+
+    /**
+     * Store image in competition folder
+     */
+    async storeCompetitionImage() {
+        try {
+            const filename = `SnapMagicUser${this.currentUserNumber}`;
+            console.log(`🏆 Storing competition image as: competition/${filename}.png`);
+            
+            // Get current card image data
+            let imageData = null;
+            if (this.generatedCardData?.result) {
+                imageData = this.generatedCardData.result;
+            } else if (this.generatedCardData?.novaImageBase64) {
+                imageData = this.generatedCardData.novaImageBase64;
+            }
+            
+            if (!imageData) {
+                console.error('❌ No image data available for competition storage');
+                return;
+            }
+            
+            // Call backend to store in competition folder
+            const apiBaseUrl = window.SNAPMAGIC_CONFIG.API_URL;
+            const response = await fetch(`${apiBaseUrl}/store-competition`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.authToken}`
+                },
+                body: JSON.stringify({
+                    filename: filename,
+                    imageData: imageData,
+                    userNumber: this.currentUserNumber
+                })
+            });
+            
+            if (response.ok) {
+                console.log('✅ Competition image stored successfully');
+                this.showNotification('🏆 Competition entry recorded!', 'success');
+            } else {
+                console.error('❌ Failed to store competition image');
+            }
+            
+        } catch (error) {
+            console.error('❌ Error storing competition image:', error);
+        }
+    }
+
+    /**
+     * Close LinkedIn confirmation popup
+     */
+    closeLinkedInConfirmation() {
+        const confirmation = document.getElementById('linkedinConfirmation');
+        if (confirmation) {
+            confirmation.remove();
+        }
     }
 
     /**
