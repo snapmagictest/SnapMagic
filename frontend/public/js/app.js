@@ -6278,14 +6278,18 @@ class SnapMagicApp {
                     <div class="linkedin-steps">
                         <div class="step-item">
                             <span class="step-number">1</span>
-                            <span class="step-text">Download Card and choose "Share on LinkedIn" to open LinkedIn</span>
+                            <span class="step-text">Ensure that you have the right card selected from the gallery</span>
                         </div>
                         <div class="step-item">
                             <span class="step-number">2</span>
-                            <span class="step-text">Add your card image manually using LinkedIn's "Add media" option</span>
+                            <span class="step-text">Download Card and choose "Share on LinkedIn" to open LinkedIn</span>
                         </div>
                         <div class="step-item">
                             <span class="step-number">3</span>
+                            <span class="step-text">Add your card image manually using LinkedIn's "Add media" option</span>
+                        </div>
+                        <div class="step-item">
+                            <span class="step-number">4</span>
                             <span class="step-text">⚠️ Don't modify the hashtag #SnapMagicUser{num} - it's your competition ID!</span>
                         </div>
                     </div>
