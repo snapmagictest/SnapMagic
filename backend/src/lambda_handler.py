@@ -2066,8 +2066,10 @@ def lambda_handler(event, context):
                     logger.error("❌ S3_BUCKET_NAME environment variable not set")
                     return create_error_response("S3 bucket not configured", 500)
                 
-                # Create S3 key for competition folder
-                competition_s3_key = f"competition/{filename}.png"
+                # Create S3 key for competition folder with timestamp
+                from datetime import datetime
+                timestamp = datetime.utcnow().strftime('%Y%m%d_%H%M%S')
+                competition_s3_key = f"competition/{filename}_{timestamp}.png"
                 
                 # Copy existing image from cards/ to competition/ folder
                 copy_source = {'Bucket': bucket_name, 'Key': s3Key}
