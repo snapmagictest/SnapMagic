@@ -6286,7 +6286,7 @@ class SnapMagicApp {
                         </div>
                         <div class="step-item">
                             <span class="step-number">3</span>
-                            <span class="step-text">Add your card image manually using LinkedIn's "Add media" option</span>
+                            <span class="step-text">Add/Upload your card image manually using LinkedIn's "Add media" option and POST</span>
                         </div>
                         <div class="step-item">
                             <span class="step-number">4</span>
