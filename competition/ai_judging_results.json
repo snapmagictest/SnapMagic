@@ -1,0 +1,41 @@
+[
+  {
+    "filename": "SnapMagicUser1.png",
+    "key": "competition/SnapMagicUser1.png",
+    "scores": {
+      "visual_impact": 4.2,
+      "creativity": 3.8,
+      "character_story": 4.5,
+      "technical_quality": 4.0,
+      "artistic_merit": 3.9
+    },
+    "total_score": 20.4,
+    "ai_reasoning": "The image has a strong visual impact with its eerie, glowing green color palette and the dramatic graveyard setting. The creativity score is slightly lower because the concept, while spooky and atmospheric, is a fairly common theme in horror art. The character and storytelling score is high because the image effectively evokes a sense of mystery and foreboding. The technical quality is good, with clear details and well-maintained proportions. The artistic merit is solid, with a consistent style that would appeal to collectors of horror-themed art."
+  },
+  {
+    "filename": "SnapMagicUser17_20250812_065357.png",
+    "key": "competition/SnapMagicUser17_20250812_065357.png",
+    "scores": {
+      "visual_impact": 4.2,
+      "creativity": 3.8,
+      "character_story": 4.5,
+      "technical_quality": 4.0,
+      "artistic_merit": 3.9
+    },
+    "total_score": 20.4,
+    "ai_reasoning": "The image has a strong visual impact with its large, golden spider and sparkling sphere, set against a dramatic cityscape. The creativity score is slightly lower as the concept, while interesting, is not entirely unique. The character and storytelling score is high due to the compelling design of the spider and the narrative potential of a giant mechanical creature in a city. Technical quality is solid with clear details and good lighting. Artistic merit is respectable, though the style could be more distinct to elevate it further."
+  },
+  {
+    "filename": "SnapMagicUser1_20250811_203142.png",
+    "key": "competition/SnapMagicUser1_20250811_203142.png",
+    "scores": {
+      "visual_impact": 4.2,
+      "creativity": 3.8,
+      "character_story": 4.5,
+      "technical_quality": 4.0,
+      "artistic_merit": 3.9
+    },
+    "total_score": 20.4,
+    "ai_reasoning": "The image has a strong visual impact with vibrant colors and an imaginative concept of cupcakes floating in the sky. The character design is compelling, evoking a whimsical and delightful story. The technical quality is good, with clear details and lighting. The artistic merit is solid, though the style could be more distinct to make it truly collectible."
+  }
+]
