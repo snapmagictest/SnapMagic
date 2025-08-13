@@ -330,8 +330,8 @@ frontend:
 
     // SQS Event Source for Queue Processor
     queueProcessorLambda.addEventSource(new lambdaEventSources.SqsEventSource(cardGenerationQueue, {
-      batchSize: 1, // Process one message at a time
-      maxConcurrency: 2, // Maximum 2 concurrent Lambda executions
+      batchSize: inputs.processing?.cardQueueBatchSize || 1, // Process messages in batches
+      maxConcurrency: inputs.processing?.cardQueueConcurrency || 2, // Maximum concurrent Lambda executions
     }));
 
     // Grant permissions

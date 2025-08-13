@@ -35,7 +35,8 @@ function loadSecretsConfig(): DeploymentInputs | null {
         novaReelModel: secrets.models.novaReel,
         novaLiteModel: secrets.models.novaLite,
         cardTemplate: secrets.cardTemplate || undefined,  // Include cardTemplate section
-        limits: secrets.limits || undefined  // Include limits section
+        limits: secrets.limits || undefined,  // Include limits section
+        processing: secrets.processing || undefined  // Include processing section
       };
     }
     return null;

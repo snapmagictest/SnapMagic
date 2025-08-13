@@ -13,6 +13,14 @@ export interface DeploymentInputs {
   novaLiteModel: string;
   cardTemplate?: any;
   limits?: any;
+  processing?: {
+    mainLambdaConcurrency?: number;
+    queueProcessorConcurrency?: number;
+    cardQueueConcurrency?: number;
+    videoQueueConcurrency?: number;
+    cardQueueBatchSize?: number;
+    videoQueueBatchSize?: number;
+  };
   app?: {
     features?: {
       print?: boolean;
