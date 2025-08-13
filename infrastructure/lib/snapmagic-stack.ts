@@ -243,7 +243,7 @@ frontend:
       role: lambdaExecutionRole,
       timeout: Duration.minutes(10),  // Extended timeout for video generation
       memorySize: 2048,  // Increased memory for AI processing
-      reservedConcurrentExecutions: 700,  // 🎯 OPTIMIZED: Handle high API traffic for 10,000 users
+      reservedConcurrentExecutions: inputs.processing?.mainLambdaConcurrency || 700,  // 🎯 OPTIMIZED: Handle high API traffic for 10,000 users
       environment: {
         PYTHONPATH: '/var/task:/var/task/src',
         LOG_LEVEL: 'INFO',
@@ -314,7 +314,7 @@ frontend:
       role: lambdaExecutionRole, // Same role as main Lambda
       timeout: Duration.seconds(90), // Timeout for card generation
       memorySize: 1024, // Less memory needed than main Lambda
-      reservedConcurrentExecutions: 200, // 🎯 OPTIMIZED: Handle Bedrock processing efficiently
+      reservedConcurrentExecutions: inputs.processing?.queueProcessorConcurrency || 200, // 🎯 OPTIMIZED: Handle Bedrock processing efficiently
       environment: {
         PYTHONPATH: '/var/task:/var/task/src',
         LOG_LEVEL: 'INFO',
@@ -331,7 +331,7 @@ frontend:
     // SQS Event Source for Queue Processor
     queueProcessorLambda.addEventSource(new lambdaEventSources.SqsEventSource(cardGenerationQueue, {
       batchSize: inputs.processing?.cardQueueBatchSize || 1, // Process messages in batches
-      maxConcurrency: inputs.processing?.cardQueueConcurrency || 2, // Maximum concurrent Lambda executions
+      maxConcurrency: inputs.processing?.cardQueueConcurrency || 100, // 🎯 FIXED: Changed fallback from 2 to 100 for high concurrency
     }));
 
     // Grant permissions

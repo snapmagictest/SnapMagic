@@ -36,7 +36,14 @@ function loadSecretsConfig(): DeploymentInputs | null {
         novaLiteModel: secrets.models.novaLite,
         cardTemplate: secrets.cardTemplate || undefined,  // Include cardTemplate section
         limits: secrets.limits || undefined,  // Include limits section
-        processing: secrets.processing || undefined  // Include processing section
+        processing: secrets.processing ? {
+          mainLambdaConcurrency: secrets.processing.main_lambda_concurrency,
+          queueProcessorConcurrency: secrets.processing.queue_processor_concurrency,
+          cardQueueConcurrency: secrets.processing.card_queue_concurrency,
+          videoQueueConcurrency: secrets.processing.video_queue_concurrency,
+          cardQueueBatchSize: secrets.processing.card_queue_batch_size,
+          videoQueueBatchSize: secrets.processing.video_queue_batch_size
+        } : undefined  // 🎯 FIXED: Map snake_case to camelCase
       };
     }
     return null;
