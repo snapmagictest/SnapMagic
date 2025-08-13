@@ -170,8 +170,8 @@ Respond ONLY in this exact JSON format:
         print("🤖 AI-Powered Image Judging with Amazon Nova Premium")
         print("Fetching image list from S3...")
         
-        # Get all images
-        response = self.s3.list_objects_v2(Bucket=self.bucket, Prefix=self.prefix)
+        # Get limited images (30 max)
+        response = self.s3.list_objects_v2(Bucket=self.bucket, Prefix=self.prefix, MaxKeys=30)
         if 'Contents' not in response:
             print("No images found!")
             return []
