@@ -1,0 +1,19 @@
+{
+  "SnapMagic-prod": {
+    "APIGatewayURL": "https://gywq5757y9.execute-api.us-east-1.amazonaws.com/prod/",
+    "AmplifyAppId": "d1ux2o8mihq5qh",
+    "AmplifyAppUrl": "https://main.d1ux2o8mihq5qh.amplifyapp.com",
+    "AmplifyConsoleUrl": "https://console.aws.amazon.com/amplify/home?region=us-east-1#/d1ux2o8mihq5qh",
+    "BranchConnected": "main",
+    "DeploymentStatus": "✅ CDK deployment complete - API Gateway URL automatically configured in frontend",
+    "DeploymentVerification": "Wait 2-3 minutes for Amplify build to complete, then test the AmplifyAppUrl",
+    "LambdaFunctionName": "SnapMagic-prod-SnapMagicAIFunction9B219E3A-m8xS1VOTdkMI",
+    "ManualDeleteCommand": "cdk destroy --force",
+    "RepositoryConnected": "https://github.com/snapmagictest/SnapMagic",
+    "SecurityNote": "GitHub token was used for deployment only and is not stored in AWS",
+    "SnapMagicAPIEndpointD012AE32": "https://gywq5757y9.execute-api.us-east-1.amazonaws.com/prod/",
+    "StackName": "SnapMagic-prod",
+    "VideoBucketName": "snapmagic-videos-prod-004704222270-1755074463635",
+    "VideoCleanupPolicy": "Videos deleted ONLY when CDK stack is destroyed (event ends)"
+  }
+}
