@@ -179,6 +179,79 @@ frontend:
     Tags.of(finalVideoStorageBucket).add('Environment', props.environment);
 
     // ========================================
+    // AMAZON BEDROCK GUARDRAILS - CONTENT FILTERING
+    // ========================================
+    const snapMagicGuardrail = new CfnResource(this, 'SnapMagicGuardrail', {
+      type: 'AWS::Bedrock::Guardrail',
+      properties: {
+        Name: `SnapMagic-ContentFilter-${props.environment}`,
+        Description: 'AI-powered content filtering for SnapMagic trading card prompts',
+        BlockedInputMessaging: 'Your prompt contains inappropriate content. Please revise and try again.',
+        BlockedOutputsMessaging: 'Generated content was filtered for safety.',
+        ContentPolicyConfig: {
+          FiltersConfig: [
+            {
+              Type: 'SEXUAL',
+              InputStrength: 'HIGH',
+              OutputStrength: 'HIGH'
+            },
+            {
+              Type: 'VIOLENCE',
+              InputStrength: 'HIGH', 
+              OutputStrength: 'HIGH'
+            },
+            {
+              Type: 'HATE',
+              InputStrength: 'HIGH',
+              OutputStrength: 'HIGH'
+            },
+            {
+              Type: 'INSULTS',
+              InputStrength: 'MEDIUM',
+              OutputStrength: 'MEDIUM'
+            },
+            {
+              Type: 'MISCONDUCT',
+              InputStrength: 'HIGH',
+              OutputStrength: 'HIGH'
+            },
+            {
+              Type: 'PROMPT_ATTACK',
+              InputStrength: 'HIGH',
+              OutputStrength: 'NONE'
+            }
+          ]
+        },
+        TopicPolicyConfig: {
+          TopicsConfig: [
+            {
+              Name: 'Inappropriate-Content',
+              Definition: 'Content that is not suitable for professional AWS events including explicit, violent, or offensive material',
+              Examples: ['nude content', 'violent imagery', 'hate speech'],
+              Type: 'DENY'
+            }
+          ]
+        },
+        WordPolicyConfig: {
+          ManagedWordListsConfig: [
+            {
+              Type: 'PROFANITY'
+            }
+          ]
+        }
+      }
+    });
+
+    // Create Guardrail version for production use
+    const snapMagicGuardrailVersion = new CfnResource(this, 'SnapMagicGuardrailVersion', {
+      type: 'AWS::Bedrock::GuardrailVersion',
+      properties: {
+        GuardrailIdentifier: snapMagicGuardrail.ref,
+        Description: `Production version for ${props.environment} environment`
+      }
+    });
+
+    // ========================================
     // IAM ROLE - LAMBDA EXECUTION
     // ========================================
     const lambdaExecutionRole = new iam.Role(this, 'SnapMagicLambdaRole', {
@@ -198,13 +271,15 @@ frontend:
                 'bedrock:StartAsyncInvoke',  // Required for Nova Reel async API
                 'bedrock:GetAsyncInvoke',    // To check async job status
                 'bedrock:ListFoundationModels',
-                'bedrock:GetFoundationModel'
+                'bedrock:GetFoundationModel',
+                'bedrock:ApplyGuardrail'     // Required for Guardrails validation
               ],
               resources: [
                 `arn:aws:bedrock:${this.region}::foundation-model/${inputs.novaCanvasModel}`,
                 `arn:aws:bedrock:${this.region}::foundation-model/${inputs.novaReelModel}`,
                 `arn:aws:bedrock:${this.region}::foundation-model/${inputs.novaLiteModel}`,
-                `arn:aws:bedrock:${this.region}:${this.account}:async-invoke/*`  // Required for StartAsyncInvoke
+                `arn:aws:bedrock:${this.region}:${this.account}:async-invoke/*`,  // Required for StartAsyncInvoke
+                `arn:aws:bedrock:${this.region}:${this.account}:guardrail/*`      // Required for ApplyGuardrail
               ]
             })
           ]
@@ -255,6 +330,9 @@ frontend:
         NOVA_REEL_MODEL: inputs.novaReelModel,
         NOVA_LITE_MODEL: inputs.novaLiteModel,
         OVERRIDE_CODE: inputs.overrideCode,
+        // Guardrails configuration
+        GUARDRAIL_ID: snapMagicGuardrail.ref,
+        GUARDRAIL_VERSION: snapMagicGuardrailVersion.ref,
         // Template configuration from secrets.json
         TEMPLATE_EVENT_NAME: inputs.cardTemplate?.eventName || 'AWS Event',
         TEMPLATE_LOGOS_JSON: JSON.stringify(inputs.cardTemplate?.logos || []),
@@ -321,6 +399,9 @@ frontend:
         S3_BUCKET_NAME: finalVideoStorageBucket.bucketName,
         NOVA_CANVAS_MODEL: inputs.novaCanvasModel,
         JOB_TRACKING_TABLE: jobTrackingTable.tableName,
+        // Guardrails configuration
+        GUARDRAIL_ID: snapMagicGuardrail.ref,
+        GUARDRAIL_VERSION: snapMagicGuardrailVersion.ref,
         // Template configuration
         TEMPLATE_EVENT_NAME: inputs.cardTemplate?.eventName || 'AWS Event',
         TEMPLATE_LOGOS_JSON: JSON.stringify(inputs.cardTemplate?.logos || []),
@@ -603,6 +684,23 @@ frontend:
       value: finalVideoStorageBucket.bucketName,
       description: 'S3 Bucket for Video Storage (Auto-cleanup after 7 days)',
       exportName: `SnapMagic-${props.environment}-VideoBucket`
+    });
+
+    new CfnOutput(this, 'GuardrailId', {
+      value: snapMagicGuardrail.ref,
+      description: 'Amazon Bedrock Guardrail ID for content filtering',
+      exportName: `SnapMagic-${props.environment}-GuardrailId`
+    });
+
+    new CfnOutput(this, 'GuardrailVersion', {
+      value: snapMagicGuardrailVersion.ref,
+      description: 'Amazon Bedrock Guardrail Version',
+      exportName: `SnapMagic-${props.environment}-GuardrailVersion`
+    });
+
+    new CfnOutput(this, 'SecurityFeatures', {
+      value: 'AI-powered content filtering, prompt injection protection, instant validation',
+      description: '🛡️ Security Features Enabled'
     });
 
     new CfnOutput(this, 'VideoCleanupPolicy', {

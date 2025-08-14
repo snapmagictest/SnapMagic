@@ -63,7 +63,7 @@ class TradingCardGenerator:
     
     def validate_prompt(self, user_prompt: str) -> Tuple[bool, Optional[str]]:
         """
-        Validate user prompt for trading card generation
+        Validate user prompt using AI-powered Amazon Bedrock Guardrails
         
         Args:
             user_prompt: User-provided description for the trading card
@@ -71,18 +71,40 @@ class TradingCardGenerator:
         Returns:
             Tuple of (is_valid, error_message)
         """
-        if not user_prompt or not user_prompt.strip():
-            return False, "Trading card prompt cannot be empty"
-        
-        prompt_length = len(user_prompt.strip())
-        
-        if prompt_length < self.MIN_PROMPT_LENGTH:
-            return False, f"Prompt must be at least {self.MIN_PROMPT_LENGTH} characters"
-        
-        if prompt_length > self.MAX_PROMPT_LENGTH:
-            return False, f"Prompt must be less than {self.MAX_PROMPT_LENGTH} characters"
-        
-        return True, None
+        # Import Guardrails validator
+        try:
+            from guardrails_validator import get_guardrails_validator
+            validator = get_guardrails_validator()
+            
+            # Use AI-powered validation with instant feedback
+            is_valid, error_message, guardrail_details = validator.validate_prompt(user_prompt)
+            
+            if not is_valid:
+                logger.warning(f"🚫 Prompt validation failed: {error_message}")
+                return False, error_message
+            
+            # Additional length check for Nova Canvas limits
+            if len(user_prompt.strip()) > self.MAX_PROMPT_LENGTH:
+                return False, f"Prompt must be less than {self.MAX_PROMPT_LENGTH} characters for Nova Canvas"
+            
+            logger.info("✅ Prompt passed AI validation")
+            return True, None
+            
+        except ImportError:
+            logger.warning("⚠️ Guardrails validator not available, using basic validation")
+            # Fallback to basic validation
+            if not user_prompt or not user_prompt.strip():
+                return False, "Trading card prompt cannot be empty"
+            
+            prompt_length = len(user_prompt.strip())
+            
+            if prompt_length < self.MIN_PROMPT_LENGTH:
+                return False, f"Prompt must be at least {self.MIN_PROMPT_LENGTH} characters"
+            
+            if prompt_length > self.MAX_PROMPT_LENGTH:
+                return False, f"Prompt must be less than {self.MAX_PROMPT_LENGTH} characters"
+            
+            return True, None
     
     def generate_trading_card(self, user_prompt: str) -> Dict[str, Any]:
         """

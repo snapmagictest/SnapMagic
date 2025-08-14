@@ -1257,6 +1257,8 @@ def lambda_handler(event, context):
                 action = 'load_card_base64'
             elif body_action == 'load_session_videos':
                 action = 'load_session_videos'
+            elif body_action == 'validate_prompt':
+                action = 'validate_prompt'
             elif body_action == 'generate_prompt':
                 action = 'generate_prompt'
             elif body_action == 'optimize_prompt':
@@ -2442,6 +2444,39 @@ def lambda_handler(event, context):
             except Exception as e:
                 logger.error(f"❌ Error loading videos for device: {str(e)}")
                 return create_error_response('Failed to load videos', 500)
+
+        # ========================================
+        # VALIDATE PROMPT ENDPOINT - INSTANT FEEDBACK
+        # ========================================
+        elif action == 'validate_prompt':
+            try:
+                body = json.loads(event.get('body', '{}'))
+                prompt = body.get('prompt', '')
+                
+                if not prompt:
+                    return create_error_response("Missing prompt parameter", 400)
+                
+                # Fast AI-powered validation using Guardrails
+                from guardrails_validator import get_guardrails_validator
+                validator = get_guardrails_validator()
+                
+                is_valid, error_message, guardrail_details = validator.validate_prompt(prompt)
+                
+                if is_valid:
+                    return create_success_response({
+                        'valid': True,
+                        'message': 'Prompt is ready for card generation'
+                    })
+                else:
+                    return create_success_response({
+                        'valid': False,
+                        'message': error_message,
+                        'suggestion': 'Please revise your prompt and try again'
+                    })
+                    
+            except Exception as e:
+                logger.error(f"❌ Prompt validation error: {str(e)}")
+                return create_error_response("Validation service temporarily unavailable", 500)
 
         # ========================================
         # GENERATE PROMPT ENDPOINT
