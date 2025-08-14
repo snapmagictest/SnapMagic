@@ -25,6 +25,10 @@ class GuardrailsValidator:
                 logger.warning("⚠️ GUARDRAIL_ID not configured - falling back to basic validation")
                 self.enabled = False
             else:
+                # Extract just the ID from the ARN if needed
+                if 'guardrail/' in self.guardrail_id:
+                    self.guardrail_id = self.guardrail_id.split('guardrail/')[-1]
+                
                 self.enabled = True
                 logger.info(f"🛡️ Guardrails validator initialized: {self.guardrail_id}")
                 
@@ -49,7 +53,7 @@ class GuardrailsValidator:
             return False, "Prompt cannot be empty", None
         
         try:
-            # Apply Guardrail to user input
+            # Apply Guardrail to user input with correct format
             response = self.bedrock_client.apply_guardrail(
                 guardrailIdentifier=self.guardrail_id,
                 guardrailVersion=self.guardrail_version,
@@ -72,15 +76,20 @@ class GuardrailsValidator:
             
         except ClientError as e:
             error_code = e.response.get('Error', {}).get('Code', 'Unknown')
+            error_message = e.response.get('Error', {}).get('Message', str(e))
+            
+            logger.error(f"❌ Guardrail API error ({error_code}): {error_message}")
+            
             if error_code == 'ValidationException':
-                logger.error(f"❌ Guardrail validation error: {str(e)}")
-                return False, "Invalid prompt format", None
+                # Guardrail configuration issue - fall back to basic validation
+                logger.warning("⚠️ Guardrail validation failed, using fallback validation")
+                return self._fallback_validation(prompt)
             elif error_code == 'AccessDeniedException':
                 logger.error("❌ Guardrail access denied - check permissions")
                 return self._fallback_validation(prompt)
             else:
-                logger.error(f"❌ Guardrail API error: {str(e)}")
-                return self._fallback_validation(prompt)
+                # For other errors, be conservative and reject
+                return False, "Content validation temporarily unavailable", None
                 
         except Exception as e:
             logger.error(f"❌ Unexpected Guardrail error: {str(e)}")
