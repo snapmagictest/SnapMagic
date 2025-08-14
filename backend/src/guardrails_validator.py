@@ -47,12 +47,15 @@ class GuardrailsValidator:
             Tuple of (is_valid, error_message, guardrail_details)
         """
         if not self.enabled:
+            logger.warning("⚠️ Guardrails disabled - using fallback validation")
             return self._fallback_validation(prompt)
         
         if not prompt or not prompt.strip():
             return False, "Prompt cannot be empty", None
         
         try:
+            logger.info(f"🛡️ Calling Guardrails API with prompt: {prompt[:50]}...")
+            
             # Apply Guardrail to user input with correct format
             response = self.bedrock_client.apply_guardrail(
                 guardrailIdentifier=self.guardrail_id,
@@ -65,13 +68,15 @@ class GuardrailsValidator:
                 }]
             )
             
+            logger.info(f"🛡️ Guardrails API response: action={response.get('action')}")
+            
             # Check if Guardrail intervened
             if response.get('action') == 'GUARDRAIL_INTERVENED':
                 blocked_reason = self._extract_block_reason(response)
-                logger.warning(f"🚫 Guardrail blocked prompt: {blocked_reason}")
+                logger.warning(f"🚫 Guardrail BLOCKED prompt: {blocked_reason}")
                 return False, "Your prompt contains inappropriate content. Please revise and try again.", response
             
-            logger.info("✅ Prompt passed Guardrail validation")
+            logger.info("✅ Prompt PASSED Guardrail validation")
             return True, None, response
             
         except ClientError as e:
@@ -79,10 +84,10 @@ class GuardrailsValidator:
             error_message = e.response.get('Error', {}).get('Message', str(e))
             
             logger.error(f"❌ Guardrail API error ({error_code}): {error_message}")
+            logger.warning("⚠️ Falling back to basic validation due to API error")
             
             if error_code == 'ValidationException':
                 # Guardrail configuration issue - fall back to basic validation
-                logger.warning("⚠️ Guardrail validation failed, using fallback validation")
                 return self._fallback_validation(prompt)
             elif error_code == 'AccessDeniedException':
                 logger.error("❌ Guardrail access denied - check permissions")
@@ -93,6 +98,7 @@ class GuardrailsValidator:
                 
         except Exception as e:
             logger.error(f"❌ Unexpected Guardrail error: {str(e)}")
+            logger.warning("⚠️ Falling back to basic validation due to unexpected error")
             return self._fallback_validation(prompt)
     
     def _extract_block_reason(self, guardrail_response: Dict[str, Any]) -> str:
@@ -143,6 +149,8 @@ class GuardrailsValidator:
     
     def _fallback_validation(self, prompt: str) -> Tuple[bool, Optional[str], None]:
         """Basic validation when Guardrails is unavailable"""
+        logger.warning("🔄 USING FALLBACK VALIDATION - Guardrails not available")
+        
         if not prompt or not prompt.strip():
             return False, "Prompt cannot be empty", None
         
@@ -160,9 +168,10 @@ class GuardrailsValidator:
         blocked_words = ['nude', 'naked', 'kill', 'murder', 'bomb', 'hate']
         for word in blocked_words:
             if word in prompt_lower:
+                logger.warning(f"🚫 FALLBACK blocked prompt containing: {word}")
                 return False, "Prompt contains inappropriate content", None
         
-        logger.info("✅ Prompt passed fallback validation")
+        logger.info("✅ Prompt passed FALLBACK validation")
         return True, None, None
 
 # Global instance for reuse
