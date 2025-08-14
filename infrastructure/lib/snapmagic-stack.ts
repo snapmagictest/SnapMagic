@@ -222,16 +222,6 @@ frontend:
             }
           ]
         },
-        TopicPolicyConfig: {
-          TopicsConfig: [
-            {
-              Name: 'Inappropriate-Content',
-              Definition: 'Content that is not suitable for professional AWS events including explicit, violent, or offensive material',
-              Examples: ['nude content', 'violent imagery', 'hate speech'],
-              Type: 'DENY'
-            }
-          ]
-        },
         WordPolicyConfig: {
           ManagedWordListsConfig: [
             {
