@@ -5317,6 +5317,22 @@ class SnapMagicApp {
 
             const data = await response.json();
             
+            // Handle HTTP error responses (400, 500, etc.)
+            if (!response.ok) {
+                console.error('❌ HTTP error response:', response.status, data);
+                this.hideProcessing();
+                
+                // Check for validation errors (400 status)
+                if (response.status === 400 && data.error) {
+                    this.showError(`🚫 ${data.error}\n\nPlease revise your prompt and try again.`);
+                } else if (response.status === 429) {
+                    this.elements.limitReachedModal.classList.remove('hidden');
+                } else {
+                    this.showError(data.error || 'Card generation failed. Please try again.');
+                }
+                throw new Error(data.error || `HTTP ${response.status} error`);
+            }
+            
             if (data.success) {
                 console.log('✅ Card generation successful');
                 
@@ -5348,7 +5364,13 @@ class SnapMagicApp {
         } catch (error) {
             console.error('❌ Card generation error:', error);
             this.resetCardButtonState();
-            this.showError('Card generation failed. Please check your connection and try again.');
+            
+            // Check if this is a validation error with a specific message
+            if (error.message && error.message !== 'Card generation failed') {
+                this.showError(error.message);
+            } else {
+                this.showError('Card generation failed. Please check your connection and try again.');
+            }
             throw error;
         } finally {
             this.activeCardRequests--; // Stop tracking this request
