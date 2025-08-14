@@ -47,8 +47,8 @@ class GuardrailsValidator:
             Tuple of (is_valid, error_message, guardrail_details)
         """
         if not self.enabled:
-            logger.warning("⚠️ Guardrails disabled - using fallback validation")
-            return self._fallback_validation(prompt)
+            logger.error("❌ Guardrails not enabled - FAILING validation")
+            return False, "Guardrails not configured properly", None
         
         if not prompt or not prompt.strip():
             return False, "Prompt cannot be empty", None
@@ -84,22 +84,15 @@ class GuardrailsValidator:
             error_message = e.response.get('Error', {}).get('Message', str(e))
             
             logger.error(f"❌ Guardrail API error ({error_code}): {error_message}")
-            logger.warning("⚠️ Falling back to basic validation due to API error")
+            logger.error("❌ NO FALLBACK - Guardrails must work or system fails")
             
-            if error_code == 'ValidationException':
-                # Guardrail configuration issue - fall back to basic validation
-                return self._fallback_validation(prompt)
-            elif error_code == 'AccessDeniedException':
-                logger.error("❌ Guardrail access denied - check permissions")
-                return self._fallback_validation(prompt)
-            else:
-                # For other errors, be conservative and reject
-                return False, "Content validation temporarily unavailable", None
+            # NO FALLBACK - Force the issue to be fixed
+            return False, f"Guardrails API error: {error_code} - {error_message}", None
                 
         except Exception as e:
             logger.error(f"❌ Unexpected Guardrail error: {str(e)}")
-            logger.warning("⚠️ Falling back to basic validation due to unexpected error")
-            return self._fallback_validation(prompt)
+            logger.error("❌ NO FALLBACK - Guardrails must work or system fails")
+            return False, f"Guardrails system error: {str(e)}", None
     
     def _extract_block_reason(self, guardrail_response: Dict[str, Any]) -> str:
         """Extract human-readable reason why content was blocked"""
