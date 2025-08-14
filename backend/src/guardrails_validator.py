@@ -29,8 +29,12 @@ class GuardrailsValidator:
                 if 'guardrail/' in self.guardrail_id:
                     self.guardrail_id = self.guardrail_id.split('guardrail/')[-1]
                 
+                # Fix version format - extract just the version number
+                if '|' in self.guardrail_version:
+                    self.guardrail_version = self.guardrail_version.split('|')[-1]
+                
                 self.enabled = True
-                logger.info(f"🛡️ Guardrails validator initialized: {self.guardrail_id}")
+                logger.info(f"🛡️ Guardrails validator initialized: ID={self.guardrail_id}, Version={self.guardrail_version}")
                 
         except Exception as e:
             logger.error(f"❌ Failed to initialize Guardrails: {str(e)}")
