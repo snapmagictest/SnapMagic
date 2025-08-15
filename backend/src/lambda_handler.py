@@ -1863,6 +1863,22 @@ def lambda_handler(event, context):
             if not prompt:
                 return create_error_response("Missing animation_prompt parameter - video prompt required", 400)
             
+            # Validate video prompt with Guardrails
+            try:
+                from guardrails_validator import GuardrailsValidator
+                validator = GuardrailsValidator()
+                is_valid, error_message, guardrail_assessment = validator.validate_prompt(prompt, "video")
+                
+                if not is_valid:
+                    logger.warning(f"🛡️ Video prompt blocked by Guardrails: {error_message}")
+                    return create_error_response(f"Content validation failed: {error_message}", 400)
+                
+                logger.info("🛡️ Video prompt passed Guardrails validation")
+                
+            except Exception as e:
+                logger.error(f"❌ Guardrails validation error for video: {str(e)}")
+                return create_error_response("Content validation service unavailable", 500)
+            
             try:
                 # Generate video using Nova Reel with card image + video prompt
                 logger.info(f"🎬 Generating video from card image with prompt: {prompt[:50]}...")
@@ -2460,7 +2476,7 @@ def lambda_handler(event, context):
                 from guardrails_validator import get_guardrails_validator
                 validator = get_guardrails_validator()
                 
-                is_valid, error_message, guardrail_details = validator.validate_prompt(prompt)
+                is_valid, error_message, guardrail_details = validator.validate_prompt(prompt, "card")
                 
                 if is_valid:
                     return create_success_response({

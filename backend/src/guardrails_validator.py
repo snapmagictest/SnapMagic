@@ -40,12 +40,13 @@ class GuardrailsValidator:
             logger.error(f"❌ Failed to initialize Guardrails: {str(e)}")
             self.enabled = False
     
-    def validate_prompt(self, prompt: str) -> Tuple[bool, Optional[str], Optional[Dict[str, Any]]]:
+    def validate_prompt(self, prompt: str, prompt_type: str = "card") -> Tuple[bool, Optional[str], Optional[Dict[str, Any]]]:
         """
         Validate user prompt using AI-powered Guardrails
         
         Args:
             prompt: User input to validate
+            prompt_type: Type of prompt ("card" or "video") for different limits
             
         Returns:
             Tuple of (is_valid, error_message, guardrail_details)
@@ -153,12 +154,19 @@ class GuardrailsValidator:
         
         prompt = prompt.strip()
         
-        # Basic length validation
+        # Basic length validation based on prompt type
         if len(prompt) < 10:
             return False, "Prompt must be at least 10 characters", None
         
-        if len(prompt) > 500:
-            return False, "Prompt must be less than 500 characters", None
+        # Different limits for different prompt types
+        if prompt_type == "video":
+            max_length = 438
+            if len(prompt) > max_length:
+                return False, f"Video prompt must be less than {max_length} characters", None
+        else:  # card prompts
+            max_length = 877
+            if len(prompt) > max_length:
+                return False, f"Card prompt must be less than {max_length} characters", None
         
         # Basic content filtering (fallback only)
         prompt_lower = prompt.lower()

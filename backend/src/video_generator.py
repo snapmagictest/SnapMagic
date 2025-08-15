@@ -34,7 +34,7 @@ class TradingCardVideoGenerator:
     
     # Validation constants
     MIN_PROMPT_LENGTH = 5
-    MAX_PROMPT_LENGTH = 512
+    MAX_PROMPT_LENGTH = 438
     
     # S3 configuration
     VIDEO_FOLDER_PREFIX = "videos/"

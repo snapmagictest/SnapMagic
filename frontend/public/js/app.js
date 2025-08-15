@@ -1473,8 +1473,8 @@ class SnapMagicApp {
             return;
         }
         
-        if (userPrompt.length > 1024) {
-            this.showError('Description must be less than 1024 characters');
+        if (userPrompt.length > 877) {
+            this.showError('Description must be less than 877 characters');
             return;
         }
 
@@ -1484,8 +1484,14 @@ class SnapMagicApp {
             return;
         }
 
-        // Store the prompt and show name input modal
-        this.pendingPrompt = userPrompt;
+        // Add AWS Event disclaimer to the prompt
+        const awsEventDisclaimer = "You are generating an image for an AWS Event. This image will be posted on social media such as LinkedIn and needs to be appropriate";
+        const finalPrompt = `${userPrompt}. ${awsEventDisclaimer}`;
+        
+        console.log('🎴 Final prompt with AWS disclaimer:', finalPrompt);
+
+        // Store the final prompt and show name input modal
+        this.pendingPrompt = finalPrompt;
         this.showNameInputModal();
     }
 
