@@ -2937,54 +2937,14 @@ class SnapMagicApp {
             return;
         }
         
-        console.log(`⚡ Downloading both GIF and PNG for card ${cardId}`);
+        console.log(`⚡ Downloading cached GIF for card ${cardId}`);
         
         // Download the cached GIF
         this.downloadGIFBlob(cachedGIF);
         
-        // Also download PNG version
-        await this.downloadPNGVersion(cardId);
-        
         // Update state to downloaded
         this.cardDownloadStates.set(cardId, 'downloaded');
         this.updateDownloadButton(cardId);
-    }
-
-    async downloadPNGVersion(cardId) {
-        try {
-            // Get the current card image URL from generatedCardData
-            if (!this.generatedCardData || !this.generatedCardData.s3_url) {
-                console.warn('No S3 URL available for PNG download');
-                return;
-            }
-
-            // Fetch the image and convert to PNG
-            const response = await fetch(this.generatedCardData.s3_url);
-            const blob = await response.blob();
-            
-            // Create download link for PNG
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            
-            // Generate PNG filename
-            const eventName = this.templateSystem?.templateConfig?.eventName || 'Event';
-            const sanitizedEventName = eventName.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
-            const today = new Date().toISOString().slice(0, 10);
-            const time = new Date().toTimeString().slice(0, 5).replace(':', '');
-            link.download = `snapmagic-${sanitizedEventName}-card-${today}-${time}.png`;
-            
-            // Trigger PNG download
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            
-            // Clean up
-            setTimeout(() => URL.revokeObjectURL(link.href), 1000);
-            
-            console.log('✅ PNG download completed');
-        } catch (error) {
-            console.error('❌ PNG download failed:', error);
-        }
     }
     
     /**
