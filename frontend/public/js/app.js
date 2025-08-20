@@ -6539,9 +6539,8 @@ class SnapMagicApp {
         
         // Open LinkedIn button
         document.getElementById('openLinkedinApp').addEventListener('click', () => {
-            window.open('https://www.linkedin.com/feed/', '_blank');
             document.getElementById('linkedinCopyModal').remove();
-            setTimeout(() => this.showLinkedInConfirmation(), 1000);
+            this.showLinkedInConfirmation();
         });
         
         // Cancel button
