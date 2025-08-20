@@ -6517,7 +6517,7 @@ class SnapMagicApp {
                     <textarea id="linkedinText" readonly style="width:100%;height:120px;margin:1rem 0;padding:0.8rem;border-radius:8px;font-size:14px;line-height:1.4;background:#1a1a1a;color:#fff;border:1px solid #444;">${shareText}</textarea>
                     <div class="modal-buttons">
                         <button id="copyLinkedinText" class="art-deco-btn">📋 Copy</button>
-                        <button id="openLinkedinApp" class="art-deco-btn">📱 LinkedIn</button>
+                        <button id="openLinkedinApp" class="art-deco-btn">Enter Competition</button>
                         <button id="cancelLinkedinCopy" class="art-deco-btn">Cancel</button>
                     </div>
                 </div>
