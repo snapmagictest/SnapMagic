@@ -6391,6 +6391,79 @@ class SnapMagicApp {
         this.showLinkedInCopyModal(shareText);
     }
 
+    async downloadStaticPNG() {
+        try {
+            if (!this.generatedCardData) {
+                this.showError('No card available for PNG download');
+                return;
+            }
+
+            // Find the card element (same as GIF capture)
+            const cardElement = document.querySelector('.snapmagic-card');
+            if (!cardElement) {
+                this.showError('Card element not found');
+                return;
+            }
+
+            console.log('📸 Capturing static PNG from card template...');
+
+            // Ensure html2canvas is loaded (same as GIF capture)
+            if (typeof html2canvas === 'undefined') {
+                await this.loadHTML2Canvas();
+            }
+
+            // Capture single frame as canvas
+            const canvas = await html2canvas(cardElement, {
+                backgroundColor: null,
+                scale: 2,
+                useCORS: true,
+                allowTaint: true,
+                logging: false
+            });
+
+            // Convert canvas to PNG blob
+            canvas.toBlob((blob) => {
+                // Create download link
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                
+                // Generate filename
+                const eventName = this.templateSystem?.templateConfig?.eventName || 'Event';
+                const sanitizedEventName = eventName.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
+                const today = new Date().toISOString().slice(0, 10);
+                const time = new Date().toTimeString().slice(0, 5).replace(':', '');
+                link.download = `snapmagic-${sanitizedEventName}-card-${today}-${time}.png`;
+                
+                // Trigger download
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                // Clean up
+                setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+                
+                console.log('✅ PNG download completed');
+            }, 'image/png', 0.95);
+
+        } catch (error) {
+            console.error('❌ PNG download failed:', error);
+            this.showError('PNG download failed');
+        }
+    }
+
+    async loadHTML2Canvas() {
+        // Same loading logic as GIF capture
+        if (typeof html2canvas !== 'undefined') return;
+        
+        return new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+            script.onload = resolve;
+            script.onerror = reject;
+            document.head.appendChild(script);
+        });
+    }
+
     showLinkedInCopyModal(shareText) {
         const modalHtml = `
             <div id="linkedinCopyModal" class="modal">
@@ -6400,6 +6473,7 @@ class SnapMagicApp {
                     <textarea id="linkedinText" readonly style="width:100%;height:120px;margin:1rem 0;padding:0.8rem;border-radius:8px;font-size:14px;line-height:1.4;background:#1a1a1a;color:#fff;border:1px solid #444;">${shareText}</textarea>
                     <div class="modal-buttons">
                         <button id="copyLinkedinText" class="art-deco-btn">📋 Copy Text</button>
+                        <button id="downloadPngLinkedin" class="art-deco-btn">🖼️ Download PNG</button>
                         <button id="openLinkedinApp" class="art-deco-btn">📱 Open LinkedIn</button>
                         <button id="cancelLinkedinCopy" class="art-deco-btn">Cancel</button>
                     </div>
@@ -6418,6 +6492,11 @@ class SnapMagicApp {
             setTimeout(() => {
                 document.getElementById('copyLinkedinText').textContent = '📋 Copy Text';
             }, 2000);
+        });
+        
+        // Download PNG button
+        document.getElementById('downloadPngLinkedin').addEventListener('click', () => {
+            this.downloadStaticPNG();
         });
         
         // Open LinkedIn button
