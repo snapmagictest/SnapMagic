@@ -6398,28 +6398,33 @@ class SnapMagicApp {
                 return;
             }
 
-            // Find the card element
-            const cardElement = document.querySelector('.snapmagic-card');
-            if (!cardElement) {
-                this.showError('Card element not found');
-                return;
-            }
+            console.log('📸 Creating PNG from existing GIF system...');
 
-            console.log('📸 Capturing static PNG using GIF system...');
-
-            // Use the existing GIF capture system but capture only 1 frame
-            const gifCapture = new SnapMagicAnimatedGIFCapture();
+            const cardId = this.generatedCardData.s3_key || this.generatedCardData.filename || 'current';
             
-            // Capture single frame using GIF system (which handles tainted canvas properly)
-            const gifBlob = await gifCapture.captureAnimatedCard(cardElement, {
-                frames: 1,           // Just 1 frame
-                framerate: 1,        // Doesn't matter for 1 frame
-                quality: 1,          // Highest quality
-                duration: 100        // Short duration
-            });
-
-            // Convert GIF blob to PNG
-            await this.convertGIFToPNG(gifBlob);
+            // Check if GIF is already cached
+            const cachedGIF = this.cardGIFCache.get(cardId);
+            
+            if (cachedGIF) {
+                // Convert existing GIF to PNG
+                await this.convertGIFToPNG(cachedGIF);
+            } else {
+                // Need to create GIF first, then convert to PNG
+                console.log('🔄 Creating GIF first to extract PNG...');
+                
+                // Prepare the GIF (this will cache it)
+                await this.prepareCardDownload(cardId);
+                
+                // Wait a moment for the GIF to be cached
+                setTimeout(async () => {
+                    const newCachedGIF = this.cardGIFCache.get(cardId);
+                    if (newCachedGIF) {
+                        await this.convertGIFToPNG(newCachedGIF);
+                    } else {
+                        this.showError('Failed to create GIF for PNG conversion');
+                    }
+                }, 1000);
+            }
 
         } catch (error) {
             console.error('❌ PNG download failed:', error);
