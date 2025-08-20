@@ -6423,29 +6423,33 @@ class SnapMagicApp {
                 height: cardElement.offsetHeight
             });
 
-            // Convert canvas to PNG blob
-            canvas.toBlob((blob) => {
-                // Create download link
-                const link = document.createElement('a');
-                link.href = URL.createObjectURL(blob);
-                
-                // Generate filename
-                const eventName = this.templateSystem?.templateConfig?.eventName || 'Event';
-                const sanitizedEventName = eventName.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
-                const today = new Date().toISOString().slice(0, 10);
-                const time = new Date().toTimeString().slice(0, 5).replace(':', '');
-                link.download = `snapmagic-${sanitizedEventName}-card-${today}-${time}.png`;
-                
-                // Trigger download
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                
-                // Clean up
-                setTimeout(() => URL.revokeObjectURL(link.href), 1000);
-                
-                console.log('✅ PNG download completed');
-            }, 'image/png', 0.95);
+            // Convert canvas to PNG (same method as GIF capture)
+            const frameDataURL = canvas.toDataURL('image/png');
+            
+            // Convert data URL to blob for download
+            const response = await fetch(frameDataURL);
+            const blob = await response.blob();
+            
+            // Create download link
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            
+            // Generate filename
+            const eventName = this.templateSystem?.templateConfig?.eventName || 'Event';
+            const sanitizedEventName = eventName.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
+            const today = new Date().toISOString().slice(0, 10);
+            const time = new Date().toTimeString().slice(0, 5).replace(':', '');
+            link.download = `snapmagic-${sanitizedEventName}-card-${today}-${time}.png`;
+            
+            // Trigger download
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            // Clean up
+            setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+            
+            console.log('✅ PNG download completed');
 
         } catch (error) {
             console.error('❌ PNG download failed:', error);
