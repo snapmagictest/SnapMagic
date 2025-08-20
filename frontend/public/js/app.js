@@ -6407,18 +6407,15 @@ class SnapMagicApp {
 
             console.log('📸 Capturing static PNG from card template...');
 
-            // Ensure html2canvas is loaded (same as GIF capture)
-            if (typeof html2canvas === 'undefined') {
-                await this.loadHTML2Canvas();
-            }
-
-            // Capture single frame as canvas
+            // Use exact same settings as GIF capture (frame 0)
             const canvas = await html2canvas(cardElement, {
-                backgroundColor: null,
-                scale: 2,
-                useCORS: true,
+                scale: 1,
+                useCORS: false,
                 allowTaint: true,
-                logging: false
+                backgroundColor: null,
+                logging: false,
+                width: cardElement.offsetWidth,
+                height: cardElement.offsetHeight
             });
 
             // Convert canvas to PNG blob
