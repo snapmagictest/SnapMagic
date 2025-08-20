@@ -6407,6 +6407,11 @@ class SnapMagicApp {
 
             console.log('📸 Capturing static PNG from card template...');
 
+            // Ensure html2canvas is loaded
+            if (typeof html2canvas === 'undefined') {
+                await this.loadHTML2CanvasLibrary();
+            }
+
             // Use exact same settings as GIF capture (frame 0)
             const canvas = await html2canvas(cardElement, {
                 scale: 1,
@@ -6446,19 +6451,6 @@ class SnapMagicApp {
             console.error('❌ PNG download failed:', error);
             this.showError('PNG download failed');
         }
-    }
-
-    async loadHTML2Canvas() {
-        // Same loading logic as GIF capture
-        if (typeof html2canvas !== 'undefined') return;
-        
-        return new Promise((resolve, reject) => {
-            const script = document.createElement('script');
-            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
-            script.onload = resolve;
-            script.onerror = reject;
-            document.head.appendChild(script);
-        });
     }
 
     showLinkedInCopyModal(shareText) {
