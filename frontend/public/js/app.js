@@ -2904,10 +2904,19 @@ class SnapMagicApp {
             
             console.log(`✅ Card ${cardId} prepared successfully (${Math.round(gifBlob.size / 1024)}KB)`);
             
-            // AUTO-DOWNLOAD: Download immediately when ready
+            // AUTO-DOWNLOAD: Download immediately when ready (unless PNG-only mode)
             setTimeout(() => {
-                console.log(`⚡ Auto-downloading card ${cardId}...`);
-                this.downloadCachedGIF(cardId);
+                if (this.pngOnlyMode) {
+                    console.log(`📸 PNG-only mode: Converting GIF to PNG instead of downloading GIF`);
+                    // Convert to PNG instead of downloading GIF
+                    const cachedGIF = this.cardGIFCache.get(cardId);
+                    if (cachedGIF) {
+                        this.convertGIFToPNG(cachedGIF);
+                    }
+                } else {
+                    console.log(`⚡ Auto-downloading card ${cardId}...`);
+                    this.downloadCachedGIF(cardId);
+                }
             }, 500); // Small delay to show the ready state briefly
             
         } catch (error) {
@@ -6398,7 +6407,7 @@ class SnapMagicApp {
                 return;
             }
 
-            console.log('📸 Creating PNG from existing GIF system...');
+            console.log('📸 Creating PNG from visible card...');
 
             const cardId = this.generatedCardData.s3_key || this.generatedCardData.filename || 'current';
             
@@ -6406,29 +6415,50 @@ class SnapMagicApp {
             const cachedGIF = this.cardGIFCache.get(cardId);
             
             if (cachedGIF) {
-                // Convert existing GIF to PNG
+                // Convert existing GIF to PNG (no additional download)
                 await this.convertGIFToPNG(cachedGIF);
             } else {
-                // Need to create GIF first, then convert to PNG
-                console.log('🔄 Creating GIF first to extract PNG...');
+                // Set flag to prevent GIF auto-download
+                this.pngOnlyMode = true;
                 
-                // Prepare the GIF (this will cache it)
+                // Use existing prepare function but prevent auto-download
                 await this.prepareCardDownload(cardId);
                 
-                // Wait a moment for the GIF to be cached
-                setTimeout(async () => {
-                    const newCachedGIF = this.cardGIFCache.get(cardId);
-                    if (newCachedGIF) {
-                        await this.convertGIFToPNG(newCachedGIF);
-                    } else {
-                        this.showError('Failed to create GIF for PNG conversion');
-                    }
-                }, 1000);
+                // Reset flag
+                this.pngOnlyMode = false;
             }
 
         } catch (error) {
             console.error('❌ PNG download failed:', error);
             this.showError('PNG download failed');
+            this.pngOnlyMode = false;
+        }
+    }
+
+    async prepareCardDownloadSilent(cardId) {
+        // Same as prepareCardDownload but without auto-downloading the GIF
+        console.log(`🔄 Preparing card ${cardId} silently for PNG extraction...`);
+        
+        // Set loading state
+        this.cardDownloadStates.set(cardId, 'loading');
+        
+        try {
+            // Create the GIF (same process as normal)
+            await this.createAnimatedGIFForCard(cardId);
+            
+            // Set ready state but don't auto-download
+            this.cardDownloadStates.set(cardId, 'ready');
+            
+            // Convert cached GIF to PNG
+            const cachedGIF = this.cardGIFCache.get(cardId);
+            if (cachedGIF) {
+                await this.convertGIFToPNG(cachedGIF);
+            }
+            
+        } catch (error) {
+            console.error('❌ Silent GIF preparation failed:', error);
+            this.cardDownloadStates.set(cardId, 'prepare');
+            throw error;
         }
     }
 
@@ -6486,9 +6516,8 @@ class SnapMagicApp {
                     <p>Copy this text and paste it in your LinkedIn post, then upload your card image:</p>
                     <textarea id="linkedinText" readonly style="width:100%;height:120px;margin:1rem 0;padding:0.8rem;border-radius:8px;font-size:14px;line-height:1.4;background:#1a1a1a;color:#fff;border:1px solid #444;">${shareText}</textarea>
                     <div class="modal-buttons">
-                        <button id="copyLinkedinText" class="art-deco-btn">📋 Copy Text</button>
-                        <button id="downloadPngLinkedin" class="art-deco-btn">🖼️ Download PNG</button>
-                        <button id="openLinkedinApp" class="art-deco-btn">📱 Open LinkedIn</button>
+                        <button id="copyLinkedinText" class="art-deco-btn">📋 Copy</button>
+                        <button id="openLinkedinApp" class="art-deco-btn">📱 LinkedIn</button>
                         <button id="cancelLinkedinCopy" class="art-deco-btn">Cancel</button>
                     </div>
                 </div>
@@ -6504,13 +6533,8 @@ class SnapMagicApp {
             document.execCommand('copy');
             document.getElementById('copyLinkedinText').textContent = '✅ Copied!';
             setTimeout(() => {
-                document.getElementById('copyLinkedinText').textContent = '📋 Copy Text';
+                document.getElementById('copyLinkedinText').textContent = '📋 Copy';
             }, 2000);
-        });
-        
-        // Download PNG button
-        document.getElementById('downloadPngLinkedin').addEventListener('click', () => {
-            this.downloadStaticPNG();
         });
         
         // Open LinkedIn button
