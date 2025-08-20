@@ -2937,14 +2937,54 @@ class SnapMagicApp {
             return;
         }
         
-        console.log(`⚡ Downloading cached GIF for card ${cardId}`);
+        console.log(`⚡ Downloading both GIF and PNG for card ${cardId}`);
         
         // Download the cached GIF
         this.downloadGIFBlob(cachedGIF);
         
+        // Also download PNG version
+        await this.downloadPNGVersion(cardId);
+        
         // Update state to downloaded
         this.cardDownloadStates.set(cardId, 'downloaded');
         this.updateDownloadButton(cardId);
+    }
+
+    async downloadPNGVersion(cardId) {
+        try {
+            // Get the current card image URL from generatedCardData
+            if (!this.generatedCardData || !this.generatedCardData.s3_url) {
+                console.warn('No S3 URL available for PNG download');
+                return;
+            }
+
+            // Fetch the image and convert to PNG
+            const response = await fetch(this.generatedCardData.s3_url);
+            const blob = await response.blob();
+            
+            // Create download link for PNG
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            
+            // Generate PNG filename
+            const eventName = this.templateSystem?.templateConfig?.eventName || 'Event';
+            const sanitizedEventName = eventName.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
+            const today = new Date().toISOString().slice(0, 10);
+            const time = new Date().toTimeString().slice(0, 5).replace(':', '');
+            link.download = `snapmagic-${sanitizedEventName}-card-${today}-${time}.png`;
+            
+            // Trigger PNG download
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            // Clean up
+            setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+            
+            console.log('✅ PNG download completed');
+        } catch (error) {
+            console.error('❌ PNG download failed:', error);
+        }
     }
     
     /**
@@ -6361,7 +6401,7 @@ class SnapMagicApp {
 
 
     /**
-     * Open LinkedIn with clean post text (no URL)
+     * Open LinkedIn with mobile-friendly copy/paste approach
      */
     openLinkedInForSharing() {
         // Get event name from template configuration
@@ -6385,22 +6425,52 @@ class SnapMagicApp {
             console.warn('Could not parse configuration for event name:', error);
         }
         
-        console.log('🎯 Using event name for LinkedIn:', eventName);
-        
-        // Simple clean LinkedIn message
         const shareText = `🎴✨ Just created my AI-powered trading card with SnapMagic - Powered by AWS! Generated using Amazon Bedrock Nova Canvas at ${eventName}. #AmazonBedrockNova #SnapMagicUser${this.currentUserNumber}`;
         
-        // LinkedIn sharing URL with text only
-        const linkedInUrl = `https://www.linkedin.com/sharing/share-offsite/?text=${encodeURIComponent(shareText)}`;
+        // Show copy/paste modal for all devices (mobile-friendly approach)
+        this.showLinkedInCopyModal(shareText);
+    }
+
+    showLinkedInCopyModal(shareText) {
+        const modalHtml = `
+            <div id="linkedinCopyModal" class="modal">
+                <div class="modal-content">
+                    <h3>📱 Copy Text for LinkedIn</h3>
+                    <p>Copy this text and paste it in your LinkedIn post, then upload your card image:</p>
+                    <textarea id="linkedinText" readonly style="width:100%;height:120px;margin:1rem 0;padding:0.8rem;border-radius:8px;font-size:14px;line-height:1.4;background:#1a1a1a;color:#fff;border:1px solid #444;">${shareText}</textarea>
+                    <div class="modal-buttons">
+                        <button id="copyLinkedinText" class="art-deco-btn">📋 Copy Text</button>
+                        <button id="openLinkedinApp" class="art-deco-btn">📱 Open LinkedIn</button>
+                        <button id="cancelLinkedinCopy" class="art-deco-btn">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        `;
         
-        console.log('🔗 Opening LinkedIn with clean text');
-        console.log('📝 Share text:', shareText);
-        window.open(linkedInUrl, '_blank', 'width=600,height=600,scrollbars=yes,resizable=yes');
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
         
-        // Show confirmation dialog after opening LinkedIn
-        setTimeout(() => {
-            this.showLinkedInConfirmation();
-        }, 2000); // Give user time to see LinkedIn opened
+        // Copy text button
+        document.getElementById('copyLinkedinText').addEventListener('click', () => {
+            const textArea = document.getElementById('linkedinText');
+            textArea.select();
+            document.execCommand('copy');
+            document.getElementById('copyLinkedinText').textContent = '✅ Copied!';
+            setTimeout(() => {
+                document.getElementById('copyLinkedinText').textContent = '📋 Copy Text';
+            }, 2000);
+        });
+        
+        // Open LinkedIn button
+        document.getElementById('openLinkedinApp').addEventListener('click', () => {
+            window.open('https://www.linkedin.com/feed/', '_blank');
+            document.getElementById('linkedinCopyModal').remove();
+            setTimeout(() => this.showLinkedInConfirmation(), 1000);
+        });
+        
+        // Cancel button
+        document.getElementById('cancelLinkedinCopy').addEventListener('click', () => {
+            document.getElementById('linkedinCopyModal').remove();
+        });
     }
 
     /**
