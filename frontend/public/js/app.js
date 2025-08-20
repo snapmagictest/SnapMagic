@@ -6398,63 +6398,79 @@ class SnapMagicApp {
                 return;
             }
 
-            // Find the card element (same as GIF capture)
+            // Find the card element
             const cardElement = document.querySelector('.snapmagic-card');
             if (!cardElement) {
                 this.showError('Card element not found');
                 return;
             }
 
-            console.log('📸 Capturing static PNG from card template...');
+            console.log('📸 Capturing static PNG using GIF system...');
 
-            // Ensure html2canvas is loaded
-            if (typeof html2canvas === 'undefined') {
-                await this.loadHTML2CanvasLibrary();
-            }
-
-            // Use exact same settings as GIF capture (frame 0)
-            const canvas = await html2canvas(cardElement, {
-                scale: 1,
-                useCORS: false,
-                allowTaint: true,
-                backgroundColor: null,
-                logging: false,
-                width: cardElement.offsetWidth,
-                height: cardElement.offsetHeight
+            // Use the existing GIF capture system but capture only 1 frame
+            const gifCapture = new SnapMagicAnimatedGIFCapture();
+            
+            // Capture single frame using GIF system (which handles tainted canvas properly)
+            const gifBlob = await gifCapture.captureAnimatedCard(cardElement, {
+                frames: 1,           // Just 1 frame
+                framerate: 1,        // Doesn't matter for 1 frame
+                quality: 1,          // Highest quality
+                duration: 100        // Short duration
             });
 
-            // Convert canvas to PNG (same method as GIF capture)
-            const frameDataURL = canvas.toDataURL('image/png');
-            
-            // Convert data URL to blob for download
-            const response = await fetch(frameDataURL);
-            const blob = await response.blob();
-            
-            // Create download link
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            
-            // Generate filename
-            const eventName = this.templateSystem?.templateConfig?.eventName || 'Event';
-            const sanitizedEventName = eventName.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
-            const today = new Date().toISOString().slice(0, 10);
-            const time = new Date().toTimeString().slice(0, 5).replace(':', '');
-            link.download = `snapmagic-${sanitizedEventName}-card-${today}-${time}.png`;
-            
-            // Trigger download
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            
-            // Clean up
-            setTimeout(() => URL.revokeObjectURL(link.href), 1000);
-            
-            console.log('✅ PNG download completed');
+            // Convert GIF blob to PNG
+            await this.convertGIFToPNG(gifBlob);
 
         } catch (error) {
             console.error('❌ PNG download failed:', error);
             this.showError('PNG download failed');
         }
+    }
+
+    async convertGIFToPNG(gifBlob) {
+        // Create image from GIF blob
+        const img = new Image();
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+
+        return new Promise((resolve, reject) => {
+            img.onload = () => {
+                // Set canvas size to match image
+                canvas.width = img.width;
+                canvas.height = img.height;
+                
+                // Draw first frame of GIF to canvas
+                ctx.drawImage(img, 0, 0);
+                
+                // Convert to PNG blob
+                canvas.toBlob((blob) => {
+                    // Create download link
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob);
+                    
+                    // Generate filename
+                    const eventName = this.templateSystem?.templateConfig?.eventName || 'Event';
+                    const sanitizedEventName = eventName.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
+                    const today = new Date().toISOString().slice(0, 10);
+                    const time = new Date().toTimeString().slice(0, 5).replace(':', '');
+                    link.download = `snapmagic-${sanitizedEventName}-card-${today}-${time}.png`;
+                    
+                    // Trigger download
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    
+                    // Clean up
+                    setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+                    
+                    console.log('✅ PNG download completed');
+                    resolve();
+                }, 'image/png', 0.95);
+            };
+            
+            img.onerror = reject;
+            img.src = URL.createObjectURL(gifBlob);
+        });
     }
 
     showLinkedInCopyModal(shareText) {
